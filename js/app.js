@@ -1,9 +1,19 @@
 // js/app.js
-import React, { useState, useEffect } from './vendor/react.js';
-import ReactDOM from './vendor/react-dom.js';
+console.log('App.js: Loading...');
+// UMD Globals
+const React = window.React;
+const ReactDOM = window.ReactDOM;
+const { useState, useEffect } = React;
+
+console.log('App.js: React global', React);
+console.log('App.js: ReactDOM global', ReactDOM);
+
 import htm from './vendor/htm.js';
+console.log('App.js: htm imported');
 import { initLanguage, t, setLanguage } from './i18n.js';
 import { useStore, actions } from './store.js';
+
+console.log('App.js: Imports complete');
 
 const html = htm.bind(React.createElement);
 

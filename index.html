@@ -47,24 +47,6 @@
         "@type": "SearchAction",
         "target": "https://coachsearching.com/?q={search_term_string}",
         "query-input": "required name=search_term_string"
-      }
-    }
-    </script>
-</head>
-
-<body>
-    <div id="root"></div>
-
-    <!-- Application Entry -->
-    <!-- Note: We import React inside app.js now via ESM, so no need for separate script tags if app.js imports them. 
-         However, our app.js imports from ./vendor/react.js which we just updated to ESM. 
-         We should remove the old script tags for react/react-dom as they are now imported by app.js -->
-    <script type="module" src="./js/app.js"></script>
-
-    <!-- Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
                 // Use relative path for SW
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => console.log('SW registered'))
@@ -72,6 +54,6 @@
             });
         }
     </script>
-</body>
+    </body>
 
 </html>

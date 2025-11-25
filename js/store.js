@@ -1,5 +1,5 @@
 // js/store.js
-import { useState, useEffect } from './vendor/react.js';
+const { useState, useEffect } = window.React;
 
 // Simple global state using a custom hook + event listener pattern
 // In a larger app, we'd use Context or Redux, but this is sufficient for "no build tools" simplicity.
