@@ -23,6 +23,40 @@ const debugConsole = initDebugConsole();
 
 const API_BASE = 'https://clouedo.com/coachsearching/api';
 
+// Currency Management
+const CURRENCY_SYMBOLS = {
+    'EUR': '€',
+    'USD': '$',
+    'GBP': '£'
+};
+
+const CURRENCY_RATES = {
+    'EUR': 1,
+    'USD': 1.09,
+    'GBP': 0.86
+};
+
+let currentCurrency = localStorage.getItem('currency') || 'EUR';
+
+function setCurrency(code) {
+    currentCurrency = code;
+    localStorage.setItem('currency', code);
+    window.dispatchEvent(new Event('currencyChange'));
+    console.log('Currency changed to:', code);
+}
+
+function getCurrentCurrency() {
+    return currentCurrency;
+}
+
+function formatPrice(eurPrice) {
+    const rate = CURRENCY_RATES[currentCurrency];
+    const convertedPrice = (eurPrice * rate).toFixed(0);
+    const symbol = CURRENCY_SYMBOLS[currentCurrency];
+    return symbol + convertedPrice;
+}
+
+
 // Utility: Simple Markdown to HTML
 function markdownToHTML(md) {
     if (!md) return '';
@@ -156,6 +190,57 @@ const Footer = ({ onOpenLegal }) => {
     `;
 };
 
+
+const CurrencySelector = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [currency, setCurrencyState] = useState(getCurrentCurrency());
+
+    useEffect(() => {
+        const handleCurrencyChange = () => {
+            console.log('Currency changed event received');
+            setCurrencyState(getCurrentCurrency());
+        };
+        window.addEventListener('currencyChange', handleCurrencyChange);
+        return () => window.removeEventListener('currencyChange', handleCurrencyChange);
+    }, []);
+
+    const handleSelect = (code) => {
+        console.log('Currency selected:', code);
+        setCurrency(code);
+        setIsOpen(false);
+    };
+
+    const currencies = [
+        { code: 'EUR', symbol: '€', label: 'Euro' },
+        { code: 'USD', symbol: '$', label: 'US Dollar' },
+        { code: 'GBP', symbol: '£', label: 'Pound' }
+    ];
+
+    const current = currencies.find(c => c.code === currency) || currencies[0];
+
+    return html`
+        <div class="currency-selector">
+            <button class="currency-btn" onClick=${() => setIsOpen(!isOpen)} aria-label="Select currency">
+                <span>${current.symbol}</span>
+                <span>${current.code}</span>
+            </button>
+            <div class="currency-dropdown ${isOpen ? 'show' : ''}" role="menu">
+                ${currencies.map(curr => html`
+                    <div 
+                        key=${curr.code} 
+                        class="currency-option ${curr.code === currency ? 'active' : ''}" 
+                        onClick=${() => handleSelect(curr.code)} 
+                        role="menuitem"
+                    >
+                        <span>${curr.symbol}</span>
+                        <span>${curr.label}</span>
+                    </div>
+                `)}
+            </div>
+        </div>
+    `;
+};
+
 const LanguageSelector = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentLang, setCurrentLang] = useState(getCurrentLang());
@@ -218,6 +303,7 @@ const Navbar = ({ session }) => {
                     ` : html`
                         <a href="#login" class="nav-auth-btn">Sign In / Register</a>
                     `}
+                    <${CurrencySelector} />
                     <${LanguageSelector} />
                 </nav>
             </div>
@@ -398,13 +484,21 @@ const SignOut = () => {
         console.log('Signing out...');
         setConfirming(true);
         try {
-            await window.supabaseClient.auth.signOut();
+            const { error } = await window.supabaseClient.auth.signOut();
+            if (error) {
+                console.error('Sign out error:', error);
+                throw error;
+            }
             console.log('Sign out successful');
+            // Redirect to home immediately
+            window.location.hash = '#home';
+            // Force reload to clear session state
             setTimeout(() => {
-                window.location.hash = '#home';
-            }, 1000);
+                window.location.reload();
+            }, 100);
         } catch (error) {
             console.error('Sign out error:', error);
+            alert('Failed to sign out. Please try again.');
             setConfirming(false);
         }
     };
@@ -480,35 +574,39 @@ const Hero = ({ onSearch }) => {
                                 <button 
                                     type="button"
                                     class="filter-toggle-btn ${sessionType === 'online' ? 'active' : ''}"
-                                    onClick=${() => setSessionType('online')}
+                                    onClick=${() => {
+                                        setSessionType('online');
+                                        console.log('Session type: Online');
+                                    }}
                                 >
                                     💻 Online
                                 </button>
                                 <button 
                                     type="button"
                                     class="filter-toggle-btn ${sessionType === 'onsite' ? 'active' : ''}"
-                                    onClick=${() => setSessionType('onsite')}
+                                    onClick=${() => {
+                                        setSessionType('onsite');
+                                        console.log('Session type: On-Site');
+                                    }}
                                 >
                                     📍 On-Site
                                 </button>
                             </div>
-                            ${sessionType === 'onsite' && html`
-                                <div class="location-inputs">
-                                    <input 
-                                        type="text" 
-                                        placeholder="Location (e.g., New York, NY)"
-                                        value=${location}
-                                        onChange=${(e) => setLocation(e.target.value)}
-                                    />
-                                    <select value=${radius} onChange=${(e) => setRadius(e.target.value)}>
-                                        <option value="10">Within 10 km</option>
-                                        <option value="25">Within 25 km</option>
-                                        <option value="50">Within 50 km</option>
-                                        <option value="100">Within 100 km</option>
-                                        <option value="200">Within 200 km</option>
-                                    </select>
-                                </div>
-                            `}
+                            <div class="location-inputs" style=${{ display: sessionType === 'onsite' ? 'flex' : 'none' }}>
+                                <input 
+                                    type="text" 
+                                    placeholder="Location (e.g., New York, NY)"
+                                    value=${location}
+                                    onChange=${(e) => setLocation(e.target.value)}
+                                />
+                                <select value=${radius} onChange=${(e) => setRadius(e.target.value)}>
+                                    <option value="10">Within 10 km</option>
+                                    <option value="25">Within 25 km</option>
+                                    <option value="50">Within 50 km</option>
+                                    <option value="100">Within 100 km</option>
+                                    <option value="200">Within 200 km</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -547,7 +645,7 @@ const CoachCard = ({ coach, onViewDetails }) => {
             <div class="coach-price-section">
                 <div>
                     <div class="price-label">${t('coach.hourly_rate')}</div>
-                    <div class="price-value">$${coach.hourly_rate}</div>
+                    <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
                     <div class="price-label">Includes taxes</div>
                 </div>
                 <button class="btn-book" onClick=${() => onViewDetails(coach)}>${t('coach.view_profile')} ></button>
@@ -560,8 +658,50 @@ const CoachList = ({ searchFilters }) => {
     const [coaches, setCoaches] = useState(mockCoaches);
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [filteredCoaches, setFilteredCoaches] = useState(mockCoaches);
+    const [loading, setLoading] = useState(false);
+    const [, forceUpdate] = useState({});
 
     console.log('CoachList rendering with', coaches.length, 'coaches');
+
+    // Load coaches from API
+    useEffect(() => {
+        const loadCoaches = async () => {
+            console.log('Loading coaches from API...');
+            setLoading(true);
+            try {
+                const response = await fetch(API_BASE + '/coaches');
+                const data = await response.json();
+                console.log('API response:', data);
+                
+                if (data.data && data.data.length > 0) {
+                    console.log('Loaded', data.data.length, 'coaches from API');
+                    setCoaches(data.data);
+                    setFilteredCoaches(data.data);
+                } else {
+                    console.log('No coaches from API, using mock data');
+                    if (data.disclaimer) {
+                        console.log('API disclaimer:', data.disclaimer);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load coaches from API:', error);
+                console.log('Falling back to mock data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        loadCoaches();
+    }, []);
+
+    useEffect(() => {
+        const handleCurrencyChange = () => {
+            console.log('CoachList: Currency changed, re-rendering');
+            forceUpdate({});
+        };
+        window.addEventListener('currencyChange', handleCurrencyChange);
+        return () => window.removeEventListener('currencyChange', handleCurrencyChange);
+    }, []);
 
     useEffect(() => {
         if (searchFilters && searchFilters.searchTerm) {
@@ -586,6 +726,12 @@ const CoachList = ({ searchFilters }) => {
             <h2 class="section-title">
                 ${searchFilters?.searchTerm ? `Search Results (${filteredCoaches.length})` : 'Top Rated Coaches'}
             </h2>
+            ${loading && html`
+                <div class="loader">
+                    <div class="spinner"></div>
+                    <p>Loading coaches...</p>
+                </div>
+            `}
             ${filteredCoaches.length === 0 && html`
                 <div class="empty-state">
                     <div class="empty-state-icon">🔍</div>
@@ -609,10 +755,21 @@ const CoachDetailModal = ({ coach, onClose }) => {
             <div class="coach-detail-content" onClick=${(e) => e.stopPropagation()}>
                 <div class="coach-detail-hero">
                     <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-detail-avatar" />
+                    <button class="modal-close-btn" onClick=${onClose} aria-label="Close">×</button>
                 </div>
                 <div class="coach-detail-body">
-                    <h2 class="coach-detail-name">${coach.full_name}</h2>
-                    <p class="coach-detail-title">${coach.title}</p>
+                    <div class="coach-detail-header">
+                        <div>
+                            <h2 class="coach-detail-name">${coach.full_name}</h2>
+                            <p class="coach-detail-title">${coach.title}</p>
+                        </div>
+                        <button class="btn-book-prominent" onClick=${() => {
+                            console.log('Book now clicked for', coach.full_name);
+                            alert('Booking feature coming soon! Check the debug console for details.');
+                        }}>
+                            ${t('coach.book')}
+                        </button>
+                    </div>
 
                     <div class="coach-detail-stats">
                         <div class="coach-detail-stat">
@@ -624,7 +781,7 @@ const CoachDetailModal = ({ coach, onClose }) => {
                             <div class="coach-detail-stat-label">Reviews</div>
                         </div>
                         <div class="coach-detail-stat">
-                            <div class="coach-detail-stat-value">$${coach.hourly_rate}</div>
+                            <div class="coach-detail-stat-value">${formatPrice(coach.hourly_rate)}</div>
                             <div class="coach-detail-stat-label">Per Hour</div>
                         </div>
                     </div>
@@ -643,17 +800,6 @@ const CoachDetailModal = ({ coach, onClose }) => {
                         <h3 class="coach-detail-section-title">Languages</h3>
                         ${coach.languages.map(l => html`<span key=${l} class="badge badge-petrol">${l}</span>`)}
                     </div>
-
-                    <button class="btn-primary" style=${{ width: '100%', marginTop: '20px' }} onClick=${() => {
-                        console.log('Book now clicked for', coach.full_name);
-                        alert('Booking feature coming soon! Check the debug console for details.');
-                    }}>
-                        ${t('coach.book')}
-                    </button>
-
-                    <button class="btn-secondary" style=${{ width: '100%', marginTop: '12px' }} onClick=${onClose}>
-                        Close
-                    </button>
                 </div>
             </div>
         </div>
