@@ -31,11 +31,9 @@ const legalContent = {
     imprint: {
         title: 'Imprint',
         content: html`
-            <h3>CoachSearching GmbH</h3>
-            <p>Musterstraße 123<br/>10115 Berlin<br/>Germany</p>
-            <p><strong>Represented by:</strong><br/>Max Mustermann</p>
-            <p><strong>Contact:</strong><br/>Email: info@coachsearching.com<br/>Phone: +49 30 12345678</p>
-            <p><strong>Register Entry:</strong><br/>Entry in the Handelsregister.<br/>Registering court: Amtsgericht Berlin-Charlottenburg<br/>Registration number: HRB 123456</p>
+            <h3>coachsearching.com</h3>
+            <p><strong>Represented by:</strong><br/>Michael Gross</p>
+            <p><strong>Contact:</strong><br/>Email: info[at]coachsearching.com</p>
         `
     },
     privacy: {
@@ -55,13 +53,13 @@ const legalContent = {
         title: 'Terms of Service',
         content: html`
             <h3>1. Scope</h3>
-            <p>These terms apply to all business relations between the customer and CoachSearching.</p>
+            <p>These terms apply to all business relations between the customer and coachsearching.com.</p>
             <h3>2. Services</h3>
-            <p>CoachSearching provides a platform to connect clients with professional coaches.</p>
+            <p>coachsearching.com provides a platform to connect clients with professional coaches.</p>
             <h3>3. Booking & Payment</h3>
             <p>Bookings are binding. Payments are processed via Stripe.</p>
             <h3>4. Liability</h3>
-            <p>We are not liable for the content or quality of the coaching sessions provided by independent coaches.</p>
+            <p>coachsearching.com not liable for the content or quality of the coaching sessions provided by independent coaches.</p>
         `
     }
 };
@@ -93,7 +91,7 @@ const Footer = ({ onOpenLegal }) => {
             <div class="container footer-content">
                 <div>
                     <div class="logo" style=${{ fontSize: '1.2rem' }}>CoachSearching</div>
-                    <div style=${{ color: '#888', fontSize: '0.85rem', marginTop: '8px' }}>© 2023 CoachSearching GmbH</div>
+                    <div style=${{ color: '#888', fontSize: '0.85rem', marginTop: '8px' }}>© 2028 coachsearching.com</div>
                 </div>
                 <div class="footer-links">
                     <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }}>Imprint</a>

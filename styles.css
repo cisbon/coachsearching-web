@@ -783,11 +783,242 @@ header {
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        color: var(--text-main);
-    }
 
-    .lang-option:hover {
-        background-color: #f5f5f5;
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 600px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-md);
+        }
+
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .modal-body h3 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .modal-body p {
+            margin-bottom: 12px;
+        }
+
+        /* Auth & Forms */
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 0 20px;
+        }
+
+        .auth-card {
+            background: white;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .auth-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .auth-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .auth-switch-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        /* Role Selection */
+        .role-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .role-option {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .role-option.selected {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Language Selector */
+        .lang-selector {
+            position: relative;
+            margin-left: 16px;
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            height: 40px;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .lang-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            min-width: 140px;
+            z-index: 100;
+            margin-top: 4px;
+        }
+
+        .lang-dropdown.show {
+            display: flex;
+        }
+
+        .lang-option {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .lang-option:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* Footer Styles - Re-added */
+        footer {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 40px 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-link {
+            color: #cccccc;
+            text-decoration: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: white;
+        }
     }
+}
