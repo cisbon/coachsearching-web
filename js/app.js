@@ -50,7 +50,7 @@ const Hero = () => {
                 <h1>${t('hero.title')}</h1>
                 <p>${t('hero.subtitle')}</p>
                 <div class="search-box">
-                    <input type="text" placeholder="${t('search.placeholder')}" class="form-control" style="max-width: 400px; display: inline-block; margin-right: 10px;" />
+                    <input type="text" placeholder="${t('search.placeholder')}" class="form-control" style=${{ maxWidth: '400px', display: 'inline-block', marginRight: '10px' }} />
                     <button class="btn btn-secondary">${t('search.btn')}</button>
                 </div>
             </div>
