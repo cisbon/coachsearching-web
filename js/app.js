@@ -1210,6 +1210,7 @@ const App = () => {
         case '#coaches': Component = CoachList; break;
         case '#login': Component = Auth; break;
         case '#dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
+        case '#signout': Component = SignOut; break;
         default: Component = Home;
     }
 
