@@ -1,5 +1,15 @@
 // api/config.php
 
+// CORS Headers - MUST be first
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Max-Age: 86400");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE, PATCH");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit(0);
+}
+
 // Load .env file
 if (file_exists(__DIR__ . '/.env')) {
     $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -14,18 +24,6 @@ if (file_exists(__DIR__ . '/.env')) {
             $_SERVER[$name] = $value;
         }
     }
-}
-
-// Allow from any origin for now to fix CORS issues during development
-// In production, you should restrict this.
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Max-Age: 86400");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE, PATCH");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    exit(0);
 }
 
 // API Keys - Only using URL and Anon Key as requested
