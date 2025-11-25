@@ -255,15 +255,16 @@ const LanguageSelector = () => {
 
     useEffect(() => {
         const handleLangChange = () => {
-            console.log('Language changed event received');
-            setCurrentLang(getCurrentLang());
+            const newLang = getCurrentLang();
+            console.log('LANG: LanguageSelector received event, updating to:', newLang);
+            setCurrentLang(newLang);
         };
         window.addEventListener('langChange', handleLangChange);
         return () => window.removeEventListener('langChange', handleLangChange);
     }, []);
 
     const handleSelect = (langCode) => {
-        console.log('Language selected:', langCode);
+        console.log('LANG: User selected language:', langCode);
         setLanguage(langCode);
         setCurrentLang(langCode);
         setIsOpen(false);
@@ -481,24 +482,35 @@ const SignOut = () => {
     const [confirming, setConfirming] = useState(false);
 
     const handleSignOut = async () => {
-        console.log('Signing out...');
+        console.log('LOGOUT: Starting sign out process...');
         setConfirming(true);
+        
+        if (!window.supabaseClient) {
+            console.error('LOGOUT: Supabase client not found!');
+            alert('Cannot sign out - please refresh and try again');
+            return;
+        }
+        
         try {
+            console.log('LOGOUT: Calling supabaseClient.auth.signOut()...');
             const { error } = await window.supabaseClient.auth.signOut();
+            
             if (error) {
-                console.error('Sign out error:', error);
+                console.error('LOGOUT: Sign out returned error:', error);
                 throw error;
             }
-            console.log('Sign out successful');
-            // Redirect to home immediately
+            
+            console.log('LOGOUT: Sign out API call successful');
+            console.log('LOGOUT: Redirecting to home...');
             window.location.hash = '#home';
-            // Force reload to clear session state
+            
+            console.log('LOGOUT: Reloading page to clear session...');
             setTimeout(() => {
                 window.location.reload();
-            }, 100);
+            }, 200);
         } catch (error) {
-            console.error('Sign out error:', error);
-            alert('Failed to sign out. Please try again.');
+            console.error('LOGOUT: Exception during sign out:', error);
+            alert('Failed to sign out: ' + error.message);
             setConfirming(false);
         }
     };
@@ -1121,6 +1133,7 @@ const App = () => {
     const [session, setSession] = useState(null);
     const [legalModal, setLegalModal] = useState({ isOpen: false, type: null });
     const [configLoaded, setConfigLoaded] = useState(false);
+    const [languageVersion, setLanguageVersion] = useState(0);
 
     useEffect(() => {
         console.log('App useEffect: Fetching config...');

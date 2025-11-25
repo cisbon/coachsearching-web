@@ -237,9 +237,14 @@ let currentLang = 'en';
 
 export function setLanguage(lang) {
     if (translations[lang]) {
+        console.log('LANG: Changing language from', currentLang, 'to', lang);
         currentLang = lang;
         localStorage.setItem('lang', lang);
+        console.log('LANG: Dispatching langChange event');
         window.dispatchEvent(new Event('langChange'));
+        console.log('LANG: Language change complete');
+    } else {
+        console.error('LANG: Invalid language code:', lang);
     }
 }
 
