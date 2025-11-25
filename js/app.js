@@ -1,27 +1,4 @@
-// js/app.js
-console.log('App.js: Loading...');
 
-// UMD Globals
-const React = window.React;
-const ReactDOM = window.ReactDOM;
-const { useState, useEffect } = React;
-const { createClient } = window.supabase;
-
-// Initialize Supabase
-const supabaseUrl = 'https://your-project.supabase.co'; // REPLACE WITH REAL URL
-const supabaseKey = 'your-anon-key'; // REPLACE WITH REAL KEY
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-console.log('App.js: React global', React);
-console.log('App.js: ReactDOM global', ReactDOM);
-
-import htm from './vendor/htm.js';
-console.log('App.js: htm imported');
-import { initLanguage, t, setLanguage } from './i18n.js';
-import { useStore, actions } from './store.js';
-import { mockCoaches } from './mockData.js';
-
-console.log('App.js: Imports complete');
 // js/app.js
 console.log('App.js: Loading...');
 
