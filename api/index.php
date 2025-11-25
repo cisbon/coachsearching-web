@@ -93,7 +93,7 @@ try {
                 $controller->update(getAuthUid());
             }
             break;
-            
+
         case 'bookings':
             $controller = new BookingController();
             if ($method === 'POST') $controller->create(getAuthUid());
@@ -109,11 +109,22 @@ try {
                 $controller->create(getAuthUid());
             }
             break;
-            
+
         case 'pro-bono':
             $controller = new ProBonoController();
             if ($method === 'GET') $controller->index();
             elseif ($method === 'POST') $controller->create(getAuthUid());
+            break;
+
+        case 'payment':
+            $controller = new PaymentController();
+            if ($id === 'checkout') {
+                $controller->createCheckoutSession(getAuthUid());
+            } elseif ($id === 'connect-oauth') {
+                $controller->connectOAuth(getAuthUid());
+            } elseif ($id === 'connect-callback') {
+                $controller->connectCallback();
+            }
             break;
 
         case 'features':

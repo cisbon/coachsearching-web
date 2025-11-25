@@ -51,11 +51,26 @@ CREATE TABLE public.cs_pro_bono_slots (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Session Packages
+CREATE TABLE public.cs_packages (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    coach_id UUID REFERENCES public.cs_coaches(id),
+    name TEXT NOT NULL,
+    description TEXT,
+    session_count INTEGER NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    currency TEXT DEFAULT 'USD',
+    duration_minutes INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Bookings (Paid and Pro-bono)
 CREATE TABLE public.cs_bookings (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     coach_id UUID REFERENCES public.cs_coaches(id),
     client_id UUID REFERENCES auth.users(id),
+    package_id UUID REFERENCES public.cs_packages(id),
     slot_id UUID, -- Optional link to pro_bono_slots if applicable
     start_time TIMESTAMP WITH TIME ZONE NOT NULL,
     end_time TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -66,6 +81,18 @@ CREATE TABLE public.cs_bookings (
     stripe_payment_intent_id TEXT,
     meeting_link TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Reviews
+CREATE TABLE public.cs_reviews (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    coach_id UUID REFERENCES public.cs_coaches(id),
+    client_id UUID REFERENCES auth.users(id),
+    booking_id UUID REFERENCES public.cs_bookings(id),
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(booking_id) -- One review per booking
 );
 
 -- VIEW for User Profiles (Exposing auth.users metadata to REST API)
@@ -88,16 +115,25 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- RLS Policies
 ALTER TABLE public.cs_feature_flags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_coaches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cs_packages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_pro_bono_slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cs_reviews ENABLE ROW LEVEL SECURITY;
 
 -- Feature Flags: Public read
 CREATE POLICY "Feature flags are viewable by everyone" ON public.cs_feature_flags FOR SELECT USING (true);
 
--- Coaches: Public read, update own
+-- Coaches: Public read, update own, insert own
 CREATE POLICY "Coaches are viewable by everyone" ON public.cs_coaches FOR SELECT USING (true);
+CREATE POLICY "Coaches can insert own profile" ON public.cs_coaches FOR INSERT WITH CHECK ((select auth.uid()) = id);
 CREATE POLICY "Coaches can update own profile" ON public.cs_coaches FOR UPDATE USING ((select auth.uid()) = id);
+
+-- Packages: Public read, coach manage
+CREATE POLICY "Packages are viewable by everyone" ON public.cs_packages FOR SELECT USING (true);
+CREATE POLICY "Coaches can insert own packages" ON public.cs_packages FOR INSERT WITH CHECK ((select auth.uid()) = coach_id);
+CREATE POLICY "Coaches can update own packages" ON public.cs_packages FOR UPDATE USING ((select auth.uid()) = coach_id);
+CREATE POLICY "Coaches can delete own packages" ON public.cs_packages FOR DELETE USING ((select auth.uid()) = coach_id);
 
 -- Articles: Published are public, drafts viewable by author
 CREATE POLICY "Articles viewable by everyone or author" ON public.cs_articles FOR SELECT USING (
@@ -118,6 +154,12 @@ CREATE POLICY "View own bookings" ON public.cs_bookings FOR SELECT USING (
 );
 CREATE POLICY "Clients can insert bookings" ON public.cs_bookings FOR INSERT WITH CHECK ((select auth.uid()) = client_id);
 CREATE POLICY "Coaches can update bookings" ON public.cs_bookings FOR UPDATE USING ((select auth.uid()) = coach_id);
+
+-- Reviews: Public read published reviews, clients can write
+CREATE POLICY "Reviews are viewable by everyone" ON public.cs_reviews FOR SELECT USING (true);
+CREATE POLICY "Clients can insert own reviews" ON public.cs_reviews FOR INSERT WITH CHECK ((select auth.uid()) = client_id);
+CREATE POLICY "Clients can update own reviews" ON public.cs_reviews FOR UPDATE USING ((select auth.uid()) = client_id);
+CREATE POLICY "Clients can delete own reviews" ON public.cs_reviews FOR DELETE USING ((select auth.uid()) = client_id);
 
 -- Permissions for View and RPC
 GRANT SELECT ON public.cs_user_profiles TO anon, authenticated;

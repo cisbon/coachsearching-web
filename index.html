@@ -32,12 +32,16 @@
     <link href="favicon.ico" rel="icon">
     <link rel="stylesheet" href="./styles.css">
 
-    <!-- Preload Critical Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canonical & Hreflang -->
+    <link rel="canonical" href="https://coachsearching.com/">
+    <link rel="alternate" hreflang="en" href="https://coachsearching.com/?lang=en">
+    <link rel="alternate" hreflang="de" href="https://coachsearching.com/?lang=de">
+    <link rel="alternate" hreflang="es" href="https://coachsearching.com/?lang=es">
+    <link rel="alternate" hreflang="fr" href="https://coachsearching.com/?lang=fr">
+    <link rel="alternate" hreflang="it" href="https://coachsearching.com/?lang=it">
+    <link rel="alternate" hreflang="x-default" href="https://coachsearching.com/">
 
-    <!-- Schema.org -->
+    <!-- Schema.org - Multiple schemas -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -48,6 +52,49 @@
         "@type": "SearchAction",
         "target": "https://coachsearching.com/?q={search_term_string}",
         "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "What is CoachSearching?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "CoachSearching is a professional platform connecting clients with certified coaches for business, life, and personal development coaching sessions."
+        }
+      }, {
+        "@type": "Question",
+        "name": "How do I book a coaching session?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Search for coaches by specialty, review their profiles, and book sessions directly through our secure platform with flexible online or in-person options."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Are the coaches certified?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, all coaches on our platform are verified professionals with relevant certifications and experience in their coaching specialties."
+        }
+      }]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "CoachSearching",
+      "url": "https://coachsearching.com",
+      "logo": "https://coachsearching.com/icon-192.png",
+      "description": "Professional coaching platform for business, life, and personal development",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "info@coachsearching.com",
+        "contactType": "Customer Service"
       }
     }
     </script>
