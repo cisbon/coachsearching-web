@@ -1,6 +1,7 @@
 :root {
     --primary: #006266;
     /* Petrol */
+    --primary-light: #008b8f;
     --primary-dark: #004a4d;
     --secondary: #febb02;
     /* Booking.com yellow-ish accent */
@@ -59,6 +60,10 @@ header {
     color: white;
     text-decoration: none;
     letter-spacing: -0.5px;
+}
+
+.logo span {
+    color: var(--primary-light);
 }
 
 .nav-links {

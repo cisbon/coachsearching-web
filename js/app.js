@@ -90,7 +90,7 @@ const Footer = ({ onOpenLegal }) => {
         <footer>
             <div class="container footer-content">
                 <div>
-                    <div class="logo" style=${{ fontSize: '1.2rem' }}>CoachSearching</div>
+                    <div class="logo" style=${{ fontSize: '1.2rem' }}>coach<span>searching</span>.com</div>
                     <div style=${{ color: '#888', fontSize: '0.85rem', marginTop: '8px' }}>© 2028 coachsearching.com</div>
                 </div>
                 <div class="footer-links">
