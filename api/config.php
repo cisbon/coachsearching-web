@@ -1,3 +1,4 @@
+<?php
 // api/config.php
 
 // CORS Headers - MUST be first
