@@ -17,7 +17,7 @@
 }
 
 * {
-    box-sizing: border_box;
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
@@ -28,6 +28,9 @@ body {
     color: var(--text-main);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 /* Layout */
@@ -58,6 +61,11 @@ header {
     letter-spacing: -0.5px;
 }
 
+.nav-links {
+    display: flex;
+    align-items: center;
+}
+
 .nav-links a {
     color: white;
     text-decoration: none;
@@ -78,6 +86,10 @@ header {
     font-weight: 600;
     margin-left: 24px;
     transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
 }
 
 .nav-auth-btn:hover {
@@ -327,698 +339,272 @@ header {
     .coach-img {
         width: 100%;
         height: 200px;
-        display: flex;
-        align-items: center;
-        border: 2px solid transparent;
-        border-radius: 2px;
-        background: white;
-    }
-
-    .search-input-group:focus-within {
-        border-color: var(--secondary);
-        z-index: 10;
-    }
-
-    .search-icon {
-        padding-left: 12px;
-        color: var(--text-muted);
-    }
-
-    .search-input {
-        width: 100%;
-        padding: 14px 12px;
-        border: none;
-        font-size: 1rem;
-        outline: none;
-        font-family: inherit;
-    }
-
-    .search-btn {
-        background-color: #0071c2;
-        /* Booking.com blue for button */
-        color: white;
-        border: none;
-        padding: 0 32px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        cursor: pointer;
-        border-radius: 2px;
-        transition: background-color 0.2s;
-    }
-
-    .search-btn:hover {
-        background-color: #005999;
-    }
-
-    /* Coach List */
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 24px;
-        color: var(--text-main);
-    }
-
-    .coach-list {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .coach-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 16px;
-        display: flex;
-        gap: 24px;
-        transition: box-shadow 0.2s;
-    }
-
-    .coach-card:hover {
-        box-shadow: var(--shadow-md);
-    }
-
-    .coach-img {
-        width: 200px;
-        height: 200px;
-        object-fit: cover;
-        border-radius: var(--radius);
-        flex-shrink: 0;
-    }
-
-    .coach-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .coach-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 8px;
-    }
-
-    .coach-name {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #0071c2;
-        margin-bottom: 4px;
-    }
-
-    .coach-title {
-        font-size: 0.9rem;
-        color: var(--text-main);
-        font-weight: 600;
-    }
-
-    .coach-rating {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .rating-badge {
-        background-color: #003580;
-        color: white;
-        padding: 4px 6px;
-        border-radius: 4px 4px 4px 0;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-
-    .rating-text {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-    }
-
-    .coach-details {
-        margin-top: 8px;
-        font-size: 0.9rem;
-        color: var(--text-main);
-        line-height: 1.6;
-        flex: 1;
-    }
-
-    .coach-meta {
-        display: flex;
-        gap: 16px;
-        margin-top: 12px;
-        font-size: 0.85rem;
-        color: var(--text-muted);
     }
 
     .coach-price-section {
-        text-align: right;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        min-width: 150px;
-    }
-
-    .price-label {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-    }
-
-    .price-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-main);
+        text-align: left;
+        margin-top: 16px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .btn-book {
-        background-color: #0071c2;
-        color: white;
-        border: none;
-        padding: 10px 16px;
-        border-radius: 2px;
-        font-weight: 600;
-        cursor: pointer;
-        margin-top: 12px;
+        width: auto;
+        margin-top: 0;
+    }
+
+    .search-container {
+        position: static;
+        transform: none;
         width: 100%;
-        text-align: center;
+        margin-top: -20px;
+        margin-bottom: 20px;
     }
 
-    .btn-book:hover {
-        background-color: #005999;
-    }
-
-    /* Utilities */
-    .mt-4 {
-        margin-top: 16px;
-    }
-
-    .text-center {
-        text-align: center;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .coach-card {
-            flex-direction: column;
-        }
-
-        .coach-img {
-            width: 100%;
-            height: 200px;
-        }
-
-        .coach-price-section {
-            text-align: left;
-            margin-top: 16px;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .btn-book {
-            width: auto;
-            margin-top: 0;
-        }
-
-        .search-container {
-            position: static;
-            transform: none;
-            width: 100%;
-            margin-top: -20px;
-            margin-bottom: 20px;
-        }
-
-        .search-form {
-            flex-direction: column;
-        }
-
-        .hero {
-            padding-bottom: 40px;
-        }
-    }
-
-    /* Footer */
-    footer {
-        background-color: #1a1a1a;
-        color: white;
-        padding: 40px 0;
-        margin-top: auto;
-    }
-
-    .footer-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
-
-    .footer-links {
-        display: flex;
-        gap: 24px;
-    }
-
-    .footer-link {
-        color: #cccccc;
-        text-decoration: none;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: color 0.2s;
-    }
-
-    .footer-link:hover {
-        color: white;
-    }
-
-    /* Modal */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        padding: 20px;
-    }
-
-    .modal-content {
-        background-color: white;
-        border-radius: var(--radius);
-        width: 100%;
-        max-width: 600px;
-        max-height: 80vh;
-        display: flex;
+    .search-form {
         flex-direction: column;
-        box-shadow: var(--shadow-md);
     }
 
-    .modal-header {
-        padding: 16px 24px;
-        border-bottom: 1px solid var(--border-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .hero {
+        padding-bottom: 40px;
     }
+}
 
-    .modal-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--text-main);
-    }
+/* Footer */
+footer {
+    background-color: #1a1a1a;
+    color: white;
+    padding: 40px 0;
+    margin-top: auto;
+}
 
-    .modal-close {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: var(--text-muted);
-    }
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
 
-    .modal-body {
-        padding: 24px;
-        overflow-y: auto;
-        line-height: 1.6;
-        font-size: 0.95rem;
-    }
+.footer-links {
+    display: flex;
+    gap: 24px;
+}
 
-    .modal-body h3 {
-        margin-top: 16px;
-        margin-bottom: 8px;
-        font-size: 1.1rem;
-    }
+.footer-link {
+    color: #cccccc;
+    text-decoration: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
 
-    .modal-body p {
-        margin-bottom: 12px;
-    }
+.footer-link:hover {
+    color: white;
+}
 
-    /* Auth & Forms */
-    .auth-container {
-        max-width: 400px;
-        margin: 100px auto;
-        padding: 0 20px;
-    }
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
 
-    .auth-card {
-        background: white;
-        padding: 32px;
-        border-radius: 8px;
-        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
+.modal-content {
+    background-color: white;
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-md);
+}
 
-    .auth-input {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 16px;
-        box-sizing: border-box;
-    }
+.modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-    .auth-btn {
-        width: 100%;
-        padding: 12px;
-        background-color: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
 
-    .auth-btn:hover {
-        background-color: var(--primary-dark);
-    }
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
 
-    .auth-btn:disabled {
-        background-color: #ccc;
-        cursor: not-allowed;
-    }
+.modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
 
-    .auth-switch-btn {
-        background: none;
-        border: none;
-        color: var(--primary);
-        cursor: pointer;
-        text-decoration: underline;
-        font-size: 14px;
-        margin-top: 10px;
-    }
+.modal-body h3 {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
 
-    /* Role Selection */
-    .role-group {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
+.modal-body p {
+    margin-bottom: 12px;
+}
 
-    .role-option {
-        flex: 1;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        text-align: center;
-        cursor: pointer;
-        font-size: 14px;
-        transition: all 0.2s;
-    }
+/* Auth & Forms */
+.auth-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 0 20px;
+}
 
-    .role-option.selected {
-        background-color: var(--primary);
-        color: white;
-        border-color: var(--primary);
-    }
+.auth-card {
+    background: white;
+    padding: 32px;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
-    /* Language Selector */
-    .lang-selector {
-        position: relative;
-        margin-left: 16px;
-    }
+.auth-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
 
-    .lang-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 12px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        height: 40px;
-        color: white;
-        box-sizing: border-box;
-    }
+.auth-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
 
-    .lang-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
+.auth-btn:hover {
+    background-color: var(--primary-dark);
+}
 
-    .lang-dropdown {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        display: none;
-        flex-direction: column;
-        min-width: 140px;
-        z-index: 100;
-        margin-top: 4px;
-    }
+.auth-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
 
-    .lang-dropdown.show {
-        display: flex;
-    }
+.auth-switch-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 14px;
+    margin-top: 10px;
+}
 
-    .lang-option {
-        padding: 10px 16px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
+/* Role Selection */
+.role-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
 
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px;
-        }
+.role-option {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
 
-        .modal-content {
-            background-color: white;
-            border-radius: var(--radius);
-            width: 100%;
-            max-width: 600px;
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: var(--shadow-md);
-        }
+.role-option.selected {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
 
-        .modal-header {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+/* Language Selector */
+.lang-selector {
+    position: relative;
+    margin-left: 16px;
+}
 
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-main);
-        }
+.lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    height: 40px;
+    color: white;
+    box-sizing: border-box;
+}
 
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-muted);
-        }
+.lang-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
 
-        .modal-body {
-            padding: 24px;
-            overflow-y: auto;
-            line-height: 1.6;
-            font-size: 0.95rem;
-        }
+.lang-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: none;
+    flex-direction: column;
+    min-width: 140px;
+    z-index: 100;
+    margin-top: 4px;
+}
 
-        .modal-body h3 {
-            margin-top: 16px;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
+.lang-dropdown.show {
+    display: flex;
+}
 
-        .modal-body p {
-            margin-bottom: 12px;
-        }
+.lang-option {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-main);
+}
 
-        /* Auth & Forms */
-        .auth-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 0 20px;
-        }
-
-        .auth-card {
-            background: white;
-            padding: 32px;
-            border-radius: 8px;
-            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .auth-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        .auth-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .auth-btn:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .auth-btn:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        .auth-switch-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            text-decoration: underline;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        /* Role Selection */
-        .role-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .role-option {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .role-option.selected {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* Language Selector */
-        .lang-selector {
-            position: relative;
-            margin-left: 16px;
-        }
-
-        .lang-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            height: 40px;
-            color: white;
-            box-sizing: border-box;
-        }
-
-        .lang-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .lang-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            display: none;
-            flex-direction: column;
-            min-width: 140px;
-            z-index: 100;
-            margin-top: 4px;
-        }
-
-        .lang-dropdown.show {
-            display: flex;
-        }
-
-        .lang-option {
-            padding: 10px 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: var(--text-main);
-        }
-
-        .lang-option:hover {
-            background-color: #f5f5f5;
-        }
-
-        /* Footer Styles - Re-added */
-        footer {
-            background-color: #1a1a1a;
-            color: white;
-            padding: 40px 0;
-            margin-top: auto;
-        }
-
-        .footer-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        .footer-link {
-            color: #cccccc;
-            text-decoration: none;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .footer-link:hover {
-            color: white;
-        }
-    }
+.lang-option:hover {
+    background-color: #f5f5f5;
 }
