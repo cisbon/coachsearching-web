@@ -316,14 +316,14 @@ const Auth = () => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState('person');
+    const [userType, setUserType] = useState('client');
     const [isLogin, setIsLogin] = useState(true);
     const [message, setMessage] = useState('');
 
     const handleAuth = async (e) => {
         e.preventDefault();
 
-        console.log('Auth attempt started', { isLogin, email, role });
+        console.log('Auth attempt started', { isLogin, email, userType });
 
         if (!window.supabaseClient) {
             const error = 'Error: Supabase not initialized.';
@@ -345,13 +345,13 @@ const Auth = () => {
                 });
                 console.log('Sign in result:', result);
             } else {
-                console.log('Attempting sign up...');
+                console.log('Attempting sign up as:', userType);
                 result = await window.supabaseClient.auth.signUp({
                     email,
                     password,
                     options: {
                         data: {
-                            role,
+                            user_type: userType,
                             full_name: email.split('@')[0]
                         }
                     }
@@ -373,18 +373,24 @@ const Auth = () => {
                     setMessage('Success! Please check your email to confirm your account.');
                     console.log('Email confirmation required');
                 } else if (data.user && data.session) {
-                    setMessage('Registration successful! Redirecting...');
-                    console.log('Registration complete with session, redirecting...');
-                    setTimeout(() => {
-                        console.log('Delayed redirect to dashboard after registration');
-                        window.location.hash = '#dashboard';
-                    }, 500);
+                    const needsOnboarding = userType === 'coach' && data.session;
+                    if (needsOnboarding) {
+                        setMessage('Registration successful! Complete your coach profile...');
+                        console.log('Coach registration complete, redirecting to onboarding...');
+                        setTimeout(() => {
+                            window.location.hash = '#onboarding';
+                        }, 500);
+                    } else {
+                        setMessage('Registration successful! Redirecting...');
+                        console.log('Registration complete with session, redirecting...');
+                        setTimeout(() => {
+                            window.location.hash = '#dashboard';
+                        }, 500);
+                    }
                 }
             } else {
                 console.log('Login successful, waiting for session state update...');
-                // Don't redirect - the auth state change will update session and trigger re-render
                 setMessage('Login successful! Loading dashboard...');
-                // Small delay to let React update the session state
                 setTimeout(() => {
                     console.log('Delayed redirect to dashboard after login');
                     window.location.hash = '#dashboard';
@@ -402,7 +408,7 @@ const Auth = () => {
     return html`
         <div class="auth-container">
             <div class="auth-card">
-                <h2 class="section-title text-center">${isLogin ? 'Sign In' : 'Create Account'}</h2>
+                <h2 class="section-title text-center">${isLogin ? t('auth.signin') : t('auth.signup')}</h2>
 
                 ${message && html`
                     <div class="alert ${message.includes('Error') || message.includes('error') || message.includes('failed') ? 'alert-error' : 'alert-success'}">
@@ -412,34 +418,47 @@ const Auth = () => {
 
                 <form onSubmit=${handleAuth} style=${{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     ${!isLogin && html`
-                        <div class="role-group" role="radiogroup" aria-label="Select your role">
-                            <div class="role-option ${role === 'person' ? 'selected' : ''}"
-                                 onClick=${() => setRole('person')}
+                        <div class="user-type-label">${t('auth.selectType')}</div>
+                        <div class="role-group" role="radiogroup" aria-label="Select user type">
+                            <div class="role-option ${userType === 'client' ? 'selected' : ''}"
+                                 onClick=${() => setUserType('client')}
                                  role="radio"
-                                 aria-checked=${role === 'person'}
+                                 aria-checked=${userType === 'client'}
                                  tabIndex="0">
-                                👤 Person
+                                <div class="role-icon">👤</div>
+                                <div class="role-text">
+                                    <div class="role-name">${t('auth.client')}</div>
+                                    <div class="role-desc">${t('auth.clientDesc')}</div>
+                                </div>
                             </div>
-                            <div class="role-option ${role === 'business' ? 'selected' : ''}"
-                                 onClick=${() => setRole('business')}
+                            <div class="role-option ${userType === 'coach' ? 'selected' : ''}"
+                                 onClick=${() => setUserType('coach')}
                                  role="radio"
-                                 aria-checked=${role === 'business'}
+                                 aria-checked=${userType === 'coach'}
                                  tabIndex="0">
-                                🏢 Business
+                                <div class="role-icon">🎓</div>
+                                <div class="role-text">
+                                    <div class="role-name">${t('auth.coach')}</div>
+                                    <div class="role-desc">${t('auth.coachDesc')}</div>
+                                </div>
                             </div>
-                            <div class="role-option ${role === 'coach' ? 'selected' : ''}"
-                                 onClick=${() => setRole('coach')}
+                            <div class="role-option ${userType === 'business' ? 'selected' : ''}"
+                                 onClick=${() => setUserType('business')}
                                  role="radio"
-                                 aria-checked=${role === 'coach'}
+                                 aria-checked=${userType === 'business'}
                                  tabIndex="0">
-                                🎓 Coach
+                                <div class="role-icon">🏢</div>
+                                <div class="role-text">
+                                    <div class="role-name">${t('auth.business')}</div>
+                                    <div class="role-desc">${t('auth.businessDesc')}</div>
+                                </div>
                             </div>
                         </div>
                     `}
 
                     <input
                         type="email"
-                        placeholder="Email Address"
+                        placeholder=${t('auth.email')}
                         class="auth-input"
                         value=${email}
                         onChange=${(e) => setEmail(e.target.value)}
@@ -448,7 +467,7 @@ const Auth = () => {
                     />
                     <input
                         type="password"
-                        placeholder="Password"
+                        placeholder=${t('auth.password')}
                         class="auth-input"
                         value=${password}
                         onChange=${(e) => setPassword(e.target.value)}
@@ -475,8 +494,231 @@ const Auth = () => {
     `;
 };
 
-// Continue in next part...
+// Coach Onboarding Component
+const CoachOnboarding = ({ session }) => {
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
+    const [formData, setFormData] = useState({
+        full_name: session?.user?.user_metadata?.full_name || '',
+        title: '',
+        bio: '',
+        location: '',
+        hourly_rate: '',
+        specialties: '',
+        languages: 'en',
+        session_types_online: true,
+        session_types_onsite: false,
+        avatar_url: ''
+    });
 
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage('');
+
+        try {
+            // Parse comma-separated values into arrays
+            const specialtiesArray = formData.specialties.split(',').map(s => s.trim()).filter(Boolean);
+            const languagesArray = formData.languages.split(',').map(s => s.trim()).filter(Boolean);
+            const sessionTypesArray = [];
+            if (formData.session_types_online) sessionTypesArray.push('online');
+            if (formData.session_types_onsite) sessionTypesArray.push('onsite');
+
+            const coachProfile = {
+                id: session.user.id,
+                full_name: formData.full_name,
+                title: formData.title,
+                bio: formData.bio,
+                location: formData.location,
+                hourly_rate: parseFloat(formData.hourly_rate) || 0,
+                currency: 'EUR',
+                specialties: specialtiesArray,
+                languages: languagesArray,
+                session_types: sessionTypesArray,
+                avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                onboarding_completed: true
+            };
+
+            console.log('Submitting coach profile:', coachProfile);
+
+            // Save to database via API
+            const response = await fetch(API_BASE + '/coaches', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + session.access_token
+                },
+                body: JSON.stringify(coachProfile)
+            });
+
+            const result = await response.json();
+            console.log('Coach profile save result:', result);
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to save profile');
+            }
+
+            setMessage('Profile completed successfully! Redirecting...');
+            setTimeout(() => {
+                window.location.hash = '#dashboard';
+            }, 1000);
+        } catch (error) {
+            console.error('Onboarding error:', error);
+            setMessage('Error: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return html`
+        <div class="auth-container">
+            <div class="onboarding-card">
+                <h2 class="section-title text-center">${t('onboard.title')}</h2>
+                <p class="text-center" style=${{ color: 'var(--text-muted)', marginBottom: '24px' }}>
+                    Complete your profile to start offering coaching services
+                </p>
+
+                ${message && html`
+                    <div class="alert ${message.includes('Error') ? 'alert-error' : 'alert-success'}">
+                        ${message}
+                    </div>
+                `}
+
+                <form onSubmit=${handleSubmit} style=${{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div class="form-group">
+                        <label class="form-label">${t('onboard.fullName')} *</label>
+                        <input
+                            type="text"
+                            class="auth-input"
+                            value=${formData.full_name}
+                            onChange=${(e) => handleChange('full_name', e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">${t('onboard.jobTitle')} *</label>
+                        <input
+                            type="text"
+                            class="auth-input"
+                            placeholder="e.g., Life Coach, Business Consultant, Executive Coach"
+                            value=${formData.title}
+                            onChange=${(e) => handleChange('title', e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">${t('onboard.bio')} *</label>
+                        <textarea
+                            class="auth-textarea"
+                            rows="5"
+                            placeholder="Tell potential clients about your experience, approach, and what makes you unique..."
+                            value=${formData.bio}
+                            onChange=${(e) => handleChange('bio', e.target.value)}
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">${t('onboard.location')}</label>
+                            <input
+                                type="text"
+                                class="auth-input"
+                                placeholder="e.g., Zurich, Switzerland"
+                                value=${formData.location}
+                                onChange=${(e) => handleChange('location', e.target.value)}
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">${t('onboard.hourlyRate')} *</label>
+                            <input
+                                type="number"
+                                class="auth-input"
+                                placeholder="150"
+                                min="0"
+                                step="1"
+                                value=${formData.hourly_rate}
+                                onChange=${(e) => handleChange('hourly_rate', e.target.value)}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">${t('onboard.specialties')} *</label>
+                        <input
+                            type="text"
+                            class="auth-input"
+                            placeholder="Life Coaching, Business Strategy, Leadership Development"
+                            value=${formData.specialties}
+                            onChange=${(e) => handleChange('specialties', e.target.value)}
+                            required
+                        />
+                        <small class="form-hint">Separate multiple specialties with commas</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">${t('onboard.languages')} *</label>
+                        <input
+                            type="text"
+                            class="auth-input"
+                            placeholder="en, de, es"
+                            value=${formData.languages}
+                            onChange=${(e) => handleChange('languages', e.target.value)}
+                            required
+                        />
+                        <small class="form-hint">Use language codes: en, de, es, fr, it</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">${t('onboard.sessionTypes')} *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked=${formData.session_types_online}
+                                    onChange=${(e) => handleChange('session_types_online', e.target.checked)}
+                                />
+                                <span>💻 Online Sessions</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked=${formData.session_types_onsite}
+                                    onChange=${(e) => handleChange('session_types_onsite', e.target.checked)}
+                                />
+                                <span>📍 On-Site Sessions</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">${t('onboard.avatar')}</label>
+                        <input
+                            type="url"
+                            class="auth-input"
+                            placeholder="https://example.com/your-photo.jpg"
+                            value=${formData.avatar_url}
+                            onChange=${(e) => handleChange('avatar_url', e.target.value)}
+                        />
+                        <small class="form-hint">Leave blank to use a generated avatar</small>
+                    </div>
+
+                    <button class="auth-btn" type="submit" disabled=${loading}>
+                        ${loading ? t('onboard.uploading') : t('onboard.submit')}
+                    </button>
+                </form>
+            </div>
+        </div>
+    `;
+};
 
 const SignOut = () => {
     const [confirming, setConfirming] = useState(false);
@@ -727,6 +969,14 @@ const Hero = ({ onSearch }) => {
 };
 
 const CoachCard = ({ coach, onViewDetails }) => {
+    // Map database fields to component fields
+    const rating = coach.rating_average || coach.rating || 0;
+    const reviewsCount = coach.rating_count || coach.reviews_count || 0;
+    const location = coach.location || 'Remote';
+    const languages = coach.languages || [];
+    const specialties = coach.specialties || [];
+    const bio = coach.bio || '';
+
     return html`
     <div class="coach-card">
             <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-img" />
@@ -736,21 +986,30 @@ const CoachCard = ({ coach, onViewDetails }) => {
                         <h3 class="coach-name">${coach.full_name}</h3>
                         <div class="coach-title">${coach.title}</div>
                         <div class="coach-meta">
-                            <span>📍 ${coach.location}</span>
-                            <span>💬 ${coach.languages.join(', ')}</span>
+                            <span>📍 ${location}</span>
+                            ${languages.length > 0 ? html`<span>💬 ${languages.join(', ')}</span>` : ''}
                         </div>
                     </div>
-                    <div class="coach-rating">
-                        <div class="rating-badge">${coach.rating}</div>
-                        <div class="rating-text">${coach.reviews_count} ${t('coach.reviews')}</div>
-                    </div>
+                    ${rating > 0 ? html`
+                        <div class="coach-rating">
+                            <div class="rating-badge">${rating.toFixed(1)}</div>
+                            <div class="rating-text">${reviewsCount} ${t('coach.reviews')}</div>
+                        </div>
+                    ` : html`
+                        <div class="coach-rating">
+                            <div class="rating-badge">New</div>
+                            <div class="rating-text">No reviews yet</div>
+                        </div>
+                    `}
                 </div>
                 <div class="coach-details">
-                    <p>${coach.bio}</p>
-                    <div style=${{ marginTop: '8px' }}>
-                        <strong>Specialties: </strong>
-                        ${coach.specialties.join(', ')}
-                    </div>
+                    <p>${bio}</p>
+                    ${specialties.length > 0 ? html`
+                        <div style=${{ marginTop: '8px' }}>
+                            <strong>Specialties: </strong>
+                            ${specialties.join(', ')}
+                        </div>
+                    ` : ''}
                 </div>
             </div>
             <div class="coach-price-section">
@@ -861,6 +1120,14 @@ const CoachList = ({ searchFilters }) => {
 const CoachDetailModal = ({ coach, onClose }) => {
     console.log('Opening coach detail modal for', coach.full_name);
 
+    // Map database fields to component fields
+    const rating = coach.rating_average || coach.rating || 0;
+    const reviewsCount = coach.rating_count || coach.reviews_count || 0;
+    const location = coach.location || 'Remote';
+    const languages = coach.languages || [];
+    const specialties = coach.specialties || [];
+    const bio = coach.bio || '';
+
     return html`
         <div class="coach-detail-modal" onClick=${onClose}>
             <div class="coach-detail-content" onClick=${(e) => e.stopPropagation()}>
@@ -873,6 +1140,7 @@ const CoachDetailModal = ({ coach, onClose }) => {
                         <div>
                             <h2 class="coach-detail-name">${coach.full_name}</h2>
                             <p class="coach-detail-title">${coach.title}</p>
+                            <p class="coach-detail-location">📍 ${location}</p>
                         </div>
                         <button class="btn-book-prominent" onClick=${() => {
                             console.log('Book now clicked for', coach.full_name);
@@ -884,11 +1152,11 @@ const CoachDetailModal = ({ coach, onClose }) => {
 
                     <div class="coach-detail-stats">
                         <div class="coach-detail-stat">
-                            <div class="coach-detail-stat-value">${coach.rating}</div>
+                            <div class="coach-detail-stat-value">${rating > 0 ? rating.toFixed(1) : 'New'}</div>
                             <div class="coach-detail-stat-label">Rating</div>
                         </div>
                         <div class="coach-detail-stat">
-                            <div class="coach-detail-stat-value">${coach.reviews_count}</div>
+                            <div class="coach-detail-stat-value">${reviewsCount}</div>
                             <div class="coach-detail-stat-label">Reviews</div>
                         </div>
                         <div class="coach-detail-stat">
@@ -899,18 +1167,22 @@ const CoachDetailModal = ({ coach, onClose }) => {
 
                     <div class="coach-detail-section">
                         <h3 class="coach-detail-section-title">About</h3>
-                        <p>${coach.bio}</p>
+                        <p>${bio || 'No bio available.'}</p>
                     </div>
 
-                    <div class="coach-detail-section">
-                        <h3 class="coach-detail-section-title">Specialties</h3>
-                        ${coach.specialties.map(s => html`<span key=${s} class="badge badge-petrol">${s}</span>`)}
-                    </div>
+                    ${specialties.length > 0 ? html`
+                        <div class="coach-detail-section">
+                            <h3 class="coach-detail-section-title">Specialties</h3>
+                            ${specialties.map(s => html`<span key=${s} class="badge badge-petrol">${s}</span>`)}
+                        </div>
+                    ` : ''}
 
-                    <div class="coach-detail-section">
-                        <h3 class="coach-detail-section-title">Languages</h3>
-                        ${coach.languages.map(l => html`<span key=${l} class="badge badge-petrol">${l}</span>`)}
-                    </div>
+                    ${languages.length > 0 ? html`
+                        <div class="coach-detail-section">
+                            <h3 class="coach-detail-section-title">Languages</h3>
+                            ${languages.map(l => html`<span key=${l} class="badge badge-petrol">${l}</span>`)}
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         </div>
@@ -1308,6 +1580,7 @@ const App = () => {
         case '#home': Component = Home; break;
         case '#coaches': Component = CoachList; break;
         case '#login': Component = Auth; break;
+        case '#onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
         case '#dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
         case '#signout': Component = SignOut; break;
         default: Component = Home;

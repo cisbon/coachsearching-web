@@ -680,27 +680,152 @@ footer {
 }
 
 /* Role Selection */
+.user-type-label {
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
 .role-group {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 12px;
     margin-bottom: 10px;
 }
 
 .role-option {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
     transition: all 0.2s;
+    background: white;
+}
+
+.role-option:hover {
+    border-color: var(--petrol-light);
+    background: #f8f9fa;
 }
 
 .role-option.selected {
-    background-color: var(--primary-petrol);
-    color: white;
+    background-color: rgba(0, 98, 102, 0.05);
     border-color: var(--primary-petrol);
+    box-shadow: 0 0 0 1px var(--primary-petrol);
+}
+
+.role-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    width: 48px;
+    text-align: center;
+}
+
+.role-text {
+    flex: 1;
+    text-align: left;
+}
+
+.role-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.role-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Onboarding Form */
+.onboarding-card {
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.9rem;
+}
+
+.form-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.auth-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.auth-textarea:focus {
+    outline: none;
+    border-color: var(--petrol-light);
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.checkbox-label:hover {
+    background: #f8f9fa;
+    border-color: var(--petrol-light);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox-label span {
+    font-size: 1rem;
+    color: var(--text-main);
 }
 
 /* Language Selector */
@@ -1306,6 +1431,12 @@ footer {
 
 .coach-detail-title {
     font-size: 18px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.coach-detail-location {
+    font-size: 14px;
     color: var(--text-muted);
     margin-bottom: 16px;
 }
