@@ -567,11 +567,13 @@ const Hero = ({ onSearch }) => {
                 // Reverse geocode to get city name
                 try {
                     const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+                        { headers: { 'User-Agent': 'CoachSearching/1.0' } }
                     );
                     const data = await response.json();
-                    const city = data.address.city || data.address.town || data.address.village || data.address.county;
-                    const country = data.address.country;
+                    console.log('Geocoding response:', data);
+                    const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county;
+                    const country = data.address?.country;
                     const locationString = city ? `${city}, ${country}` : `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
 
                     console.log('Location set to:', locationString);
@@ -584,9 +586,32 @@ const Hero = ({ onSearch }) => {
                 setGettingLocation(false);
             },
             (error) => {
+                console.error('Geolocation error code:', error.code);
+                console.error('Geolocation error message:', error.message);
                 console.error('Geolocation error:', error);
-                alert('Unable to get your location. Please enter it manually.');
+
+                let errorMessage = 'Unable to get your location. ';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage += 'Location permission denied. Please enable location access in your browser settings.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage += 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage += 'Location request timed out.';
+                        break;
+                    default:
+                        errorMessage += 'Please enter it manually.';
+                }
+
+                alert(errorMessage);
                 setGettingLocation(false);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
             }
         );
     };
