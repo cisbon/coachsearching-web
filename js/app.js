@@ -421,7 +421,6 @@ const App = () => {
         fetch('https://clouedo.com/coachsearching/api/env.php')
             .then(res => res.json())
             .then(config => {
-                console.log('Config loaded:', config);
                 if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
                     window.supabaseClient = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
 
