@@ -68,6 +68,23 @@ CREATE TABLE public.cs_bookings (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- VIEW for User Profiles (Exposing auth.users metadata to REST API)
+CREATE OR REPLACE VIEW public.cs_user_profiles AS 
+SELECT 
+    id, 
+    email, 
+    raw_user_meta_data->>'full_name' as full_name, 
+    raw_user_meta_data->>'avatar_url' as avatar_url 
+FROM auth.users;
+
+-- RPC for Webhook Updates (Security Definer to allow Anon updates)
+CREATE OR REPLACE FUNCTION confirm_booking_by_intent(intent_id TEXT)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE cs_bookings SET status = 'confirmed' WHERE stripe_payment_intent_id = intent_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- RLS Policies
 ALTER TABLE public.cs_feature_flags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_coaches ENABLE ROW LEVEL SECURITY;
@@ -75,17 +92,14 @@ ALTER TABLE public.cs_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_pro_bono_slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_bookings ENABLE ROW LEVEL SECURITY;
 
--- Feature Flags: Public read, Admin write (assuming admin role check or similar, for now read-only public)
+-- Feature Flags: Public read
 CREATE POLICY "Feature flags are viewable by everyone" ON public.cs_feature_flags FOR SELECT USING (true);
 
 -- Coaches: Public read, update own
--- Fix: Use (select auth.uid()) to avoid re-evaluation
 CREATE POLICY "Coaches are viewable by everyone" ON public.cs_coaches FOR SELECT USING (true);
 CREATE POLICY "Coaches can update own profile" ON public.cs_coaches FOR UPDATE USING ((select auth.uid()) = id);
 
 -- Articles: Published are public, drafts viewable by author
--- Fix: Combine policies to avoid "Multiple Permissive Policies" warning where possible, or accept if logic requires split.
--- However, for SELECT, we can combine: (published = true) OR (auth.uid() = coach_id)
 CREATE POLICY "Articles viewable by everyone or author" ON public.cs_articles FOR SELECT USING (
     published = true OR (select auth.uid()) = coach_id
 );
@@ -93,9 +107,7 @@ CREATE POLICY "Authors can insert own articles" ON public.cs_articles FOR INSERT
 CREATE POLICY "Authors can update own articles" ON public.cs_articles FOR UPDATE USING ((select auth.uid()) = coach_id);
 
 -- Pro Bono Slots: Public read, coach manage
--- Fix: Combine SELECT policies
 CREATE POLICY "Slots viewable by everyone" ON public.cs_pro_bono_slots FOR SELECT USING (true);
--- Separate policies for modification
 CREATE POLICY "Coaches can insert own slots" ON public.cs_pro_bono_slots FOR INSERT WITH CHECK ((select auth.uid()) = coach_id);
 CREATE POLICY "Coaches can update own slots" ON public.cs_pro_bono_slots FOR UPDATE USING ((select auth.uid()) = coach_id);
 CREATE POLICY "Coaches can delete own slots" ON public.cs_pro_bono_slots FOR DELETE USING ((select auth.uid()) = coach_id);
@@ -106,3 +118,7 @@ CREATE POLICY "View own bookings" ON public.cs_bookings FOR SELECT USING (
 );
 CREATE POLICY "Clients can insert bookings" ON public.cs_bookings FOR INSERT WITH CHECK ((select auth.uid()) = client_id);
 CREATE POLICY "Coaches can update bookings" ON public.cs_bookings FOR UPDATE USING ((select auth.uid()) = coach_id);
+
+-- Permissions for View and RPC
+GRANT SELECT ON public.cs_user_profiles TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION confirm_booking_by_intent TO anon, authenticated;

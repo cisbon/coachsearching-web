@@ -3,58 +3,80 @@
 
 class ProBonoController {
     private $db;
-    private $conn;
 
     public function __construct() {
         $this->db = new Database();
-        $this->conn = $this->db->getConnection();
     }
 
     public function index() {
-        // Get available slots
-        $query = "SELECT s.*, 
-                         u.raw_user_meta_data->>'full_name' as coach_name, 
-                         u.raw_user_meta_data->>'avatar_url' as avatar_url 
-                  FROM cs_pro_bono_slots s 
-                  JOIN cs_coaches c ON s.coach_id = c.id 
-                  JOIN auth.users u ON c.id = u.id 
-                  WHERE s.is_booked = false AND s.start_time > NOW() 
-                  ORDER BY s.start_time ASC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $slots = $stmt->fetchAll();
+        try {
+            // Join cs_coaches -> cs_user_profiles
+            $query = "select=*,cs_coaches(cs_user_profiles(full_name,avatar_url))&is_booked=eq.false&start_time=gt.now&order=start_time.asc";
+            
+            $response = $this->db->request('GET', '/cs_pro_bono_slots?' . $query);
 
-        if (empty($slots)) {
-            echo json_encode([
-                "data" => [],
-                "disclaimer" => "No data found; database may be empty or filters too strict."
-            ]);
-        } else {
-            echo json_encode(["data" => $slots]);
+            if ($response['status'] >= 200 && $response['status'] < 300) {
+                $slots = $response['body'];
+                
+                // Flatten
+                foreach ($slots as &$slot) {
+                    if (isset($slot['cs_coaches']['cs_user_profiles'])) {
+                        $profile = $slot['cs_coaches']['cs_user_profiles'];
+                        $slot['coach_name'] = $profile['full_name'] ?? '';
+                        $slot['avatar_url'] = $profile['avatar_url'] ?? '';
+                        unset($slot['cs_coaches']);
+                    }
+                }
+
+                if (empty($slots)) {
+                    echo json_encode([
+                        "data" => [],
+                        "disclaimer" => "No data found; database may be empty or filters too strict."
+                    ]);
+                } else {
+                    echo json_encode(["data" => $slots]);
+                }
+            } else {
+                http_response_code($response['status']);
+                echo json_encode($response['body']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["error" => $e->getMessage()]);
         }
     }
 
     public function create($userId) {
-        // Coach creates a slot
         if (!$userId) {
             http_response_code(401);
             echo json_encode(["error" => "Unauthorized"]);
             return;
         }
 
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? '';
+        $token = str_replace('Bearer ', '', $authHeader);
+
         $data = json_decode(file_get_contents("php://input"), true);
         
-        $query = "INSERT INTO cs_pro_bono_slots (coach_id, start_time, end_time) VALUES (:coach_id, :start_time, :end_time)";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindValue(':coach_id', $userId);
-        $stmt->bindValue(':start_time', $data['start_time']);
-        $stmt->bindValue(':end_time', $data['end_time']);
+        $insertData = [
+            'coach_id' => $userId,
+            'start_time' => $data['start_time'],
+            'end_time' => $data['end_time']
+        ];
 
-        if ($stmt->execute()) {
-            echo json_encode(["message" => "Slot created"]);
-        } else {
+        try {
+            $response = $this->db->request('POST', '/cs_pro_bono_slots', $insertData, $token);
+
+            if ($response['status'] >= 200 && $response['status'] < 300) {
+                echo json_encode(["message" => "Slot created"]);
+            } else {
+                http_response_code($response['status']);
+                echo json_encode($response['body']);
+            }
+        } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(["error" => "Failed to create slot"]);
+            echo json_encode(["error" => $e->getMessage()]);
         }
     }
 }

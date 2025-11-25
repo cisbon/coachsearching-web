@@ -3,52 +3,68 @@
 
 class ArticleController {
     private $db;
-    private $conn;
 
     public function __construct() {
         $this->db = new Database();
-        $this->conn = $this->db->getConnection();
     }
 
     public function index() {
-        $query = "SELECT a.*, u.raw_user_meta_data->>'full_name' as author_name 
-                  FROM cs_articles a 
-                  JOIN cs_coaches c ON a.coach_id = c.id 
-                  JOIN auth.users u ON c.id = u.id 
-                  WHERE published = true 
-                  ORDER BY created_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $articles = $stmt->fetchAll();
+        try {
+            // Join cs_coaches -> cs_user_profiles
+            // Syntax: select=*,cs_coaches(cs_user_profiles(full_name))
+            $query = "select=*,cs_coaches(cs_user_profiles(full_name))&published=eq.true&order=created_at.desc";
+            
+            $response = $this->db->request('GET', '/cs_articles?' . $query);
 
-        if (empty($articles)) {
-            echo json_encode([
-                "data" => [],
-                "disclaimer" => "No data found; database may be empty or filters too strict."
-            ]);
-        } else {
-            echo json_encode(["data" => $articles]);
+            if ($response['status'] >= 200 && $response['status'] < 300) {
+                $articles = $response['body'];
+                
+                // Flatten
+                foreach ($articles as &$article) {
+                    if (isset($article['cs_coaches']['cs_user_profiles'])) {
+                        $article['author_name'] = $article['cs_coaches']['cs_user_profiles']['full_name'] ?? 'Unknown';
+                        unset($article['cs_coaches']);
+                    }
+                }
+
+                if (empty($articles)) {
+                    echo json_encode([
+                        "data" => [],
+                        "disclaimer" => "No data found; database may be empty or filters too strict."
+                    ]);
+                } else {
+                    echo json_encode(["data" => $articles]);
+                }
+            } else {
+                http_response_code($response['status']);
+                echo json_encode($response['body']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["error" => $e->getMessage()]);
         }
     }
 
     public function get($id) {
-        // ID can be UUID or Slug
-        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $id)) {
-             $query = "SELECT * FROM cs_articles WHERE id = :id";
-        } else {
-             $query = "SELECT * FROM cs_articles WHERE slug = :id";
-        }
-       
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindValue(':id', $id);
-        $stmt->execute();
-        $article = $stmt->fetch();
+        try {
+            $query = "select=*";
+            if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $id)) {
+                 $query .= "&id=eq.$id";
+            } else {
+                 $query .= "&slug=eq.$id";
+            }
+           
+            $response = $this->db->request('GET', '/cs_articles?' . $query);
 
-        if ($article) {
-            echo json_encode(["data" => $article]);
-        } else {
-            http_response_code(404);
-            echo json_encode(["error" => "Article not found"]);
+            if ($response['status'] >= 200 && $response['status'] < 300 && !empty($response['body'])) {
+                echo json_encode(["data" => $response['body'][0]]);
+            } else {
+                http_response_code(404);
+                echo json_encode(["error" => "Article not found"]);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["error" => $e->getMessage()]);
         }
     }
 
@@ -58,6 +74,10 @@ class ArticleController {
             echo json_encode(["error" => "Unauthorized"]);
             return;
         }
+
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? '';
+        $token = str_replace('Bearer ', '', $authHeader);
 
         $data = json_decode(file_get_contents("php://input"), true);
 
@@ -69,23 +89,26 @@ class ArticleController {
 
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $data['title'])));
 
-        $query = "INSERT INTO cs_articles (coach_id, title, slug, content, summary, published) 
-                  VALUES (:coach_id, :title, :slug, :content, :summary, :published) RETURNING id";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindValue(':coach_id', $userId);
-        $stmt->bindValue(':title', $data['title']);
-        $stmt->bindValue(':slug', $slug);
-        $stmt->bindValue(':content', $data['content']);
-        $stmt->bindValue(':summary', substr(strip_tags($data['content']), 0, 150));
-        $stmt->bindValue(':published', $data['published'] ?? false, PDO::PARAM_BOOL);
+        $insertData = [
+            'coach_id' => $userId,
+            'title' => $data['title'],
+            'slug' => $slug,
+            'content' => $data['content'],
+            'summary' => substr(strip_tags($data['content']), 0, 150),
+            'published' => $data['published'] ?? false
+        ];
 
         try {
-            if ($stmt->execute()) {
-                $id = $stmt->fetchColumn();
-                echo json_encode(["message" => "Article created", "id" => $id, "slug" => $slug]);
+            $response = $this->db->request('POST', '/cs_articles', $insertData, $token);
+
+            if ($response['status'] >= 200 && $response['status'] < 300) {
+                $article = $response['body'][0] ?? null;
+                echo json_encode(["message" => "Article created", "id" => $article['id'] ?? null, "slug" => $slug]);
+            } else {
+                http_response_code($response['status']);
+                echo json_encode($response['body']);
             }
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(["error" => "Failed to create article. Slug might be duplicate."]);
         }
