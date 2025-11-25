@@ -8,10 +8,7 @@ const ReactDOM = window.ReactDOM;
 const { useState, useEffect } = React;
 const { createClient } = window.supabase;
 
-// Initialize Supabase
-const supabaseUrl = 'https://your-project.supabase.co'; // REPLACE WITH REAL URL
-const supabaseKey = 'your-anon-key'; // REPLACE WITH REAL KEY
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Supabase will be initialized in App component after fetching config
 
 console.log('App.js: React global', React);
 console.log('App.js: ReactDOM global', ReactDOM);
@@ -80,7 +77,7 @@ const LegalModal = ({ isOpen, onClose, type }) => {
             <div class="modal-content" onClick=${(e) => e.stopPropagation()}>
                 <div class="modal-header">
                     <h2 class="modal-title">${title}</h2>
-                    <button class="modal-close" onClick=${onClose}>&times;</button>
+                    <button class="modal-close" onClick=${onClose}>X</button>
                 </div>
                 <div class="modal-body">
                     ${content}
@@ -118,7 +115,7 @@ const Navbar = ({ session }) => {
                     <a href="#coaches">${t('nav.coaches')}</a>
                     ${session ? html`
                         <a href="#dashboard">${t('nav.dashboard')}</a>
-                        <button class="nav-auth-btn" onClick=${() => supabase.auth.signOut()}>Sign Out</button>
+                        <button class="nav-auth-btn" onClick=${() => window.supabaseClient.auth.signOut()}>Sign Out</button>
                     ` : html`
                         <a href="#login" class="nav-auth-btn">Sign In / Register</a>
                     `}
@@ -145,8 +142,8 @@ const Auth = () => {
     const handleAuth = async (e) => {
         e.preventDefault();
 
-        if (supabaseUrl.includes('your-project')) {
-            setMessage('Error: Supabase credentials are not configured. Please contact the administrator.');
+        if (!window.supabaseClient) {
+            setMessage('Error: Supabase not initialized.');
             return;
         }
 
@@ -155,8 +152,8 @@ const Auth = () => {
 
         try {
             const { error } = isLogin
-                ? await supabase.auth.signInWithPassword({ email, password })
-                : await supabase.auth.signUp({ email, password });
+                ? await window.supabaseClient.auth.signInWithPassword({ email, password })
+                : await window.supabaseClient.auth.signUp({ email, password });
 
             if (error) throw error;
 
@@ -329,23 +326,37 @@ const App = () => {
     const [route, setRoute] = useState(window.location.hash || '#home');
     const [session, setSession] = useState(null);
     const [legalModal, setLegalModal] = useState({ isOpen: false, type: null });
+    const [configLoaded, setConfigLoaded] = useState(false);
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-        });
+        // Fetch config from backend
+        fetch('https://clouedo.com/coachsearching/api/env.php')
+            .then(res => res.json())
+            .then(config => {
+                console.log('Config loaded:', config);
+                if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
+                    window.supabaseClient = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
 
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
+                    // Init session check
+                    window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
+                        setSession(session);
+                    });
+
+                    const { data: { subscription } } = window.supabaseClient.auth.onAuthStateChange((_event, session) => {
+                        setSession(session);
+                    });
+
+                    setConfigLoaded(true);
+                } else {
+                    console.error('Missing Supabase config');
+                }
+            })
+            .catch(err => console.error('Failed to load config:', err));
 
         const handleHashChange = () => setRoute(window.location.hash || '#home');
         window.addEventListener('hashchange', handleHashChange);
         window.addEventListener('langChange', () => setRoute(r => r)); // Force re-render on lang change
         return () => {
-            subscription.unsubscribe();
             window.removeEventListener('hashchange', handleHashChange);
             window.removeEventListener('langChange', () => { });
         };
@@ -353,6 +364,10 @@ const App = () => {
 
     const openLegal = (type) => setLegalModal({ isOpen: true, type });
     const closeLegal = () => setLegalModal({ isOpen: false, type: null });
+
+    if (!configLoaded) {
+        return html`<div class="container" style=${{ marginTop: '100px', textAlign: 'center' }}>Loading configuration...</div>`;
+    }
 
     let Component;
     switch (route) {
