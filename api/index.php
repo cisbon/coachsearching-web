@@ -2,6 +2,7 @@
 // api/index.php
 
 require_once 'config.php';
+require_once 'polyfill.php';
 require_once 'Database.php';
 
 // Simple Rate Limiting (File-based for shared hosting compatibility, or session based)

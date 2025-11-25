@@ -57,7 +57,14 @@ class Database {
         curl_close($ch);
 
         if ($error) {
+            // Log error for debugging (in a real app, log to file)
+            error_log("CURL Error: $error");
             throw new Exception("CURL Error: " . $error);
+        }
+
+        // Check for Supabase errors
+        if ($httpCode >= 400) {
+            error_log("Supabase Error [$httpCode]: " . $response);
         }
 
         return [

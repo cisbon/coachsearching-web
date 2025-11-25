@@ -49,29 +49,12 @@
         "query-input": "required name=search_term_string"
       }
     }
-    </script>
-</head>
-
-<body>
-    <div id="root"></div>
-
-    <!-- Vendor Scripts (UMD - Globals) -->
-    <script src="./js/vendor/react.js"></script>
-    <script src="./js/vendor/react-dom.js"></script>
-
-    <!-- Application Entry -->
-    <script type="module" src="./js/app.js"></script>
-
-    <!-- Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => console.log('SW registered'))
                     .catch(err => console.log('SW failed', err));
             });
         }
     </script>
-</body>
+    </body>
 
 </html>

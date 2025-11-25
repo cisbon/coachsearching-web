@@ -1,9 +1,16 @@
 // js/app.js
 console.log('App.js: Loading...');
+
 // UMD Globals
 const React = window.React;
 const ReactDOM = window.ReactDOM;
 const { useState, useEffect } = React;
+const { createClient } = window.supabase;
+
+// Initialize Supabase
+const supabaseUrl = 'https://your-project.supabase.co'; // REPLACE WITH REAL URL
+const supabaseKey = 'your-anon-key'; // REPLACE WITH REAL KEY
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 console.log('App.js: React global', React);
 console.log('App.js: ReactDOM global', ReactDOM);
@@ -12,6 +19,7 @@ import htm from './vendor/htm.js';
 console.log('App.js: htm imported');
 import { initLanguage, t, setLanguage } from './i18n.js';
 import { useStore, actions } from './store.js';
+import { mockCoaches } from './mockData.js';
 
 console.log('App.js: Imports complete');
 
@@ -20,8 +28,9 @@ const html = htm.bind(React.createElement);
 // Initialize
 initLanguage();
 
-// Components (Inline for simplicity in this file, usually split out)
-const Navbar = () => {
+// --- Components ---
+
+const Navbar = ({ session }) => {
     return html`
         <header>
             <div class="container nav-flex">
@@ -29,8 +38,13 @@ const Navbar = () => {
                 <nav class="nav-links">
                     <a href="#home">${t('nav.home')}</a>
                     <a href="#coaches">${t('nav.coaches')}</a>
-                    <a href="#dashboard">${t('nav.dashboard')}</a>
-                    <select onChange=${(e) => setLanguage(e.target.value)}>
+                    ${session ? html`
+                        <a href="#dashboard">${t('nav.dashboard')}</a>
+                        <button class="nav-auth-btn" onClick=${() => supabase.auth.signOut()}>Sign Out</button>
+                    ` : html`
+                        <a href="#login" class="nav-auth-btn">Sign In / Register</a>
+                    `}
+                    <select onChange=${(e) => setLanguage(e.target.value)} style=${{ marginLeft: '16px', padding: '4px', borderRadius: '2px' }}>
                         <option value="en">EN</option>
                         <option value="de">DE</option>
                         <option value="es">ES</option>
@@ -43,15 +57,102 @@ const Navbar = () => {
     `;
 };
 
+const Auth = () => {
+    const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLogin, setIsLogin] = useState(true);
+    const [message, setMessage] = useState('');
+
+    const handleAuth = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage('');
+
+        try {
+            const { error } = isLogin
+                ? await supabase.auth.signInWithPassword({ email, password })
+                : await supabase.auth.signUp({ email, password });
+
+            if (error) throw error;
+
+            if (!isLogin) {
+                setMessage('Check your email for the login link!');
+            } else {
+                window.location.hash = '#dashboard';
+            }
+        } catch (error) {
+            setMessage(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return html`
+        <div class="container" style=${{ marginTop: '100px', maxWidth: '400px' }}>
+            <div class="coach-card" style=${{ flexDirection: 'column', gap: '16px' }}>
+                <h2 class="section-title text-center">${isLogin ? 'Sign In' : 'Register'}</h2>
+                ${message && html`<div class="alert" style=${{ color: 'red', textAlign: 'center' }}>${message}</div>`}
+                <form onSubmit=${handleAuth} style=${{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <input 
+                        type="email" 
+                        placeholder="Email" 
+                        class="search-input" 
+                        style=${{ border: '1px solid #ccc' }}
+                        value=${email}
+                        onChange=${(e) => setEmail(e.target.value)}
+                        required
+                    />
+                    <input 
+                        type="password" 
+                        placeholder="Password" 
+                        class="search-input" 
+                        style=${{ border: '1px solid #ccc' }}
+                        value=${password}
+                        onChange=${(e) => setPassword(e.target.value)}
+                        required
+                    />
+                    <button class="btn-book" disabled=${loading}>
+                        ${loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Sign Up')}
+                    </button>
+                </form>
+                <div class="text-center">
+                    <button 
+                        style=${{ background: 'none', border: 'none', color: '#0071c2', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick=${() => setIsLogin(!isLogin)}
+                    >
+                        ${isLogin ? 'Need an account? Register' : 'Already have an account? Sign In'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 const Hero = () => {
     return html`
         <section class="hero">
             <div class="container">
-                <h1>${t('hero.title')}</h1>
-                <p>${t('hero.subtitle')}</p>
-                <div class="search-box">
-                    <input type="text" placeholder="${t('search.placeholder')}" class="form-control" style=${{ maxWidth: '400px', display: 'inline-block', marginRight: '10px' }} />
-                    <button class="btn btn-secondary">${t('search.btn')}</button>
+                <h1>Find your perfect coach</h1>
+                <p>From career transitions to executive leadership, find the guidance you need.</p>
+            </div>
+            <div class="container">
+                 <div class="search-container">
+                    <form class="search-form" onSubmit=${(e) => e.preventDefault()}>
+                        <div class="search-input-group">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" class="search-input" placeholder="What do you want to achieve?" />
+                        </div>
+                        <div class="search-input-group">
+                            <span class="search-icon">📅</span>
+                            <input type="text" class="search-input" placeholder="Check-in Date" onFocus=${(e) => e.target.type = 'date'} onBlur=${(e) => e.target.type = 'text'} />
+                        </div>
+                         <div class="search-input-group">
+                            <span class="search-icon">👥</span>
+                            <input type="text" class="search-input" placeholder="1 person" />
+                        </div>
+                        <button class="search-btn">Search</button>
+                    </form>
                 </div>
             </div>
         </section>
@@ -60,30 +161,71 @@ const Hero = () => {
 
 const CoachCard = ({ coach }) => {
     return html`
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">${coach.full_name}</h3>
-                <p class="card-text">${coach.title}</p>
-                <p><strong>${t('coach.hourly_rate')}:</strong> $${coach.hourly_rate}</p>
-                <button class="btn btn-primary mt-4">${t('coach.book')}</button>
+        <div class="coach-card">
+            <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-img" />
+            <div class="coach-info">
+                <div class="coach-header">
+                    <div>
+                        <h3 class="coach-name">${coach.full_name}</h3>
+                        <div class="coach-title">${coach.title}</div>
+                        <div class="coach-meta">
+                            <span>📍 ${coach.location}</span>
+                            <span>💬 ${coach.languages.join(', ')}</span>
+                        </div>
+                    </div>
+                    <div class="coach-rating">
+                        <div class="rating-badge">${coach.rating}</div>
+                        <div class="rating-text">${coach.reviews_count} reviews</div>
+                    </div>
+                </div>
+                <div class="coach-details">
+                    <p>${coach.bio}</p>
+                    <div style=${{ marginTop: '8px' }}>
+                        <strong>Specialties: </strong>
+                        ${coach.specialties.join(', ')}
+                    </div>
+                </div>
+            </div>
+            <div class="coach-price-section">
+                <div>
+                    <div class="price-label">Hourly Rate</div>
+                    <div class="price-value">$${coach.hourly_rate}</div>
+                    <div class="price-label">Includes taxes</div>
+                </div>
+                <button class="btn-book">See availability ></button>
             </div>
         </div>
     `;
 };
 
 const CoachList = () => {
-    const { coaches, loading } = useStore();
-
-    useEffect(() => {
-        actions.fetchCoaches();
-    }, []);
-
-    if (loading) return html`<div class="container text-center mt-4">Loading...</div>`;
+    // Use mock data for now
+    const coaches = mockCoaches;
 
     return html`
-        <div class="container">
-            <div class="grid">
+        <div class="container" style=${{ marginTop: '60px', paddingBottom: '40px' }}>
+            <h2 class="section-title">Top Rated Coaches</h2>
+            <div class="coach-list">
                 ${coaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} />`)}
+            </div>
+        </div>
+    `;
+};
+
+const Dashboard = ({ session }) => {
+    if (!session) {
+        window.location.hash = '#login';
+        return null;
+    }
+
+    return html`
+        <div class="container" style=${{ marginTop: '100px' }}>
+            <h2 class="section-title">Dashboard</h2>
+            <div class="coach-card">
+                <div class="coach-info">
+                    <h3>Welcome, ${session.user.email}</h3>
+                    <p>This is your dashboard. You can manage your bookings and profile here.</p>
+                </div>
             </div>
         </div>
     `;
@@ -101,12 +243,24 @@ const Home = () => {
 const App = () => {
     // Simple Hash Router
     const [route, setRoute] = useState(window.location.hash || '#home');
+    const [session, setSession] = useState(null);
 
     useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+        });
+
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+        });
+
         const handleHashChange = () => setRoute(window.location.hash || '#home');
         window.addEventListener('hashchange', handleHashChange);
         window.addEventListener('langChange', () => setRoute(r => r)); // Force re-render on lang change
         return () => {
+            subscription.unsubscribe();
             window.removeEventListener('hashchange', handleHashChange);
             window.removeEventListener('langChange', () => { });
         };
@@ -116,13 +270,14 @@ const App = () => {
     switch (route) {
         case '#home': Component = Home; break;
         case '#coaches': Component = CoachList; break;
-        // Add more routes
+        case '#login': Component = Auth; break;
+        case '#dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
         default: Component = Home;
     }
 
     return html`
         <div>
-            <${Navbar} />
+            <${Navbar} session=${session} />
             <${Component} />
         </div>
     `;
