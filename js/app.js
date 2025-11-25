@@ -32,6 +32,7 @@ const legalContent = {
         title: 'Imprint',
         content: html`
             <h3>coachsearching.com</h3>
+            <h2>Information according to § 5 TMG</h2>
             <p><strong>Represented by:</strong><br/>Michael Gross</p>
             <p><strong>Contact:</strong><br/>Email: info[at]coachsearching.com</p>
         `
@@ -146,7 +147,7 @@ const Navbar = ({ session }) => {
     return html`
         <header>
             <div class="container nav-flex">
-                <a href="#" class="logo">coach<span>searching</span></a>
+                <a href="#" class="logo">coach<span>searching</span>.com</a>
                 <nav class="nav-links">
                     <a href="#home">${t('nav.home')}</a>
                     <a href="#coaches">${t('nav.coaches')}</a>
