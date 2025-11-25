@@ -99,120 +99,10 @@ const Footer = ({ onOpenLegal }) => {
                     <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }}>Imprint</a>
                     <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('privacy'); }}>Privacy</a>
                     <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('terms'); }}>Terms</a>
-                </div>
-            </div>
-        </footer>
-    `;
-};
-
-const Navbar = ({ session }) => {
-    return html`
-        <header>
-            <div class="container nav-flex">
-                <a href="#" class="logo">CoachSearching</a>
-                <nav class="nav-links">
-                    <a href="#home">${t('nav.home')}</a>
-                    <a href="#coaches">${t('nav.coaches')}</a>
-                    ${session ? html`
-                        <a href="#dashboard">${t('nav.dashboard')}</a>
-                        <button class="nav-auth-btn" onClick=${() => window.supabaseClient.auth.signOut()}>Sign Out</button>
-                    ` : html`
-                        <a href="#login" class="nav-auth-btn">Sign In / Register</a>
-                    `}
-                    <select onChange=${(e) => setLanguage(e.target.value)} style=${{ marginLeft: '16px', padding: '4px', borderRadius: '2px' }}>
-                        <option value="en">EN</option>
-                        <option value="de">DE</option>
-                        <option value="es">ES</option>
-                        <option value="fr">FR</option>
-                        <option value="it">IT</option>
-                    </select>
-                </nav>
-            </div>
-        </header>
-    `;
-};
-
-const Auth = () => {
-    const [loading, setLoading] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLogin, setIsLogin] = useState(true);
-    const [message, setMessage] = useState('');
-
-    const handleAuth = async (e) => {
-        e.preventDefault();
-
-        if (!window.supabaseClient) {
-            setMessage('Error: Supabase not initialized.');
-            return;
-        }
-
-        setLoading(true);
-        setMessage('');
-
-        try {
-            const { error } = isLogin
-                ? await window.supabaseClient.auth.signInWithPassword({ email, password })
-                : await window.supabaseClient.auth.signUp({ email, password });
-
-            if (error) throw error;
-
-            if (!isLogin) {
-                setMessage('Check your email for the login link!');
-            } else {
-                window.location.hash = '#dashboard';
-            }
-        } catch (error) {
-            setMessage(error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return html`
-        <div class="container" style=${{ marginTop: '100px', maxWidth: '400px' }}>
-            <div class="coach-card" style=${{ flexDirection: 'column', gap: '16px' }}>
-                <h2 class="section-title text-center">${isLogin ? 'Sign In' : 'Register'}</h2>
-                ${message && html`<div class="alert" style=${{ color: message.includes('Error') ? 'red' : 'green', textAlign: 'center', padding: '10px', background: message.includes('Error') ? '#ffebee' : '#e8f5e9', borderRadius: '4px' }}>${message}</div>`}
-                <form onSubmit=${handleAuth} style=${{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <input 
-                        type="email" 
-                        placeholder="Email" 
-                        class="search-input" 
-                        style=${{ border: '1px solid #ccc' }}
-                        value=${email}
-                        onChange=${(e) => setEmail(e.target.value)}
-                        required
-                    />
-                    <input 
-                        type="password" 
-                        placeholder="Password" 
-                        class="search-input" 
-                        style=${{ border: '1px solid #ccc' }}
-                        value=${password}
-                        onChange=${(e) => setPassword(e.target.value)}
-                        required
-                    />
-                    <button class="btn-book" disabled=${loading}>
-                        ${loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Sign Up')}
-                    </button>
-                </form>
-                <div class="text-center">
-                    <button 
-                        style=${{ background: 'none', border: 'none', color: '#0071c2', cursor: 'pointer', textDecoration: 'underline' }}
-                        onClick=${() => setIsLogin(!isLogin)}
-                    >
-                        ${isLogin ? 'Need an account? Register' : 'Already have an account? Sign In'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-};
 
 const Hero = () => {
     return html`
-        <section class="hero">
+        < section class="hero" >
             <div class="container">
                 <h1>Find your perfect coach</h1>
                 <p>From career transitions to executive leadership, find the guidance you need.</p>
@@ -236,13 +126,13 @@ const Hero = () => {
                     </form>
                 </div>
             </div>
-        </section>
+        </section >
     `;
 };
 
 const CoachCard = ({ coach }) => {
     return html`
-        <div class="coach-card">
+    < div class="coach-card" >
             <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-img" />
             <div class="coach-info">
                 <div class="coach-header">
@@ -275,7 +165,7 @@ const CoachCard = ({ coach }) => {
                 </div>
                 <button class="btn-book">See availability ></button>
             </div>
-        </div>
+        </div >
     `;
 };
 
@@ -284,12 +174,12 @@ const CoachList = () => {
     const coaches = mockCoaches;
 
     return html`
-        <div class="container" style=${{ marginTop: '60px', paddingBottom: '40px' }}>
+    < div class="container" style = ${ { marginTop: '60px', paddingBottom: '40px' } }>
             <h2 class="section-title">Top Rated Coaches</h2>
             <div class="coach-list">
                 ${coaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} />`)}
             </div>
-        </div>
+        </div >
     `;
 };
 
@@ -300,7 +190,7 @@ const Dashboard = ({ session }) => {
     }
 
     return html`
-        <div class="container" style=${{ marginTop: '100px' }}>
+    < div class="container" style = ${ { marginTop: '100px' } }>
             <h2 class="section-title">Dashboard</h2>
             <div class="coach-card">
                 <div class="coach-info">
@@ -308,16 +198,16 @@ const Dashboard = ({ session }) => {
                     <p>This is your dashboard. You can manage your bookings and profile here.</p>
                 </div>
             </div>
-        </div>
+        </div >
     `;
 };
 
 const Home = () => {
     return html`
-        <div>
+    < div >
             <${Hero} />
             <${CoachList} />
-        </div>
+        </div >
     `;
 };
 
@@ -366,7 +256,7 @@ const App = () => {
     const closeLegal = () => setLegalModal({ isOpen: false, type: null });
 
     if (!configLoaded) {
-        return html`<div class="container" style=${{ marginTop: '100px', textAlign: 'center' }}>Loading configuration...</div>`;
+        return html`< div class="container" style = ${ { marginTop: '100px', textAlign: 'center' } }> Loading configuration...</div > `;
     }
 
     let Component;
@@ -374,11 +264,11 @@ const App = () => {
         case '#home': Component = Home; break;
         case '#coaches': Component = CoachList; break;
         case '#login': Component = Auth; break;
-        case '#dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
+        case '#dashboard': Component = () => html`< ${ Dashboard } session = ${ session } />`; break;
         default: Component = Home;
     }
 
-    return html`
+return html`
         <div style=${{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <${Navbar} session=${session} />
             <div style=${{ flex: 1 }}>
