@@ -1176,12 +1176,17 @@ const App = () => {
             setRoute(newRoute);
         };
 
+        const handleLangChange = () => {
+            console.log('LANG: Language changed event received in App');
+            setLanguageVersion(v => v + 1);
+        };
+
         window.addEventListener('hashchange', handleHashChange);
-        window.addEventListener('langChange', () => setRoute(r => r));
+        window.addEventListener('langChange', handleLangChange);
 
         return () => {
             window.removeEventListener('hashchange', handleHashChange);
-            window.removeEventListener('langChange', () => { });
+            window.removeEventListener('langChange', handleLangChange);
         };
     }, []);
 
