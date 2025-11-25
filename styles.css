@@ -192,6 +192,105 @@ header {
     background-color: var(--primary-petrol);
 }
 
+/* Search Row Layout */
+.search-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.search-row .search-input-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-row .filter-toggle {
+    flex-shrink: 0;
+    min-width: 180px;
+}
+
+.search-row .search-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* Location Row (appears below when on-site selected) */
+.location-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid var(--border-color);
+}
+
+.location-input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 2px;
+}
+
+.location-input-wrapper:focus-within {
+    border-color: var(--petrol-light);
+}
+
+.location-input-wrapper .search-icon {
+    padding-left: 16px;
+}
+
+.location-input {
+    flex: 1;
+    padding: 14px 12px;
+    border: none;
+    font-size: 1rem;
+    outline: none;
+    background: transparent;
+}
+
+.use-location-btn {
+    padding: 8px 16px;
+    background: var(--primary-petrol);
+    color: white;
+    border: none;
+    border-radius: 2px;
+    margin-right: 8px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background-color 0.2s;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.use-location-btn:hover:not(:disabled) {
+    background-color: var(--petrol-dark);
+}
+
+.use-location-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.radius-select {
+    flex-shrink: 0;
+    padding: 14px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 2px;
+    font-size: 1rem;
+    background: white;
+    cursor: pointer;
+    outline: none;
+    min-width: 150px;
+}
+
+.radius-select:focus {
+    border-color: var(--petrol-light);
+}
+
 /* Coach List */
 .section-title {
     font-size: 1.5rem;
@@ -369,6 +468,28 @@ header {
 
     .search-form {
         flex-direction: column;
+    }
+
+    .search-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .search-row .search-input-group,
+    .search-row .filter-toggle,
+    .search-row .search-btn {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .location-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .location-input-wrapper,
+    .radius-select {
+        width: 100%;
     }
 
     .hero {

@@ -540,6 +540,7 @@ const Hero = ({ onSearch }) => {
     const [location, setLocation] = useState('');
     const [radius, setRadius] = useState('25');
     const [date, setDate] = useState('');
+    const [gettingLocation, setGettingLocation] = useState(false);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -547,6 +548,47 @@ const Hero = ({ onSearch }) => {
         if (onSearch) {
             onSearch({ searchTerm, sessionType, location, radius, date });
         }
+    };
+
+    const handleUseMyLocation = () => {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser');
+            return;
+        }
+
+        setGettingLocation(true);
+        console.log('Getting user location...');
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                console.log('Location received:', { latitude, longitude });
+
+                // Reverse geocode to get city name
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                    );
+                    const data = await response.json();
+                    const city = data.address.city || data.address.town || data.address.village || data.address.county;
+                    const country = data.address.country;
+                    const locationString = city ? `${city}, ${country}` : `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+
+                    console.log('Location set to:', locationString);
+                    setLocation(locationString);
+                } catch (error) {
+                    console.error('Geocoding error:', error);
+                    setLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
+                }
+
+                setGettingLocation(false);
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                alert('Unable to get your location. Please enter it manually.');
+                setGettingLocation(false);
+            }
+        );
     };
 
     return html`
@@ -558,32 +600,29 @@ const Hero = ({ onSearch }) => {
             <div class="container">
                  <div class="search-container">
                     <form class="search-form" onSubmit=${handleSearch}>
-                        <div class="search-input-group">
-                            <span class="search-icon">🔍</span>
-                            <input 
-                                type="text" 
-                                class="search-input" 
-                                placeholder=${t('search.placeholder')}
-                                value=${searchTerm}
-                                onChange=${(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div class="search-input-group">
-                            <span class="search-icon">📅</span>
-                            <input 
-                                type="date" 
-                                class="search-input" 
-                                placeholder="Date"
-                                value=${date}
-                                onChange=${(e) => setDate(e.target.value)}
-                            />
-                        </div>
-                        <button class="search-btn">${t('search.btn')}</button>
-                    </form>
-                    <div class="search-filters">
-                        <div class="filter-row">
+                        <div class="search-row">
+                            <div class="search-input-group">
+                                <span class="search-icon">🔍</span>
+                                <input
+                                    type="text"
+                                    class="search-input"
+                                    placeholder=${t('search.placeholder')}
+                                    value=${searchTerm}
+                                    onChange=${(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div class="search-input-group">
+                                <span class="search-icon">📅</span>
+                                <input
+                                    type="date"
+                                    class="search-input"
+                                    placeholder="Date"
+                                    value=${date}
+                                    onChange=${(e) => setDate(e.target.value)}
+                                />
+                            </div>
                             <div class="filter-toggle">
-                                <button 
+                                <button
                                     type="button"
                                     class="filter-toggle-btn ${sessionType === 'online' ? 'active' : ''}"
                                     onClick=${() => {
@@ -591,9 +630,9 @@ const Hero = ({ onSearch }) => {
                                         console.log('Session type: Online');
                                     }}
                                 >
-                                    💻 Online
+                                    💻 ${t('search.online')}
                                 </button>
-                                <button 
+                                <button
                                     type="button"
                                     class="filter-toggle-btn ${sessionType === 'onsite' ? 'active' : ''}"
                                     onClick=${() => {
@@ -601,26 +640,42 @@ const Hero = ({ onSearch }) => {
                                         console.log('Session type: On-Site');
                                     }}
                                 >
-                                    📍 On-Site
+                                    📍 ${t('search.onsite')}
                                 </button>
                             </div>
-                            <div class="location-inputs" style=${{ display: sessionType === 'onsite' ? 'flex' : 'none' }}>
-                                <input 
-                                    type="text" 
-                                    placeholder="Location (e.g., New York, NY)"
-                                    value=${location}
-                                    onChange=${(e) => setLocation(e.target.value)}
-                                />
-                                <select value=${radius} onChange=${(e) => setRadius(e.target.value)}>
-                                    <option value="10">Within 10 km</option>
-                                    <option value="25">Within 25 km</option>
-                                    <option value="50">Within 50 km</option>
-                                    <option value="100">Within 100 km</option>
-                                    <option value="200">Within 200 km</option>
+                            <button type="submit" class="search-btn">${t('search.btn')}</button>
+                        </div>
+                        ${sessionType === 'onsite' ? html`
+                            <div class="location-row">
+                                <div class="location-input-wrapper">
+                                    <span class="search-icon">📍</span>
+                                    <input
+                                        type="text"
+                                        class="location-input"
+                                        placeholder=${t('search.locationPlaceholder')}
+                                        value=${location}
+                                        onChange=${(e) => setLocation(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        class="use-location-btn"
+                                        onClick=${handleUseMyLocation}
+                                        disabled=${gettingLocation}
+                                        title="Use my current location"
+                                    >
+                                        ${gettingLocation ? '⌛' : '📍'}
+                                    </button>
+                                </div>
+                                <select class="radius-select" value=${radius} onChange=${(e) => setRadius(e.target.value)}>
+                                    <option value="10">${t('search.within')} 10 km</option>
+                                    <option value="25">${t('search.within')} 25 km</option>
+                                    <option value="50">${t('search.within')} 50 km</option>
+                                    <option value="100">${t('search.within')} 100 km</option>
+                                    <option value="200">${t('search.within')} 200 km</option>
                                 </select>
                             </div>
-                        </div>
-                    </div>
+                        ` : ''}
+                    </form>
                 </div>
             </div>
         </section>
