@@ -146,7 +146,7 @@ const Navbar = ({ session }) => {
     return html`
         <header>
             <div class="container nav-flex">
-                <a href="#" class="logo">CoachSearching</a>
+                <a href="#" class="logo">coach<span>searching</span></a>
                 <nav class="nav-links">
                     <a href="#home">${t('nav.home')}</a>
                     <a href="#coaches">${t('nav.coaches')}</a>
