@@ -67,7 +67,7 @@ header {
 }
 
 .nav-links a {
-    color: white;
+    color: var(--primary);
     text-decoration: none;
     margin-left: 24px;
     font-weight: 500;
