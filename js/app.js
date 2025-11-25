@@ -282,11 +282,20 @@ const Auth = () => {
                 } else if (data.user && data.session) {
                     setMessage('Registration successful! Redirecting...');
                     console.log('Registration complete with session, redirecting...');
-                    setTimeout(() => window.location.hash = '#dashboard', 1000);
+                    setTimeout(() => {
+                        console.log('Delayed redirect to dashboard after registration');
+                        window.location.hash = '#dashboard';
+                    }, 500);
                 }
             } else {
-                console.log('Login successful, redirecting to dashboard...');
-                window.location.hash = '#dashboard';
+                console.log('Login successful, waiting for session state update...');
+                // Don't redirect - the auth state change will update session and trigger re-render
+                setMessage('Login successful! Loading dashboard...');
+                // Small delay to let React update the session state
+                setTimeout(() => {
+                    console.log('Delayed redirect to dashboard after login');
+                    window.location.hash = '#dashboard';
+                }, 500);
             }
         } catch (error) {
             console.error('Auth Error:', error);
@@ -295,6 +304,7 @@ const Auth = () => {
             setLoading(false);
         }
     };
+
 
     return html`
         <div class="auth-container">
@@ -522,14 +532,21 @@ const CoachDetailModal = ({ coach, onClose }) => {
 const Dashboard = ({ session }) => {
     const [activeTab, setActiveTab] = useState('overview');
 
+    console.log('Dashboard component rendering, session:', !!session);
+
     if (!session) {
-        console.log('No session, redirecting to login');
-        window.location.hash = '#login';
-        return null;
+        console.log('No session in Dashboard, waiting for auth state...');
+        // Show loading state instead of redirecting immediately
+        return html`
+            <div class="container" style=${{ marginTop: '100px', textAlign: 'center' }}>
+                <div class="spinner"></div>
+                <p>Loading dashboard...</p>
+            </div>
+        `;
     }
 
     const userRole = session.user?.user_metadata?.role || 'person';
-    console.log('Dashboard loaded for user:', session.user.email, 'Role:', userRole);
+    console.log('Dashboard loaded successfully for user:', session.user.email, 'Role:', userRole);
 
     return html`
     <div class="dashboard-container">
