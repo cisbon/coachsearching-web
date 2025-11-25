@@ -22,13 +22,114 @@ import { useStore, actions } from './store.js';
 import { mockCoaches } from './mockData.js';
 
 console.log('App.js: Imports complete');
+// js/app.js
+console.log('App.js: Loading...');
+
+// UMD Globals
+const React = window.React;
+const ReactDOM = window.ReactDOM;
+const { useState, useEffect } = React;
+const { createClient } = window.supabase;
+
+// Initialize Supabase
+const supabaseUrl = 'https://your-project.supabase.co'; // REPLACE WITH REAL URL
+const supabaseKey = 'your-anon-key'; // REPLACE WITH REAL KEY
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+console.log('App.js: React global', React);
+console.log('App.js: ReactDOM global', ReactDOM);
+
+import htm from './vendor/htm.js';
+console.log('App.js: htm imported');
+import { initLanguage, t, setLanguage } from './i18n.js';
+import { useStore, actions } from './store.js';
+import { mockCoaches } from './mockData.js';
+
+console.log('App.js: Imports complete');
 
 const html = htm.bind(React.createElement);
 
 // Initialize
 initLanguage();
 
+// --- Legal Content ---
+const legalContent = {
+    imprint: {
+        title: 'Imprint',
+        content: html`
+            <h3>CoachSearching GmbH</h3>
+            <p>Musterstraße 123<br/>10115 Berlin<br/>Germany</p>
+            <p><strong>Represented by:</strong><br/>Max Mustermann</p>
+            <p><strong>Contact:</strong><br/>Email: info@coachsearching.com<br/>Phone: +49 30 12345678</p>
+            <p><strong>Register Entry:</strong><br/>Entry in the Handelsregister.<br/>Registering court: Amtsgericht Berlin-Charlottenburg<br/>Registration number: HRB 123456</p>
+        `
+    },
+    privacy: {
+        title: 'Privacy Policy',
+        content: html`
+            <h3>1. Data Protection Overview</h3>
+            <p>General information about what happens to your personal data when you visit our website.</p>
+            <h3>2. Hosting</h3>
+            <p>We host our content via GitHub Pages and use Supabase for our database.</p>
+            <h3>3. Data Collection</h3>
+            <p>We collect data when you register, book a coach, or contact us. This includes name, email, and payment info.</p>
+            <h3>4. Analytics</h3>
+            <p>We use cookies to analyze website traffic and improve user experience.</p>
+        `
+    },
+    terms: {
+        title: 'Terms of Service',
+        content: html`
+            <h3>1. Scope</h3>
+            <p>These terms apply to all business relations between the customer and CoachSearching.</p>
+            <h3>2. Services</h3>
+            <p>CoachSearching provides a platform to connect clients with professional coaches.</p>
+            <h3>3. Booking & Payment</h3>
+            <p>Bookings are binding. Payments are processed via Stripe.</p>
+            <h3>4. Liability</h3>
+            <p>We are not liable for the content or quality of the coaching sessions provided by independent coaches.</p>
+        `
+    }
+};
+
 // --- Components ---
+
+const LegalModal = ({ isOpen, onClose, type }) => {
+    if (!isOpen || !type) return null;
+    const { title, content } = legalContent[type];
+
+    return html`
+        <div class="modal-overlay" onClick=${onClose}>
+            <div class="modal-content" onClick=${(e) => e.stopPropagation()}>
+                <div class="modal-header">
+                    <h2 class="modal-title">${title}</h2>
+                    <button class="modal-close" onClick=${onClose}>&times;</button>
+                </div>
+                <div class="modal-body">
+                    ${content}
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+const Footer = ({ onOpenLegal }) => {
+    return html`
+        <footer>
+            <div class="container footer-content">
+                <div>
+                    <div class="logo" style=${{ fontSize: '1.2rem' }}>CoachSearching</div>
+                    <div style=${{ color: '#888', fontSize: '0.85rem', marginTop: '8px' }}>© 2023 CoachSearching GmbH</div>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }}>Imprint</a>
+                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('privacy'); }}>Privacy</a>
+                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('terms'); }}>Terms</a>
+                </div>
+            </div>
+        </footer>
+    `;
+};
 
 const Navbar = ({ session }) => {
     return html`
@@ -66,6 +167,12 @@ const Auth = () => {
 
     const handleAuth = async (e) => {
         e.preventDefault();
+
+        if (supabaseUrl.includes('your-project')) {
+            setMessage('Error: Supabase credentials are not configured. Please contact the administrator.');
+            return;
+        }
+
         setLoading(true);
         setMessage('');
 
@@ -92,7 +199,7 @@ const Auth = () => {
         <div class="container" style=${{ marginTop: '100px', maxWidth: '400px' }}>
             <div class="coach-card" style=${{ flexDirection: 'column', gap: '16px' }}>
                 <h2 class="section-title text-center">${isLogin ? 'Sign In' : 'Register'}</h2>
-                ${message && html`<div class="alert" style=${{ color: 'red', textAlign: 'center' }}>${message}</div>`}
+                ${message && html`<div class="alert" style=${{ color: message.includes('Error') ? 'red' : 'green', textAlign: 'center', padding: '10px', background: message.includes('Error') ? '#ffebee' : '#e8f5e9', borderRadius: '4px' }}>${message}</div>`}
                 <form onSubmit=${handleAuth} style=${{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <input 
                         type="email" 
@@ -244,6 +351,7 @@ const App = () => {
     // Simple Hash Router
     const [route, setRoute] = useState(window.location.hash || '#home');
     const [session, setSession] = useState(null);
+    const [legalModal, setLegalModal] = useState({ isOpen: false, type: null });
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -266,6 +374,9 @@ const App = () => {
         };
     }, []);
 
+    const openLegal = (type) => setLegalModal({ isOpen: true, type });
+    const closeLegal = () => setLegalModal({ isOpen: false, type: null });
+
     let Component;
     switch (route) {
         case '#home': Component = Home; break;
@@ -276,9 +387,13 @@ const App = () => {
     }
 
     return html`
-        <div>
+        <div style=${{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <${Navbar} session=${session} />
-            <${Component} />
+            <div style=${{ flex: 1 }}>
+                <${Component} />
+            </div>
+            <${Footer} onOpenLegal=${openLegal} />
+            <${LegalModal} isOpen=${legalModal.isOpen} onClose=${closeLegal} type=${legalModal.type} />
         </div>
     `;
 };
