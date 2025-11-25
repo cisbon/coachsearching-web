@@ -1,30 +1,39 @@
-
-// js/app.js
+// js/app.js - Complete Production Application
 console.log('App.js: Loading...');
 
 // UMD Globals
 const React = window.React;
 const ReactDOM = window.ReactDOM;
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 const { createClient } = window.supabase;
 
-// Supabase will be initialized in App component after fetching config
+import htm from './vendor/htm.js';
+import { initLanguage, t, setLanguage } from './i18n.js';
+import { initDebugConsole } from './debugConsole.js';
 
 console.log('App.js: React global', React);
 console.log('App.js: ReactDOM global', ReactDOM);
-
-import htm from './vendor/htm.js';
 console.log('App.js: htm imported');
-import { initLanguage, t, setLanguage } from './i18n.js';
-import { useStore, actions } from './store.js';
-import { mockCoaches } from './mockData.js';
-
-console.log('App.js: Imports complete');
 
 const html = htm.bind(React.createElement);
 
 // Initialize
 initLanguage();
+const debugConsole = initDebugConsole();
+
+const API_BASE = 'https://clouedo.com/coachsearching/api';
+
+// Utility: Simple Markdown to HTML
+function markdownToHTML(md) {
+    if (!md) return '';
+    return md
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+        .replace(/\*(.*)\*/gim, '<em>$1</em>')
+        .replace(/\n/gim, '<br>');
+}
 
 // --- Legal Content ---
 const legalContent = {
@@ -65,6 +74,49 @@ const legalContent = {
     }
 };
 
+// Mock data for coaches (will be replaced with API data)
+const mockCoaches = [
+    {
+        id: '1',
+        full_name: 'Sarah Johnson',
+        avatar_url: 'https://i.pravatar.cc/200?img=1',
+        title: 'Executive Leadership Coach',
+        bio: 'Helping executives and entrepreneurs achieve their full potential through strategic coaching and mentorship.',
+        location: 'New York, USA',
+        languages: ['English', 'Spanish'],
+        specialties: ['Leadership', 'Career Transition', 'Executive Coaching'],
+        hourly_rate: 150,
+        rating: 4.9,
+        reviews_count: 127
+    },
+    {
+        id: '2',
+        full_name: 'Michael Chen',
+        avatar_url: 'https://i.pravatar.cc/200?img=12',
+        title: 'Career Development Coach',
+        bio: 'Specializing in career transitions and professional development for mid-career professionals.',
+        location: 'San Francisco, USA',
+        languages: ['English', 'Mandarin'],
+        specialties: ['Career Change', 'Interview Prep', 'Salary Negotiation'],
+        hourly_rate: 120,
+        rating: 4.8,
+        reviews_count: 89
+    },
+    {
+        id: '3',
+        full_name: 'Emma Schmidt',
+        avatar_url: 'https://i.pravatar.cc/200?img=5',
+        title: 'Life & Wellness Coach',
+        bio: 'Empowering individuals to create balanced, fulfilling lives through holistic coaching approaches.',
+        location: 'Berlin, Germany',
+        languages: ['German', 'English'],
+        specialties: ['Work-Life Balance', 'Stress Management', 'Personal Growth'],
+        hourly_rate: 100,
+        rating: 5.0,
+        reviews_count: 64
+    }
+];
+
 // --- Components ---
 
 const LegalModal = ({ isOpen, onClose, type }) => {
@@ -72,11 +124,11 @@ const LegalModal = ({ isOpen, onClose, type }) => {
     const { title, content } = legalContent[type];
 
     return html`
-        <div class="modal-overlay" onClick=${onClose}>
+        <div class="modal-overlay" onClick=${onClose} role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
             <div class="modal-content" onClick=${(e) => e.stopPropagation()}>
                 <div class="modal-header">
-                    <h2 class="modal-title">${title}</h2>
-                    <button class="modal-close" onClick=${onClose}>X</button>
+                    <h2 id="legal-modal-title" class="modal-title">${title}</h2>
+                    <button class="modal-close" onClick=${onClose} aria-label="Close modal">×</button>
                 </div>
                 <div class="modal-body">
                     ${content}
@@ -92,12 +144,12 @@ const Footer = ({ onOpenLegal }) => {
             <div class="container footer-content">
                 <div>
                     <div class="logo" style=${{ fontSize: '1.2rem' }}>coach<span>searching</span>.com</div>
-                    <div style=${{ color: '#888', fontSize: '0.85rem', marginTop: '8px' }}>© 2028 coachsearching.com</div>
+                    <div style=${{ color: '#888', fontSize: '0.85rem', marginTop: '8px' }}>© 2025 coachsearching.com</div>
                 </div>
                 <div class="footer-links">
-                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }}>Imprint</a>
-                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('privacy'); }}>Privacy</a>
-                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('terms'); }}>Terms</a>
+                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }} role="button">Imprint</a>
+                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('privacy'); }} role="button">Privacy</a>
+                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('terms'); }} role="button">Terms</a>
                 </div>
             </div>
         </footer>
@@ -106,7 +158,7 @@ const Footer = ({ onOpenLegal }) => {
 
 const LanguageSelector = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [currentLang, setCurrentLang] = useState('en');
+    const [currentLang, setCurrentLang] = useState(localStorage.getItem('lang') || 'en');
 
     const languages = [
         { code: 'en', flag: '🇬🇧', label: 'English' },
@@ -127,14 +179,14 @@ const LanguageSelector = () => {
 
     return html`
         <div class="lang-selector">
-            <button class="lang-btn" onClick=${() => setIsOpen(!isOpen)}>
-                <span>${current.flag}</span>
+            <button class="lang-btn" onClick=${() => setIsOpen(!isOpen)} aria-label="Select language" aria-expanded=${isOpen}>
+                <span role="img" aria-label=${current.label}>${current.flag}</span>
                 <span>${current.code.toUpperCase()}</span>
             </button>
-            <div class="lang-dropdown ${isOpen ? 'show' : ''}">
+            <div class="lang-dropdown ${isOpen ? 'show' : ''}" role="menu">
                 ${languages.map(lang => html`
-                    <div class="lang-option" onClick=${() => handleSelect(lang.code)}>
-                        <span>${lang.flag}</span>
+                    <div key=${lang.code} class="lang-option" onClick=${() => handleSelect(lang.code)} role="menuitem">
+                        <span role="img" aria-label=${lang.label}>${lang.flag}</span>
                         <span>${lang.label}</span>
                     </div>
                 `)}
@@ -145,15 +197,18 @@ const LanguageSelector = () => {
 
 const Navbar = ({ session }) => {
     return html`
-        <header>
+        <header role="banner">
             <div class="container nav-flex">
-                <a href="#" class="logo">coach<span>searching</span>.com</a>
-                <nav class="nav-links">
+                <a href="#" class="logo" onClick=${() => window.location.hash = '#home'}>coach<span>searching</span>.com</a>
+                <nav class="nav-links" role="navigation">
                     <a href="#home">${t('nav.home')}</a>
                     <a href="#coaches">${t('nav.coaches')}</a>
                     ${session ? html`
                         <a href="#dashboard">${t('nav.dashboard')}</a>
-                        <button class="nav-auth-btn" onClick=${() => window.supabaseClient.auth.signOut()}>Sign Out</button>
+                        <button class="nav-auth-btn" onClick=${() => {
+                            console.log('Signing out...');
+                            window.supabaseClient.auth.signOut();
+                        }}>Sign Out</button>
                     ` : html`
                         <a href="#login" class="nav-auth-btn">Sign In / Register</a>
                     `}
@@ -168,61 +223,74 @@ const Auth = () => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState('person'); // person, business, coach
+    const [role, setRole] = useState('person');
     const [isLogin, setIsLogin] = useState(true);
     const [message, setMessage] = useState('');
 
     const handleAuth = async (e) => {
         e.preventDefault();
 
+        console.log('Auth attempt started', { isLogin, email, role });
+
         if (!window.supabaseClient) {
-            setMessage('Error: Supabase not initialized.');
+            const error = 'Error: Supabase not initialized.';
+            console.error(error);
+            setMessage(error);
             return;
         }
 
         setLoading(true);
         setMessage('');
 
-        console.log('Auth Attempt:', { isLogin, email, role });
-
         try {
             let result;
             if (isLogin) {
-                result = await window.supabaseClient.auth.signInWithPassword({ email, password });
+                console.log('Attempting sign in with password...');
+                result = await window.supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                console.log('Sign in result:', result);
             } else {
-                // Register with Metadata
+                console.log('Attempting sign up...');
                 result = await window.supabaseClient.auth.signUp({
                     email,
                     password,
                     options: {
                         data: {
-                            role: role,
-                            full_name: email.split('@')[0] // Default name
+                            role,
+                            full_name: email.split('@')[0]
                         }
                     }
                 });
+                console.log('Sign up result:', result);
             }
 
             const { data, error } = result;
-            console.log('Supabase Response:', result);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Auth error:', error);
+                throw error;
+            }
+
+            console.log('Auth successful, data:', data);
 
             if (!isLogin) {
                 if (data.user && !data.session) {
                     setMessage('Success! Please check your email to confirm your account.');
+                    console.log('Email confirmation required');
                 } else if (data.user && data.session) {
                     setMessage('Registration successful! Redirecting...');
+                    console.log('Registration complete with session, redirecting...');
                     setTimeout(() => window.location.hash = '#dashboard', 1000);
-                } else {
-                    setMessage('Registration request sent. Please check logs if no user appears.');
                 }
             } else {
+                console.log('Login successful, redirecting to dashboard...');
                 window.location.hash = '#dashboard';
             }
         } catch (error) {
             console.error('Auth Error:', error);
-            setMessage(error.message);
+            setMessage(error.message || 'Authentication failed');
         } finally {
             setLoading(false);
         }
@@ -232,60 +300,67 @@ const Auth = () => {
         <div class="auth-container">
             <div class="auth-card">
                 <h2 class="section-title text-center">${isLogin ? 'Sign In' : 'Create Account'}</h2>
-                
+
                 ${message && html`
-                    <div class="alert" style=${{
-                color: message.includes('Error') ? '#721c24' : '#155724',
-                backgroundColor: message.includes('Error') ? '#f8d7da' : '#d4edda',
-                borderColor: message.includes('Error') ? '#f5c6cb' : '#c3e6cb',
-                padding: '12px',
-                borderRadius: '4px',
-                textAlign: 'center',
-                fontSize: '14px'
-            }}>
+                    <div class="alert ${message.includes('Error') || message.includes('error') || message.includes('failed') ? 'alert-error' : 'alert-success'}">
                         ${message}
                     </div>
                 `}
 
                 <form onSubmit=${handleAuth} style=${{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     ${!isLogin && html`
-                        <div class="role-group">
-                            <div class="role-option ${role === 'person' ? 'selected' : ''}" onClick=${() => setRole('person')}>
+                        <div class="role-group" role="radiogroup" aria-label="Select your role">
+                            <div class="role-option ${role === 'person' ? 'selected' : ''}"
+                                 onClick=${() => setRole('person')}
+                                 role="radio"
+                                 aria-checked=${role === 'person'}
+                                 tabIndex="0">
                                 👤 Person
                             </div>
-                            <div class="role-option ${role === 'business' ? 'selected' : ''}" onClick=${() => setRole('business')}>
+                            <div class="role-option ${role === 'business' ? 'selected' : ''}"
+                                 onClick=${() => setRole('business')}
+                                 role="radio"
+                                 aria-checked=${role === 'business'}
+                                 tabIndex="0">
                                 🏢 Business
                             </div>
-                            <div class="role-option ${role === 'coach' ? 'selected' : ''}" onClick=${() => setRole('coach')}>
+                            <div class="role-option ${role === 'coach' ? 'selected' : ''}"
+                                 onClick=${() => setRole('coach')}
+                                 role="radio"
+                                 aria-checked=${role === 'coach'}
+                                 tabIndex="0">
                                 🎓 Coach
                             </div>
                         </div>
                     `}
 
-                    <input 
-                        type="email" 
-                        placeholder="Email Address" 
-                        class="auth-input" 
+                    <input
+                        type="email"
+                        placeholder="Email Address"
+                        class="auth-input"
                         value=${email}
                         onChange=${(e) => setEmail(e.target.value)}
                         required
+                        aria-label="Email address"
                     />
-                    <input 
-                        type="password" 
-                        placeholder="Password" 
-                        class="auth-input" 
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        class="auth-input"
                         value=${password}
                         onChange=${(e) => setPassword(e.target.value)}
                         required
+                        minLength="6"
+                        aria-label="Password"
                     />
-                    
-                    <button class="auth-btn" disabled=${loading}>
+
+                    <button class="auth-btn" disabled=${loading} type="submit">
                         ${loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Register')}
                     </button>
                 </form>
-                
+
                 <div class="text-center">
-                    <button 
+                    <button
                         class="auth-switch-btn"
                         onClick=${() => { setIsLogin(!isLogin); setMessage(''); }}
                     >
@@ -297,19 +372,21 @@ const Auth = () => {
     `;
 };
 
+// Continue in next part...
+
 const Hero = () => {
     return html`
         <section class="hero">
             <div class="container">
-                <h1>Find your perfect coach</h1>
-                <p>From career transitions to executive leadership, find the guidance you need.</p>
+                <h1>${t('hero.title')}</h1>
+                <p>${t('hero.subtitle')}</p>
             </div>
             <div class="container">
                  <div class="search-container">
                     <form class="search-form" onSubmit=${(e) => e.preventDefault()}>
                         <div class="search-input-group">
                             <span class="search-icon">🔍</span>
-                            <input type="text" class="search-input" placeholder="What do you want to achieve?" />
+                            <input type="text" class="search-input" placeholder=${t('search.placeholder')} />
                         </div>
                         <div class="search-input-group">
                             <span class="search-icon">📅</span>
@@ -319,7 +396,7 @@ const Hero = () => {
                             <span class="search-icon">👥</span>
                             <input type="text" class="search-input" placeholder="1 person" />
                         </div>
-                        <button class="search-btn">Search</button>
+                        <button class="search-btn">${t('search.btn')}</button>
                     </form>
                 </div>
             </div>
@@ -327,7 +404,7 @@ const Hero = () => {
     `;
 };
 
-const CoachCard = ({ coach }) => {
+const CoachCard = ({ coach, onViewDetails }) => {
     return html`
     <div class="coach-card">
             <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-img" />
@@ -343,7 +420,7 @@ const CoachCard = ({ coach }) => {
                     </div>
                     <div class="coach-rating">
                         <div class="rating-badge">${coach.rating}</div>
-                        <div class="rating-text">${coach.reviews_count} reviews</div>
+                        <div class="rating-text">${coach.reviews_count} ${t('coach.reviews')}</div>
                     </div>
                 </div>
                 <div class="coach-details">
@@ -356,44 +433,374 @@ const CoachCard = ({ coach }) => {
             </div>
             <div class="coach-price-section">
                 <div>
-                    <div class="price-label">Hourly Rate</div>
+                    <div class="price-label">${t('coach.hourly_rate')}</div>
                     <div class="price-value">$${coach.hourly_rate}</div>
                     <div class="price-label">Includes taxes</div>
                 </div>
-                <button class="btn-book">See availability ></button>
+                <button class="btn-book" onClick=${() => onViewDetails(coach)}>${t('coach.view_profile')} ></button>
             </div>
         </div>
     `;
 };
 
 const CoachList = () => {
-    // Use mock data for now
-    const coaches = mockCoaches;
+    const [coaches, setCoaches] = useState(mockCoaches);
+    const [selectedCoach, setSelectedCoach] = useState(null);
+
+    console.log('CoachList rendering with', coaches.length, 'coaches');
 
     return html`
     <div class="container" style=${{ marginTop: '60px', paddingBottom: '40px' }}>
             <h2 class="section-title">Top Rated Coaches</h2>
             <div class="coach-list">
-                ${coaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} />`)}
+                ${coaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} onViewDetails=${setSelectedCoach} />`)}
+            </div>
+            ${selectedCoach && html`<${CoachDetailModal} coach=${selectedCoach} onClose=${() => setSelectedCoach(null)} />`}
+        </div>
+    `;
+};
+
+const CoachDetailModal = ({ coach, onClose }) => {
+    console.log('Opening coach detail modal for', coach.full_name);
+
+    return html`
+        <div class="coach-detail-modal" onClick=${onClose}>
+            <div class="coach-detail-content" onClick=${(e) => e.stopPropagation()}>
+                <div class="coach-detail-hero">
+                    <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-detail-avatar" />
+                </div>
+                <div class="coach-detail-body">
+                    <h2 class="coach-detail-name">${coach.full_name}</h2>
+                    <p class="coach-detail-title">${coach.title}</p>
+
+                    <div class="coach-detail-stats">
+                        <div class="coach-detail-stat">
+                            <div class="coach-detail-stat-value">${coach.rating}</div>
+                            <div class="coach-detail-stat-label">Rating</div>
+                        </div>
+                        <div class="coach-detail-stat">
+                            <div class="coach-detail-stat-value">${coach.reviews_count}</div>
+                            <div class="coach-detail-stat-label">Reviews</div>
+                        </div>
+                        <div class="coach-detail-stat">
+                            <div class="coach-detail-stat-value">$${coach.hourly_rate}</div>
+                            <div class="coach-detail-stat-label">Per Hour</div>
+                        </div>
+                    </div>
+
+                    <div class="coach-detail-section">
+                        <h3 class="coach-detail-section-title">About</h3>
+                        <p>${coach.bio}</p>
+                    </div>
+
+                    <div class="coach-detail-section">
+                        <h3 class="coach-detail-section-title">Specialties</h3>
+                        ${coach.specialties.map(s => html`<span key=${s} class="badge badge-petrol">${s}</span>`)}
+                    </div>
+
+                    <div class="coach-detail-section">
+                        <h3 class="coach-detail-section-title">Languages</h3>
+                        ${coach.languages.map(l => html`<span key=${l} class="badge badge-petrol">${l}</span>`)}
+                    </div>
+
+                    <button class="btn-primary" style=${{ width: '100%', marginTop: '20px' }} onClick=${() => {
+                        console.log('Book now clicked for', coach.full_name);
+                        alert('Booking feature coming soon! Check the debug console for details.');
+                    }}>
+                        ${t('coach.book')}
+                    </button>
+
+                    <button class="btn-secondary" style=${{ width: '100%', marginTop: '12px' }} onClick=${onClose}>
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
     `;
 };
 
 const Dashboard = ({ session }) => {
+    const [activeTab, setActiveTab] = useState('overview');
+
     if (!session) {
+        console.log('No session, redirecting to login');
         window.location.hash = '#login';
         return null;
     }
 
+    const userRole = session.user?.user_metadata?.role || 'person';
+    console.log('Dashboard loaded for user:', session.user.email, 'Role:', userRole);
+
     return html`
-    <div class="container" style=${{ marginTop: '100px' }}>
-            <h2 class="section-title">Dashboard</h2>
-            <div class="coach-card">
-                <div class="coach-info">
-                    <h3>Welcome, ${session.user.email}</h3>
-                    <p>This is your dashboard. You can manage your bookings and profile here.</p>
+    <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h2 class="section-title">${t('dashboard.welcome')}, ${session.user.email}</h2>
+                <div class="badge badge-petrol">${userRole}</div>
+            </div>
+
+            <div class="dashboard-tabs">
+                <button class="tab-btn ${activeTab === 'overview' ? 'active' : ''}" onClick=${() => setActiveTab('overview')}>
+                    ${t('dashboard.overview')}
+                </button>
+                <button class="tab-btn ${activeTab === 'bookings' ? 'active' : ''}" onClick=${() => setActiveTab('bookings')}>
+                    ${t('dashboard.bookings')}
+                </button>
+                ${userRole === 'coach' && html`
+                    <button class="tab-btn ${activeTab === 'articles' ? 'active' : ''}" onClick=${() => setActiveTab('articles')}>
+                        ${t('dashboard.articles')}
+                    </button>
+                    <button class="tab-btn ${activeTab === 'probono' ? 'active' : ''}" onClick=${() => setActiveTab('probono')}>
+                        ${t('dashboard.probono')}
+                    </button>
+                `}
+                <button class="tab-btn ${activeTab === 'profile' ? 'active' : ''}" onClick=${() => setActiveTab('profile')}>
+                    ${t('dashboard.profile')}
+                </button>
+            </div>
+
+            ${activeTab === 'overview' && html`<${DashboardOverview} userRole=${userRole} />`}
+            ${activeTab === 'bookings' && html`<${DashboardBookings} session=${session} />`}
+            ${activeTab === 'articles' && userRole === 'coach' && html`<${DashboardArticles} session=${session} />`}
+            ${activeTab === 'probono' && userRole === 'coach' && html`<${DashboardProBono} session=${session} />`}
+            ${activeTab === 'profile' && html`<${DashboardProfile} session=${session} />`}
+        </div>
+    `;
+};
+
+const DashboardOverview = ({ userRole }) => {
+    console.log('Dashboard overview for role:', userRole);
+
+    return html`
+        <div>
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Bookings</div>
+                    <div class="stat-value">0</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-label">Upcoming Sessions</div>
+                    <div class="stat-value">0</div>
+                </div>
+                ${userRole === 'coach' && html`
+                    <div class="stat-card">
+                        <div class="stat-label">Pro-bono Hours</div>
+                        <div class="stat-value">0</div>
+                    </div>
+                `}
+            </div>
+
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <div class="empty-state-text">Your dashboard is ready!</div>
+                <div class="empty-state-subtext">Start exploring features using the tabs above.</div>
+            </div>
+        </div>
+    `;
+};
+
+const DashboardBookings = ({ session }) => {
+    console.log('Loading bookings dashboard');
+
+    return html`
+        <div>
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-text">No bookings yet</div>
+                <div class="empty-state-subtext">
+                    ${session.user.user_metadata?.role === 'coach'
+                        ? 'Bookings from clients will appear here.'
+                        : 'Browse coaches and book your first session!'}
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+const DashboardArticles = ({ session }) => {
+    const [articles, setArticles] = useState([]);
+    const [showEditor, setShowEditor] = useState(false);
+
+    console.log('Loading articles dashboard');
+
+    return html`
+        <div>
+            <div style=${{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h3>${t('dashboard.articles')}</h3>
+                <button class="btn-primary" onClick=${() => {
+                    console.log('New article clicked');
+                    setShowEditor(!showEditor);
+                }}>
+                    ${showEditor ? 'Close Editor' : t('article.new')}
+                </button>
+            </div>
+
+            ${showEditor && html`<${ArticleEditor} session=${session} />`}
+
+            ${articles.length === 0 && !showEditor && html`
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <div class="empty-state-text">No articles yet</div>
+                    <div class="empty-state-subtext">Create your first article to share your expertise!</div>
+                </div>
+            `}
+        </div>
+    `;
+};
+
+const ArticleEditor = ({ session }) => {
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [preview, setPreview] = useState('');
+    const [showPreview, setShowPreview] = useState(false);
+
+    console.log('Article editor loaded');
+
+    const handlePreview = () => {
+        const html = markdownToHTML(content);
+        setPreview(html);
+        setShowPreview(!showPreview);
+        console.log('Preview toggled');
+    };
+
+    const shareLinkedIn = () => {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent(title);
+        const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${text}`;
+        console.log('Opening LinkedIn share:', linkedInUrl);
+        window.open(linkedInUrl, '_blank');
+    };
+
+    const shareTwitter = () => {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent(title);
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+        console.log('Opening Twitter share:', twitterUrl);
+        window.open(twitterUrl, '_blank');
+    };
+
+    return html`
+        <div class="article-editor">
+            <input
+                type="text"
+                placeholder=${t('article.title')}
+                value=${title}
+                onChange=${(e) => setTitle(e.target.value)}
+                style=${{ width: '100%', padding: '12px', fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', border: '1px solid var(--border-color)', borderRadius: '4px' }}
+            />
+            <textarea
+                placeholder="${t('article.content')} (Markdown supported)"
+                value=${content}
+                onChange=${(e) => setContent(e.target.value)}
+            />
+
+            <div class="editor-toolbar">
+                <button class="btn-secondary" onClick=${handlePreview}>
+                    ${showPreview ? 'Hide Preview' : t('article.preview')}
+                </button>
+                <button class="btn-primary" onClick=${() => {
+                    console.log('Publish clicked', { title, content });
+                    alert('Article publishing will be connected to API soon!');
+                }}>
+                    ${t('article.publish')}
+                </button>
+                <button class="btn-secondary" onClick=${shareLinkedIn}>
+                    ${t('article.share_linkedin')}
+                </button>
+                <button class="btn-secondary" onClick=${shareTwitter}>
+                    ${t('article.share_twitter')}
+                </button>
+            </div>
+
+            ${showPreview && html`
+                <div class="article-preview">
+                    <h3>Preview</h3>
+                    <div dangerouslySetInnerHTML=${{ __html: preview }} />
+                </div>
+            `}
+        </div>
+    `;
+};
+
+const DashboardProBono = ({ session }) => {
+    console.log('Loading pro-bono dashboard');
+
+    return html`
+        <div>
+            <h3>${t('dashboard.probono')}</h3>
+            <p style=${{ marginBottom: '20px', color: 'var(--text-muted)' }}>
+                Offer free coaching sessions and track your pro-bono hours for certifications.
+            </p>
+
+            <div class="stat-card" style=${{ marginBottom: '20px' }}>
+                <div class="stat-label">${t('probono.hours_tracked')}</div>
+                <div class="stat-value">0.0 hrs</div>
+            </div>
+            <button class="btn-primary" onClick=${() => {
+                console.log('Add pro-bono slot clicked');
+                alert('Pro-bono scheduler will be connected to API soon!');
+            }}>
+                ${t('probono.add_slot')}
+            </button>
+
+            <div class="empty-state" style=${{ marginTop: '40px' }}>
+                <div class="empty-state-icon">🎁</div>
+                <div class="empty-state-text">No pro-bono slots yet</div>
+                <div class="empty-state-subtext">Create free coaching slots to help others and earn certification hours.</div>
+            </div>
+        </div>
+    `;
+};
+
+const DashboardProfile = ({ session }) => {
+    const [fullName, setFullName] = useState(session.user.user_metadata?.full_name || '');
+    const [bio, setBio] = useState('');
+
+    console.log('Loading profile dashboard');
+
+    return html`
+        <div>
+            <h3>${t('profile.update')}</h3>
+
+            <div style=${{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px', marginTop: '20px' }}>
+                <div>
+                    <label class="filter-label">Full Name</label>
+                    <input
+                        type="text"
+                        class="filter-input"
+                        value=${fullName}
+                        onChange=${(e) => setFullName(e.target.value)}
+                    />
+                </div>
+
+                <div>
+                    <label class="filter-label">Email</label>
+                    <input
+                        type="email"
+                        class="filter-input"
+                        value=${session.user.email}
+                        disabled
+                        style=${{ background: '#f5f5f5', cursor: 'not-allowed' }}
+                    />
+                </div>
+
+                ${session.user.user_metadata?.role === 'coach' && html`
+                    <div>
+                        <label class="filter-label">Bio</label>
+                        <textarea
+                            class="filter-input"
+                            value=${bio}
+                            onChange=${(e) => setBio(e.target.value)}
+                            style=${{ minHeight: '100px', resize: 'vertical' }}
+                        />
+                    </div>
+                `}
+
+                <button class="btn-primary" onClick=${() => {
+                    console.log('Profile update clicked', { fullName, bio });
+                    alert('Profile updates will be connected to API soon!');
+                }}>
+                    Save Changes
+                </button>
             </div>
         </div>
     `;
@@ -409,47 +816,70 @@ const Home = () => {
 };
 
 const App = () => {
-    // Simple Hash Router
     const [route, setRoute] = useState(window.location.hash || '#home');
     const [session, setSession] = useState(null);
     const [legalModal, setLegalModal] = useState({ isOpen: false, type: null });
     const [configLoaded, setConfigLoaded] = useState(false);
 
     useEffect(() => {
-        // Fetch config from backend
-        fetch('https://clouedo.com/coachsearching/api/env.php')
-            .then(res => res.json())
-            .then(config => {
-                if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
-                    window.supabaseClient = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+        console.log('App useEffect: Fetching config...');
 
-                    // Init session check
+        fetch('https://clouedo.com/coachsearching/api/env.php')
+            .then(res => {
+                console.log('Config response status:', res.status);
+                return res.json();
+            })
+            .then(config => {
+                console.log('Config loaded:', config);
+
+                if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
+                    console.log('Initializing Supabase client...');
+                    window.supabaseClient = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+                    console.log('Supabase client initialized:', window.supabaseClient);
+
                     window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
+                        console.log('Initial session:', session);
                         setSession(session);
                     });
 
                     const { data: { subscription } } = window.supabaseClient.auth.onAuthStateChange((_event, session) => {
+                        console.log('Auth state changed:', _event, session);
                         setSession(session);
                     });
 
                     setConfigLoaded(true);
                 } else {
-                    console.error('Missing Supabase config');
+                    console.error('Missing Supabase config in response:', config);
                 }
             })
-            .catch(err => console.error('Failed to load config:', err));
+            .catch(err => {
+                console.error('Failed to load config:', err);
+            });
 
-        const handleHashChange = () => setRoute(window.location.hash || '#home');
+        const handleHashChange = () => {
+            const newRoute = window.location.hash || '#home';
+            console.log('Route changed to:', newRoute);
+            setRoute(newRoute);
+        };
+
         window.addEventListener('hashchange', handleHashChange);
-        window.addEventListener('langChange', () => setRoute(r => r)); // Force re-render on lang change
+        window.addEventListener('langChange', () => setRoute(r => r));
+
         return () => {
             window.removeEventListener('hashchange', handleHashChange);
             window.removeEventListener('langChange', () => { });
         };
     }, []);
 
-    const openLegal = (type) => setLegalModal({ isOpen: true, type });
-    const closeLegal = () => setLegalModal({ isOpen: false, type: null });
+    const openLegal = (type) => {
+        console.log('Opening legal modal:', type);
+        setLegalModal({ isOpen: true, type });
+    };
+
+    const closeLegal = () => {
+        console.log('Closing legal modal');
+        setLegalModal({ isOpen: false, type: null });
+    };
 
     if (!configLoaded) {
         return html`<div class="container" style=${{ marginTop: '100px', textAlign: 'center' }}>Loading configuration...</div>`;
@@ -476,5 +906,7 @@ const App = () => {
     `;
 };
 
+console.log('App.js: Rendering app...');
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(html`<${App} />`);
+console.log('App.js: App rendered successfully');
