@@ -590,19 +590,19 @@ const Hero = ({ onSearch }) => {
                 console.error('Geolocation error message:', error.message);
                 console.error('Geolocation error:', error);
 
-                let errorMessage = 'Unable to get your location. ';
+                let errorMessage = '';
                 switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage += 'Location permission denied. Please enable location access in your browser settings.';
+                    case 1: // PERMISSION_DENIED
+                        errorMessage = 'Location access was denied.\n\nTo enable:\n• Click the location icon in your browser address bar\n• Select "Allow" for location access\n• Try again';
                         break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage += 'Location information unavailable.';
+                    case 2: // POSITION_UNAVAILABLE
+                        errorMessage = 'Location information is unavailable. Please enter your location manually.';
                         break;
-                    case error.TIMEOUT:
-                        errorMessage += 'Location request timed out.';
+                    case 3: // TIMEOUT
+                        errorMessage = 'Location request timed out. Please try again or enter your location manually.';
                         break;
                     default:
-                        errorMessage += 'Please enter it manually.';
+                        errorMessage = 'Unable to get your location. Please enter it manually.';
                 }
 
                 alert(errorMessage);
