@@ -99,6 +99,11 @@ const Footer = ({ onOpenLegal }) => {
                     <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }}>Imprint</a>
                     <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('privacy'); }}>Privacy</a>
                     <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('terms'); }}>Terms</a>
+                </div>
+            </div>
+        </footer>
+    `;
+};
 
 const Hero = () => {
     return html`
@@ -174,7 +179,7 @@ const CoachList = () => {
     const coaches = mockCoaches;
 
     return html`
-    < div class="container" style = ${ { marginTop: '60px', paddingBottom: '40px' } }>
+    < div class="container" style = ${{ marginTop: '60px', paddingBottom: '40px' }}>
             <h2 class="section-title">Top Rated Coaches</h2>
             <div class="coach-list">
                 ${coaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} />`)}
@@ -190,7 +195,7 @@ const Dashboard = ({ session }) => {
     }
 
     return html`
-    < div class="container" style = ${ { marginTop: '100px' } }>
+    < div class="container" style = ${{ marginTop: '100px' }}>
             <h2 class="section-title">Dashboard</h2>
             <div class="coach-card">
                 <div class="coach-info">
@@ -256,7 +261,7 @@ const App = () => {
     const closeLegal = () => setLegalModal({ isOpen: false, type: null });
 
     if (!configLoaded) {
-        return html`< div class="container" style = ${ { marginTop: '100px', textAlign: 'center' } }> Loading configuration...</div > `;
+        return html`< div class="container" style = ${{ marginTop: '100px', textAlign: 'center' }}> Loading configuration...</div > `;
     }
 
     let Component;
@@ -264,11 +269,11 @@ const App = () => {
         case '#home': Component = Home; break;
         case '#coaches': Component = CoachList; break;
         case '#login': Component = Auth; break;
-        case '#dashboard': Component = () => html`< ${ Dashboard } session = ${ session } />`; break;
+        case '#dashboard': Component = () => html`< ${Dashboard} session = ${session} />`; break;
         default: Component = Home;
     }
 
-return html`
+    return html`
         <div style=${{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <${Navbar} session=${session} />
             <div style=${{ flex: 1 }}>
