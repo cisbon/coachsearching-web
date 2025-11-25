@@ -8,7 +8,7 @@ const { useState, useEffect, useRef, useCallback } = React;
 const { createClient } = window.supabase;
 
 import htm from './vendor/htm.js';
-import { initLanguage, t, setLanguage } from './i18n.js';
+import { initLanguage, t, setLanguage, getCurrentLang } from './i18n.js';
 import { initDebugConsole } from './debugConsole.js';
 
 console.log('App.js: React global', React);
@@ -158,7 +158,7 @@ const Footer = ({ onOpenLegal }) => {
 
 const LanguageSelector = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [currentLang, setCurrentLang] = useState(localStorage.getItem('lang') || 'en');
+    const [currentLang, setCurrentLang] = useState(getCurrentLang());
 
     const languages = [
         { code: 'en', flag: '🇬🇧', label: 'English' },
@@ -168,11 +168,20 @@ const LanguageSelector = () => {
         { code: 'it', flag: '🇮🇹', label: 'Italiano' }
     ];
 
+    useEffect(() => {
+        const handleLangChange = () => {
+            console.log('Language changed event received');
+            setCurrentLang(getCurrentLang());
+        };
+        window.addEventListener('langChange', handleLangChange);
+        return () => window.removeEventListener('langChange', handleLangChange);
+    }, []);
+
     const handleSelect = (langCode) => {
+        console.log('Language selected:', langCode);
         setLanguage(langCode);
         setCurrentLang(langCode);
         setIsOpen(false);
-        window.dispatchEvent(new Event('langChange'));
     };
 
     const current = languages.find(l => l.code === currentLang) || languages[0];
@@ -205,10 +214,7 @@ const Navbar = ({ session }) => {
                     <a href="#coaches">${t('nav.coaches')}</a>
                     ${session ? html`
                         <a href="#dashboard">${t('nav.dashboard')}</a>
-                        <button class="nav-auth-btn" onClick=${() => {
-                            console.log('Signing out...');
-                            window.supabaseClient.auth.signOut();
-                        }}>Sign Out</button>
+                        <a href="#signout" class="nav-auth-btn">Sign Out</a>
                     ` : html`
                         <a href="#login" class="nav-auth-btn">Sign In / Register</a>
                     `}
@@ -384,7 +390,59 @@ const Auth = () => {
 
 // Continue in next part...
 
-const Hero = () => {
+
+const SignOut = () => {
+    const [confirming, setConfirming] = useState(false);
+
+    const handleSignOut = async () => {
+        console.log('Signing out...');
+        setConfirming(true);
+        try {
+            await window.supabaseClient.auth.signOut();
+            console.log('Sign out successful');
+            setTimeout(() => {
+                window.location.hash = '#home';
+            }, 1000);
+        } catch (error) {
+            console.error('Sign out error:', error);
+            setConfirming(false);
+        }
+    };
+
+    return html`
+        <div class="signout-container">
+            <div class="signout-card">
+                <div class="signout-icon">👋</div>
+                <h2>Sign Out</h2>
+                <p>Are you sure you want to sign out? You'll need to log in again to access your dashboard.</p>
+                <div class="signout-actions">
+                    <button class="btn-secondary" onClick=${() => window.location.hash = '#dashboard'} disabled=${confirming}>
+                        Cancel
+                    </button>
+                    <button class="btn-primary" onClick=${handleSignOut} disabled=${confirming}>
+                        ${confirming ? 'Signing Out...' : 'Yes, Sign Out'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+const Hero = ({ onSearch }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sessionType, setSessionType] = useState('online');
+    const [location, setLocation] = useState('');
+    const [radius, setRadius] = useState('25');
+    const [date, setDate] = useState('');
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        console.log('Search:', { searchTerm, sessionType, location, radius, date });
+        if (onSearch) {
+            onSearch({ searchTerm, sessionType, location, radius, date });
+        }
+    };
+
     return html`
         <section class="hero">
             <div class="container">
@@ -393,21 +451,66 @@ const Hero = () => {
             </div>
             <div class="container">
                  <div class="search-container">
-                    <form class="search-form" onSubmit=${(e) => e.preventDefault()}>
+                    <form class="search-form" onSubmit=${handleSearch}>
                         <div class="search-input-group">
                             <span class="search-icon">🔍</span>
-                            <input type="text" class="search-input" placeholder=${t('search.placeholder')} />
+                            <input 
+                                type="text" 
+                                class="search-input" 
+                                placeholder=${t('search.placeholder')}
+                                value=${searchTerm}
+                                onChange=${(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
                         <div class="search-input-group">
                             <span class="search-icon">📅</span>
-                            <input type="text" class="search-input" placeholder="Check-in Date" onFocus=${(e) => e.target.type = 'date'} onBlur=${(e) => e.target.type = 'text'} />
-                        </div>
-                         <div class="search-input-group">
-                            <span class="search-icon">👥</span>
-                            <input type="text" class="search-input" placeholder="1 person" />
+                            <input 
+                                type="date" 
+                                class="search-input" 
+                                placeholder="Date"
+                                value=${date}
+                                onChange=${(e) => setDate(e.target.value)}
+                            />
                         </div>
                         <button class="search-btn">${t('search.btn')}</button>
                     </form>
+                    <div class="search-filters">
+                        <div class="filter-row">
+                            <div class="filter-toggle">
+                                <button 
+                                    type="button"
+                                    class="filter-toggle-btn ${sessionType === 'online' ? 'active' : ''}"
+                                    onClick=${() => setSessionType('online')}
+                                >
+                                    💻 Online
+                                </button>
+                                <button 
+                                    type="button"
+                                    class="filter-toggle-btn ${sessionType === 'onsite' ? 'active' : ''}"
+                                    onClick=${() => setSessionType('onsite')}
+                                >
+                                    📍 On-Site
+                                </button>
+                            </div>
+                            ${sessionType === 'onsite' && html`
+                                <div class="location-inputs">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Location (e.g., New York, NY)"
+                                        value=${location}
+                                        onChange=${(e) => setLocation(e.target.value)}
+                                    />
+                                    <select value=${radius} onChange=${(e) => setRadius(e.target.value)}>
+                                        <option value="10">Within 10 km</option>
+                                        <option value="25">Within 25 km</option>
+                                        <option value="50">Within 50 km</option>
+                                        <option value="100">Within 100 km</option>
+                                        <option value="200">Within 200 km</option>
+                                    </select>
+                                </div>
+                            `}
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -453,17 +556,45 @@ const CoachCard = ({ coach, onViewDetails }) => {
     `;
 };
 
-const CoachList = () => {
+const CoachList = ({ searchFilters }) => {
     const [coaches, setCoaches] = useState(mockCoaches);
     const [selectedCoach, setSelectedCoach] = useState(null);
+    const [filteredCoaches, setFilteredCoaches] = useState(mockCoaches);
 
     console.log('CoachList rendering with', coaches.length, 'coaches');
 
+    useEffect(() => {
+        if (searchFilters && searchFilters.searchTerm) {
+            console.log('Filtering coaches with:', searchFilters);
+            const term = searchFilters.searchTerm.toLowerCase();
+            const filtered = coaches.filter(coach => 
+                coach.full_name.toLowerCase().includes(term) ||
+                coach.title.toLowerCase().includes(term) ||
+                coach.bio.toLowerCase().includes(term) ||
+                coach.specialties.some(s => s.toLowerCase().includes(term)) ||
+                coach.location.toLowerCase().includes(term)
+            );
+            setFilteredCoaches(filtered);
+            console.log('Filtered results:', filtered.length, 'coaches');
+        } else {
+            setFilteredCoaches(coaches);
+        }
+    }, [searchFilters, coaches]);
+
     return html`
     <div class="container" style=${{ marginTop: '60px', paddingBottom: '40px' }}>
-            <h2 class="section-title">Top Rated Coaches</h2>
+            <h2 class="section-title">
+                ${searchFilters?.searchTerm ? `Search Results (${filteredCoaches.length})` : 'Top Rated Coaches'}
+            </h2>
+            ${filteredCoaches.length === 0 && html`
+                <div class="empty-state">
+                    <div class="empty-state-icon">🔍</div>
+                    <div class="empty-state-text">No coaches found</div>
+                    <div class="empty-state-subtext">Try adjusting your search criteria</div>
+                </div>
+            `}
             <div class="coach-list">
-                ${coaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} onViewDetails=${setSelectedCoach} />`)}
+                ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} onViewDetails=${setSelectedCoach} />`)}
             </div>
             ${selectedCoach && html`<${CoachDetailModal} coach=${selectedCoach} onClose=${() => setSelectedCoach(null)} />`}
         </div>
@@ -824,10 +955,17 @@ const DashboardProfile = ({ session }) => {
 };
 
 const Home = () => {
+    const [searchFilters, setSearchFilters] = useState(null);
+
+    const handleSearch = (filters) => {
+        console.log('Home: Search filters received:', filters);
+        setSearchFilters(filters);
+    };
+
     return html`
     <div>
-            <${Hero} />
-            <${CoachList} />
+            <${Hero} onSearch=${handleSearch} />
+            <${CoachList} searchFilters=${searchFilters} />
         </div>
     `;
 };

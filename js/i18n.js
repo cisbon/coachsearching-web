@@ -247,6 +247,10 @@ export function t(key) {
     return translations[currentLang][key] || key;
 }
 
+export function getCurrentLang() {
+    return currentLang;
+}
+
 export function initLanguage() {
     const saved = localStorage.getItem('lang');
     if (saved && translations[saved]) {
