@@ -591,9 +591,28 @@ const Hero = ({ onSearch }) => {
                 console.error('Geolocation error:', error);
 
                 let errorMessage = '';
+                const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
                 switch(error.code) {
                     case 1: // PERMISSION_DENIED
-                        errorMessage = 'Location access was denied.\n\nTo enable:\n• Click the location icon in your browser address bar\n• Select "Allow" for location access\n• Try again';
+                        if (isIOS || isSafari) {
+                            errorMessage = 'Location access is blocked.\n\n';
+                            errorMessage += 'To enable on iPad/iPhone:\n';
+                            errorMessage += '1. Open Settings app\n';
+                            errorMessage += '2. Go to Privacy & Security → Location Services\n';
+                            errorMessage += '3. Enable Location Services\n';
+                            errorMessage += '4. Scroll down to Safari → Allow "While Using"\n';
+                            errorMessage += '5. Return here and try again\n\n';
+                            errorMessage += 'Or just type your location manually!';
+                        } else {
+                            errorMessage = 'Location access was denied.\n\n';
+                            errorMessage += 'To enable:\n';
+                            errorMessage += '• Click the location icon in your browser address bar\n';
+                            errorMessage += '• Select "Allow" for location access\n';
+                            errorMessage += '• Try again\n\n';
+                            errorMessage += 'Or just type your location manually!';
+                        }
                         break;
                     case 2: // POSITION_UNAVAILABLE
                         errorMessage = 'Location information is unavailable. Please enter your location manually.';
