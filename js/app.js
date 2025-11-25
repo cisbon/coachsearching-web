@@ -105,6 +105,199 @@ const Footer = ({ onOpenLegal }) => {
     `;
 };
 
+const LanguageSelector = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [currentLang, setCurrentLang] = useState('en');
+
+    const languages = [
+        { code: 'en', flag: '🇬🇧', label: 'English' },
+        { code: 'de', flag: '🇩🇪', label: 'Deutsch' },
+        { code: 'es', flag: '🇪🇸', label: 'Español' },
+        { code: 'fr', flag: '🇫🇷', label: 'Français' },
+        { code: 'it', flag: '🇮🇹', label: 'Italiano' }
+    ];
+
+    const handleSelect = (langCode) => {
+        setLanguage(langCode);
+        setCurrentLang(langCode);
+        setIsOpen(false);
+        window.dispatchEvent(new Event('langChange'));
+    };
+
+    const current = languages.find(l => l.code === currentLang) || languages[0];
+
+    return html`
+        <div class="lang-selector">
+            <button class="lang-btn" onClick=${() => setIsOpen(!isOpen)}>
+                <span>${current.flag}</span>
+                <span>${current.code.toUpperCase()}</span>
+            </button>
+            <div class="lang-dropdown ${isOpen ? 'show' : ''}">
+                ${languages.map(lang => html`
+                    <div class="lang-option" onClick=${() => handleSelect(lang.code)}>
+                        <span>${lang.flag}</span>
+                        <span>${lang.label}</span>
+                    </div>
+                `)}
+            </div>
+        </div>
+    `;
+};
+
+const Navbar = ({ session }) => {
+    return html`
+        <header>
+            <div class="container nav-flex">
+                <a href="#" class="logo">CoachSearching</a>
+                <nav class="nav-links">
+                    <a href="#home">${t('nav.home')}</a>
+                    <a href="#coaches">${t('nav.coaches')}</a>
+                    ${session ? html`
+                        <a href="#dashboard">${t('nav.dashboard')}</a>
+                        <button class="nav-auth-btn" onClick=${() => window.supabaseClient.auth.signOut()}>Sign Out</button>
+                    ` : html`
+                        <a href="#login" class="nav-auth-btn">Sign In / Register</a>
+                    `}
+                    <${LanguageSelector} />
+                </nav>
+            </div>
+        </header>
+    `;
+};
+
+const Auth = () => {
+    const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [role, setRole] = useState('person'); // person, business, coach
+    const [isLogin, setIsLogin] = useState(true);
+    const [message, setMessage] = useState('');
+
+    const handleAuth = async (e) => {
+        e.preventDefault();
+
+        if (!window.supabaseClient) {
+            setMessage('Error: Supabase not initialized.');
+            return;
+        }
+
+        setLoading(true);
+        setMessage('');
+
+        console.log('Auth Attempt:', { isLogin, email, role });
+
+        try {
+            let result;
+            if (isLogin) {
+                result = await window.supabaseClient.auth.signInWithPassword({ email, password });
+            } else {
+                // Register with Metadata
+                result = await window.supabaseClient.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            role: role,
+                            full_name: email.split('@')[0] // Default name
+                        }
+                    }
+                });
+            }
+
+            const { data, error } = result;
+            console.log('Supabase Response:', result);
+
+            if (error) throw error;
+
+            if (!isLogin) {
+                if (data.user && !data.session) {
+                    setMessage('Success! Please check your email to confirm your account.');
+                } else if (data.user && data.session) {
+                    setMessage('Registration successful! Redirecting...');
+                    setTimeout(() => window.location.hash = '#dashboard', 1000);
+                } else {
+                    setMessage('Registration request sent. Please check logs if no user appears.');
+                }
+            } else {
+                window.location.hash = '#dashboard';
+            }
+        } catch (error) {
+            console.error('Auth Error:', error);
+            setMessage(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return html`
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2 class="section-title text-center">${isLogin ? 'Sign In' : 'Create Account'}</h2>
+                
+                ${message && html`
+                    <div class="alert" style=${{
+                color: message.includes('Error') ? '#721c24' : '#155724',
+                backgroundColor: message.includes('Error') ? '#f8d7da' : '#d4edda',
+                borderColor: message.includes('Error') ? '#f5c6cb' : '#c3e6cb',
+                padding: '12px',
+                borderRadius: '4px',
+                textAlign: 'center',
+                fontSize: '14px'
+            }}>
+                        ${message}
+                    </div>
+                `}
+
+                <form onSubmit=${handleAuth} style=${{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    ${!isLogin && html`
+                        <div class="role-group">
+                            <div class="role-option ${role === 'person' ? 'selected' : ''}" onClick=${() => setRole('person')}>
+                                👤 Person
+                            </div>
+                            <div class="role-option ${role === 'business' ? 'selected' : ''}" onClick=${() => setRole('business')}>
+                                🏢 Business
+                            </div>
+                            <div class="role-option ${role === 'coach' ? 'selected' : ''}" onClick=${() => setRole('coach')}>
+                                🎓 Coach
+                            </div>
+                        </div>
+                    `}
+
+                    <input 
+                        type="email" 
+                        placeholder="Email Address" 
+                        class="auth-input" 
+                        value=${email}
+                        onChange=${(e) => setEmail(e.target.value)}
+                        required
+                    />
+                    <input 
+                        type="password" 
+                        placeholder="Password" 
+                        class="auth-input" 
+                        value=${password}
+                        onChange=${(e) => setPassword(e.target.value)}
+                        required
+                    />
+                    
+                    <button class="auth-btn" disabled=${loading}>
+                        ${loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Register')}
+                    </button>
+                </form>
+                
+                <div class="text-center">
+                    <button 
+                        class="auth-switch-btn"
+                        onClick=${() => { setIsLogin(!isLogin); setMessage(''); }}
+                    >
+                        ${isLogin ? 'New here? Create an account' : 'Already have an account? Sign In'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 const Hero = () => {
     return html`
         <section class="hero">
