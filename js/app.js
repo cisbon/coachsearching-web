@@ -1725,15 +1725,26 @@ const DashboardAvailability = ({ session }) => {
             const response = await fetch(`${API_BASE}/coaches/${session.user.id}/availability`);
             const data = await response.json();
 
-            if (data.data) {
+            console.log('Availability API response:', data);
+
+            // Ensure we always set an array
+            if (data.data && Array.isArray(data.data)) {
                 setWeeklySlots(data.data);
+            } else {
+                setWeeklySlots([]);
             }
         } catch (error) {
             console.error('Failed to load availability:', error);
+            setWeeklySlots([]); // Ensure it's an array even on error
         }
     };
 
     const getSlotsForDay = (dayId) => {
+        // Safety check to ensure weeklySlots is an array
+        if (!Array.isArray(weeklySlots)) {
+            console.error('weeklySlots is not an array:', weeklySlots);
+            return [];
+        }
         return weeklySlots.filter(slot => slot.day_of_week === dayId);
     };
 
@@ -2023,9 +2034,11 @@ const DashboardProBono = ({ session }) => {
 const DashboardProfile = ({ session, userType }) => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [uploading, setUploading] = useState(false);
     const [formData, setFormData] = useState({
         full_name: session.user.user_metadata?.full_name || '',
         avatar_url: '',
+        banner_url: '',
         title: '',
         bio: '',
         location: '',
@@ -2054,6 +2067,7 @@ const DashboardProfile = ({ session, userType }) => {
                 setFormData({
                     full_name: coach.full_name || '',
                     avatar_url: coach.avatar_url || '',
+                    banner_url: coach.banner_url || '',
                     title: coach.title || '',
                     bio: coach.bio || '',
                     location: coach.location || '',
@@ -2067,6 +2081,71 @@ const DashboardProfile = ({ session, userType }) => {
             }
         } catch (error) {
             console.error('Failed to load coach profile:', error);
+        }
+    };
+
+    const handleImageUpload = async (event, fieldName = 'avatar_url') => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            setMessage('Error: Please select an image file');
+            setTimeout(() => setMessage(''), 3000);
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setMessage('Error: Image must be less than 5MB');
+            setTimeout(() => setMessage(''), 3000);
+            return;
+        }
+
+        setUploading(true);
+        setMessage('Uploading image...');
+
+        try {
+            // Create unique file name
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${session.user.id}-${fieldName}-${Date.now()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            console.log('Uploading to Supabase Storage:', filePath);
+
+            // Upload to Supabase Storage
+            const { data, error } = await supabaseClient.storage
+                .from('profile-images')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) {
+                console.error('Upload error:', error);
+                throw error;
+            }
+
+            console.log('Upload successful:', data);
+
+            // Get public URL
+            const { data: { publicUrl } } = supabaseClient.storage
+                .from('profile-images')
+                .getPublicUrl(filePath);
+
+            console.log('Public URL:', publicUrl);
+
+            // Update form data
+            setFormData({ ...formData, [fieldName]: publicUrl });
+            setMessage('Image uploaded successfully!');
+            setTimeout(() => setMessage(''), 3000);
+
+        } catch (error) {
+            console.error('Failed to upload image:', error);
+            setMessage('Error: ' + (error.message || 'Failed to upload image'));
+            setTimeout(() => setMessage(''), 5000);
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -2090,6 +2169,7 @@ const DashboardProfile = ({ session, userType }) => {
                 Object.assign(profileData, {
                     title: formData.title,
                     bio: formData.bio,
+                    banner_url: formData.banner_url || '',
                     location: formData.location,
                     hourly_rate: parseFloat(formData.hourly_rate) || 0,
                     currency: formData.currency,
@@ -2143,7 +2223,7 @@ const DashboardProfile = ({ session, userType }) => {
 
                 <!-- Avatar Upload -->
                 <div>
-                    <label class="filter-label">Profile Picture URL</label>
+                    <label class="filter-label">Profile Picture</label>
                     <div style=${{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         ${formData.avatar_url && html`
                             <img src=${formData.avatar_url} alt="Avatar" style=${{
@@ -2155,17 +2235,76 @@ const DashboardProfile = ({ session, userType }) => {
                             }} />
                         `}
                         <div style=${{ flex: 1 }}>
+                            <div style=${{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                <label class="btn-secondary" style=${{ cursor: 'pointer', padding: '8px 16px', margin: 0 }}>
+                                    ${uploading ? 'Uploading...' : '📤 Upload Image'}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        style=${{ display: 'none' }}
+                                        onChange=${(e) => handleImageUpload(e, 'avatar_url')}
+                                        disabled=${uploading}
+                                    />
+                                </label>
+                            </div>
                             <input
                                 type="url"
                                 class="filter-input"
-                                placeholder="https://example.com/avatar.jpg"
+                                placeholder="Or enter image URL: https://example.com/avatar.jpg"
                                 value=${formData.avatar_url}
                                 onChange=${(e) => setFormData({ ...formData, avatar_url: e.target.value })}
                             />
-                            <div class="form-hint">Enter image URL or leave empty for auto-generated avatar</div>
+                            <div class="form-hint">Upload an image or enter a URL. Leave empty for auto-generated avatar. Max 5MB.</div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Banner Upload (Coach Only) -->
+                ${userType === 'coach' && html`
+                    <div>
+                        <label class="filter-label">Profile Banner</label>
+                        <div style=${{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            ${formData.banner_url && html`
+                                <img src=${formData.banner_url} alt="Banner" style=${{
+                                    width: '100%',
+                                    height: '200px',
+                                    objectFit: 'cover',
+                                    borderRadius: '8px',
+                                    border: '2px solid var(--border-color)'
+                                }} />
+                            `}
+                            <div style=${{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                <label class="btn-secondary" style=${{ cursor: 'pointer', padding: '8px 16px', margin: 0 }}>
+                                    ${uploading ? 'Uploading...' : '📤 Upload Banner'}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        style=${{ display: 'none' }}
+                                        onChange=${(e) => handleImageUpload(e, 'banner_url')}
+                                        disabled=${uploading}
+                                    />
+                                </label>
+                                ${formData.banner_url && html`
+                                    <button
+                                        class="btn-secondary"
+                                        onClick=${() => setFormData({ ...formData, banner_url: '' })}
+                                        style=${{ padding: '8px 16px' }}
+                                    >
+                                        🗑️ Remove Banner
+                                    </button>
+                                `}
+                            </div>
+                            <input
+                                type="url"
+                                class="filter-input"
+                                placeholder="Or enter banner image URL"
+                                value=${formData.banner_url}
+                                onChange=${(e) => setFormData({ ...formData, banner_url: e.target.value })}
+                            />
+                            <div class="form-hint">Recommended size: 1200x300px. Max 5MB.</div>
+                        </div>
+                    </div>
+                `}
 
                 <!-- Basic Info -->
                 <div>
