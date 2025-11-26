@@ -3,10 +3,11 @@
 ## Fresh Start with cs_ Prefix
 
 This guide will give you a clean database with the `cs_` prefix for all tables.
+**Complete platform** with 30+ tables ready for production!
 
 ---
 
-## 🚀 Quick Setup (3 Steps, 5 Minutes)
+## 🚀 Quick Setup (4 Steps, 10 Minutes)
 
 ### Step 1: Open Supabase SQL Editor
 1. Go to https://supabase.com/dashboard
@@ -30,11 +31,26 @@ Success. No rows returned
 
 ---
 
-### Step 3: Run Script #2 - Create Clean Schema
-**This creates the new tables with cs_ prefix**
+### Step 3: Run Script #2 - Create All Tables
+**This creates 30+ tables with cs_ prefix**
 
 1. Click **"New Query"** again
 2. Copy all from: `database/02_CREATE_SCHEMA.sql`
+3. Paste into SQL Editor
+4. Click **"Run"**
+
+Expected result:
+```
+Success. No rows returned
+```
+
+---
+
+### Step 4: Run Script #3 - Indexes & Policies
+**This adds indexes, functions, triggers, and RLS policies**
+
+1. Click **"New Query"** again
+2. Copy all from: `database/03_INDEXES_AND_POLICIES.sql`
 3. Paste into SQL Editor
 4. Click **"Run"**
 
