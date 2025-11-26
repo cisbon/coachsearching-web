@@ -50,26 +50,74 @@ function handleCoaches($method, $id, $action, $input) {
 }
 
 function getCoaches() {
-    // TODO: Replace with actual Supabase query
+    error_log('[COACH DEBUG] getCoaches() called');
+
+    // Try to get from Supabase
+    try {
+        $supabaseUrl = SUPABASE_URL;
+        $supabaseKey = SUPABASE_ANON_KEY;
+
+        error_log('[COACH DEBUG] Supabase URL: ' . $supabaseUrl);
+        error_log('[COACH DEBUG] Fetching from coaches table...');
+
+        $url = $supabaseUrl . '/rest/v1/coaches?select=*';
+        $headers = [
+            'apikey: ' . $supabaseKey,
+            'Authorization: Bearer ' . $supabaseKey,
+            'Content-Type: application/json'
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        error_log('[COACH DEBUG] Supabase HTTP code: ' . $httpCode);
+
+        if ($curlError) {
+            error_log('[COACH DEBUG] CURL error: ' . $curlError);
+        }
+
+        if ($httpCode === 200 && $response) {
+            $coaches = json_decode($response, true);
+            error_log('[COACH DEBUG] Successfully loaded ' . count($coaches) . ' coaches from Supabase');
+            error_log('[COACH DEBUG] Coach names: ' . json_encode(array_column($coaches, 'full_name')));
+            echo json_encode(['coaches' => $coaches, 'source' => 'supabase']);
+            return;
+        } else {
+            error_log('[COACH DEBUG] Failed to load from Supabase, HTTP code: ' . $httpCode);
+            error_log('[COACH DEBUG] Response: ' . substr($response, 0, 200));
+        }
+    } catch (Exception $e) {
+        error_log('[COACH DEBUG] Exception: ' . $e->getMessage());
+    }
+
+    // Fallback to mock data
+    error_log('[COACH DEBUG] Using mock data');
     $coaches = [
         [
             'id' => '1',
-            'name' => 'Sarah Johnson',
+            'full_name' => 'Sarah Johnson',
             'email' => 'sarah@example.com',
-            'professional_title' => 'Certified Life Coach',
+            'title' => 'Certified Life Coach',
             'bio' => 'Helping professionals find clarity and purpose',
             'specialties' => ['Life Coaching', 'Career Coaching'],
             'languages' => ['English', 'Spanish'],
             'hourly_rate' => 75.00,
-            'rating' => 4.9,
-            'review_count' => 87,
+            'rating_average' => 4.9,
+            'rating_count' => 87,
             'is_verified' => true,
             'avatar_url' => null,
-            'years_experience' => 8
+            'location' => 'Remote'
         ]
     ];
-    
-    echo json_encode(['coaches' => $coaches]);
+
+    echo json_encode(['coaches' => $coaches, 'source' => 'mock']);
 }
 
 function getCoach($id) {

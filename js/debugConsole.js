@@ -5,6 +5,8 @@ export class DebugConsole {
         this.logs = [];
         this.isVisible = localStorage.getItem('debugConsoleVisible') === 'true';
         this.maxLogs = 100;
+        this.errorCount = 0;
+        this.warnCount = 0;
         this.init();
         this.interceptConsole();
     }
@@ -18,6 +20,12 @@ export class DebugConsole {
             <div class="debug-console-header">
                 <span class="debug-console-title">Debug Console</span>
                 <div class="debug-console-actions">
+                    <span class="debug-console-badge error-badge" id="debug-error-count" title="Errors">
+                        ❌ <span class="badge-count">0</span>
+                    </span>
+                    <span class="debug-console-badge warn-badge" id="debug-warn-count" title="Warnings">
+                        ⚠️ <span class="badge-count">0</span>
+                    </span>
                     <button class="debug-console-btn" id="debug-clear" title="Clear logs">🗑️</button>
                     <button class="debug-console-btn" id="debug-copy" title="Copy to clipboard">📋</button>
                     <button class="debug-console-btn" id="debug-toggle" title="Hide console">▼</button>
@@ -114,12 +122,32 @@ export class DebugConsole {
         const log = { timestamp, type, message };
         this.logs.push(log);
 
+        // Update counts
+        if (type === 'error') {
+            this.errorCount++;
+            this.updateCountBadge('error', this.errorCount);
+        } else if (type === 'warn') {
+            this.warnCount++;
+            this.updateCountBadge('warn', this.warnCount);
+        }
+
         // Keep only last N logs
         if (this.logs.length > this.maxLogs) {
             this.logs.shift();
         }
 
         this.renderLog(log);
+    }
+
+    updateCountBadge(type, count) {
+        const badgeId = type === 'error' ? 'debug-error-count' : 'debug-warn-count';
+        const badge = document.getElementById(badgeId);
+        if (badge) {
+            const countSpan = badge.querySelector('.badge-count');
+            if (countSpan) {
+                countSpan.textContent = count;
+            }
+        }
     }
 
     renderLog(log) {
@@ -145,6 +173,10 @@ export class DebugConsole {
     clear() {
         this.logs = [];
         this.body.innerHTML = '';
+        this.errorCount = 0;
+        this.warnCount = 0;
+        this.updateCountBadge('error', 0);
+        this.updateCountBadge('warn', 0);
         this.addLog('info', ['Console cleared']);
     }
 

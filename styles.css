@@ -184,6 +184,23 @@ header {
     outline: none;
     font-family: inherit;
     background: transparent;
+    box-shadow: none;
+}
+
+.search-input:focus {
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+.search-input[type="date"] {
+    cursor: pointer;
+}
+
+.search-input-group:has([type="date"]) {
+    flex: 0 1 auto;
+    min-width: 160px;
+    max-width: 200px;
 }
 
 .search-input.rate-select {
@@ -863,6 +880,15 @@ footer {
 
 .lang-btn:hover {
     background: rgba(255, 255, 255, 0.2);
+}
+
+.flag-icon {
+    width: 20px;
+    height: 15px;
+    object-fit: cover;
+    border-radius: 2px;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .lang-dropdown {
@@ -1597,6 +1623,32 @@ footer {
 .debug-console-actions {
     display: flex;
     gap: 8px;
+    align-items: center;
+}
+
+.debug-console-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.debug-console-badge.error-badge {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.debug-console-badge.warn-badge {
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+}
+
+.debug-console-badge .badge-count {
+    min-width: 16px;
+    text-align: center;
 }
 
 .debug-console-btn {

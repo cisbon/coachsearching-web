@@ -245,12 +245,13 @@ const LanguageSelector = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentLang, setCurrentLang] = useState(getCurrentLang());
 
+    // Using SVG flags from circle-flags CDN for Windows compatibility
     const languages = [
-        { code: 'en', flag: '🇬🇧', label: 'English' },
-        { code: 'de', flag: '🇩🇪', label: 'Deutsch' },
-        { code: 'es', flag: '🇪🇸', label: 'Español' },
-        { code: 'fr', flag: '🇫🇷', label: 'Français' },
-        { code: 'it', flag: '🇮🇹', label: 'Italiano' }
+        { code: 'en', flagCode: 'gb', label: 'English' },
+        { code: 'de', flagCode: 'de', label: 'Deutsch' },
+        { code: 'es', flagCode: 'es', label: 'Español' },
+        { code: 'fr', flagCode: 'fr', label: 'Français' },
+        { code: 'it', flagCode: 'it', label: 'Italiano' }
     ];
 
     useEffect(() => {
@@ -275,13 +276,23 @@ const LanguageSelector = () => {
     return html`
         <div class="lang-selector">
             <button class="lang-btn" onClick=${() => setIsOpen(!isOpen)} aria-label="Select language" aria-expanded=${isOpen}>
-                <span role="img" aria-label=${current.label}>${current.flag}</span>
+                <img
+                    src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${current.flagCode}.svg"
+                    alt=${current.label}
+                    class="flag-icon"
+                    loading="lazy"
+                />
                 <span>${current.code.toUpperCase()}</span>
             </button>
             <div class="lang-dropdown ${isOpen ? 'show' : ''}" role="menu">
                 ${languages.map(lang => html`
                     <div key=${lang.code} class="lang-option" onClick=${() => handleSelect(lang.code)} role="menuitem">
-                        <span role="img" aria-label=${lang.label}>${lang.flag}</span>
+                        <img
+                            src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${lang.flagCode}.svg"
+                            alt=${lang.label}
+                            class="flag-icon"
+                            loading="lazy"
+                        />
                         <span>${lang.label}</span>
                     </div>
                 `)}
@@ -1053,28 +1064,45 @@ const CoachList = ({ searchFilters, session }) => {
     // Load coaches from API
     useEffect(() => {
         const loadCoaches = async () => {
-            console.log('Loading coaches from API...');
+            console.log('🔍 [COACH DEBUG] Loading coaches from API...');
+            console.log('🔍 [COACH DEBUG] API endpoint:', API_BASE + '/coaches');
             setLoading(true);
             try {
                 const response = await fetch(API_BASE + '/coaches');
+                console.log('🔍 [COACH DEBUG] Response status:', response.status);
+                console.log('🔍 [COACH DEBUG] Response ok:', response.ok);
+
                 const data = await response.json();
-                console.log('API response:', data);
-                
-                if (data.data && data.data.length > 0) {
-                    console.log('Loaded', data.data.length, 'coaches from API');
-                    setCoaches(data.data);
-                    setFilteredCoaches(data.data);
-                } else {
-                    console.log('No coaches from API, using mock data');
-                    if (data.disclaimer) {
-                        console.log('API disclaimer:', data.disclaimer);
+                console.log('🔍 [COACH DEBUG] Full API response:', JSON.stringify(data, null, 2));
+                console.log('🔍 [COACH DEBUG] Response keys:', Object.keys(data));
+
+                if (data.data && Array.isArray(data.data)) {
+                    console.log('🔍 [COACH DEBUG] Coaches array length:', data.data.length);
+                    if (data.data.length > 0) {
+                        console.log('🔍 [COACH DEBUG] First coach:', JSON.stringify(data.data[0], null, 2));
+                        console.log('🔍 [COACH DEBUG] All coach names:', data.data.map(c => c.full_name || c.name));
+                        setCoaches(data.data);
+                        setFilteredCoaches(data.data);
+                    } else {
+                        console.warn('⚠️ [COACH DEBUG] API returned empty array!');
                     }
+                } else if (data.coaches && Array.isArray(data.coaches)) {
+                    console.log('🔍 [COACH DEBUG] Found coaches in .coaches property, length:', data.coaches.length);
+                    if (data.coaches.length > 0) {
+                        console.log('🔍 [COACH DEBUG] First coach:', JSON.stringify(data.coaches[0], null, 2));
+                        setCoaches(data.coaches);
+                        setFilteredCoaches(data.coaches);
+                    }
+                } else {
+                    console.error('❌ [COACH DEBUG] No coaches array found in response!');
+                    console.error('❌ [COACH DEBUG] Response structure:', typeof data, data);
                 }
             } catch (error) {
-                console.error('Failed to load coaches from API:', error);
-                console.log('Falling back to mock data');
+                console.error('❌ [COACH DEBUG] Failed to load coaches:', error);
+                console.error('❌ [COACH DEBUG] Error stack:', error.stack);
             } finally {
                 setLoading(false);
+                console.log('🔍 [COACH DEBUG] Loading complete');
             }
         };
         
