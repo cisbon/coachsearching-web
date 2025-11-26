@@ -608,6 +608,23 @@ const CoachOnboarding = ({ session }) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    const handleNext = () => {
+        if (step === 1) {
+            // Validate step 1 fields
+            if (!formData.full_name || !formData.title || !formData.bio || !formData.hourly_rate) {
+                setMessage('Please fill in all required fields');
+                return;
+            }
+            setMessage('');
+            setStep(2);
+        }
+    };
+
+    const handleBack = () => {
+        setStep(1);
+        setMessage('');
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -616,6 +633,43 @@ const CoachOnboarding = ({ session }) => {
         try {
             if (!window.supabaseClient) {
                 throw new Error('Database connection not available');
+            }
+
+            // CRITICAL: Ensure cs_users record exists first (same fix as for cs_clients)
+            console.log('🔍 Checking if cs_users record exists for:', session.user.id);
+
+            const { data: existingUser, error: userCheckError } = await window.supabaseClient
+                .from('cs_users')
+                .select('id')
+                .eq('id', session.user.id)
+                .maybeSingle();
+
+            if (!existingUser) {
+                console.log('⚠️ cs_users record missing, creating it now...');
+
+                // Create cs_users record if missing
+                const { error: userCreateError } = await window.supabaseClient
+                    .from('cs_users')
+                    .insert([{
+                        id: session.user.id,
+                        email: session.user.email,
+                        full_name: formData.full_name,
+                        role: 'coach',
+                        user_type: 'coach',
+                        avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                        is_email_verified: !!session.user.email_confirmed_at,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }]);
+
+                if (userCreateError) {
+                    console.error('❌ Failed to create cs_users record:', userCreateError);
+                    throw new Error('Failed to create user profile. Please contact support.');
+                }
+
+                console.log('✅ cs_users record created successfully');
+            } else {
+                console.log('✅ cs_users record already exists');
             }
 
             // Parse comma-separated values into arrays
@@ -670,216 +724,344 @@ const CoachOnboarding = ({ session }) => {
         }
     };
 
+    const inputStyle = {
+        width: '100%',
+        padding: '14px 16px',
+        fontSize: '15px',
+        border: '2px solid #E5E7EB',
+        borderRadius: '10px',
+        outline: 'none',
+        transition: 'all 0.2s',
+        fontFamily: 'inherit'
+    };
+
+    const labelStyle = {
+        display: 'block',
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#374151',
+        marginBottom: '8px'
+    };
+
     return html`
-        <div class="container" style=${{ maxWidth: '900px', margin: '60px auto', padding: '0 20px' }}>
+        <div style=${{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '40px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
             <div style=${{
+                maxWidth: '700px',
+                width: '100%',
                 background: 'white',
-                borderRadius: '16px',
-                padding: '48px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+                borderRadius: '20px',
+                padding: '50px',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
             }}>
+                <!-- Header -->
                 <div style=${{ textAlign: 'center', marginBottom: '40px' }}>
                     <h1 style=${{
                         fontSize: '32px',
                         fontWeight: '700',
-                        color: 'var(--primary-petrol)',
+                        color: '#1F2937',
                         marginBottom: '12px'
                     }}>
-                        🎯 Complete Your Coach Profile
+                        ${step === 1 ? '👋 Welcome, Coach!' : '✨ Almost There!'}
                     </h1>
-                    <p style=${{
-                        fontSize: '16px',
-                        color: 'var(--text-muted)',
-                        maxWidth: '600px',
-                        margin: '0 auto'
-                    }}>
-                        Just a few details to get you started and visible to potential clients
+                    <p style=${{ fontSize: '16px', color: '#6B7280' }}>
+                        ${step === 1 ? 'Let's set up your profile to attract clients' : 'Tell us about your expertise and availability'}
                     </p>
+
+                    <!-- Progress Bar -->
+                    <div style=${{
+                        marginTop: '30px',
+                        display: 'flex',
+                        gap: '8px',
+                        justifyContent: 'center'
+                    }}>
+                        <div style=${{
+                            width: '40px',
+                            height: '4px',
+                            borderRadius: '2px',
+                            background: step >= 1 ? '#667eea' : '#E5E7EB',
+                            transition: 'all 0.3s'
+                        }}></div>
+                        <div style=${{
+                            width: '40px',
+                            height: '4px',
+                            borderRadius: '2px',
+                            background: step >= 2 ? '#667eea' : '#E5E7EB',
+                            transition: 'all 0.3s'
+                        }}></div>
+                    </div>
+                    <div style=${{ marginTop: '8px', fontSize: '13px', color: '#9CA3AF', fontWeight: '500' }}>
+                        Step ${step} of 2
+                    </div>
                 </div>
 
                 ${message && html`
-                    <div class="alert ${message.includes('Error') ? 'alert-error' : 'alert-success'}" style=${{ marginBottom: '32px' }}>
+                    <div style=${{
+                        padding: '14px 18px',
+                        borderRadius: '10px',
+                        marginBottom: '24px',
+                        background: message.includes('Error') ? '#FEE2E2' : '#D1FAE5',
+                        color: message.includes('Error') ? '#991B1B' : '#065F46',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                    }}>
                         ${message}
                     </div>
                 `}
 
-                <form onSubmit=${handleSubmit}>
-                    <div style=${{ display: 'grid', gap: '32px' }}>
-                        <!-- Basic Info -->
-                        <div>
-                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
-                                📝 Basic Information
-                            </h3>
-                            <div style=${{ display: 'grid', gap: '20px' }}>
-                                <div class="form-group">
-                                    <label class="form-label">Full Name *</label>
-                                    <input
-                                        type="text"
-                                        class="form-control"
-                                        value=${formData.full_name}
-                                        onChange=${(e) => handleChange('full_name', e.target.value)}
-                                        required
-                                    />
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label">Professional Title *</label>
-                                    <input
-                                        type="text"
-                                        class="form-control"
-                                        placeholder="e.g., Life Coach, Business Consultant, Executive Coach"
-                                        value=${formData.title}
-                                        onChange=${(e) => handleChange('title', e.target.value)}
-                                        required
-                                    />
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label">About You *</label>
-                                    <textarea
-                                        class="form-control"
-                                        rows="6"
-                                        placeholder="Tell potential clients about your experience, approach, and what makes you unique..."
-                                        value=${formData.bio}
-                                        onChange=${(e) => handleChange('bio', e.target.value)}
-                                        required
-                                        style=${{ minHeight: '150px' }}
-                                    ></textarea>
-                                    <small class="form-hint">Share your coaching philosophy, certifications, and what sets you apart</small>
-                                </div>
+                <form onSubmit=${step === 2 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}>
+                    <!-- Step 1: Basic Info & Pricing -->
+                    ${step === 1 && html`
+                        <div style=${{ display: 'grid', gap: '22px' }}>
+                            <div>
+                                <label style=${labelStyle}>Full Name *</label>
+                                <input
+                                    type="text"
+                                    style=${inputStyle}
+                                    value=${formData.full_name}
+                                    onChange=${(e) => handleChange('full_name', e.target.value)}
+                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
+                                    required
+                                />
                             </div>
-                        </div>
 
-                        <!-- Pricing & Location -->
-                        <div>
-                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
-                                💰 Pricing & Location
-                            </h3>
-                            <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div class="form-group">
-                                    <label class="form-label">Hourly Rate (EUR) *</label>
+                            <div>
+                                <label style=${labelStyle}>Professional Title *</label>
+                                <input
+                                    type="text"
+                                    style=${inputStyle}
+                                    placeholder="e.g., Life Coach, Business Consultant"
+                                    value=${formData.title}
+                                    onChange=${(e) => handleChange('title', e.target.value)}
+                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label style=${labelStyle}>About You *</label>
+                                <textarea
+                                    style=${{...inputStyle, minHeight: '120px', resize: 'vertical'}}
+                                    placeholder="Share your coaching philosophy, experience, and approach..."
+                                    value=${formData.bio}
+                                    onChange=${(e) => handleChange('bio', e.target.value)}
+                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <div>
+                                    <label style=${labelStyle}>Hourly Rate (EUR) *</label>
                                     <input
                                         type="number"
-                                        class="form-control"
+                                        style=${inputStyle}
                                         placeholder="150"
                                         min="0"
                                         step="1"
                                         value=${formData.hourly_rate}
                                         onChange=${(e) => handleChange('hourly_rate', e.target.value)}
+                                        onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                        onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                         required
                                     />
                                 </div>
 
-                                <div class="form-group">
-                                    <label class="form-label">Location</label>
+                                <div>
+                                    <label style=${labelStyle}>Location</label>
                                     <input
                                         type="text"
-                                        class="form-control"
-                                        placeholder="e.g., Zurich, Switzerland"
+                                        style=${inputStyle}
+                                        placeholder="e.g., Zurich"
                                         value=${formData.location}
                                         onChange=${(e) => handleChange('location', e.target.value)}
+                                        onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                        onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                     />
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Expertise -->
-                        <div>
-                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
-                                🎓 Expertise & Languages
-                            </h3>
-                            <div style=${{ display: 'grid', gap: '20px' }}>
-                                <div class="form-group">
-                                    <label class="form-label">Specialties *</label>
-                                    <input
-                                        type="text"
-                                        class="form-control"
-                                        placeholder="Life Coaching, Business Strategy, Leadership Development"
-                                        value=${formData.specialties}
-                                        onChange=${(e) => handleChange('specialties', e.target.value)}
-                                        required
-                                    />
-                                    <small class="form-hint">Separate multiple specialties with commas</small>
-                                </div>
+                        <div style=${{ marginTop: '32px', display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
+                            <button
+                                type="button"
+                                onClick=${() => window.location.hash = '#coaches'}
+                                style=${{
+                                    padding: '14px 24px',
+                                    background: 'transparent',
+                                    color: '#6B7280',
+                                    border: 'none',
+                                    borderRadius: '10px',
+                                    fontSize: '15px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Skip for Now
+                            </button>
+                            <button
+                                type="submit"
+                                style=${{
+                                    padding: '14px 32px',
+                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '10px',
+                                    fontSize: '15px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+                                }}
+                            >
+                                Next Step →
+                            </button>
+                        </div>
+                    `}
 
-                                <div class="form-group">
-                                    <label class="form-label">Languages *</label>
-                                    <input
-                                        type="text"
-                                        class="form-control"
-                                        placeholder="en, de, es, fr"
-                                        value=${formData.languages}
-                                        onChange=${(e) => handleChange('languages', e.target.value)}
-                                        required
-                                    />
-                                    <small class="form-hint">Use language codes (en=English, de=German, es=Spanish, fr=French, it=Italian)</small>
+                    <!-- Step 2: Expertise & Settings -->
+                    ${step === 2 && html`
+                        <div style=${{ display: 'grid', gap: '22px' }}>
+                            <div>
+                                <label style=${labelStyle}>Specialties *</label>
+                                <input
+                                    type="text"
+                                    style=${inputStyle}
+                                    placeholder="Life Coaching, Business Strategy, Leadership"
+                                    value=${formData.specialties}
+                                    onChange=${(e) => handleChange('specialties', e.target.value)}
+                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
+                                    required
+                                />
+                                <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
+                                    Separate with commas
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Session Types -->
-                        <div>
-                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
-                                📍 Session Types
-                            </h3>
-                            <div class="checkbox-group">
-                                <label class="checkbox-label" style=${{ padding: '16px', border: '2px solid var(--border-color)', borderRadius: '8px' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked=${formData.session_types_online}
-                                        onChange=${(e) => handleChange('session_types_online', e.target.checked)}
-                                    />
-                                    <span style=${{ fontSize: '16px' }}>💻 Offer Online Sessions (via video call)</span>
-                                </label>
-                                <label class="checkbox-label" style=${{ padding: '16px', border: '2px solid var(--border-color)', borderRadius: '8px' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked=${formData.session_types_onsite}
-                                        onChange=${(e) => handleChange('session_types_onsite', e.target.checked)}
-                                    />
-                                    <span style=${{ fontSize: '16px' }}>📍 Offer On-Site Sessions (in person)</span>
-                                </label>
+                            <div>
+                                <label style=${labelStyle}>Languages *</label>
+                                <input
+                                    type="text"
+                                    style=${inputStyle}
+                                    placeholder="en, de, es"
+                                    value=${formData.languages}
+                                    onChange=${(e) => handleChange('languages', e.target.value)}
+                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
+                                    required
+                                />
+                                <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
+                                    Use codes: en, de, es, fr, it
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Optional -->
-                        <div>
-                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
-                                🖼️ Profile Picture (Optional)
-                            </h3>
-                            <div class="form-group">
-                                <label class="form-label">Avatar URL</label>
+                            <div>
+                                <label style=${{...labelStyle, marginBottom: '12px'}}>Session Types *</label>
+                                <div style=${{ display: 'grid', gap: '12px' }}>
+                                    <label style=${{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        padding: '14px',
+                                        border: '2px solid #E5E7EB',
+                                        borderRadius: '10px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}>
+                                        <input
+                                            type="checkbox"
+                                            checked=${formData.session_types_online}
+                                            onChange=${(e) => handleChange('session_types_online', e.target.checked)}
+                                            style=${{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <span style=${{ fontSize: '15px', fontWeight: '500' }}>💻 Online Sessions</span>
+                                    </label>
+                                    <label style=${{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        padding: '14px',
+                                        border: '2px solid #E5E7EB',
+                                        borderRadius: '10px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}>
+                                        <input
+                                            type="checkbox"
+                                            checked=${formData.session_types_onsite}
+                                            onChange=${(e) => handleChange('session_types_onsite', e.target.checked)}
+                                            style=${{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <span style=${{ fontSize: '15px', fontWeight: '500' }}>📍 On-Site Sessions</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style=${labelStyle}>Profile Picture URL (Optional)</label>
                                 <input
                                     type="url"
-                                    class="form-control"
-                                    placeholder="https://example.com/your-photo.jpg"
+                                    style=${inputStyle}
+                                    placeholder="https://example.com/photo.jpg"
                                     value=${formData.avatar_url}
                                     onChange=${(e) => handleChange('avatar_url', e.target.value)}
+                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                 />
-                                <small class="form-hint">Leave blank to use an automatically generated avatar</small>
+                                <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
+                                    Leave blank for auto-generated avatar
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div style=${{ marginTop: '40px', display: 'flex', gap: '16px', justifyContent: 'center' }}>
-                        <button
-                            type="button"
-                            onClick=${() => window.location.hash = '#coaches'}
-                            class="btn-secondary"
-                            style=${{ minWidth: '150px' }}
-                            disabled=${loading}
-                        >
-                            Skip for Now
-                        </button>
-                        <button
-                            type="submit"
-                            class="btn-primary"
-                            style=${{ minWidth: '200px' }}
-                            disabled=${loading}
-                        >
-                            ${loading ? '💾 Saving...' : '✅ Complete Profile'}
-                        </button>
-                    </div>
+                        <div style=${{ marginTop: '32px', display: 'flex', gap: '12px' }}>
+                            <button
+                                type="button"
+                                onClick=${handleBack}
+                                disabled=${loading}
+                                style=${{
+                                    padding: '14px 24px',
+                                    background: '#F3F4F6',
+                                    color: '#374151',
+                                    border: 'none',
+                                    borderRadius: '10px',
+                                    fontSize: '15px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    flex: 1
+                                }}
+                            >
+                                ← Back
+                            </button>
+                            <button
+                                type="submit"
+                                disabled=${loading}
+                                style=${{
+                                    padding: '14px 32px',
+                                    background: loading ? '#9CA3AF' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '10px',
+                                    fontSize: '15px',
+                                    fontWeight: '600',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    boxShadow: loading ? 'none' : '0 4px 12px rgba(102, 126, 234, 0.4)',
+                                    flex: 2
+                                }}
+                            >
+                                ${loading ? '💾 Creating Profile...' : '✅ Complete Setup'}
+                            </button>
+                        </div>
+                    `}
                 </form>
             </div>
         </div>
