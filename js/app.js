@@ -1418,47 +1418,66 @@ const BookingModal = ({ coach, session, onClose }) => {
         try {
             console.log('💾 Starting booking creation...');
 
-            // Get or create client_id
-            console.log('📋 Fetching client data for user:', session.user.id);
+            // Get or create client_id using upsert to avoid RLS race conditions
+            console.log('📋 Getting or creating client data for user:', session.user.id);
             let clientId = null;
 
+            // First try to fetch existing client
             const { data: existingClient, error: clientFetchError } = await window.supabaseClient
                 .from('cs_clients')
                 .select('id')
                 .eq('user_id', session.user.id)
-                .maybeSingle(); // Use maybeSingle() instead of single() to avoid error on no rows
+                .maybeSingle();
 
             console.log('📋 Client fetch result:', { existingClient, clientFetchError });
 
-            if (clientFetchError) {
-                console.error('❌ Error fetching client:', clientFetchError);
-                // Continue to try creating client instead of throwing
-            }
-
-            if (existingClient) {
+            if (existingClient && !clientFetchError) {
                 clientId = existingClient.id;
                 console.log('✅ Existing client ID:', clientId);
             } else {
-                // Create client record
-                console.log('➕ Creating new client record...');
-                const { data: newClient, error: createError } = await window.supabaseClient
+                // Use upsert to create or update client record
+                // This handles the case where record exists but RLS prevented us from seeing it
+                console.log('➕ Upserting client record...');
+
+                const clientData = {
+                    user_id: session.user.id,
+                    full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+                    email: session.user.email,
+                    phone: session.user.user_metadata?.phone || null,
+                    updated_at: new Date().toISOString()
+                };
+
+                const { data: upsertedClient, error: upsertError } = await window.supabaseClient
                     .from('cs_clients')
-                    .insert([{
-                        user_id: session.user.id,
-                        full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-                        email: session.user.email,
-                        phone: session.user.user_metadata?.phone || null
-                    }])
-                    .select()
+                    .upsert(clientData, {
+                        onConflict: 'user_id', // Use user_id as the conflict target
+                        ignoreDuplicates: false // Update if exists
+                    })
+                    .select('id')
                     .single();
 
-                if (createError) {
-                    console.error('❌ Error creating client:', createError);
-                    throw new Error('Failed to create client profile. Please make sure the cs_clients table exists and has proper RLS policies.');
-                }
+                if (upsertError) {
+                    console.error('❌ Error upserting client:', upsertError);
 
-                clientId = newClient.id;
-                console.log('✅ New client ID:', clientId);
+                    // If upsert failed, try one more time to fetch
+                    console.log('⚠️ Upsert failed, trying final fetch...');
+                    const { data: finalClient, error: finalError } = await window.supabaseClient
+                        .from('cs_clients')
+                        .select('id')
+                        .eq('user_id', session.user.id)
+                        .maybeSingle();
+
+                    if (finalClient) {
+                        clientId = finalClient.id;
+                        console.log('✅ Found client on final fetch:', clientId);
+                    } else {
+                        console.error('❌ Final fetch failed:', finalError);
+                        throw new Error(`Cannot access or create client profile. Error: ${upsertError.message || 'Unknown error'}. Please check database setup.`);
+                    }
+                } else {
+                    clientId = upsertedClient.id;
+                    console.log('✅ Client ID from upsert:', clientId);
+                }
             }
 
             // Check if coach has auto-accept enabled
