@@ -746,7 +746,7 @@ const CoachOnboarding = ({ session }) => {
     return html`
         <div style=${{
             minHeight: '100vh',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #006266 0%, #004A4D 100%)',
             padding: '40px 20px',
             display: 'flex',
             alignItems: 'center',
@@ -785,14 +785,14 @@ const CoachOnboarding = ({ session }) => {
                             width: '40px',
                             height: '4px',
                             borderRadius: '2px',
-                            background: step >= 1 ? '#667eea' : '#E5E7EB',
+                            background: step >= 1 ? '#006266' : '#E5E7EB',
                             transition: 'all 0.3s'
                         }}></div>
                         <div style=${{
                             width: '40px',
                             height: '4px',
                             borderRadius: '2px',
-                            background: step >= 2 ? '#667eea' : '#E5E7EB',
+                            background: step >= 2 ? '#006266' : '#E5E7EB',
                             transition: 'all 0.3s'
                         }}></div>
                     </div>
@@ -826,7 +826,7 @@ const CoachOnboarding = ({ session }) => {
                                     style=${inputStyle}
                                     value=${formData.full_name}
                                     onChange=${(e) => handleChange('full_name', e.target.value)}
-                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onFocus=${(e) => e.target.style.borderColor = '#006266'}
                                     onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                     required
                                 />
@@ -840,7 +840,7 @@ const CoachOnboarding = ({ session }) => {
                                     placeholder="e.g., Life Coach, Business Consultant"
                                     value=${formData.title}
                                     onChange=${(e) => handleChange('title', e.target.value)}
-                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onFocus=${(e) => e.target.style.borderColor = '#006266'}
                                     onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                     required
                                 />
@@ -853,7 +853,7 @@ const CoachOnboarding = ({ session }) => {
                                     placeholder="Share your coaching philosophy, experience, and approach..."
                                     value=${formData.bio}
                                     onChange=${(e) => handleChange('bio', e.target.value)}
-                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onFocus=${(e) => e.target.style.borderColor = '#006266'}
                                     onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                     required
                                 ></textarea>
@@ -870,7 +870,7 @@ const CoachOnboarding = ({ session }) => {
                                         step="1"
                                         value=${formData.hourly_rate}
                                         onChange=${(e) => handleChange('hourly_rate', e.target.value)}
-                                        onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                        onFocus=${(e) => e.target.style.borderColor = '#006266'}
                                         onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                         required
                                     />
@@ -884,7 +884,7 @@ const CoachOnboarding = ({ session }) => {
                                         placeholder="e.g., Zurich"
                                         value=${formData.location}
                                         onChange=${(e) => handleChange('location', e.target.value)}
-                                        onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                        onFocus=${(e) => e.target.style.borderColor = '#006266'}
                                         onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                     />
                                 </div>
@@ -912,14 +912,14 @@ const CoachOnboarding = ({ session }) => {
                                 type="submit"
                                 style=${{
                                     padding: '14px 32px',
-                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                    background: 'linear-gradient(135deg, #006266 0%, #004A4D 100%)',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: '10px',
                                     fontSize: '15px',
                                     fontWeight: '600',
                                     cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+                                    boxShadow: '0 4px 12px rgba(0, 98, 102, 0.4)'
                                 }}
                             >
                                 Next Step →
@@ -938,7 +938,7 @@ const CoachOnboarding = ({ session }) => {
                                     placeholder="Life Coaching, Business Strategy, Leadership"
                                     value=${formData.specialties}
                                     onChange=${(e) => handleChange('specialties', e.target.value)}
-                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onFocus=${(e) => e.target.style.borderColor = '#006266'}
                                     onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                     required
                                 />
@@ -955,7 +955,7 @@ const CoachOnboarding = ({ session }) => {
                                     placeholder="en, de, es"
                                     value=${formData.languages}
                                     onChange=${(e) => handleChange('languages', e.target.value)}
-                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onFocus=${(e) => e.target.style.borderColor = '#006266'}
                                     onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                     required
                                 />
@@ -1014,7 +1014,7 @@ const CoachOnboarding = ({ session }) => {
                                     placeholder="https://example.com/photo.jpg"
                                     value=${formData.avatar_url}
                                     onChange=${(e) => handleChange('avatar_url', e.target.value)}
-                                    onFocus=${(e) => e.target.style.borderColor = '#667eea'}
+                                    onFocus=${(e) => e.target.style.borderColor = '#006266'}
                                     onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                 />
                                 <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
@@ -1047,14 +1047,14 @@ const CoachOnboarding = ({ session }) => {
                                 disabled=${loading}
                                 style=${{
                                     padding: '14px 32px',
-                                    background: loading ? '#9CA3AF' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                    background: loading ? '#9CA3AF' : 'linear-gradient(135deg, #006266 0%, #004A4D 100%)',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: '10px',
                                     fontSize: '15px',
                                     fontWeight: '600',
                                     cursor: loading ? 'not-allowed' : 'pointer',
-                                    boxShadow: loading ? 'none' : '0 4px 12px rgba(102, 126, 234, 0.4)',
+                                    boxShadow: loading ? 'none' : '0 4px 12px rgba(0, 98, 102, 0.4)',
                                     flex: 2
                                 }}
                             >
