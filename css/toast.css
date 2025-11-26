@@ -1,0 +1,453 @@
+/* ============================================
+   TOAST NOTIFICATION SYSTEM
+   Modern, accessible, animated
+   ============================================ */
+
+/* ============================================
+   TOAST CONTAINER
+   ============================================ */
+
+.toast-container {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 420px;
+    width: 100%;
+    pointer-events: none;
+}
+
+/* ============================================
+   INDIVIDUAL TOAST
+   ============================================ */
+
+.toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    border-left: 4px solid var(--toast-color, #6b7280);
+    pointer-events: auto;
+    animation: toastSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(calc(100% + 1.5rem));
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast-exit {
+    animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes toastSlideOut {
+    from {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(calc(100% + 1.5rem)) scale(0.95);
+        opacity: 0;
+    }
+}
+
+/* ============================================
+   TOAST TYPES
+   ============================================ */
+
+.toast-success {
+    --toast-color: var(--green-500, #22c55e);
+    background: linear-gradient(135deg, #ffffff, #f0fdf4);
+    border-left-color: var(--green-500, #22c55e);
+}
+
+.toast-error {
+    --toast-color: var(--red-500, #ef4444);
+    background: linear-gradient(135deg, #ffffff, #fef2f2);
+    border-left-color: var(--red-500, #ef4444);
+}
+
+.toast-warning {
+    --toast-color: var(--yellow-500, #eab308);
+    background: linear-gradient(135deg, #ffffff, #fefce8);
+    border-left-color: var(--yellow-500, #eab308);
+}
+
+.toast-info {
+    --toast-color: var(--blue-500, #3b82f6);
+    background: linear-gradient(135deg, #ffffff, #eff6ff);
+    border-left-color: var(--blue-500, #3b82f6);
+}
+
+/* ============================================
+   TOAST ICON
+   ============================================ */
+
+.toast-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: iconBounce 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* ============================================
+   TOAST CONTENT
+   ============================================ */
+
+.toast-content {
+    flex: 1;
+    padding-top: 0.125rem; /* Align with icon */
+}
+
+.toast-message {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--gray-800, #1f2937);
+    font-weight: 500;
+}
+
+/* ============================================
+   TOAST CLOSE BUTTON
+   ============================================ */
+
+.toast-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--gray-500, #9ca3af);
+    font-size: 1.125rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.toast-close:hover {
+    background: var(--gray-100, #f3f4f6);
+    color: var(--gray-700, #374151);
+    transform: scale(1.1);
+}
+
+.toast-close:active {
+    transform: scale(0.95);
+}
+
+/* ============================================
+   TOAST PROGRESS BAR
+   ============================================ */
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gray-200, #e5e7eb);
+    overflow: hidden;
+}
+
+.toast-progress-bar {
+    height: 100%;
+    background: var(--toast-color, #6b7280);
+    transition: width 0.05s linear;
+    box-shadow: 0 0 10px var(--toast-color, #6b7280);
+}
+
+/* ============================================
+   SPINNER (for loading toasts)
+   ============================================ */
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-top-color: var(--blue-500, #3b82f6);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   NOTIFICATION BANNER (persistent)
+   ============================================ */
+
+.notification-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    border-left: 4px solid var(--banner-color, #6b7280);
+    margin: 1rem 0;
+    animation: bannerSlideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes bannerSlideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.notification-banner-success {
+    --banner-color: var(--green-500, #22c55e);
+    background: linear-gradient(135deg, #f0fdf4, #ffffff);
+    border-left-color: var(--green-500, #22c55e);
+}
+
+.notification-banner-error {
+    --banner-color: var(--red-500, #ef4444);
+    background: linear-gradient(135deg, #fef2f2, #ffffff);
+    border-left-color: var(--red-500, #ef4444);
+}
+
+.notification-banner-warning {
+    --banner-color: var(--yellow-500, #eab308);
+    background: linear-gradient(135deg, #fefce8, #ffffff);
+    border-left-color: var(--yellow-500, #eab308);
+}
+
+.notification-banner-info {
+    --banner-color: var(--blue-500, #3b82f6);
+    background: linear-gradient(135deg, #eff6ff, #ffffff);
+    border-left-color: var(--blue-500, #3b82f6);
+}
+
+.notification-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.notification-banner-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.notification-banner-message {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--gray-800, #1f2937);
+    font-weight: 500;
+}
+
+.notification-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.notification-banner-action {
+    padding: 0.5rem 1rem;
+    background: var(--banner-color, #6b7280);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.notification-banner-action:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.notification-banner-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--gray-500, #9ca3af);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.notification-banner-close:hover {
+    background: var(--gray-100, #f3f4f6);
+    color: var(--gray-700, #374151);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .toast-container {
+        top: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: none;
+    }
+
+    .toast {
+        width: 100%;
+    }
+
+    @keyframes toastSlideIn {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes toastSlideOut {
+        from {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-20px) scale(0.95);
+            opacity: 0;
+        }
+    }
+
+    .notification-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .notification-banner-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .notification-banner-action {
+        flex: 1;
+    }
+}
+
+/* ============================================
+   DARK MODE SUPPORT (optional)
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+    .toast,
+    .notification-banner {
+        background: var(--gray-800, #1f2937);
+        box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.4);
+    }
+
+    .toast-success {
+        background: linear-gradient(135deg, #1f2937, #064e3b);
+    }
+
+    .toast-error {
+        background: linear-gradient(135deg, #1f2937, #7f1d1d);
+    }
+
+    .toast-warning {
+        background: linear-gradient(135deg, #1f2937, #713f12);
+    }
+
+    .toast-info {
+        background: linear-gradient(135deg, #1f2937, #1e3a8a);
+    }
+
+    .toast-message,
+    .notification-banner-message {
+        color: var(--gray-100, #f3f4f6);
+    }
+
+    .toast-close,
+    .notification-banner-close {
+        color: var(--gray-400, #9ca3af);
+    }
+
+    .toast-close:hover,
+    .notification-banner-close:hover {
+        background: var(--gray-700, #374151);
+        color: var(--gray-200, #e5e7eb);
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .toast,
+    .toast-exit,
+    .notification-banner,
+    .toast-icon {
+        animation: none;
+    }
+
+    .toast-progress-bar {
+        transition: none;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .toast,
+    .notification-banner {
+        border: 2px solid currentColor;
+    }
+
+    .toast-close,
+    .notification-banner-close {
+        border: 1px solid currentColor;
+    }
+}
+
+/* Focus visible for keyboard navigation */
+.toast-close:focus-visible,
+.notification-banner-close:focus-visible,
+.notification-banner-action:focus-visible {
+    outline: 2px solid var(--primary-petrol, #006266);
+    outline-offset: 2px;
+}
