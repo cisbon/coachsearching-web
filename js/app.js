@@ -2123,6 +2123,12 @@ const DashboardProfile = ({ session, userType }) => {
 
             if (error) {
                 console.error('Upload error:', error);
+
+                // Check if it's a bucket not found error
+                if (error.message && error.message.includes('Bucket not found')) {
+                    throw new Error('Storage bucket "profile-images" does not exist. Please create it in Supabase Dashboard → Storage → New Bucket. See SUPABASE_SETUP_GUIDE.md for instructions.');
+                }
+
                 throw error;
             }
 
