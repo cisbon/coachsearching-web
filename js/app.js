@@ -1508,8 +1508,8 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
                 const { data, error } = await window.supabaseClient
                     .from('cs_articles')
                     .select('*')
-                    .eq('coach_id', coach.user_id || coach.id)
-                    .eq('is_published', true)
+                    .eq('coach_id', coach.id)
+                    .eq('status', 'published')
                     .order('created_at', { ascending: false })
                     .limit(5);
 
@@ -1599,7 +1599,7 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
                                     >
                                         <h4 class="coach-article-title">${article.title}</h4>
                                         <p class="coach-article-excerpt">
-                                            ${article.excerpt || article.content.substring(0, 120) + '...'}
+                                            ${article.excerpt || (article.content_html ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 120) + '...' : '')}
                                         </p>
                                         <div class="coach-article-meta">
                                             <span>📅 ${new Date(article.created_at).toLocaleDateString()}</span>
@@ -1627,7 +1627,7 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
                             </div>
                             <div
                                 class="article-detail-body"
-                                dangerouslySetInnerHTML=${{ __html: markdownToHTML(selectedArticle.content) }}
+                                dangerouslySetInnerHTML=${{ __html: selectedArticle.content_html || '' }}
                             />
                         </div>
                     </div>
@@ -2640,14 +2640,23 @@ const DashboardArticles = ({ session }) => {
         setLoading(true);
         try {
             if (window.supabaseClient && session) {
-                const { data, error } = await window.supabaseClient
-                    .from('cs_articles')
-                    .select('*')
-                    .eq('coach_id', session.user.id)
-                    .order('created_at', { ascending: false });
+                // First get coach_id from cs_coaches table
+                const { data: coachData } = await window.supabaseClient
+                    .from('cs_coaches')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .single();
 
-                if (!error && data) {
-                    setArticles(data);
+                if (coachData) {
+                    const { data, error } = await window.supabaseClient
+                        .from('cs_articles')
+                        .select('*')
+                        .eq('coach_id', coachData.id)
+                        .order('created_at', { ascending: false });
+
+                    if (!error && data) {
+                        setArticles(data);
+                    }
                 }
             }
         } catch (error) {
@@ -2684,9 +2693,10 @@ const DashboardArticles = ({ session }) => {
 
     const handleTogglePublish = async (article) => {
         try {
+            const newStatus = article.status === 'published' ? 'draft' : 'published';
             const { error } = await window.supabaseClient
                 .from('cs_articles')
-                .update({ is_published: !article.is_published })
+                .update({ status: newStatus })
                 .eq('id', article.id);
 
             if (!error) {
@@ -2755,8 +2765,8 @@ const DashboardArticles = ({ session }) => {
                             <div class="article-card-header">
                                 <div class="article-card-title">
                                     <h4>${article.title}</h4>
-                                    <span class="status-badge ${article.is_published ? 'status-confirmed' : 'status-pending'}">
-                                        ${article.is_published ? '✓ Published' : '📝 Draft'}
+                                    <span class="status-badge ${article.status === 'published' ? 'status-confirmed' : 'status-pending'}">
+                                        ${article.status === 'published' ? '✓ Published' : '📝 Draft'}
                                     </span>
                                 </div>
                                 <div class="article-card-meta">
@@ -2768,7 +2778,7 @@ const DashboardArticles = ({ session }) => {
                             </div>
 
                             <div class="article-card-excerpt">
-                                ${article.excerpt || article.content.substring(0, 150) + '...'}
+                                ${article.excerpt || (article.content_html ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : '')}
                             </div>
 
                             <div class="article-card-actions">
@@ -2776,10 +2786,10 @@ const DashboardArticles = ({ session }) => {
                                     ✏️ Edit
                                 </button>
                                 <button
-                                    class="btn-small ${article.is_published ? 'btn-secondary' : 'btn-primary'}"
+                                    class="btn-small ${article.status === 'published' ? 'btn-secondary' : 'btn-primary'}"
                                     onClick=${() => handleTogglePublish(article)}
                                 >
-                                    ${article.is_published ? '📥 Unpublish' : '🚀 Publish'}
+                                    ${article.status === 'published' ? '📥 Unpublish' : '🚀 Publish'}
                                 </button>
                                 <button class="btn-small btn-danger" onClick=${() => handleDelete(article.id)}>
                                     🗑️ Delete
@@ -2795,66 +2805,54 @@ const DashboardArticles = ({ session }) => {
 
 const ArticleEditor = ({ session, article, onClose }) => {
     const [title, setTitle] = useState(article?.title || '');
-    const [content, setContent] = useState(article?.content || '');
     const [excerpt, setExcerpt] = useState(article?.excerpt || '');
-    const [showPreview, setShowPreview] = useState(false);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
-    const textareaRef = useRef(null);
+    const editorRef = useRef(null);
 
-    const insertFormatting = (before, after = '') => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
+    // Initialize WYSIWYG editor content
+    useEffect(() => {
+        if (editorRef.current && article?.content_html) {
+            editorRef.current.innerHTML = article.content_html;
+        }
+    }, [article]);
 
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selectedText = content.substring(start, end);
-        const newText = content.substring(0, start) + before + selectedText + after + content.substring(end);
-
-        setContent(newText);
-
-        // Set cursor position after insertion
-        setTimeout(() => {
-            textarea.focus();
-            const newCursorPos = start + before.length + selectedText.length + after.length;
-            textarea.setSelectionRange(newCursorPos, newCursorPos);
-        }, 0);
+    // WYSIWYG formatting functions using contenteditable
+    const formatBold = () => {
+        document.execCommand('bold', false, null);
+        editorRef.current?.focus();
     };
 
-    const formatBold = () => insertFormatting('**', '**');
-    const formatItalic = () => insertFormatting('*', '*');
+    const formatItalic = () => {
+        document.execCommand('italic', false, null);
+        editorRef.current?.focus();
+    };
+
     const formatHeading2 = () => {
-        const textarea = textareaRef.current;
-        const start = textarea.selectionStart;
-        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
-        const newText = content.substring(0, lineStart) + '## ' + content.substring(lineStart);
-        setContent(newText);
+        document.execCommand('formatBlock', false, '<h2>');
+        editorRef.current?.focus();
     };
+
     const formatHeading3 = () => {
-        const textarea = textareaRef.current;
-        const start = textarea.selectionStart;
-        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
-        const newText = content.substring(0, lineStart) + '### ' + content.substring(lineStart);
-        setContent(newText);
+        document.execCommand('formatBlock', false, '<h3>');
+        editorRef.current?.focus();
     };
+
     const formatBulletList = () => {
-        const textarea = textareaRef.current;
-        const start = textarea.selectionStart;
-        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
-        const newText = content.substring(0, lineStart) + '- ' + content.substring(lineStart);
-        setContent(newText);
+        document.execCommand('insertUnorderedList', false, null);
+        editorRef.current?.focus();
     };
+
     const formatNumberedList = () => {
-        const textarea = textareaRef.current;
-        const start = textarea.selectionStart;
-        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
-        const newText = content.substring(0, lineStart) + '1. ' + content.substring(lineStart);
-        setContent(newText);
+        document.execCommand('insertOrderedList', false, null);
+        editorRef.current?.focus();
     };
+
     const formatLink = () => {
         const url = prompt('Enter URL:');
         if (url) {
-            insertFormatting('[', `](${url})`);
+            document.execCommand('createLink', false, url);
+            editorRef.current?.focus();
         }
     };
 
@@ -2865,7 +2863,10 @@ const ArticleEditor = ({ session, article, onClose }) => {
             return;
         }
 
-        if (!content.trim()) {
+        const contentHTML = editorRef.current?.innerHTML || '';
+        const plainText = editorRef.current?.innerText || '';
+
+        if (!plainText.trim()) {
             setMessage('Error: Please enter content');
             setTimeout(() => setMessage(''), 3000);
             return;
@@ -2875,18 +2876,43 @@ const ArticleEditor = ({ session, article, onClose }) => {
         setMessage('');
 
         try {
+            console.log('💾 Starting article save...');
+
+            // Generate slug from title
+            const slug = title.toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+
+            // Get coach_id from cs_coaches table
+            console.log('📋 Fetching coach data for user:', session.user.id);
+            const { data: coachData, error: coachError } = await window.supabaseClient
+                .from('cs_coaches')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .single();
+
+            if (coachError) {
+                console.error('❌ Coach fetch error:', coachError);
+                throw new Error('Coach profile not found. Please complete your profile first.');
+            }
+
+            console.log('✅ Coach ID:', coachData.id);
+
             const articleData = {
-                coach_id: session.user.id,
+                coach_id: coachData.id,
                 title: title.trim(),
-                content: content.trim(),
-                excerpt: excerpt.trim() || content.trim().substring(0, 200),
-                is_published: publishNow,
-                tags: [] // Can be enhanced later
+                slug: slug || 'untitled',
+                content_html: contentHTML,
+                excerpt: excerpt.trim() || plainText.substring(0, 200),
+                status: publishNow ? 'published' : 'draft',
             };
+
+            console.log('📝 Article data prepared:', { ...articleData, content_html: contentHTML.substring(0, 100) + '...' });
 
             let result;
             if (article?.id) {
                 // Update existing article
+                console.log('🔄 Updating existing article:', article.id);
                 result = await window.supabaseClient
                     .from('cs_articles')
                     .update(articleData)
@@ -2894,6 +2920,7 @@ const ArticleEditor = ({ session, article, onClose }) => {
                     .select();
             } else {
                 // Create new article
+                console.log('➕ Creating new article');
                 result = await window.supabaseClient
                     .from('cs_articles')
                     .insert([articleData])
@@ -2901,9 +2928,11 @@ const ArticleEditor = ({ session, article, onClose }) => {
             }
 
             if (result.error) {
+                console.error('❌ Supabase error:', result.error);
                 throw result.error;
             }
 
+            console.log('✅ Article saved successfully!', result.data);
             setMessage(publishNow ? '✓ Article published successfully!' : '✓ Article saved as draft!');
             setTimeout(() => {
                 setMessage('');
@@ -2911,14 +2940,12 @@ const ArticleEditor = ({ session, article, onClose }) => {
             }, 1500);
 
         } catch (error) {
-            console.error('Failed to save article:', error);
+            console.error('❌ Failed to save article:', error);
             setMessage('Error: ' + error.message);
         } finally {
             setSaving(false);
         }
     };
-
-    const previewHTML = markdownToHTML(content);
 
     return html`
         <div class="article-editor-modern">
@@ -3016,42 +3043,15 @@ const ArticleEditor = ({ session, article, onClose }) => {
                         </button>
                     </div>
 
-                    <div class="toolbar-spacer"></div>
-
-                    <button
-                        class="toolbar-btn ${showPreview ? 'active' : ''}"
-                        onClick=${() => setShowPreview(!showPreview)}
-                    >
-                        ${showPreview ? '✏️ Edit' : '👁️ Preview'}
-                    </button>
                 </div>
 
-                <!-- Editor / Preview Toggle -->
-                ${!showPreview ? html`
-                    <textarea
-                        ref=${textareaRef}
-                        class="editor-textarea"
-                        placeholder="Write your article content here...
-
-You can use formatting:
-- **bold text**
-- *italic text*
-- ## Headings
-- - Bullet points
-- 1. Numbered lists
-- [links](https://example.com)"
-                        value=${content}
-                        onChange=${(e) => setContent(e.target.value)}
-                    />
-                ` : html`
-                    <div class="editor-preview">
-                        <div class="preview-header">
-                            <h2>${title || 'Untitled Article'}</h2>
-                            ${excerpt && html`<p class="preview-excerpt">${excerpt}</p>`}
-                        </div>
-                        <div class="preview-content" dangerouslySetInnerHTML=${{ __html: previewHTML }} />
-                    </div>
-                `}
+                <!-- WYSIWYG Editor -->
+                <div
+                    ref=${editorRef}
+                    class="wysiwyg-editor"
+                    contenteditable="true"
+                    placeholder="Start writing your article here... Use the toolbar above to format your text."
+                ></div>
 
                 <!-- Action Buttons -->
                 <div class="editor-actions">
