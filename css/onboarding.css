@@ -10,9 +10,12 @@
 
 .onboarding-container,
 .welcome-screen {
+    /* Main petrol colors */
     --petrol-primary: #006266;
     --petrol-light: #4FCBCE;
     --petrol-dark: #004A4D;
+
+    /* Petrol shades */
     --petrol-50: #e6f3f3;
     --petrol-100: #cce7e8;
     --petrol-200: #99cfcf;
@@ -23,6 +26,18 @@
     --petrol-700: #00484a;
     --petrol-800: #003a3c;
     --petrol-900: #002d2e;
+
+    /* Shadow colors (petrol-based) */
+    --shadow-petrol-sm: 0 4px 12px #00626640;
+    --shadow-petrol-md: 0 4px 20px #00626615;
+    --shadow-petrol-lg: 0 6px 16px #00626650;
+    --shadow-petrol-xl: 0 8px 24px #0062661a;
+
+    /* Overlay colors */
+    --overlay-petrol: #006266b3;
+    --overlay-white: #ffffffe6;
+    --overlay-white-light: #ffffff33;
+    --overlay-white-medium: #ffffff66;
 }
 
 /* ============================================
@@ -91,7 +106,7 @@
     background: var(--petrol-primary);
     border-color: var(--petrol-primary);
     color: white;
-    box-shadow: 0 4px 12px rgba(0, 98, 102, 0.3);
+    box-shadow: var(--shadow-petrol-sm);
 }
 
 .progress-step.completed .step-indicator {
@@ -141,7 +156,7 @@
     border-radius: 20px;
     padding: 3rem;
     margin-bottom: 2rem;
-    box-shadow: 0 4px 20px rgba(0, 98, 102, 0.08);
+    box-shadow: var(--shadow-petrol-md);
     animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -199,13 +214,13 @@
 .btn-primary {
     background: var(--petrol-primary);
     color: white;
-    box-shadow: 0 4px 12px rgba(0, 98, 102, 0.25);
+    box-shadow: var(--shadow-petrol-sm);
 }
 
 .btn-primary:hover:not(:disabled) {
     background: var(--petrol-dark);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 98, 102, 0.35);
+    box-shadow: var(--shadow-petrol-lg);
 }
 
 .btn-primary:disabled {
@@ -311,7 +326,7 @@
 .welcome-feature:hover {
     border-color: var(--petrol-light);
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 98, 102, 0.1);
+    box-shadow: var(--shadow-petrol-xl);
 }
 
 .welcome-feature-icon {
@@ -469,7 +484,7 @@
 .preview-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 98, 102, 0.7);
+    background: var(--overlay-petrol);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -490,7 +505,7 @@
 .upload-loading {
     position: absolute;
     inset: 0;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--overlay-white);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -543,7 +558,7 @@
 .language-flag-btn.selected {
     border-color: var(--petrol-primary);
     background: var(--petrol-50);
-    box-shadow: 0 4px 12px rgba(0, 98, 102, 0.15);
+    box-shadow: var(--shadow-petrol-sm);
 }
 
 .flag-emoji {
@@ -621,7 +636,7 @@
     justify-content: center;
     width: 18px;
     height: 18px;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--overlay-white-light);
     border: none;
     border-radius: 50%;
     color: white;
@@ -632,7 +647,7 @@
 }
 
 .pill-remove:hover {
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--overlay-white-medium);
 }
 
 .pill-input {
@@ -748,7 +763,7 @@
 .format-card.selected {
     border-color: var(--petrol-primary);
     background: var(--petrol-50);
-    box-shadow: 0 4px 16px rgba(0, 98, 102, 0.15);
+    box-shadow: var(--shadow-petrol-sm);
 }
 
 .format-icon {
@@ -909,7 +924,7 @@
     background: var(--petrol-50);
     border-color: var(--petrol-light);
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 98, 102, 0.12);
+    box-shadow: var(--shadow-petrol-xl);
 }
 
 .goal-card.selected,
@@ -917,7 +932,7 @@
     background: linear-gradient(135deg, var(--petrol-50), var(--petrol-100));
     border-color: var(--petrol-primary);
     border-width: 3px;
-    box-shadow: 0 4px 16px rgba(0, 98, 102, 0.2);
+    box-shadow: var(--shadow-petrol-sm);
 }
 
 .goal-icon {
@@ -1112,7 +1127,7 @@
 .next-step-card:hover {
     border-color: var(--petrol-light);
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 98, 102, 0.1);
+    box-shadow: var(--shadow-petrol-xl);
 }
 
 .next-step-icon {
