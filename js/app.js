@@ -1170,71 +1170,42 @@ const CoachList = ({ searchFilters, session }) => {
         return coaches;
     }, [searchFilters, coaches]);
 
-    // Load coaches from API (memoized to prevent unnecessary re-creations)
+    // Load coaches from Supabase directly
     const loadCoaches = useCallback(async () => {
-            console.log('🔍 [COACH DEBUG] Loading coaches from API...');
-            console.log('🔍 [COACH DEBUG] API endpoint:', API_BASE + '/coaches');
+            console.log('🔍 Loading coaches from database...');
             setLoading(true);
 
             let loadedSuccessfully = false;
 
-            // Try 1: Load from PHP API
-            try {
-                const response = await fetch(API_BASE + '/coaches');
-                console.log('🔍 [COACH DEBUG] API Response status:', response.status);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('🔍 [COACH DEBUG] API response:', JSON.stringify(data, null, 2));
-
-                    if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-                        console.log('✅ [COACH DEBUG] Loaded', data.data.length, 'coaches from API');
-                        setCoaches(data.data);
-                        loadedSuccessfully = true;
-                    } else if (data.coaches && Array.isArray(data.coaches) && data.coaches.length > 0) {
-                        console.log('✅ [COACH DEBUG] Loaded', data.coaches.length, 'coaches from API (.coaches)');
-                        setCoaches(data.coaches);
-                        loadedSuccessfully = true;
-                    }
-                } else {
-                    console.warn('⚠️ [COACH DEBUG] API returned', response.status, '- will try Supabase directly');
-                }
-            } catch (error) {
-                console.warn('⚠️ [COACH DEBUG] API fetch failed:', error.message);
-            }
-
-            // Try 2: Load directly from Supabase if API failed
-            if (!loadedSuccessfully && window.supabaseClient) {
+            // Load directly from Supabase
+            if (window.supabaseClient) {
                 try {
-                    console.log('🔍 [COACH DEBUG] Trying direct Supabase query...');
                     const { data: supabaseCoaches, error } = await window.supabaseClient
                         .from('cs_coaches')
                         .select('*')
                         .order('created_at', { ascending: false });
 
                     if (error) {
-                        console.error('❌ [COACH DEBUG] Supabase error:', error);
+                        console.error('❌ Error loading coaches:', error);
                     } else if (supabaseCoaches && supabaseCoaches.length > 0) {
-                        console.log('✅ [COACH DEBUG] Loaded', supabaseCoaches.length, 'coaches from Supabase directly!');
-                        console.log('🔍 [COACH DEBUG] Coach names:', supabaseCoaches.map(c => c.full_name));
+                        console.log('✅ Loaded', supabaseCoaches.length, 'coaches');
                         setCoaches(supabaseCoaches);
                         loadedSuccessfully = true;
                     } else {
-                        console.warn('⚠️ [COACH DEBUG] Supabase returned no coaches');
+                        console.log('ℹ️ No coaches found in database');
                     }
                 } catch (error) {
-                    console.error('❌ [COACH DEBUG] Supabase query failed:', error);
+                    console.error('❌ Failed to load coaches:', error);
                 }
             }
 
-            // Try 3: Fall back to mock data
+            // Fall back to mock data if needed
             if (!loadedSuccessfully) {
-                console.warn('⚠️ [COACH DEBUG] Using mock data as fallback');
+                console.log('ℹ️ Using mock data');
                 setCoaches(mockCoaches);
             }
 
             setLoading(false);
-            console.log('🔍 [COACH DEBUG] Loading complete');
     }, []);
 
     useEffect(() => {
@@ -5106,6 +5077,114 @@ const CoachEarningsDashboard = ({ session }) => {
     `;
 };
 
+// =====================================================
+// EMAIL VERIFICATION BANNER
+// =====================================================
+
+const EmailVerificationBanner = ({ session }) => {
+    const [dismissed, setDismissed] = useState(false);
+    const [resending, setResending] = useState(false);
+    const [resent, setResent] = useState(false);
+
+    // Don't show if no session, email is verified, or user dismissed it
+    if (!session || session.user?.email_confirmed_at || dismissed) {
+        return null;
+    }
+
+    // Mask email for privacy (e.g., m*****@c****.com)
+    const maskEmail = (email) => {
+        if (!email) return '';
+        const [localPart, domain] = email.split('@');
+        if (!localPart || !domain) return email;
+
+        const maskedLocal = localPart.charAt(0) + '*****';
+        const [domainName, tld] = domain.split('.');
+        const maskedDomain = domainName.charAt(0) + '****' + (tld ? '.' + tld : '');
+
+        return `${maskedLocal}@${maskedDomain}`;
+    };
+
+    const handleResendVerification = async () => {
+        if (!window.supabaseClient) return;
+
+        setResending(true);
+        try {
+            const { error } = await window.supabaseClient.auth.resend({
+                type: 'signup',
+                email: session.user.email
+            });
+
+            if (error) {
+                console.error('Failed to resend verification email:', error);
+                alert('Failed to resend verification email. Please try again later.');
+            } else {
+                setResent(true);
+                setTimeout(() => setResent(false), 5000);
+            }
+        } catch (error) {
+            console.error('Error resending verification email:', error);
+        } finally {
+            setResending(false);
+        }
+    };
+
+    return html`
+        <div style=${{
+            background: 'linear-gradient(90deg, #FEF3C7 0%, #FDE68A 100%)',
+            borderBottom: '1px solid #F59E0B',
+            padding: '12px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            fontSize: '14px',
+            color: '#92400E'
+        }}>
+            <span style=${{ fontSize: '18px' }}>⚠️</span>
+            <span>
+                Please verify your email address: <strong>${maskEmail(session.user.email)}</strong>
+            </span>
+            <button
+                onClick=${handleResendVerification}
+                disabled=${resending || resent}
+                style=${{
+                    background: resent ? '#10B981' : '#F59E0B',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    cursor: resending || resent ? 'not-allowed' : 'pointer',
+                    fontWeight: '500',
+                    transition: 'all 0.2s',
+                    opacity: resending ? 0.7 : 1
+                }}
+            >
+                ${resent ? '✓ Sent!' : resending ? 'Sending...' : 'Resend Email'}
+            </button>
+            <button
+                onClick=${() => setDismissed(true)}
+                style=${{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#92400E',
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    padding: '0 8px',
+                    lineHeight: 1
+                }}
+                title="Dismiss"
+            >
+                ×
+            </button>
+        </div>
+    `;
+};
+
+// =====================================================
+// ERROR BOUNDARY
+// =====================================================
+
 // Error Boundary Component (must be a class component)
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -5290,6 +5369,7 @@ const App = () => {
     return html`
         <div style=${{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <${Navbar} session=${session} />
+            <${EmailVerificationBanner} session=${session} />
             <div style=${{ flex: 1 }}>
                 <${Component} />
             </div>
