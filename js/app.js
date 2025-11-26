@@ -1153,7 +1153,7 @@ const CoachList = ({ searchFilters, session }) => {
                 try {
                     console.log('🔍 [COACH DEBUG] Trying direct Supabase query...');
                     const { data: supabaseCoaches, error } = await window.supabaseClient
-                        .from('coaches')
+                        .from('cs_coaches')
                         .select('*')
                         .order('created_at', { ascending: false });
 
@@ -2203,7 +2203,7 @@ const DashboardProfile = ({ session, userType }) => {
         try {
             console.log('📋 [PROFILE DEBUG] Querying Supabase for coach profile...');
             const { data: coach, error } = await window.supabaseClient
-                .from('coaches')
+                .from('cs_coaches')
                 .select('*')
                 .eq('user_id', session.user.id)
                 .single();
@@ -2374,7 +2374,7 @@ const DashboardProfile = ({ session, userType }) => {
             if (!savedSuccessfully) {
                 console.log('💾 [SAVE DEBUG] Trying to save via Supabase...');
                 const { data, error } = await window.supabaseClient
-                    .from('coaches')
+                    .from('cs_coaches')
                     .upsert(profileData, {
                         onConflict: 'user_id'
                     })
