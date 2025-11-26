@@ -3572,7 +3572,8 @@ const DashboardProfile = ({ session, userType }) => {
         specialties: '',
         languages: '',
         session_types_online: true,
-        session_types_onsite: false
+        session_types_onsite: false,
+        auto_accept_bookings: false
     });
 
     // Load coach profile if coach
@@ -3607,7 +3608,8 @@ const DashboardProfile = ({ session, userType }) => {
                         specialties: coach.specialties?.join(', ') || '',
                         languages: coach.languages?.join(', ') || '',
                         session_types_online: coach.session_types?.includes('online') || true,
-                        session_types_onsite: coach.session_types?.includes('onsite') || false
+                        session_types_onsite: coach.session_types?.includes('onsite') || false,
+                        auto_accept_bookings: coach.auto_accept_bookings || false
                     });
                     console.log('✅ [PROFILE DEBUG] Profile loaded from API successfully');
                     return;
@@ -3648,7 +3650,8 @@ const DashboardProfile = ({ session, userType }) => {
                     specialties: coach.specialties?.join(', ') || '',
                     languages: coach.languages?.join(', ') || '',
                     session_types_online: coach.session_types?.includes('online') || true,
-                    session_types_onsite: coach.session_types?.includes('onsite') || false
+                    session_types_onsite: coach.session_types?.includes('onsite') || false,
+                    auto_accept_bookings: coach.auto_accept_bookings || false
                 });
             }
         } catch (error) {
@@ -3755,7 +3758,8 @@ const DashboardProfile = ({ session, userType }) => {
                     currency: formData.currency,
                     specialties: formData.specialties.split(',').map(s => s.trim()).filter(Boolean),
                     languages: formData.languages.split(',').map(s => s.trim()).filter(Boolean),
-                    session_types: sessionTypesArray
+                    session_types: sessionTypesArray,
+                    auto_accept_bookings: formData.auto_accept_bookings
                 });
             }
 
@@ -4035,6 +4039,24 @@ const DashboardProfile = ({ session, userType }) => {
                                 />
                                 <span>📍 On-site Sessions</span>
                             </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="filter-label">Booking Settings</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked=${formData.auto_accept_bookings}
+                                    onChange=${(e) => setFormData({ ...formData, auto_accept_bookings: e.target.checked })}
+                                />
+                                <span>✓ Auto-accept booking requests</span>
+                            </label>
+                        </div>
+                        <div class="form-hint">
+                            When enabled, booking requests will be automatically confirmed.
+                            When disabled, you'll need to manually accept each booking and provide meeting details.
                         </div>
                     </div>
                 `}
