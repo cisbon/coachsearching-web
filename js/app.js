@@ -406,6 +406,15 @@ const Auth = () => {
                 console.log('Sign in result:', result);
             } else {
                 console.log('Attempting sign up as:', userType);
+                console.log('Sign up params:', {
+                    email,
+                    options: {
+                        data: {
+                            user_type: userType,
+                            full_name: email.split('@')[0]
+                        }
+                    }
+                });
                 result = await window.supabaseClient.auth.signUp({
                     email,
                     password,
@@ -417,6 +426,12 @@ const Auth = () => {
                     }
                 });
                 console.log('Sign up result:', result);
+                console.log('Sign up error details:', {
+                    error: result.error,
+                    errorMessage: result.error?.message,
+                    errorStatus: result.error?.status,
+                    errorCode: result.error?.code
+                });
             }
 
             const { data, error } = result;
