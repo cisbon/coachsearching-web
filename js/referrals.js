@@ -1,6 +1,12 @@
-import { html } from 'https://esm.sh/htm/react';
-import { useState, useEffect } from 'react';
-import { supabaseClient } from './config.js';
+import htm from './vendor/htm.js';
+import { t } from './i18n.js';
+
+const React = window.React;
+const { useState, useEffect } = React;
+const html = htm.bind(React.createElement);
+
+// Use the global supabaseClient
+const supabaseClient = window.supabaseClient;
 
 /**
  * Referral Dashboard Component

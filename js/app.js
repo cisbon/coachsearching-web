@@ -10,6 +10,9 @@ const { createClient } = window.supabase;
 import htm from './vendor/htm.js';
 import { initLanguage, t, setLanguage, getCurrentLang } from './i18n.js';
 import { initDebugConsole } from './debugConsole.js';
+import { SessionNotesWizard, SessionNotesDashboard } from './sessionNotes.js';
+import { ReferralDashboard, ReferralWidget } from './referrals.js';
+import { PromoCodeWidget, PromoCodeBanner, PromoCodeManager } from './promoCode.js';
 
 console.log('App.js: React global', React);
 console.log('App.js: ReactDOM global', ReactDOM);
@@ -2126,6 +2129,9 @@ const Dashboard = ({ session }) => {
                     <button class="tab-btn ${activeTab === 'availability' ? 'active' : ''}" onClick=${() => setActiveTab('availability')}>
                         Availability
                     </button>
+                    <button class="tab-btn ${activeTab === 'session_notes' ? 'active' : ''}" onClick=${() => setActiveTab('session_notes')}>
+                        ${t('dashboard.session_notes') || 'Session Notes'}
+                    </button>
                     <button class="tab-btn ${activeTab === 'articles' ? 'active' : ''}" onClick=${() => setActiveTab('articles')}>
                         ${t('dashboard.articles')}
                     </button>
@@ -2133,6 +2139,9 @@ const Dashboard = ({ session }) => {
                         ${t('dashboard.probono')}
                     </button>
                 `}
+                <button class="tab-btn ${activeTab === 'referrals' ? 'active' : ''}" onClick=${() => setActiveTab('referrals')}>
+                    ${t('dashboard.referrals') || 'Referrals'}
+                </button>
                 <button class="tab-btn ${activeTab === 'profile' ? 'active' : ''}" onClick=${() => setActiveTab('profile')}>
                     ${t('dashboard.profile')}
                 </button>
@@ -2141,8 +2150,10 @@ const Dashboard = ({ session }) => {
             ${activeTab === 'overview' && html`<${DashboardOverview} userType=${userType} session=${session} />`}
             ${activeTab === 'bookings' && html`<${DashboardBookings} session=${session} userType=${userType} />`}
             ${activeTab === 'availability' && userType === 'coach' && html`<${DashboardAvailability} session=${session} />`}
+            ${activeTab === 'session_notes' && userType === 'coach' && html`<${SessionNotesDashboard} session=${session} />`}
             ${activeTab === 'articles' && userType === 'coach' && html`<${DashboardArticles} session=${session} />`}
             ${activeTab === 'probono' && userType === 'coach' && html`<${DashboardProBono} session=${session} />`}
+            ${activeTab === 'referrals' && html`<${ReferralDashboard} session=${session} />`}
             ${activeTab === 'profile' && html`<${DashboardProfile} session=${session} userType=${userType} />`}
         </div>
     `;

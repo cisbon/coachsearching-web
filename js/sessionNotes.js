@@ -2,6 +2,7 @@
 // Import in app.js with: import { SessionNotesWizard, SessionNotesDashboard } from './sessionNotes.js';
 
 import htm from './vendor/htm.js';
+import { t } from './i18n.js';
 
 const React = window.React;
 const { useState, useEffect, useRef } = React;
