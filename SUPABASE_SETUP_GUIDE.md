@@ -18,42 +18,45 @@ If you're getting **"Bucket not found"** error when uploading profile images, fo
 
 ### Step 2: Set Bucket Policies (Optional but Recommended)
 
-Click on the `profile-images` bucket, then go to **Policies** tab:
+**Apply RLS Policies:** Run the pre-made SQL script `database/fix-storage-rls.sql` in SQL Editor, OR manually create these policies:
 
 ```sql
--- Allow authenticated users to upload their own files
-CREATE POLICY "Users can upload profile images"
+-- 1. Allow authenticated users to upload files
+CREATE POLICY "Authenticated users can upload profile images"
 ON storage.objects FOR INSERT
 TO authenticated
-WITH CHECK (
-  bucket_id = 'profile-images' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
+WITH CHECK (bucket_id = 'profile-images');
 
--- Allow public read access
-CREATE POLICY "Public can view profile images"
+-- 2. Allow public read access (bucket is public)
+CREATE POLICY "Public read access for profile images"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'profile-images');
 
--- Allow users to update their own files
+-- 3. Allow users to update their own files (filename starts with user_id)
 CREATE POLICY "Users can update own profile images"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (
-  bucket_id = 'profile-images' AND
-  (storage.foldername(name))[1] = auth.uid()::text
+    bucket_id = 'profile-images' AND
+    (storage.filename(name) LIKE auth.uid()::text || '%')
+)
+WITH CHECK (
+    bucket_id = 'profile-images' AND
+    (storage.filename(name) LIKE auth.uid()::text || '%')
 );
 
--- Allow users to delete their own files
+-- 4. Allow users to delete their own files
 CREATE POLICY "Users can delete own profile images"
 ON storage.objects FOR DELETE
 TO authenticated
 USING (
-  bucket_id = 'profile-images' AND
-  (storage.foldername(name))[1] = auth.uid()::text
+    bucket_id = 'profile-images' AND
+    (storage.filename(name) LIKE auth.uid()::text || '%')
 );
 ```
+
+**Easier Method:** Just run `database/fix-storage-rls.sql` - it does all of this for you!
 
 ### Step 3: Test Upload
 
