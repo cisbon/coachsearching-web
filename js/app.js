@@ -23,6 +23,15 @@ const debugConsole = initDebugConsole();
 
 const API_BASE = 'https://clouedo.com/coachsearching/api';
 
+// Performance Utilities
+const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func(...args), delay);
+    };
+};
+
 // Currency Management
 const CURRENCY_SYMBOLS = {
     'EUR': '€',
@@ -996,7 +1005,35 @@ const Hero = ({ onSearch }) => {
     `;
 };
 
-const CoachCard = ({ coach, onViewDetails }) => {
+// Skeleton loader for coach cards (memoized for performance)
+const CoachCardSkeleton = React.memo(() => {
+    return html`
+        <div class="skeleton-card">
+            <div class="skeleton-header">
+                <div class="skeleton skeleton-avatar"></div>
+                <div class="skeleton-info">
+                    <div class="skeleton skeleton-title"></div>
+                    <div class="skeleton skeleton-subtitle"></div>
+                    <div class="skeleton skeleton-meta"></div>
+                </div>
+            </div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text short"></div>
+            <div class="skeleton-badges">
+                <div class="skeleton skeleton-badge"></div>
+                <div class="skeleton skeleton-badge"></div>
+                <div class="skeleton skeleton-badge"></div>
+            </div>
+            <div class="skeleton-footer">
+                <div class="skeleton skeleton-price"></div>
+                <div class="skeleton skeleton-button"></div>
+            </div>
+        </div>
+    `;
+});
+
+// Memoized coach card to prevent unnecessary re-renders
+const CoachCard = React.memo(({ coach, onViewDetails }) => {
     // Map database fields to component fields
     const rating = coach.rating_average || coach.rating || 0;
     const reviewsCount = coach.rating_count || coach.reviews_count || 0;
@@ -1007,7 +1044,7 @@ const CoachCard = ({ coach, onViewDetails }) => {
 
     return html`
     <div class="coach-card">
-            <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-img" />
+            <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-img" loading="lazy" />
             <div class="coach-info">
                 <div class="coach-header">
                     <div>
@@ -1050,20 +1087,36 @@ const CoachCard = ({ coach, onViewDetails }) => {
             </div>
         </div>
     `;
-};
+});
 
 const CoachList = ({ searchFilters, session }) => {
     const [coaches, setCoaches] = useState(mockCoaches);
     const [selectedCoach, setSelectedCoach] = useState(null);
-    const [filteredCoaches, setFilteredCoaches] = useState(mockCoaches);
     const [loading, setLoading] = useState(false);
     const [, forceUpdate] = useState({});
 
     console.log('CoachList rendering with', coaches.length, 'coaches');
 
-    // Load coaches from API
-    useEffect(() => {
-        const loadCoaches = async () => {
+    // Memoized filtered coaches to avoid unnecessary filtering
+    const filteredCoaches = React.useMemo(() => {
+        if (searchFilters && searchFilters.searchTerm) {
+            console.log('Filtering coaches with:', searchFilters);
+            const term = searchFilters.searchTerm.toLowerCase();
+            const filtered = coaches.filter(coach =>
+                coach.full_name.toLowerCase().includes(term) ||
+                coach.title.toLowerCase().includes(term) ||
+                coach.bio.toLowerCase().includes(term) ||
+                coach.specialties.some(s => s.toLowerCase().includes(term)) ||
+                coach.location.toLowerCase().includes(term)
+            );
+            console.log('Filtered results:', filtered.length, 'coaches');
+            return filtered;
+        }
+        return coaches;
+    }, [searchFilters, coaches]);
+
+    // Load coaches from API (memoized to prevent unnecessary re-creations)
+    const loadCoaches = useCallback(async () => {
             console.log('🔍 [COACH DEBUG] Loading coaches from API...');
             console.log('🔍 [COACH DEBUG] API endpoint:', API_BASE + '/coaches');
             setLoading(true);
@@ -1104,10 +1157,11 @@ const CoachList = ({ searchFilters, session }) => {
                 setLoading(false);
                 console.log('🔍 [COACH DEBUG] Loading complete');
             }
-        };
-        
-        loadCoaches();
     }, []);
+
+    useEffect(() => {
+        loadCoaches();
+    }, [loadCoaches]);
 
     useEffect(() => {
         const handleCurrencyChange = () => {
@@ -1118,45 +1172,28 @@ const CoachList = ({ searchFilters, session }) => {
         return () => window.removeEventListener('currencyChange', handleCurrencyChange);
     }, []);
 
-    useEffect(() => {
-        if (searchFilters && searchFilters.searchTerm) {
-            console.log('Filtering coaches with:', searchFilters);
-            const term = searchFilters.searchTerm.toLowerCase();
-            const filtered = coaches.filter(coach => 
-                coach.full_name.toLowerCase().includes(term) ||
-                coach.title.toLowerCase().includes(term) ||
-                coach.bio.toLowerCase().includes(term) ||
-                coach.specialties.some(s => s.toLowerCase().includes(term)) ||
-                coach.location.toLowerCase().includes(term)
-            );
-            setFilteredCoaches(filtered);
-            console.log('Filtered results:', filtered.length, 'coaches');
-        } else {
-            setFilteredCoaches(coaches);
-        }
-    }, [searchFilters, coaches]);
-
     return html`
     <div class="container" style=${{ marginTop: '60px', paddingBottom: '40px' }}>
             <h2 class="section-title">
                 ${searchFilters?.searchTerm ? `Search Results (${filteredCoaches.length})` : 'Top Rated Coaches'}
             </h2>
             ${loading && html`
-                <div class="loader">
-                    <div class="spinner"></div>
-                    <p>Loading coaches...</p>
+                <div class="coach-list">
+                    ${[...Array(6)].map((_, i) => html`<${CoachCardSkeleton} key=${'skeleton-' + i} />`)}
                 </div>
             `}
-            ${filteredCoaches.length === 0 && html`
+            ${!loading && filteredCoaches.length === 0 && html`
                 <div class="empty-state">
                     <div class="empty-state-icon">🔍</div>
                     <div class="empty-state-text">No coaches found</div>
                     <div class="empty-state-subtext">Try adjusting your search criteria</div>
                 </div>
             `}
-            <div class="coach-list">
-                ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} onViewDetails=${setSelectedCoach} />`)}
-            </div>
+            ${!loading && html`
+                <div class="coach-list">
+                    ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} onViewDetails=${setSelectedCoach} />`)}
+                </div>
+            `}
             ${selectedCoach && html`<${CoachDetailModal} coach=${selectedCoach} session=${session} onClose=${() => setSelectedCoach(null)} />`}
         </div>
     `;
@@ -1406,7 +1443,7 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
         <div class="coach-detail-modal" onClick=${onClose}>
             <div class="coach-detail-content" onClick=${(e) => e.stopPropagation()}>
                 <div class="coach-detail-hero">
-                    <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-detail-avatar" />
+                    <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-detail-avatar" loading="lazy" />
                     <button class="modal-close-btn" onClick=${onClose} aria-label="Close">×</button>
                 </div>
                 <div class="coach-detail-body">
@@ -2277,7 +2314,7 @@ const DashboardProfile = ({ session, userType }) => {
                     <label class="filter-label">Profile Picture</label>
                     <div style=${{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         ${formData.avatar_url && html`
-                            <img src=${formData.avatar_url} alt="Avatar" style=${{
+                            <img src=${formData.avatar_url} alt="Avatar" loading="lazy" style=${{
                                 width: '80px',
                                 height: '80px',
                                 borderRadius: '50%',
@@ -2316,7 +2353,7 @@ const DashboardProfile = ({ session, userType }) => {
                         <label class="filter-label">Profile Banner</label>
                         <div style=${{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             ${formData.banner_url && html`
-                                <img src=${formData.banner_url} alt="Banner" style=${{
+                                <img src=${formData.banner_url} alt="Banner" loading="lazy" style=${{
                                     width: '100%',
                                     height: '200px',
                                     objectFit: 'cover',
@@ -3479,6 +3516,100 @@ const CoachEarningsDashboard = ({ session }) => {
     `;
 };
 
+// Error Boundary Component (must be a class component)
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null, errorInfo: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error('React Error Boundary caught an error:', error, errorInfo);
+        this.setState({ error, errorInfo });
+
+        // Log to debug console if available
+        if (window.debugConsole) {
+            window.debugConsole.addLog('error', [
+                'React Error:',
+                error.toString(),
+                errorInfo.componentStack
+            ]);
+        }
+    }
+
+    handleReset() {
+        this.setState({ hasError: false, error: null, errorInfo: null });
+        window.location.hash = '#home';
+        window.location.reload();
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return React.createElement('div', {
+                style: {
+                    padding: '40px',
+                    textAlign: 'center',
+                    maxWidth: '600px',
+                    margin: '100px auto',
+                    background: 'white',
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                }
+            },
+                React.createElement('div', {
+                    style: { fontSize: '64px', marginBottom: '20px' }
+                }, '⚠️'),
+                React.createElement('h2', {
+                    style: { color: '#dc2626', marginBottom: '16px' }
+                }, 'Oops! Something went wrong'),
+                React.createElement('p', {
+                    style: { color: '#6b7280', marginBottom: '24px' }
+                }, 'We encountered an unexpected error. Our team has been notified.'),
+                this.state.error && React.createElement('details', {
+                    style: {
+                        textAlign: 'left',
+                        background: '#f3f4f6',
+                        padding: '16px',
+                        borderRadius: '8px',
+                        marginBottom: '24px',
+                        fontSize: '14px',
+                        fontFamily: 'monospace'
+                    }
+                },
+                    React.createElement('summary', {
+                        style: { cursor: 'pointer', marginBottom: '8px', fontWeight: 'bold' }
+                    }, 'Error Details'),
+                    React.createElement('pre', {
+                        style: { whiteSpace: 'pre-wrap', wordBreak: 'break-word' }
+                    }, this.state.error.toString()),
+                    this.state.errorInfo && React.createElement('pre', {
+                        style: { whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginTop: '8px' }
+                    }, this.state.errorInfo.componentStack)
+                ),
+                React.createElement('button', {
+                    onClick: () => this.handleReset(),
+                    style: {
+                        background: '#006266',
+                        color: 'white',
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                    }
+                }, '🔄 Reload Application')
+            );
+        }
+
+        return this.props.children;
+    }
+}
+
 const App = () => {
     const [route, setRoute] = useState(window.location.hash || '#home');
     const [session, setSession] = useState(null);
@@ -3580,5 +3711,7 @@ const App = () => {
 
 console.log('App.js: Rendering app...');
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(html`<${App} />`);
+root.render(
+    React.createElement(ErrorBoundary, null, html`<${App} />`)
+);
 console.log('App.js: App rendered successfully');
