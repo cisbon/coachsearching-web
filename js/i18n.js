@@ -313,7 +313,144 @@ const translations = {
         "onboard.verifiedBadgeDesc": "Verified coaches get 3x more bookings. Upload your credentials to get your verified badge.",
         "onboard.avatar": "Profile Picture URL",
         "onboard.submit": "Complete Profile",
-        "onboard.uploading": "Saving..."
+        "onboard.uploading": "Saving...",
+
+        // Trust Building - Coach Profile
+        "trust.excellent": "Excellent",
+        "trust.good": "Good",
+        "trust.building": "Building",
+        "trust.new": "New",
+        "trust.title": "Why Choose Our Platform",
+        "trust.verified": "Verified Profiles",
+        "trust.verifiedDesc": "All coaches go through identity and credential verification",
+        "trust.videoIntros": "Video Introductions",
+        "trust.videoIntrosDesc": "See and hear from coaches before booking",
+        "trust.reviews": "Authentic Reviews",
+        "trust.reviewsDesc": "Real feedback from verified clients",
+        "trust.secure": "Secure Payments",
+        "trust.secureDesc": "Protected transactions through Stripe",
+
+        // Verification Badges
+        "badge.identity": "Identity Verified",
+        "badge.credentials": "Credentials Verified",
+        "badge.video": "Video Intro",
+        "badge.topRated": "Top Rated",
+        "badge.experienced": "Experienced",
+        "badge.fastResponse": "Fast Response",
+
+        // Coach Profile
+        "profile.overview": "Overview",
+        "profile.credentials": "Credentials",
+        "profile.services": "Services",
+        "profile.reviews": "Reviews",
+        "profile.about": "About",
+        "profile.specialties": "Specialties",
+        "profile.sessionTypes": "Session Types",
+        "profile.links": "Links",
+        "profile.website": "Website",
+        "profile.noBio": "No bio provided yet.",
+
+        // Video
+        "video.noVideo": "No video introduction yet",
+        "video.watchIntro": "Watch Intro",
+        "video.notSupported": "Your browser does not support video.",
+        "video.hasIntro": "Has video introduction",
+        "video.uploadPrompt": "Click to upload your introduction video",
+        "video.uploadHint": "Max 120 seconds, under 100MB",
+        "video.uploading": "Uploading...",
+        "video.remove": "Remove Video",
+        "video.invalidType": "Please select a video file",
+        "video.tooLarge": "Video must be under 100MB",
+        "video.tooLong": "Video must be under 120 seconds",
+        "video.uploadFailed": "Upload failed. Please try again.",
+
+        // Credentials
+        "credentials.none": "No credentials added yet",
+        "credentials.verified": "Verified",
+
+        // Services/Pricing
+        "services.none": "No services available.",
+        "services.contactCoach": "Contact the coach directly for pricing.",
+        "pricing.single": "Single Session",
+        "pricing.package": "Package",
+        "pricing.subscription": "Subscription",
+        "pricing.discovery": "Discovery Call",
+        "pricing.popular": "Most Popular",
+        "pricing.minutes": "min",
+        "pricing.sessions": "sessions",
+        "pricing.free": "Free",
+        "pricing.scheduleCall": "Schedule Call",
+        "pricing.bookNow": "Book Now",
+
+        // Reviews
+        "reviews.none": "No reviews yet.",
+        "reviews.beFirst": "Be the first to leave a review!",
+
+        // Coach Card
+        "coach.yearsExp": "years",
+        "coach.sessionsCompleted": "sessions",
+        "coach.new": "New Coach",
+        "coach.hour": "hr",
+        "coach.from": "From",
+        "coach.session": "session",
+        "coach.bookSession": "Book Session",
+
+        // Hero/Landing
+        "hero.searchPlaceholder": "Search by specialty, name, or location...",
+        "hero.searchBtn": "Find Coaches",
+        "hero.popular": "Popular:",
+
+        // Coaches Section
+        "coaches.featured": "Featured Coaches",
+        "coaches.featuredSubtitle": "Watch their introduction videos",
+        "coaches.moreCoaches": "More Coaches",
+        "coaches.allCoaches": "All Coaches",
+
+        // Search Results
+        "search.resultsFor": "Results for",
+        "search.coachesFound": "coaches found",
+        "search.noResults": "No coaches found",
+        "search.noResultsHint": "Try adjusting your search criteria",
+
+        // How It Works
+        "how.title": "How It Works",
+        "how.step1.title": "Browse Coaches",
+        "how.step1.desc": "Search by specialty, watch introduction videos, and review credentials",
+        "how.step2.title": "Book a Session",
+        "how.step2.desc": "Choose a time that works for you and book with secure payment",
+        "how.step3.title": "Start Coaching",
+        "how.step3.desc": "Connect online or in-person and achieve your goals",
+
+        // CTA
+        "cta.title": "Are You a Coach?",
+        "cta.subtitle": "Join our platform and reach thousands of potential clients",
+        "cta.benefit1": "Manage your schedule easily",
+        "cta.benefit2": "Get paid securely",
+        "cta.benefit3": "Build your reputation with reviews",
+        "cta.button": "Become a Coach",
+
+        // Platform Stats
+        "stats.coaches": "Professional Coaches",
+        "stats.sessions": "Sessions Completed",
+        "stats.hours": "Hours of Coaching",
+        "stats.countries": "Countries Served",
+
+        // Profile Checklist
+        "checklist.title": "Complete Your Profile",
+        "checklist.photo": "Profile Photo",
+        "checklist.bio": "Bio (100+ chars)",
+        "checklist.specialties": "Specialties",
+        "checklist.video": "Video Introduction",
+        "checklist.credentials": "Add Credentials",
+        "checklist.pricing": "Set Pricing",
+        "checklist.availability": "Set Availability",
+
+        // Session Types
+        "session.online": "Online",
+        "session.onsite": "On-site",
+
+        // Common
+        "common.loading": "Loading..."
     },
     de: {
         // Navigation
