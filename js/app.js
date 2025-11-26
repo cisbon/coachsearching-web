@@ -1205,14 +1205,14 @@ const Dashboard = ({ session }) => {
         `;
     }
 
-    const userRole = session.user?.user_metadata?.role || 'person';
-    console.log('Dashboard loaded successfully for user:', session.user.email, 'Role:', userRole);
+    const userType = session.user?.user_metadata?.user_type || 'client';
+    console.log('Dashboard loaded successfully for user:', session.user.email, 'User Type:', userType);
 
     return html`
     <div class="dashboard-container">
             <div class="dashboard-header">
                 <h2 class="section-title">${t('dashboard.welcome')}, ${session.user.email}</h2>
-                <div class="badge badge-petrol">${userRole}</div>
+                <div class="badge badge-petrol">${userType === 'client' ? 'Client' : userType === 'coach' ? 'Coach' : 'Business'}</div>
             </div>
 
             <div class="dashboard-tabs">
@@ -1222,7 +1222,10 @@ const Dashboard = ({ session }) => {
                 <button class="tab-btn ${activeTab === 'bookings' ? 'active' : ''}" onClick=${() => setActiveTab('bookings')}>
                     ${t('dashboard.bookings')}
                 </button>
-                ${userRole === 'coach' && html`
+                ${userType === 'coach' && html`
+                    <button class="tab-btn ${activeTab === 'availability' ? 'active' : ''}" onClick=${() => setActiveTab('availability')}>
+                        Availability
+                    </button>
                     <button class="tab-btn ${activeTab === 'articles' ? 'active' : ''}" onClick=${() => setActiveTab('articles')}>
                         ${t('dashboard.articles')}
                     </button>
@@ -1235,17 +1238,18 @@ const Dashboard = ({ session }) => {
                 </button>
             </div>
 
-            ${activeTab === 'overview' && html`<${DashboardOverview} userRole=${userRole} />`}
-            ${activeTab === 'bookings' && html`<${DashboardBookings} session=${session} />`}
-            ${activeTab === 'articles' && userRole === 'coach' && html`<${DashboardArticles} session=${session} />`}
-            ${activeTab === 'probono' && userRole === 'coach' && html`<${DashboardProBono} session=${session} />`}
-            ${activeTab === 'profile' && html`<${DashboardProfile} session=${session} />`}
+            ${activeTab === 'overview' && html`<${DashboardOverview} userType=${userType} />`}
+            ${activeTab === 'bookings' && html`<${DashboardBookings} session=${session} userType=${userType} />`}
+            ${activeTab === 'availability' && userType === 'coach' && html`<${DashboardAvailability} session=${session} />`}
+            ${activeTab === 'articles' && userType === 'coach' && html`<${DashboardArticles} session=${session} />`}
+            ${activeTab === 'probono' && userType === 'coach' && html`<${DashboardProBono} session=${session} />`}
+            ${activeTab === 'profile' && html`<${DashboardProfile} session=${session} userType=${userType} />`}
         </div>
     `;
 };
 
-const DashboardOverview = ({ userRole }) => {
-    console.log('Dashboard overview for role:', userRole);
+const DashboardOverview = ({ userType }) => {
+    console.log('Dashboard overview for user type:', userType);
 
     return html`
         <div>
@@ -1275,7 +1279,7 @@ const DashboardOverview = ({ userRole }) => {
     `;
 };
 
-const DashboardBookings = ({ session }) => {
+const DashboardBookings = ({ session, userType }) => {
     console.log('Loading bookings dashboard');
 
     return html`
@@ -1284,9 +1288,27 @@ const DashboardBookings = ({ session }) => {
                 <div class="empty-state-icon">📅</div>
                 <div class="empty-state-text">No bookings yet</div>
                 <div class="empty-state-subtext">
-                    ${session.user.user_metadata?.role === 'coach'
+                    ${userType === 'coach'
                         ? 'Bookings from clients will appear here.'
                         : 'Browse coaches and book your first session!'}
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+const DashboardAvailability = ({ session }) => {
+    console.log('Loading availability dashboard');
+
+    return html`
+        <div>
+            <h3>Set Your Availability</h3>
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-text">Availability Calendar</div>
+                <div class="empty-state-subtext">
+                    Set your weekly schedule and manage specific date overrides.
+                    <br/><strong>Coming soon!</strong>
                 </div>
             </div>
         </div>
@@ -1428,7 +1450,7 @@ const DashboardProBono = ({ session }) => {
     `;
 };
 
-const DashboardProfile = ({ session }) => {
+const DashboardProfile = ({ session, userType }) => {
     const [fullName, setFullName] = useState(session.user.user_metadata?.full_name || '');
     const [bio, setBio] = useState('');
 
@@ -1460,7 +1482,7 @@ const DashboardProfile = ({ session }) => {
                     />
                 </div>
 
-                ${session.user.user_metadata?.role === 'coach' && html`
+                ${userType === 'coach' && html`
                     <div>
                         <label class="filter-label">Bio</label>
                         <textarea
