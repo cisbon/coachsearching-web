@@ -1296,11 +1296,93 @@ const BookingModal = ({ coach, session, onClose }) => {
     const loadAvailableSlots = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE}/coaches/${coach.id}/available-slots?date=${selectedDate}&duration=${duration}`);
-            const data = await response.json();
-            setAvailableSlots(data.data || []);
+            console.log('🕐 Loading available slots for:', { coach_id: coach.id, date: selectedDate, duration });
+
+            // Get the day of week for the selected date
+            const selectedDateTime = new Date(selectedDate);
+            const dayOfWeek = selectedDateTime.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+            // Load coach availability for this day
+            const { data: availability, error: availError } = await window.supabaseClient
+                .from('cs_coach_availability')
+                .select('*')
+                .eq('coach_id', coach.id)
+                .eq('day_of_week', dayOfWeek)
+                .eq('is_active', true)
+                .order('start_time');
+
+            if (availError) {
+                console.error('❌ Error loading availability:', availError);
+                setAvailableSlots([]);
+                return;
+            }
+
+            console.log('✅ Found availability slots:', availability);
+
+            // Load existing bookings for this date
+            const startOfDay = new Date(selectedDate);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(selectedDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const { data: bookings, error: bookError } = await window.supabaseClient
+                .from('cs_bookings')
+                .select('start_time, end_time')
+                .eq('coach_id', coach.id)
+                .gte('start_time', startOfDay.toISOString())
+                .lte('start_time', endOfDay.toISOString())
+                .in('status', ['pending', 'confirmed']);
+
+            if (bookError) {
+                console.error('❌ Error loading bookings:', bookError);
+            }
+
+            console.log('✅ Existing bookings:', bookings);
+
+            // Generate time slots from availability
+            const slots = [];
+            availability.forEach(avail => {
+                const [startHour, startMinute] = avail.start_time.split(':').map(Number);
+                const [endHour, endMinute] = avail.end_time.split(':').map(Number);
+
+                const slotDate = new Date(selectedDate);
+                slotDate.setHours(startHour, startMinute, 0, 0);
+
+                const endDate = new Date(selectedDate);
+                endDate.setHours(endHour, endMinute, 0, 0);
+
+                // Generate slots every 30 minutes
+                while (slotDate < endDate) {
+                    const slotEnd = new Date(slotDate.getTime() + duration * 60000);
+
+                    // Check if slot end time is within availability
+                    if (slotEnd <= endDate) {
+                        // Check if slot conflicts with existing bookings
+                        const hasConflict = bookings?.some(booking => {
+                            const bookingStart = new Date(booking.start_time);
+                            const bookingEnd = new Date(booking.end_time);
+                            return (
+                                (slotDate >= bookingStart && slotDate < bookingEnd) ||
+                                (slotEnd > bookingStart && slotEnd <= bookingEnd) ||
+                                (slotDate <= bookingStart && slotEnd >= bookingEnd)
+                            );
+                        });
+
+                        if (!hasConflict) {
+                            slots.push({
+                                start_time: slotDate.toISOString()
+                            });
+                        }
+                    }
+
+                    slotDate.setMinutes(slotDate.getMinutes() + 30);
+                }
+            });
+
+            console.log('✅ Generated slots:', slots.length);
+            setAvailableSlots(slots);
         } catch (error) {
-            console.error('Failed to load available slots:', error);
+            console.error('❌ Failed to load available slots:', error);
             setAvailableSlots([]);
         } finally {
             setLoading(false);
@@ -1316,37 +1398,99 @@ const BookingModal = ({ coach, session, onClose }) => {
 
         setLoading(true);
         try {
+            console.log('💾 Starting booking creation...');
+
+            // Get or create client_id
+            console.log('📋 Fetching client data for user:', session.user.id);
+            let clientId = null;
+
+            const { data: existingClient, error: clientFetchError } = await window.supabaseClient
+                .from('cs_clients')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .single();
+
+            if (clientFetchError && clientFetchError.code !== 'PGRST116') {
+                console.error('❌ Error fetching client:', clientFetchError);
+                throw new Error('Failed to fetch client profile');
+            }
+
+            if (existingClient) {
+                clientId = existingClient.id;
+                console.log('✅ Existing client ID:', clientId);
+            } else {
+                // Create client record
+                console.log('➕ Creating new client record...');
+                const { data: newClient, error: createError } = await window.supabaseClient
+                    .from('cs_clients')
+                    .insert([{
+                        user_id: session.user.id,
+                        full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
+                    }])
+                    .select()
+                    .single();
+
+                if (createError) {
+                    console.error('❌ Error creating client:', createError);
+                    throw createError;
+                }
+
+                clientId = newClient.id;
+                console.log('✅ New client ID:', clientId);
+            }
+
+            // Check if coach has auto-accept enabled
+            const { data: coachSettings, error: settingsError } = await window.supabaseClient
+                .from('cs_coaches')
+                .select('auto_accept_bookings')
+                .eq('id', coach.id)
+                .single();
+
+            const autoAccept = coachSettings?.auto_accept_bookings || false;
+            console.log('✅ Auto-accept setting:', autoAccept);
+
+            // Calculate end time
+            const endTime = new Date(new Date(selectedSlot.start_time).getTime() + duration * 60000);
+
+            // Create booking
             const bookingData = {
                 coach_id: coach.id,
+                client_id: clientId,
                 start_time: selectedSlot.start_time,
+                end_time: endTime.toISOString(),
                 duration_minutes: duration,
-                meeting_type: 'online',
-                amount: (coach.hourly_rate * duration / 60).toFixed(2),
+                meeting_type: 'online', // Default to online, can be updated later
+                status: autoAccept ? 'confirmed' : 'pending',
+                amount: parseFloat((coach.hourly_rate * duration / 60).toFixed(2)),
                 currency: coach.currency || 'EUR',
-                client_notes: notes,
+                client_notes: notes || null,
                 stripe_payment_intent_id: null // TODO: Integrate Stripe
             };
 
-            const response = await fetch(`${API_BASE}/bookings`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify(bookingData)
-            });
+            console.log('📝 Booking data prepared:', bookingData);
 
-            const data = await response.json();
+            const { data: booking, error: bookingError } = await window.supabaseClient
+                .from('cs_bookings')
+                .insert([bookingData])
+                .select()
+                .single();
 
-            if (response.ok) {
-                alert('Booking created successfully! Payment integration coming soon.');
-                onClose();
-            } else {
-                alert('Failed to create booking: ' + (data.error || 'Unknown error'));
+            if (bookingError) {
+                console.error('❌ Booking error:', bookingError);
+                throw bookingError;
             }
+
+            console.log('✅ Booking created successfully!', booking);
+
+            const message = autoAccept
+                ? 'Booking confirmed! The coach will contact you with meeting details.'
+                : 'Booking request sent! The coach will review and confirm your booking.';
+
+            alert(message);
+            onClose();
         } catch (error) {
-            console.error('Booking error:', error);
-            alert('Failed to create booking');
+            console.error('❌ Failed to create booking:', error);
+            alert('Failed to create booking: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -2109,6 +2253,165 @@ const DashboardOverview = ({ userType, session }) => {
     `;
 };
 
+// Booking Acceptance Modal Component
+const BookingAcceptModal = ({ booking, onClose, onAccept }) => {
+    const [meetingType, setMeetingType] = useState(booking.meeting_type || 'online');
+    const [meetingLink, setMeetingLink] = useState('');
+    const [meetingAddress, setMeetingAddress] = useState('');
+    const [coachNotes, setCoachNotes] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleAccept = async () => {
+        if (meetingType === 'online' && !meetingLink.trim()) {
+            alert('Please provide a meeting link');
+            return;
+        }
+        if (meetingType === 'onsite' && !meetingAddress.trim()) {
+            alert('Please provide a meeting address');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await onAccept({
+                meeting_type: meetingType,
+                meeting_link: meetingType === 'online' ? meetingLink : null,
+                meeting_address: meetingType === 'onsite' ? meetingAddress : null,
+                coach_notes: coachNotes || null
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatDateTime = (dateTimeStr) => {
+        const date = new Date(dateTimeStr);
+        return {
+            date: date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+            time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        };
+    };
+
+    const dt = formatDateTime(booking.start_time);
+
+    return html`
+        <div class="booking-modal" onClick=${onClose}>
+            <div class="booking-content" onClick=${(e) => e.stopPropagation()}>
+                <div class="booking-header">
+                    <h2>Accept Booking Request</h2>
+                    <button class="modal-close-btn" onClick=${onClose}>×</button>
+                </div>
+
+                <div class="booking-details-summary">
+                    <h3>Session Details</h3>
+                    <div class="summary-row">
+                        <span>Client:</span>
+                        <span>${booking.client?.full_name || 'Client'}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Date:</span>
+                        <span>${dt.date}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Time:</span>
+                        <span>${dt.time}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Duration:</span>
+                        <span>${booking.duration_minutes} minutes</span>
+                    </div>
+                    ${booking.client_notes && html`
+                        <div class="summary-row" style=${{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <span style=${{ fontWeight: 600, marginBottom: '4px' }}>Client Notes:</span>
+                            <span style=${{ color: '#666' }}>${booking.client_notes}</span>
+                        </div>
+                    `}
+                </div>
+
+                <div class="form-group" style=${{ marginTop: '20px' }}>
+                    <label style=${{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Meeting Type</label>
+                    <div style=${{ display: 'flex', gap: '12px' }}>
+                        <button
+                            class="filter-toggle-btn ${meetingType === 'online' ? 'active' : ''}"
+                            onClick=${() => setMeetingType('online')}
+                            style=${{ flex: 1 }}
+                        >
+                            💻 Online
+                        </button>
+                        <button
+                            class="filter-toggle-btn ${meetingType === 'onsite' ? 'active' : ''}"
+                            onClick=${() => setMeetingType('onsite')}
+                            style=${{ flex: 1 }}
+                        >
+                            📍 On-site
+                        </button>
+                    </div>
+                </div>
+
+                ${meetingType === 'online' ? html`
+                    <div class="form-group">
+                        <label style=${{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+                            Meeting Link * (MS Teams, Zoom, Google Meet, etc.)
+                        </label>
+                        <input
+                            type="url"
+                            class="form-control"
+                            placeholder="https://teams.microsoft.com/..."
+                            value=${meetingLink}
+                            onInput=${(e) => setMeetingLink(e.target.value)}
+                        />
+                    </div>
+                ` : html`
+                    <div class="form-group">
+                        <label style=${{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+                            Meeting Address *
+                        </label>
+                        <textarea
+                            class="form-control"
+                            rows="3"
+                            placeholder="Enter the address where you'll meet the client..."
+                            value=${meetingAddress}
+                            onInput=${(e) => setMeetingAddress(e.target.value)}
+                        ></textarea>
+                    </div>
+                `}
+
+                <div class="form-group">
+                    <label style=${{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+                        Notes to Client (Optional)
+                    </label>
+                    <textarea
+                        class="form-control"
+                        rows="3"
+                        placeholder="Any additional information for the client..."
+                        value=${coachNotes}
+                        onInput=${(e) => setCoachNotes(e.target.value)}
+                    ></textarea>
+                </div>
+
+                <div style=${{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                    <button
+                        class="btn-secondary"
+                        onClick=${onClose}
+                        disabled=${loading}
+                        style=${{ flex: 1 }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        class="btn-primary"
+                        onClick=${handleAccept}
+                        disabled=${loading}
+                        style=${{ flex: 1 }}
+                    >
+                        ${loading ? 'Accepting...' : 'Accept & Confirm'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 const DashboardBookings = ({ session, userType }) => {
     const [bookings, setBookings] = useState([]);
     const [filteredBookings, setFilteredBookings] = useState([]);
@@ -2117,6 +2420,7 @@ const DashboardBookings = ({ session, userType }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
+    const [acceptingBooking, setAcceptingBooking] = useState(null);
 
     useEffect(() => {
         loadBookings();
@@ -2129,32 +2433,62 @@ const DashboardBookings = ({ session, userType }) => {
     const loadBookings = async () => {
         setLoading(true);
         try {
-            // Try Supabase first
             if (window.supabaseClient && session) {
-                const userId = session.user.id;
-                const { data: supabaseBookings, error } = await window.supabaseClient
-                    .from('cs_bookings')
-                    .select('*')
-                    .or(`client_id.eq.${userId},coach_id.eq.${userId}`)
-                    .order('start_time', { ascending: false });
+                console.log('📋 Loading bookings for user type:', userType);
 
-                if (!error && supabaseBookings) {
-                    setBookings(supabaseBookings);
-                    setLoading(false);
-                    return;
+                let bookingsData = [];
+
+                if (userType === 'coach') {
+                    // Get coach_id
+                    const { data: coachData } = await window.supabaseClient
+                        .from('cs_coaches')
+                        .select('id')
+                        .eq('user_id', session.user.id)
+                        .single();
+
+                    if (coachData) {
+                        const { data, error } = await window.supabaseClient
+                            .from('cs_bookings')
+                            .select(`
+                                *,
+                                client:cs_clients!client_id(full_name, email, phone)
+                            `)
+                            .eq('coach_id', coachData.id)
+                            .order('start_time', { ascending: false });
+
+                        if (!error && data) {
+                            bookingsData = data;
+                        }
+                    }
+                } else {
+                    // Client view
+                    const { data: clientData } = await window.supabaseClient
+                        .from('cs_clients')
+                        .select('id')
+                        .eq('user_id', session.user.id)
+                        .single();
+
+                    if (clientData) {
+                        const { data, error } = await window.supabaseClient
+                            .from('cs_bookings')
+                            .select(`
+                                *,
+                                coach:cs_coaches!coach_id(full_name, title, avatar_url)
+                            `)
+                            .eq('client_id', clientData.id)
+                            .order('start_time', { ascending: false });
+
+                        if (!error && data) {
+                            bookingsData = data;
+                        }
+                    }
                 }
+
+                console.log('✅ Loaded bookings:', bookingsData.length);
+                setBookings(bookingsData);
             }
-
-            // Fallback to API
-            const response = await fetch(`${API_BASE}/bookings`, {
-                headers: {
-                    'Authorization': `Bearer ${session.access_token}`
-                }
-            });
-            const data = await response.json();
-            setBookings(data.data || []);
         } catch (error) {
-            console.error('Failed to load bookings:', error);
+            console.error('❌ Failed to load bookings:', error);
             setBookings([]);
         } finally {
             setLoading(false);
@@ -2183,6 +2517,37 @@ const DashboardBookings = ({ session, userType }) => {
         setFilteredBookings(filtered);
     };
 
+    const handleAcceptBooking = async (bookingDetails) => {
+        try {
+            console.log('✅ Accepting booking:', acceptingBooking.id, bookingDetails);
+
+            const { error } = await window.supabaseClient
+                .from('cs_bookings')
+                .update({
+                    status: 'confirmed',
+                    meeting_type: bookingDetails.meeting_type,
+                    meeting_link: bookingDetails.meeting_link,
+                    meeting_address: bookingDetails.meeting_address,
+                    coach_notes: bookingDetails.coach_notes
+                })
+                .eq('id', acceptingBooking.id);
+
+            if (error) {
+                console.error('❌ Error accepting booking:', error);
+                throw error;
+            }
+
+            console.log('✅ Booking accepted successfully');
+            setMessage('✓ Booking accepted and confirmed!');
+            setAcceptingBooking(null);
+            await loadBookings();
+            setTimeout(() => setMessage(''), 3000);
+        } catch (error) {
+            console.error('❌ Failed to accept booking:', error);
+            alert('Failed to accept booking: ' + error.message);
+        }
+    };
+
     const handleCancelBooking = async (bookingId) => {
         if (!confirm('Are you sure you want to cancel this booking?')) {
             return;
@@ -2191,26 +2556,24 @@ const DashboardBookings = ({ session, userType }) => {
         const reason = prompt('Please provide a reason for cancellation (optional):');
 
         try {
-            const response = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ cancellation_reason: reason || 'No reason provided' })
-            });
+            const { error } = await window.supabaseClient
+                .from('cs_bookings')
+                .update({
+                    status: 'cancelled',
+                    cancellation_reason: reason || 'No reason provided'
+                })
+                .eq('id', bookingId);
 
-            if (response.ok) {
-                setMessage('Booking cancelled successfully');
-                loadBookings();
-                setTimeout(() => setMessage(''), 3000);
-            } else {
-                const data = await response.json();
-                alert('Failed to cancel booking: ' + (data.error || 'Unknown error'));
+            if (error) {
+                throw error;
             }
+
+            setMessage('✓ Booking cancelled successfully');
+            await loadBookings();
+            setTimeout(() => setMessage(''), 3000);
         } catch (error) {
-            console.error('Cancel booking error:', error);
-            alert('Failed to cancel booking');
+            console.error('❌ Cancel booking error:', error);
+            alert('Failed to cancel booking: ' + error.message);
         }
     };
 
@@ -2408,6 +2771,15 @@ const DashboardBookings = ({ session, userType }) => {
                             </div>
 
                             <div class="booking-card-actions">
+                                ${userType === 'coach' && booking.status === 'pending' && html`
+                                    <button
+                                        class="btn-small btn-primary"
+                                        onClick=${() => setAcceptingBooking(booking)}
+                                        style=${{ marginRight: '8px' }}
+                                    >
+                                        ✓ Accept Booking
+                                    </button>
+                                `}
                                 ${canCancel && html`
                                     <button
                                         class="btn-small btn-secondary"
@@ -2417,7 +2789,7 @@ const DashboardBookings = ({ session, userType }) => {
                                     </button>
                                 `}
                                 ${booking.status === 'cancelled' && booking.cancellation_reason && html`
-                                    <div class="booking-detail-row" style=${{ fontSize: '14px', color: '#666' }}>
+                                    <div class="booking-detail-row" style=${{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
                                         <span>Cancellation reason: ${booking.cancellation_reason}</span>
                                     </div>
                                 `}
@@ -2426,6 +2798,14 @@ const DashboardBookings = ({ session, userType }) => {
                     `;
                     })}
                 </div>
+            `}
+
+            ${acceptingBooking && html`
+                <${BookingAcceptModal}
+                    booking=${acceptingBooking}
+                    onClose=${() => setAcceptingBooking(null)}
+                    onAccept=${handleAcceptBooking}
+                />
             `}
         </div>
     `;

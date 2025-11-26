@@ -179,18 +179,18 @@ header {
 .search-input {
     flex: 1;
     padding: 16px 12px 16px 4px;
-    border: none;
+    border: none !important;
     font-size: 1rem;
-    outline: none;
+    outline: none !important;
     font-family: inherit;
     background: transparent;
-    box-shadow: none;
+    box-shadow: none !important;
 }
 
 .search-input:focus {
-    border: none;
-    outline: none;
-    box-shadow: none;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .search-input[type="date"] {
@@ -206,6 +206,9 @@ header {
 .search-input.rate-select {
     cursor: pointer;
     padding-right: 8px;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .search-input-group:has(.rate-select) {
