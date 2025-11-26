@@ -3169,6 +3169,265 @@ const FavoriteButton = ({ coachId, session, isFavorited, onToggle }) => {
     `;
 };
 
+// =====================================================
+// TIMEZONE HANDLING
+// =====================================================
+
+const TimezoneSelector = ({ value, onChange }) => {
+    const commonTimezones = [
+        { value: 'Europe/London', label: 'London (GMT)' },
+        { value: 'Europe/Paris', label: 'Paris (CET)' },
+        { value: 'Europe/Berlin', label: 'Berlin (CET)' },
+        { value: 'Europe/Madrid', label: 'Madrid (CET)' },
+        { value: 'Europe/Rome', label: 'Rome (CET)' },
+        { value: 'Europe/Amsterdam', label: 'Amsterdam (CET)' },
+        { value: 'America/New_York', label: 'New York (EST)' },
+        { value: 'America/Los_Angeles', label: 'Los Angeles (PST)' },
+        { value: 'Asia/Dubai', label: 'Dubai (GST)' },
+        { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
+        { value: 'UTC', label: 'UTC' }
+    ];
+
+    return html`
+        <select class="form-control" value=${value} onChange=${(e) => onChange(e.target.value)}>
+            <option value="">Select timezone...</option>
+            ${commonTimezones.map(tz => html`
+                <option key=${tz.value} value=${tz.value}>${tz.label}</option>
+            `)}
+        </select>
+    `;
+};
+
+// =====================================================
+// GDPR COMPLIANCE COMPONENTS
+// =====================================================
+
+const DataExportRequest = ({ session }) => {
+    const [requesting, setRequesting] = useState(false);
+    const [message, setMessage] = useState('');
+
+    const requestDataExport = async () => {
+        setRequesting(true);
+        try {
+            const response = await fetch(`${API_BASE}/gdpr/data-export`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+
+            if (response.ok) {
+                setMessage('Data export requested. You will receive an email with download link within 24 hours.');
+            } else {
+                setMessage('Error: Failed to request data export');
+            }
+        } catch (error) {
+            setMessage('Error: Failed to submit request');
+        } finally {
+            setRequesting(false);
+        }
+    };
+
+    return html`
+        <div style=${{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+            <h3 style=${{ marginBottom: '12px' }}>Export Your Data</h3>
+            <p style=${{ marginBottom: '16px', color: 'var(--text-muted)' }}>
+                Download a complete copy of all your data including profile, bookings, messages, and reviews.
+            </p>
+            ${message && html`
+                <div style=${{ padding: '12px', borderRadius: '4px', marginBottom: '16px', background: message.includes('Error') ? '#fee' : '#efe' }}>
+                    ${message}
+                </div>
+            `}
+            <button class="btn-primary" onClick=${requestDataExport} disabled=${requesting}>
+                ${requesting ? 'Processing...' : 'Request Data Export'}
+            </button>
+        </div>
+    `;
+};
+
+const AccountDeletion = ({ session }) => {
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [reason, setReason] = useState('');
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        if (!confirm('This action cannot be undone. All your data will be permanently deleted.')) return;
+
+        setDeleting(true);
+        try {
+            const response = await fetch(`${API_BASE}/gdpr/delete-account`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ reason })
+            });
+
+            if (response.ok) {
+                alert('Account deletion scheduled. You will be logged out.');
+                window.location.hash = '#signout';
+            }
+        } catch (error) {
+            alert('Failed to delete account');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    return html`
+        <div style=${{ border: '2px solid #DC2626', borderRadius: '8px', padding: '20px', background: '#FEF2F2' }}>
+            <h3 style=${{ marginBottom: '12px', color: '#DC2626' }}>⚠️ Danger Zone</h3>
+            <p style=${{ marginBottom: '16px' }}>
+                Once you delete your account, there is no going back. All data will be permanently deleted.
+            </p>
+            ${!showConfirm ? html`
+                <button
+                    class="btn-secondary"
+                    onClick=${() => setShowConfirm(true)}
+                    style=${{ background: '#DC2626', color: 'white', border: 'none' }}
+                >
+                    Delete Account
+                </button>
+            ` : html`
+                <div>
+                    <textarea
+                        class="form-control"
+                        rows="3"
+                        placeholder="Why are you leaving? (optional)"
+                        value=${reason}
+                        onInput=${(e) => setReason(e.target.value)}
+                        style=${{ marginBottom: '12px' }}
+                    ></textarea>
+                    <div style=${{ display: 'flex', gap: '12px' }}>
+                        <button class="btn-secondary" onClick=${() => setShowConfirm(false)}>Cancel</button>
+                        <button
+                            onClick=${handleDelete}
+                            disabled=${deleting}
+                            style=${{ padding: '8px 16px', background: '#DC2626', color: 'white', border: 'none', borderRadius: '4px' }}
+                        >
+                            ${deleting ? 'Deleting...' : 'Permanently Delete'}
+                        </button>
+                    </div>
+                </div>
+            `}
+        </div>
+    `;
+};
+
+// =====================================================
+// COACH EARNINGS DASHBOARD
+// =====================================================
+
+const CoachEarningsDashboard = ({ session }) => {
+    const [earnings, setEarnings] = useState(null);
+    const [payouts, setPayouts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            const [earningsRes, payoutsRes] = await Promise.all([
+                fetch(`${API_BASE}/coaches/me/earnings`, {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                }),
+                fetch(`${API_BASE}/coaches/me/payouts`, {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                })
+            ]);
+
+            const earningsData = await earningsRes.json();
+            const payoutsData = await payoutsRes.json();
+
+            setEarnings(earningsData.data);
+            setPayouts(payoutsData.data || []);
+        } catch (error) {
+            console.error('Failed to load earnings:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) return html`<div class="spinner"></div>`;
+
+    return html`
+        <div>
+            <h3 style=${{ marginBottom: '20px' }}>Earnings Dashboard</h3>
+
+            <div class="dashboard-grid" style=${{ marginBottom: '30px' }}>
+                <div class="stat-card">
+                    <div class="stat-label">Total Earned</div>
+                    <div class="stat-value">${formatPrice(earnings?.total_earned || 0)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Available</div>
+                    <div class="stat-value">${formatPrice(earnings?.available_balance || 0)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value">${formatPrice(earnings?.pending || 0)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Sessions</div>
+                    <div class="stat-value">${earnings?.total_sessions || 0}</div>
+                </div>
+            </div>
+
+            <h4 style=${{ marginBottom: '16px' }}>Payout History</h4>
+            ${payouts.length === 0 ? html`
+                <div class="empty-state">
+                    <div class="empty-state-icon">💸</div>
+                    <div class="empty-state-text">No payouts yet</div>
+                    <div class="empty-state-subtext">Payouts processed weekly on Mondays</div>
+                </div>
+            ` : html`
+                <div style=${{ overflowX: 'auto' }}>
+                    <table style=${{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style=${{ borderBottom: '2px solid var(--border-color)' }}>
+                                <th style=${{ padding: '12px', textAlign: 'left' }}>Period</th>
+                                <th style=${{ padding: '12px', textAlign: 'left' }}>Amount</th>
+                                <th style=${{ padding: '12px', textAlign: 'left' }}>Status</th>
+                                <th style=${{ padding: '12px', textAlign: 'left' }}>Arrival</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${payouts.map(p => html`
+                                <tr key=${p.id} style=${{ borderBottom: '1px solid var(--border-color)' }}>
+                                    <td style=${{ padding: '12px' }}>
+                                        ${new Date(p.period_start).toLocaleDateString()} -
+                                        ${new Date(p.period_end).toLocaleDateString()}
+                                    </td>
+                                    <td style=${{ padding: '12px', fontWeight: '600' }}>${formatPrice(p.amount)}</td>
+                                    <td style=${{ padding: '12px' }}>
+                                        <span class=${'booking-status ' + p.status}>${p.status}</span>
+                                    </td>
+                                    <td style=${{ padding: '12px' }}>
+                                        ${p.arrival_date ? new Date(p.arrival_date).toLocaleDateString() : 'Pending'}
+                                    </td>
+                                </tr>
+                            `)}
+                        </tbody>
+                    </table>
+                </div>
+            `}
+
+            <div style=${{ marginTop: '30px', padding: '16px', background: '#F0F9FA', borderRadius: '8px' }}>
+                <h4>💡 Payout Info</h4>
+                <ul style=${{ margin: 0, paddingLeft: '20px', fontSize: '14px' }}>
+                    <li>Payouts every Monday</li>
+                    <li>Commission: 15% (Founding Coaches: 10%)</li>
+                    <li>SEPA: 1-2 business days</li>
+                </ul>
+            </div>
+        </div>
+    `;
+};
+
 const App = () => {
     const [route, setRoute] = useState(window.location.hash || '#home');
     const [session, setSession] = useState(null);
