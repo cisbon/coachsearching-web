@@ -2452,19 +2452,41 @@ const DashboardAvailability = ({ session }) => {
 
     const loadAvailability = async () => {
         try {
-            const response = await fetch(`${API_BASE}/coaches/${session.user.id}/availability`);
-            const data = await response.json();
+            console.log('🕐 Loading availability for user:', session.user.id);
 
-            console.log('Availability API response:', data);
+            // First get coach_id from cs_coaches table
+            const { data: coachData, error: coachError } = await window.supabaseClient
+                .from('cs_coaches')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .single();
 
-            // Ensure we always set an array
-            if (data.data && Array.isArray(data.data)) {
-                setWeeklySlots(data.data);
-            } else {
+            if (coachError) {
+                console.error('❌ Coach fetch error:', coachError);
                 setWeeklySlots([]);
+                return;
             }
+
+            console.log('✅ Coach ID:', coachData.id);
+
+            // Load availability slots for this coach
+            const { data: slotsData, error: slotsError } = await window.supabaseClient
+                .from('cs_coach_availability')
+                .select('*')
+                .eq('coach_id', coachData.id)
+                .order('day_of_week', { ascending: true })
+                .order('start_time', { ascending: true });
+
+            if (slotsError) {
+                console.error('❌ Slots fetch error:', slotsError);
+                setWeeklySlots([]);
+                return;
+            }
+
+            console.log('✅ Loaded availability slots:', slotsData?.length || 0);
+            setWeeklySlots(slotsData || []);
         } catch (error) {
-            console.error('Failed to load availability:', error);
+            console.error('❌ Failed to load availability:', error);
             setWeeklySlots([]); // Ensure it's an array even on error
         }
     };
@@ -2509,32 +2531,71 @@ const DashboardAvailability = ({ session }) => {
         setMessage('');
 
         try {
-            const slots = weeklySlots.map(slot => ({
-                day_of_week: slot.day_of_week,
-                start_time: slot.start_time,
-                end_time: slot.end_time,
-                is_active: slot.is_active !== false
-            }));
+            console.log('💾 Starting availability save...');
+            console.log('📋 Current slots:', weeklySlots);
 
-            const response = await fetch(`${API_BASE}/coaches/me/availability`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ slots })
-            });
+            // Get coach_id from cs_coaches table
+            console.log('📋 Fetching coach data for user:', session.user.id);
+            const { data: coachData, error: coachError } = await window.supabaseClient
+                .from('cs_coaches')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .single();
 
-            if (response.ok) {
-                setMessage('Availability updated successfully!');
-                await loadAvailability(); // Reload to get IDs
-                setTimeout(() => setMessage(''), 3000);
-            } else {
-                const error = await response.json();
-                setMessage('Error: ' + (error.error || 'Failed to update availability'));
+            if (coachError) {
+                console.error('❌ Coach fetch error:', coachError);
+                throw new Error('Coach profile not found. Please complete your profile first.');
             }
+
+            console.log('✅ Coach ID:', coachData.id);
+
+            // Delete all existing availability slots for this coach
+            console.log('🗑️ Deleting existing availability slots...');
+            const { error: deleteError } = await window.supabaseClient
+                .from('cs_coach_availability')
+                .delete()
+                .eq('coach_id', coachData.id);
+
+            if (deleteError) {
+                console.error('❌ Delete error:', deleteError);
+                throw deleteError;
+            }
+
+            console.log('✅ Existing slots deleted');
+
+            // Insert new slots if there are any
+            if (weeklySlots.length > 0) {
+                const slotsToInsert = weeklySlots.map(slot => ({
+                    coach_id: coachData.id,
+                    day_of_week: slot.day_of_week,
+                    start_time: slot.start_time,
+                    end_time: slot.end_time,
+                    is_active: slot.is_active !== false
+                }));
+
+                console.log('➕ Inserting new slots:', slotsToInsert);
+
+                const { data: insertedData, error: insertError } = await window.supabaseClient
+                    .from('cs_coach_availability')
+                    .insert(slotsToInsert)
+                    .select();
+
+                if (insertError) {
+                    console.error('❌ Insert error:', insertError);
+                    throw insertError;
+                }
+
+                console.log('✅ Slots inserted successfully:', insertedData);
+            } else {
+                console.log('ℹ️ No slots to insert (all cleared)');
+            }
+
+            setMessage('✓ Availability updated successfully!');
+            await loadAvailability(); // Reload to get IDs
+            setTimeout(() => setMessage(''), 3000);
+
         } catch (error) {
-            console.error('Save error:', error);
+            console.error('❌ Save error:', error);
             setMessage('Error: ' + error.message);
         } finally {
             setLoading(false);
