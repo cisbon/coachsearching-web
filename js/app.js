@@ -1120,43 +1120,66 @@ const CoachList = ({ searchFilters, session }) => {
             console.log('🔍 [COACH DEBUG] Loading coaches from API...');
             console.log('🔍 [COACH DEBUG] API endpoint:', API_BASE + '/coaches');
             setLoading(true);
+
+            let loadedSuccessfully = false;
+
+            // Try 1: Load from PHP API
             try {
                 const response = await fetch(API_BASE + '/coaches');
-                console.log('🔍 [COACH DEBUG] Response status:', response.status);
-                console.log('🔍 [COACH DEBUG] Response ok:', response.ok);
+                console.log('🔍 [COACH DEBUG] API Response status:', response.status);
 
-                const data = await response.json();
-                console.log('🔍 [COACH DEBUG] Full API response:', JSON.stringify(data, null, 2));
-                console.log('🔍 [COACH DEBUG] Response keys:', Object.keys(data));
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🔍 [COACH DEBUG] API response:', JSON.stringify(data, null, 2));
 
-                if (data.data && Array.isArray(data.data)) {
-                    console.log('🔍 [COACH DEBUG] Coaches array length:', data.data.length);
-                    if (data.data.length > 0) {
-                        console.log('🔍 [COACH DEBUG] First coach:', JSON.stringify(data.data[0], null, 2));
-                        console.log('🔍 [COACH DEBUG] All coach names:', data.data.map(c => c.full_name || c.name));
+                    if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+                        console.log('✅ [COACH DEBUG] Loaded', data.data.length, 'coaches from API');
                         setCoaches(data.data);
-                        setFilteredCoaches(data.data);
-                    } else {
-                        console.warn('⚠️ [COACH DEBUG] API returned empty array!');
-                    }
-                } else if (data.coaches && Array.isArray(data.coaches)) {
-                    console.log('🔍 [COACH DEBUG] Found coaches in .coaches property, length:', data.coaches.length);
-                    if (data.coaches.length > 0) {
-                        console.log('🔍 [COACH DEBUG] First coach:', JSON.stringify(data.coaches[0], null, 2));
+                        loadedSuccessfully = true;
+                    } else if (data.coaches && Array.isArray(data.coaches) && data.coaches.length > 0) {
+                        console.log('✅ [COACH DEBUG] Loaded', data.coaches.length, 'coaches from API (.coaches)');
                         setCoaches(data.coaches);
-                        setFilteredCoaches(data.coaches);
+                        loadedSuccessfully = true;
                     }
                 } else {
-                    console.error('❌ [COACH DEBUG] No coaches array found in response!');
-                    console.error('❌ [COACH DEBUG] Response structure:', typeof data, data);
+                    console.warn('⚠️ [COACH DEBUG] API returned', response.status, '- will try Supabase directly');
                 }
             } catch (error) {
-                console.error('❌ [COACH DEBUG] Failed to load coaches:', error);
-                console.error('❌ [COACH DEBUG] Error stack:', error.stack);
-            } finally {
-                setLoading(false);
-                console.log('🔍 [COACH DEBUG] Loading complete');
+                console.warn('⚠️ [COACH DEBUG] API fetch failed:', error.message);
             }
+
+            // Try 2: Load directly from Supabase if API failed
+            if (!loadedSuccessfully && window.supabaseClient) {
+                try {
+                    console.log('🔍 [COACH DEBUG] Trying direct Supabase query...');
+                    const { data: supabaseCoaches, error } = await window.supabaseClient
+                        .from('coaches')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    if (error) {
+                        console.error('❌ [COACH DEBUG] Supabase error:', error);
+                    } else if (supabaseCoaches && supabaseCoaches.length > 0) {
+                        console.log('✅ [COACH DEBUG] Loaded', supabaseCoaches.length, 'coaches from Supabase directly!');
+                        console.log('🔍 [COACH DEBUG] Coach names:', supabaseCoaches.map(c => c.full_name));
+                        setCoaches(supabaseCoaches);
+                        loadedSuccessfully = true;
+                    } else {
+                        console.warn('⚠️ [COACH DEBUG] Supabase returned no coaches');
+                    }
+                } catch (error) {
+                    console.error('❌ [COACH DEBUG] Supabase query failed:', error);
+                }
+            }
+
+            // Try 3: Fall back to mock data
+            if (!loadedSuccessfully) {
+                console.warn('⚠️ [COACH DEBUG] Using mock data as fallback');
+                setCoaches(mockCoaches);
+            }
+
+            setLoading(false);
+            console.log('🔍 [COACH DEBUG] Loading complete');
     }, []);
 
     useEffect(() => {
