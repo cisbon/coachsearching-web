@@ -66,16 +66,56 @@ function formatPrice(eurPrice) {
 }
 
 
-// Utility: Simple Markdown to HTML
+// Utility: Enhanced Markdown to HTML
 function markdownToHTML(md) {
     if (!md) return '';
-    return md
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-        .replace(/\*(.*)\*/gim, '<em>$1</em>')
-        .replace(/\n/gim, '<br>');
+
+    let html = md;
+
+    // Convert headings (must be done line by line)
+    html = html.replace(/^### (.*)$/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*)$/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*)$/gim, '<h1>$1</h1>');
+
+    // Convert links [text](url)
+    html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+    // Convert bold and italic
+    html = html.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
+
+    // Convert bullet lists
+    const bulletRegex = /^- (.*)$/gm;
+    if (bulletRegex.test(html)) {
+        html = html.replace(/(^- .*$(\n|$))+/gm, function(match) {
+            const items = match.trim().split('\n').map(line =>
+                '<li>' + line.replace(/^- /, '') + '</li>'
+            ).join('');
+            return '<ul>' + items + '</ul>';
+        });
+    }
+
+    // Convert numbered lists
+    const numberRegex = /^\d+\. (.*)$/gm;
+    if (numberRegex.test(md)) {
+        html = html.replace(/(^\d+\. .*$(\n|$))+/gm, function(match) {
+            const items = match.trim().split('\n').map(line =>
+                '<li>' + line.replace(/^\d+\. /, '') + '</li>'
+            ).join('');
+            return '<ol>' + items + '</ol>';
+        });
+    }
+
+    // Convert line breaks to paragraphs
+    html = html.split('\n\n').map(para => {
+        // Don't wrap headings, lists in p tags
+        if (para.match(/^<(h[123]|ul|ol)/)) {
+            return para;
+        }
+        return '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+    }).join('');
+
+    return html;
 }
 
 // --- Legal Content ---
@@ -1444,6 +1484,9 @@ const BookingModal = ({ coach, session, onClose }) => {
 const CoachDetailModal = ({ coach, onClose, session }) => {
     console.log('Opening coach detail modal for', coach.full_name);
     const [showBooking, setShowBooking] = useState(false);
+    const [articles, setArticles] = useState([]);
+    const [articlesLoading, setArticlesLoading] = useState(true);
+    const [selectedArticle, setSelectedArticle] = useState(null);
 
     // Map database fields to component fields
     const rating = coach.rating_average || coach.rating || 0;
@@ -1452,6 +1495,34 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
     const languages = coach.languages || [];
     const specialties = coach.specialties || [];
     const bio = coach.bio || '';
+
+    // Load published articles
+    useEffect(() => {
+        loadArticles();
+    }, [coach.id]);
+
+    const loadArticles = async () => {
+        setArticlesLoading(true);
+        try {
+            if (window.supabaseClient) {
+                const { data, error } = await window.supabaseClient
+                    .from('cs_articles')
+                    .select('*')
+                    .eq('coach_id', coach.user_id || coach.id)
+                    .eq('is_published', true)
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+
+                if (!error && data) {
+                    setArticles(data);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load coach articles:', error);
+        } finally {
+            setArticlesLoading(false);
+        }
+    };
 
     const handleBookClick = () => {
         if (!session) {
@@ -1514,8 +1585,55 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
                             ${languages.map(l => html`<span key=${l} class="badge badge-petrol">${l}</span>`)}
                         </div>
                     ` : ''}
+
+                    ${/* Articles Section */ ''}
+                    ${!articlesLoading && articles.length > 0 ? html`
+                        <div class="coach-detail-section">
+                            <h3 class="coach-detail-section-title">📝 Articles & Insights</h3>
+                            <div class="coach-articles-list">
+                                ${articles.map(article => html`
+                                    <div
+                                        key=${article.id}
+                                        class="coach-article-preview"
+                                        onClick=${() => setSelectedArticle(article)}
+                                    >
+                                        <h4 class="coach-article-title">${article.title}</h4>
+                                        <p class="coach-article-excerpt">
+                                            ${article.excerpt || article.content.substring(0, 120) + '...'}
+                                        </p>
+                                        <div class="coach-article-meta">
+                                            <span>📅 ${new Date(article.created_at).toLocaleDateString()}</span>
+                                            ${article.view_count > 0 && html`<span>👁️ ${article.view_count}</span>`}
+                                        </div>
+                                    </div>
+                                `)}
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
+
+            ${/* Article Detail Modal */ ''}
+            ${selectedArticle && html`
+                <div class="article-detail-overlay" onClick=${() => setSelectedArticle(null)}>
+                    <div class="article-detail-modal" onClick=${(e) => e.stopPropagation()}>
+                        <button class="modal-close-btn" onClick=${() => setSelectedArticle(null)}>×</button>
+                        <div class="article-detail-content">
+                            <h2 class="article-detail-title">${selectedArticle.title}</h2>
+                            <div class="article-detail-meta">
+                                <span>By ${coach.full_name}</span>
+                                <span>•</span>
+                                <span>${new Date(selectedArticle.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <div
+                                class="article-detail-body"
+                                dangerouslySetInnerHTML=${{ __html: markdownToHTML(selectedArticle.content) }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            `}
+
             ${showBooking && html`
                 <${BookingModal}
                     coach=${coach}
@@ -2510,105 +2628,459 @@ const DashboardAvailability = ({ session }) => {
 
 const DashboardArticles = ({ session }) => {
     const [articles, setArticles] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showEditor, setShowEditor] = useState(false);
+    const [editingArticle, setEditingArticle] = useState(null);
 
-    console.log('Loading articles dashboard');
+    useEffect(() => {
+        loadArticles();
+    }, []);
+
+    const loadArticles = async () => {
+        setLoading(true);
+        try {
+            if (window.supabaseClient && session) {
+                const { data, error } = await window.supabaseClient
+                    .from('cs_articles')
+                    .select('*')
+                    .eq('coach_id', session.user.id)
+                    .order('created_at', { ascending: false });
+
+                if (!error && data) {
+                    setArticles(data);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load articles:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEdit = (article) => {
+        setEditingArticle(article);
+        setShowEditor(true);
+    };
+
+    const handleDelete = async (articleId) => {
+        if (!confirm('Are you sure you want to delete this article?')) {
+            return;
+        }
+
+        try {
+            const { error } = await window.supabaseClient
+                .from('cs_articles')
+                .delete()
+                .eq('id', articleId);
+
+            if (!error) {
+                await loadArticles();
+            }
+        } catch (error) {
+            console.error('Failed to delete article:', error);
+            alert('Failed to delete article');
+        }
+    };
+
+    const handleTogglePublish = async (article) => {
+        try {
+            const { error } = await window.supabaseClient
+                .from('cs_articles')
+                .update({ is_published: !article.is_published })
+                .eq('id', article.id);
+
+            if (!error) {
+                await loadArticles();
+            }
+        } catch (error) {
+            console.error('Failed to update article:', error);
+        }
+    };
+
+    const handleCloseEditor = () => {
+        setShowEditor(false);
+        setEditingArticle(null);
+        loadArticles();
+    };
+
+    if (loading) {
+        return html`
+            <div class="articles-loading">
+                ${[1, 2].map(i => html`
+                    <div key=${i} class="article-card skeleton-card">
+                        <div class="skeleton-line" style=${{ width: '70%', height: '24px', marginBottom: '12px' }}></div>
+                        <div class="skeleton-line" style=${{ width: '100%', height: '14px', marginBottom: '8px' }}></div>
+                        <div class="skeleton-line" style=${{ width: '90%', height: '14px' }}></div>
+                    </div>
+                `)}
+            </div>
+        `;
+    }
 
     return html`
-        <div>
-            <div style=${{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h3>${t('dashboard.articles')}</h3>
+        <div class="articles-container">
+            <div class="articles-header">
+                <h3 class="section-subtitle">${t('dashboard.articles')}</h3>
                 <button class="btn-primary" onClick=${() => {
-                    console.log('New article clicked');
+                    setEditingArticle(null);
                     setShowEditor(!showEditor);
                 }}>
-                    ${showEditor ? 'Close Editor' : t('article.new')}
+                    ${showEditor ? '✕ Close Editor' : '✍️ Write New Article'}
                 </button>
             </div>
 
-            ${showEditor && html`<${ArticleEditor} session=${session} />`}
+            ${showEditor && html`
+                <${ArticleEditor}
+                    session=${session}
+                    article=${editingArticle}
+                    onClose=${handleCloseEditor}
+                />
+            `}
 
-            ${articles.length === 0 && !showEditor && html`
+            ${!showEditor && articles.length === 0 && html`
                 <div class="empty-state">
                     <div class="empty-state-icon">📝</div>
                     <div class="empty-state-text">No articles yet</div>
                     <div class="empty-state-subtext">Create your first article to share your expertise!</div>
+                    <button class="btn-primary" style=${{ marginTop: '16px' }} onClick=${() => setShowEditor(true)}>
+                        ✍️ Write Your First Article
+                    </button>
+                </div>
+            `}
+
+            ${!showEditor && articles.length > 0 && html`
+                <div class="articles-list">
+                    ${articles.map(article => html`
+                        <div key=${article.id} class="article-card">
+                            <div class="article-card-header">
+                                <div class="article-card-title">
+                                    <h4>${article.title}</h4>
+                                    <span class="status-badge ${article.is_published ? 'status-confirmed' : 'status-pending'}">
+                                        ${article.is_published ? '✓ Published' : '📝 Draft'}
+                                    </span>
+                                </div>
+                                <div class="article-card-meta">
+                                    <span>📅 ${new Date(article.created_at).toLocaleDateString()}</span>
+                                    ${article.view_count > 0 && html`
+                                        <span>👁️ ${article.view_count} views</span>
+                                    `}
+                                </div>
+                            </div>
+
+                            <div class="article-card-excerpt">
+                                ${article.excerpt || article.content.substring(0, 150) + '...'}
+                            </div>
+
+                            <div class="article-card-actions">
+                                <button class="btn-small btn-secondary" onClick=${() => handleEdit(article)}>
+                                    ✏️ Edit
+                                </button>
+                                <button
+                                    class="btn-small ${article.is_published ? 'btn-secondary' : 'btn-primary'}"
+                                    onClick=${() => handleTogglePublish(article)}
+                                >
+                                    ${article.is_published ? '📥 Unpublish' : '🚀 Publish'}
+                                </button>
+                                <button class="btn-small btn-danger" onClick=${() => handleDelete(article.id)}>
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        </div>
+                    `)}
                 </div>
             `}
         </div>
     `;
 };
 
-const ArticleEditor = ({ session }) => {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [preview, setPreview] = useState('');
+const ArticleEditor = ({ session, article, onClose }) => {
+    const [title, setTitle] = useState(article?.title || '');
+    const [content, setContent] = useState(article?.content || '');
+    const [excerpt, setExcerpt] = useState(article?.excerpt || '');
     const [showPreview, setShowPreview] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState('');
+    const textareaRef = useRef(null);
 
-    console.log('Article editor loaded');
+    const insertFormatting = (before, after = '') => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
 
-    const handlePreview = () => {
-        const html = markdownToHTML(content);
-        setPreview(html);
-        setShowPreview(!showPreview);
-        console.log('Preview toggled');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = content.substring(start, end);
+        const newText = content.substring(0, start) + before + selectedText + after + content.substring(end);
+
+        setContent(newText);
+
+        // Set cursor position after insertion
+        setTimeout(() => {
+            textarea.focus();
+            const newCursorPos = start + before.length + selectedText.length + after.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
     };
 
-    const shareLinkedIn = () => {
-        const url = encodeURIComponent(window.location.href);
-        const text = encodeURIComponent(title);
-        const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${text}`;
-        console.log('Opening LinkedIn share:', linkedInUrl);
-        window.open(linkedInUrl, '_blank');
+    const formatBold = () => insertFormatting('**', '**');
+    const formatItalic = () => insertFormatting('*', '*');
+    const formatHeading2 = () => {
+        const textarea = textareaRef.current;
+        const start = textarea.selectionStart;
+        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
+        const newText = content.substring(0, lineStart) + '## ' + content.substring(lineStart);
+        setContent(newText);
+    };
+    const formatHeading3 = () => {
+        const textarea = textareaRef.current;
+        const start = textarea.selectionStart;
+        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
+        const newText = content.substring(0, lineStart) + '### ' + content.substring(lineStart);
+        setContent(newText);
+    };
+    const formatBulletList = () => {
+        const textarea = textareaRef.current;
+        const start = textarea.selectionStart;
+        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
+        const newText = content.substring(0, lineStart) + '- ' + content.substring(lineStart);
+        setContent(newText);
+    };
+    const formatNumberedList = () => {
+        const textarea = textareaRef.current;
+        const start = textarea.selectionStart;
+        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
+        const newText = content.substring(0, lineStart) + '1. ' + content.substring(lineStart);
+        setContent(newText);
+    };
+    const formatLink = () => {
+        const url = prompt('Enter URL:');
+        if (url) {
+            insertFormatting('[', `](${url})`);
+        }
     };
 
-    const shareTwitter = () => {
-        const url = encodeURIComponent(window.location.href);
-        const text = encodeURIComponent(title);
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
-        console.log('Opening Twitter share:', twitterUrl);
-        window.open(twitterUrl, '_blank');
+    const handleSave = async (publishNow = false) => {
+        if (!title.trim()) {
+            setMessage('Error: Please enter a title');
+            setTimeout(() => setMessage(''), 3000);
+            return;
+        }
+
+        if (!content.trim()) {
+            setMessage('Error: Please enter content');
+            setTimeout(() => setMessage(''), 3000);
+            return;
+        }
+
+        setSaving(true);
+        setMessage('');
+
+        try {
+            const articleData = {
+                coach_id: session.user.id,
+                title: title.trim(),
+                content: content.trim(),
+                excerpt: excerpt.trim() || content.trim().substring(0, 200),
+                is_published: publishNow,
+                tags: [] // Can be enhanced later
+            };
+
+            let result;
+            if (article?.id) {
+                // Update existing article
+                result = await window.supabaseClient
+                    .from('cs_articles')
+                    .update(articleData)
+                    .eq('id', article.id)
+                    .select();
+            } else {
+                // Create new article
+                result = await window.supabaseClient
+                    .from('cs_articles')
+                    .insert([articleData])
+                    .select();
+            }
+
+            if (result.error) {
+                throw result.error;
+            }
+
+            setMessage(publishNow ? '✓ Article published successfully!' : '✓ Article saved as draft!');
+            setTimeout(() => {
+                setMessage('');
+                if (onClose) onClose();
+            }, 1500);
+
+        } catch (error) {
+            console.error('Failed to save article:', error);
+            setMessage('Error: ' + error.message);
+        } finally {
+            setSaving(false);
+        }
     };
+
+    const previewHTML = markdownToHTML(content);
 
     return html`
-        <div class="article-editor">
-            <input
-                type="text"
-                placeholder=${t('article.title')}
-                value=${title}
-                onChange=${(e) => setTitle(e.target.value)}
-                style=${{ width: '100%', padding: '12px', fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-            />
-            <textarea
-                placeholder="${t('article.content')} (Markdown supported)"
-                value=${content}
-                onChange=${(e) => setContent(e.target.value)}
-            />
-
-            <div class="editor-toolbar">
-                <button class="btn-secondary" onClick=${handlePreview}>
-                    ${showPreview ? 'Hide Preview' : t('article.preview')}
-                </button>
-                <button class="btn-primary" onClick=${() => {
-                    console.log('Publish clicked', { title, content });
-                    alert('Article publishing will be connected to API soon!');
-                }}>
-                    ${t('article.publish')}
-                </button>
-                <button class="btn-secondary" onClick=${shareLinkedIn}>
-                    ${t('article.share_linkedin')}
-                </button>
-                <button class="btn-secondary" onClick=${shareTwitter}>
-                    ${t('article.share_twitter')}
-                </button>
-            </div>
-
-            ${showPreview && html`
-                <div class="article-preview">
-                    <h3>Preview</h3>
-                    <div dangerouslySetInnerHTML=${{ __html: preview }} />
+        <div class="article-editor-modern">
+            ${message && html`
+                <div class="message ${message.includes('Error') ? 'message-error' : 'message-success'}">
+                    ${message}
                 </div>
             `}
+
+            <div class="editor-container">
+                <!-- Title Input -->
+                <input
+                    type="text"
+                    class="editor-title-input"
+                    placeholder="Article Title"
+                    value=${title}
+                    onChange=${(e) => setTitle(e.target.value)}
+                />
+
+                <!-- Excerpt Input -->
+                <input
+                    type="text"
+                    class="editor-excerpt-input"
+                    placeholder="Short excerpt (optional - will auto-generate from content)"
+                    value=${excerpt}
+                    onChange=${(e) => setExcerpt(e.target.value)}
+                />
+
+                <!-- Formatting Toolbar -->
+                <div class="formatting-toolbar">
+                    <div class="toolbar-group">
+                        <button
+                            class="toolbar-btn"
+                            onClick=${formatBold}
+                            title="Bold (Ctrl+B)"
+                        >
+                            <strong>B</strong>
+                        </button>
+                        <button
+                            class="toolbar-btn"
+                            onClick=${formatItalic}
+                            title="Italic (Ctrl+I)"
+                        >
+                            <em>I</em>
+                        </button>
+                    </div>
+
+                    <div class="toolbar-divider"></div>
+
+                    <div class="toolbar-group">
+                        <button
+                            class="toolbar-btn"
+                            onClick=${formatHeading2}
+                            title="Heading 2"
+                        >
+                            H2
+                        </button>
+                        <button
+                            class="toolbar-btn"
+                            onClick=${formatHeading3}
+                            title="Heading 3"
+                        >
+                            H3
+                        </button>
+                    </div>
+
+                    <div class="toolbar-divider"></div>
+
+                    <div class="toolbar-group">
+                        <button
+                            class="toolbar-btn"
+                            onClick=${formatBulletList}
+                            title="Bullet List"
+                        >
+                            • List
+                        </button>
+                        <button
+                            class="toolbar-btn"
+                            onClick=${formatNumberedList}
+                            title="Numbered List"
+                        >
+                            1. List
+                        </button>
+                    </div>
+
+                    <div class="toolbar-divider"></div>
+
+                    <div class="toolbar-group">
+                        <button
+                            class="toolbar-btn"
+                            onClick=${formatLink}
+                            title="Insert Link"
+                        >
+                            🔗 Link
+                        </button>
+                    </div>
+
+                    <div class="toolbar-spacer"></div>
+
+                    <button
+                        class="toolbar-btn ${showPreview ? 'active' : ''}"
+                        onClick=${() => setShowPreview(!showPreview)}
+                    >
+                        ${showPreview ? '✏️ Edit' : '👁️ Preview'}
+                    </button>
+                </div>
+
+                <!-- Editor / Preview Toggle -->
+                ${!showPreview ? html`
+                    <textarea
+                        ref=${textareaRef}
+                        class="editor-textarea"
+                        placeholder="Write your article content here...
+
+You can use formatting:
+- **bold text**
+- *italic text*
+- ## Headings
+- - Bullet points
+- 1. Numbered lists
+- [links](https://example.com)"
+                        value=${content}
+                        onChange=${(e) => setContent(e.target.value)}
+                    />
+                ` : html`
+                    <div class="editor-preview">
+                        <div class="preview-header">
+                            <h2>${title || 'Untitled Article'}</h2>
+                            ${excerpt && html`<p class="preview-excerpt">${excerpt}</p>`}
+                        </div>
+                        <div class="preview-content" dangerouslySetInnerHTML=${{ __html: previewHTML }} />
+                    </div>
+                `}
+
+                <!-- Action Buttons -->
+                <div class="editor-actions">
+                    <button
+                        class="btn-secondary"
+                        onClick=${() => onClose && onClose()}
+                        disabled=${saving}
+                    >
+                        ← Back to Articles
+                    </button>
+
+                    <div class="editor-actions-right">
+                        <button
+                            class="btn-secondary"
+                            onClick=${() => handleSave(false)}
+                            disabled=${saving}
+                        >
+                            ${saving ? 'Saving...' : '💾 Save as Draft'}
+                        </button>
+                        <button
+                            class="btn-primary"
+                            onClick=${() => handleSave(true)}
+                            disabled=${saving}
+                        >
+                            ${saving ? 'Publishing...' : '🚀 Publish Article'}
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
 };
