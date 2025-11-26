@@ -590,6 +590,7 @@ const Auth = () => {
 const CoachOnboarding = ({ session }) => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         full_name: session?.user?.user_metadata?.full_name || '',
         title: '',
@@ -613,6 +614,10 @@ const CoachOnboarding = ({ session }) => {
         setMessage('');
 
         try {
+            if (!window.supabaseClient) {
+                throw new Error('Database connection not available');
+            }
+
             // Parse comma-separated values into arrays
             const specialtiesArray = formData.specialties.split(',').map(s => s.trim()).filter(Boolean);
             const languagesArray = formData.languages.split(',').map(s => s.trim()).filter(Boolean);
@@ -621,7 +626,7 @@ const CoachOnboarding = ({ session }) => {
             if (formData.session_types_onsite) sessionTypesArray.push('onsite');
 
             const coachProfile = {
-                id: session.user.id,
+                user_id: session.user.id,
                 full_name: formData.full_name,
                 title: formData.title,
                 bio: formData.bio,
@@ -631,35 +636,34 @@ const CoachOnboarding = ({ session }) => {
                 specialties: specialtiesArray,
                 languages: languagesArray,
                 session_types: sessionTypesArray,
+                offers_virtual: formData.session_types_online,
+                offers_onsite: formData.session_types_onsite,
                 avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 onboarding_completed: true
             };
 
-            console.log('Submitting coach profile:', coachProfile);
+            console.log('💾 Saving coach profile to Supabase:', coachProfile);
 
-            // Save to database via API
-            const response = await fetch(API_BASE + '/coaches', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + session.access_token
-                },
-                body: JSON.stringify(coachProfile)
-            });
+            // Save directly to Supabase
+            const { data, error } = await window.supabaseClient
+                .from('cs_coaches')
+                .insert([coachProfile])
+                .select()
+                .single();
 
-            const result = await response.json();
-            console.log('Coach profile save result:', result);
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Failed to save profile');
+            if (error) {
+                console.error('❌ Supabase error:', error);
+                throw new Error(error.message || 'Failed to save profile');
             }
 
-            setMessage('Profile completed successfully! Redirecting...');
+            console.log('✅ Coach profile saved successfully:', data);
+
+            setMessage('✓ Profile completed successfully! Redirecting to dashboard...');
             setTimeout(() => {
                 window.location.hash = '#dashboard';
-            }, 1000);
+            }, 1500);
         } catch (error) {
-            console.error('Onboarding error:', error);
+            console.error('❌ Onboarding error:', error);
             setMessage('Error: ' + error.message);
         } finally {
             setLoading(false);
@@ -667,145 +671,215 @@ const CoachOnboarding = ({ session }) => {
     };
 
     return html`
-        <div class="auth-container">
-            <div class="onboarding-card">
-                <h2 class="section-title text-center">${t('onboard.title')}</h2>
-                <p class="text-center" style=${{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-                    Complete your profile to start offering coaching services
-                </p>
+        <div class="container" style=${{ maxWidth: '900px', margin: '60px auto', padding: '0 20px' }}>
+            <div style=${{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '48px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+            }}>
+                <div style=${{ textAlign: 'center', marginBottom: '40px' }}>
+                    <h1 style=${{
+                        fontSize: '32px',
+                        fontWeight: '700',
+                        color: 'var(--primary-petrol)',
+                        marginBottom: '12px'
+                    }}>
+                        🎯 Complete Your Coach Profile
+                    </h1>
+                    <p style=${{
+                        fontSize: '16px',
+                        color: 'var(--text-muted)',
+                        maxWidth: '600px',
+                        margin: '0 auto'
+                    }}>
+                        Just a few details to get you started and visible to potential clients
+                    </p>
+                </div>
 
                 ${message && html`
-                    <div class="alert ${message.includes('Error') ? 'alert-error' : 'alert-success'}">
+                    <div class="alert ${message.includes('Error') ? 'alert-error' : 'alert-success'}" style=${{ marginBottom: '32px' }}>
                         ${message}
                     </div>
                 `}
 
-                <form onSubmit=${handleSubmit} style=${{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div class="form-group">
-                        <label class="form-label">${t('onboard.fullName')} *</label>
-                        <input
-                            type="text"
-                            class="auth-input"
-                            value=${formData.full_name}
-                            onChange=${(e) => handleChange('full_name', e.target.value)}
-                            required
-                        />
-                    </div>
+                <form onSubmit=${handleSubmit}>
+                    <div style=${{ display: 'grid', gap: '32px' }}>
+                        <!-- Basic Info -->
+                        <div>
+                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
+                                📝 Basic Information
+                            </h3>
+                            <div style=${{ display: 'grid', gap: '20px' }}>
+                                <div class="form-group">
+                                    <label class="form-label">Full Name *</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        value=${formData.full_name}
+                                        onChange=${(e) => handleChange('full_name', e.target.value)}
+                                        required
+                                    />
+                                </div>
 
-                    <div class="form-group">
-                        <label class="form-label">${t('onboard.jobTitle')} *</label>
-                        <input
-                            type="text"
-                            class="auth-input"
-                            placeholder="e.g., Life Coach, Business Consultant, Executive Coach"
-                            value=${formData.title}
-                            onChange=${(e) => handleChange('title', e.target.value)}
-                            required
-                        />
-                    </div>
+                                <div class="form-group">
+                                    <label class="form-label">Professional Title *</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        placeholder="e.g., Life Coach, Business Consultant, Executive Coach"
+                                        value=${formData.title}
+                                        onChange=${(e) => handleChange('title', e.target.value)}
+                                        required
+                                    />
+                                </div>
 
-                    <div class="form-group">
-                        <label class="form-label">${t('onboard.bio')} *</label>
-                        <textarea
-                            class="auth-textarea"
-                            rows="5"
-                            placeholder="Tell potential clients about your experience, approach, and what makes you unique..."
-                            value=${formData.bio}
-                            onChange=${(e) => handleChange('bio', e.target.value)}
-                            required
-                        ></textarea>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">${t('onboard.location')}</label>
-                            <input
-                                type="text"
-                                class="auth-input"
-                                placeholder="e.g., Zurich, Switzerland"
-                                value=${formData.location}
-                                onChange=${(e) => handleChange('location', e.target.value)}
-                            />
+                                <div class="form-group">
+                                    <label class="form-label">About You *</label>
+                                    <textarea
+                                        class="form-control"
+                                        rows="6"
+                                        placeholder="Tell potential clients about your experience, approach, and what makes you unique..."
+                                        value=${formData.bio}
+                                        onChange=${(e) => handleChange('bio', e.target.value)}
+                                        required
+                                        style=${{ minHeight: '150px' }}
+                                    ></textarea>
+                                    <small class="form-hint">Share your coaching philosophy, certifications, and what sets you apart</small>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">${t('onboard.hourlyRate')} *</label>
-                            <input
-                                type="number"
-                                class="auth-input"
-                                placeholder="150"
-                                min="0"
-                                step="1"
-                                value=${formData.hourly_rate}
-                                onChange=${(e) => handleChange('hourly_rate', e.target.value)}
-                                required
-                            />
+                        <!-- Pricing & Location -->
+                        <div>
+                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
+                                💰 Pricing & Location
+                            </h3>
+                            <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div class="form-group">
+                                    <label class="form-label">Hourly Rate (EUR) *</label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        placeholder="150"
+                                        min="0"
+                                        step="1"
+                                        value=${formData.hourly_rate}
+                                        onChange=${(e) => handleChange('hourly_rate', e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Location</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        placeholder="e.g., Zurich, Switzerland"
+                                        value=${formData.location}
+                                        onChange=${(e) => handleChange('location', e.target.value)}
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label">${t('onboard.specialties')} *</label>
-                        <input
-                            type="text"
-                            class="auth-input"
-                            placeholder="Life Coaching, Business Strategy, Leadership Development"
-                            value=${formData.specialties}
-                            onChange=${(e) => handleChange('specialties', e.target.value)}
-                            required
-                        />
-                        <small class="form-hint">Separate multiple specialties with commas</small>
-                    </div>
+                        <!-- Expertise -->
+                        <div>
+                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
+                                🎓 Expertise & Languages
+                            </h3>
+                            <div style=${{ display: 'grid', gap: '20px' }}>
+                                <div class="form-group">
+                                    <label class="form-label">Specialties *</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        placeholder="Life Coaching, Business Strategy, Leadership Development"
+                                        value=${formData.specialties}
+                                        onChange=${(e) => handleChange('specialties', e.target.value)}
+                                        required
+                                    />
+                                    <small class="form-hint">Separate multiple specialties with commas</small>
+                                </div>
 
-                    <div class="form-group">
-                        <label class="form-label">${t('onboard.languages')} *</label>
-                        <input
-                            type="text"
-                            class="auth-input"
-                            placeholder="en, de, es"
-                            value=${formData.languages}
-                            onChange=${(e) => handleChange('languages', e.target.value)}
-                            required
-                        />
-                        <small class="form-hint">Use language codes: en, de, es, fr, it</small>
-                    </div>
+                                <div class="form-group">
+                                    <label class="form-label">Languages *</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        placeholder="en, de, es, fr"
+                                        value=${formData.languages}
+                                        onChange=${(e) => handleChange('languages', e.target.value)}
+                                        required
+                                    />
+                                    <small class="form-hint">Use language codes (en=English, de=German, es=Spanish, fr=French, it=Italian)</small>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div class="form-group">
-                        <label class="form-label">${t('onboard.sessionTypes')} *</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
+                        <!-- Session Types -->
+                        <div>
+                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
+                                📍 Session Types
+                            </h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label" style=${{ padding: '16px', border: '2px solid var(--border-color)', borderRadius: '8px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked=${formData.session_types_online}
+                                        onChange=${(e) => handleChange('session_types_online', e.target.checked)}
+                                    />
+                                    <span style=${{ fontSize: '16px' }}>💻 Offer Online Sessions (via video call)</span>
+                                </label>
+                                <label class="checkbox-label" style=${{ padding: '16px', border: '2px solid var(--border-color)', borderRadius: '8px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked=${formData.session_types_onsite}
+                                        onChange=${(e) => handleChange('session_types_onsite', e.target.checked)}
+                                    />
+                                    <span style=${{ fontSize: '16px' }}>📍 Offer On-Site Sessions (in person)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Optional -->
+                        <div>
+                            <h3 style=${{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: 'var(--primary-petrol)' }}>
+                                🖼️ Profile Picture (Optional)
+                            </h3>
+                            <div class="form-group">
+                                <label class="form-label">Avatar URL</label>
                                 <input
-                                    type="checkbox"
-                                    checked=${formData.session_types_online}
-                                    onChange=${(e) => handleChange('session_types_online', e.target.checked)}
+                                    type="url"
+                                    class="form-control"
+                                    placeholder="https://example.com/your-photo.jpg"
+                                    value=${formData.avatar_url}
+                                    onChange=${(e) => handleChange('avatar_url', e.target.value)}
                                 />
-                                <span>💻 Online Sessions</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked=${formData.session_types_onsite}
-                                    onChange=${(e) => handleChange('session_types_onsite', e.target.checked)}
-                                />
-                                <span>📍 On-Site Sessions</span>
-                            </label>
+                                <small class="form-hint">Leave blank to use an automatically generated avatar</small>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">${t('onboard.avatar')}</label>
-                        <input
-                            type="url"
-                            class="auth-input"
-                            placeholder="https://example.com/your-photo.jpg"
-                            value=${formData.avatar_url}
-                            onChange=${(e) => handleChange('avatar_url', e.target.value)}
-                        />
-                        <small class="form-hint">Leave blank to use a generated avatar</small>
+                    <div style=${{ marginTop: '40px', display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                        <button
+                            type="button"
+                            onClick=${() => window.location.hash = '#coaches'}
+                            class="btn-secondary"
+                            style=${{ minWidth: '150px' }}
+                            disabled=${loading}
+                        >
+                            Skip for Now
+                        </button>
+                        <button
+                            type="submit"
+                            class="btn-primary"
+                            style=${{ minWidth: '200px' }}
+                            disabled=${loading}
+                        >
+                            ${loading ? '💾 Saving...' : '✅ Complete Profile'}
+                        </button>
                     </div>
-
-                    <button class="auth-btn" type="submit" disabled=${loading}>
-                        ${loading ? t('onboard.uploading') : t('onboard.submit')}
-                    </button>
                 </form>
             </div>
         </div>
