@@ -2163,12 +2163,59 @@ const DashboardProfile = ({ session, userType }) => {
     }, [userType]);
 
     const loadCoachProfile = async () => {
+        console.log('📋 [PROFILE DEBUG] Loading coach profile...');
         try {
+            // Try API first
             const response = await fetch(`${API_BASE}/coaches/${session.user.id}`);
-            const data = await response.json();
+            console.log('📋 [PROFILE DEBUG] API response status:', response.status);
 
-            if (data.data) {
-                const coach = data.data;
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📋 [PROFILE DEBUG] API data received:', data);
+
+                if (data.data) {
+                    const coach = data.data;
+                    setFormData({
+                        full_name: coach.full_name || '',
+                        avatar_url: coach.avatar_url || '',
+                        banner_url: coach.banner_url || '',
+                        title: coach.title || '',
+                        bio: coach.bio || '',
+                        location: coach.location || '',
+                        hourly_rate: coach.hourly_rate || '',
+                        currency: coach.currency || 'EUR',
+                        specialties: coach.specialties?.join(', ') || '',
+                        languages: coach.languages?.join(', ') || '',
+                        session_types_online: coach.session_types?.includes('online') || true,
+                        session_types_onsite: coach.session_types?.includes('onsite') || false
+                    });
+                    console.log('✅ [PROFILE DEBUG] Profile loaded from API successfully');
+                    return;
+                }
+            } else {
+                console.warn('⚠️ [PROFILE DEBUG] API returned', response.status, '- trying Supabase');
+            }
+        } catch (error) {
+            console.warn('⚠️ [PROFILE DEBUG] API failed:', error.message);
+        }
+
+        // Fallback to Supabase
+        try {
+            console.log('📋 [PROFILE DEBUG] Querying Supabase for coach profile...');
+            const { data: coach, error } = await window.supabaseClient
+                .from('coaches')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+
+            if (error) {
+                console.error('❌ [PROFILE DEBUG] Supabase error:', error);
+                // If no row found, that's okay - it means this is a new profile
+                if (error.code === 'PGRST116') {
+                    console.log('📋 [PROFILE DEBUG] No existing profile found - user can create one');
+                }
+            } else if (coach) {
+                console.log('✅ [PROFILE DEBUG] Profile loaded from Supabase:', coach);
                 setFormData({
                     full_name: coach.full_name || '',
                     avatar_url: coach.avatar_url || '',
@@ -2185,7 +2232,7 @@ const DashboardProfile = ({ session, userType }) => {
                 });
             }
         } catch (error) {
-            console.error('Failed to load coach profile:', error);
+            console.error('❌ [PROFILE DEBUG] Failed to load from Supabase:', error);
         }
     };
 
@@ -2261,6 +2308,7 @@ const DashboardProfile = ({ session, userType }) => {
     };
 
     const handleSave = async () => {
+        console.log('💾 [SAVE DEBUG] Starting profile save...');
         setLoading(true);
         setMessage('');
 
@@ -2270,6 +2318,7 @@ const DashboardProfile = ({ session, userType }) => {
             if (formData.session_types_onsite) sessionTypesArray.push('onsite');
 
             const profileData = {
+                user_id: session.user.id,
                 full_name: formData.full_name,
                 avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 onboarding_completed: true
@@ -2290,27 +2339,62 @@ const DashboardProfile = ({ session, userType }) => {
                 });
             }
 
-            const response = await fetch(`${API_BASE}/coaches`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify(profileData)
-            });
+            console.log('💾 [SAVE DEBUG] Profile data prepared:', profileData);
 
-            if (response.ok) {
-                setMessage('Profile updated successfully!');
-                setTimeout(() => setMessage(''), 3000);
-            } else {
-                const error = await response.json();
-                setMessage('Error: ' + (error.error || 'Failed to update profile'));
+            let savedSuccessfully = false;
+
+            // Try API first
+            try {
+                console.log('💾 [SAVE DEBUG] Trying to save via API...');
+                const response = await fetch(`${API_BASE}/coaches`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify(profileData)
+                });
+
+                console.log('💾 [SAVE DEBUG] API response status:', response.status);
+
+                if (response.ok) {
+                    console.log('✅ [SAVE DEBUG] Saved successfully via API');
+                    setMessage('Profile updated successfully!');
+                    setTimeout(() => setMessage(''), 3000);
+                    savedSuccessfully = true;
+                } else {
+                    const error = await response.json();
+                    console.warn('⚠️ [SAVE DEBUG] API returned error:', error);
+                }
+            } catch (error) {
+                console.warn('⚠️ [SAVE DEBUG] API save failed:', error.message);
+            }
+
+            // Fallback to Supabase
+            if (!savedSuccessfully) {
+                console.log('💾 [SAVE DEBUG] Trying to save via Supabase...');
+                const { data, error } = await window.supabaseClient
+                    .from('coaches')
+                    .upsert(profileData, {
+                        onConflict: 'user_id'
+                    })
+                    .select();
+
+                if (error) {
+                    console.error('❌ [SAVE DEBUG] Supabase save failed:', error);
+                    setMessage('Error: ' + error.message);
+                } else {
+                    console.log('✅ [SAVE DEBUG] Saved successfully via Supabase:', data);
+                    setMessage('Profile updated successfully!');
+                    setTimeout(() => setMessage(''), 3000);
+                }
             }
         } catch (error) {
-            console.error('Save error:', error);
+            console.error('❌ [SAVE DEBUG] Save error:', error);
             setMessage('Error: ' + error.message);
         } finally {
             setLoading(false);
+            console.log('💾 [SAVE DEBUG] Save process complete');
         }
     };
 
