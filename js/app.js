@@ -1024,7 +1024,7 @@ const CoachCard = ({ coach, onViewDetails }) => {
     `;
 };
 
-const CoachList = ({ searchFilters }) => {
+const CoachList = ({ searchFilters, session }) => {
     const [coaches, setCoaches] = useState(mockCoaches);
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [filteredCoaches, setFilteredCoaches] = useState(mockCoaches);
@@ -1112,13 +1112,233 @@ const CoachList = ({ searchFilters }) => {
             <div class="coach-list">
                 ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} onViewDetails=${setSelectedCoach} />`)}
             </div>
-            ${selectedCoach && html`<${CoachDetailModal} coach=${selectedCoach} onClose=${() => setSelectedCoach(null)} />`}
+            ${selectedCoach && html`<${CoachDetailModal} coach=${selectedCoach} session=${session} onClose=${() => setSelectedCoach(null)} />`}
         </div>
     `;
 };
 
-const CoachDetailModal = ({ coach, onClose }) => {
+const BookingModal = ({ coach, session, onClose }) => {
+    const [step, setStep] = useState(1); // 1: date/time, 2: confirm
+    const [selectedDate, setSelectedDate] = useState('');
+    const [selectedSlot, setSelectedSlot] = useState(null);
+    const [duration, setDuration] = useState(60);
+    const [availableSlots, setAvailableSlots] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [notes, setNotes] = useState('');
+
+    // Generate next 14 days
+    const getNextDays = () => {
+        const days = [];
+        for (let i = 0; i < 14; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() + i);
+            days.push({
+                value: date.toISOString().split('T')[0],
+                label: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+            });
+        }
+        return days;
+    };
+
+    const nextDays = getNextDays();
+
+    useEffect(() => {
+        if (selectedDate) {
+            loadAvailableSlots();
+        }
+    }, [selectedDate, duration]);
+
+    const loadAvailableSlots = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_BASE}/coaches/${coach.id}/available-slots?date=${selectedDate}&duration=${duration}`);
+            const data = await response.json();
+            setAvailableSlots(data.data || []);
+        } catch (error) {
+            console.error('Failed to load available slots:', error);
+            setAvailableSlots([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSlotSelect = (slot) => {
+        setSelectedSlot(slot);
+    };
+
+    const handleConfirmBooking = async () => {
+        if (!selectedSlot) return;
+
+        setLoading(true);
+        try {
+            const bookingData = {
+                coach_id: coach.id,
+                start_time: selectedSlot.start_time,
+                duration_minutes: duration,
+                meeting_type: 'online',
+                amount: (coach.hourly_rate * duration / 60).toFixed(2),
+                currency: coach.currency || 'EUR',
+                client_notes: notes,
+                stripe_payment_intent_id: null // TODO: Integrate Stripe
+            };
+
+            const response = await fetch(`${API_BASE}/bookings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(bookingData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Booking created successfully! Payment integration coming soon.');
+                onClose();
+            } else {
+                alert('Failed to create booking: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Booking error:', error);
+            alert('Failed to create booking');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const totalPrice = (coach.hourly_rate * duration / 60).toFixed(2);
+
+    return html`
+        <div class="booking-modal" onClick=${onClose}>
+            <div class="booking-content" onClick=${(e) => e.stopPropagation()}>
+                <div class="booking-header">
+                    <h2>Book a Session with ${coach.full_name}</h2>
+                    <button class="modal-close-btn" onClick=${onClose}>×</button>
+                </div>
+
+                ${step === 1 && html`
+                    <div class="booking-step">
+                        <div class="form-group">
+                            <label>Duration</label>
+                            <select class="form-control" value=${duration} onChange=${(e) => setDuration(Number(e.target.value))}>
+                                <option value="30">30 minutes - ${formatPrice((coach.hourly_rate * 0.5))}</option>
+                                <option value="60">60 minutes - ${formatPrice(coach.hourly_rate)}</option>
+                                <option value="90">90 minutes - ${formatPrice((coach.hourly_rate * 1.5))}</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Select Date</label>
+                            <div class="date-selector">
+                                ${nextDays.map(day => html`
+                                    <button
+                                        key=${day.value}
+                                        class="date-btn ${selectedDate === day.value ? 'selected' : ''}"
+                                        onClick=${() => setSelectedDate(day.value)}
+                                    >
+                                        ${day.label}
+                                    </button>
+                                `)}
+                            </div>
+                        </div>
+
+                        ${selectedDate && html`
+                            <div class="form-group">
+                                <label>Available Time Slots</label>
+                                ${loading && html`<div class="spinner"></div>`}
+                                ${!loading && availableSlots.length === 0 && html`
+                                    <div class="empty-state-subtext">No available slots for this date</div>
+                                `}
+                                ${!loading && availableSlots.length > 0 && html`
+                                    <div class="time-slot-grid">
+                                        ${availableSlots.map(slot => {
+                                            const time = new Date(slot.start_time).toLocaleTimeString('en-US', {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                hour12: false
+                                            });
+                                            return html`
+                                                <button
+                                                    key=${slot.start_time}
+                                                    class="time-slot-btn ${selectedSlot?.start_time === slot.start_time ? 'selected' : ''}"
+                                                    onClick=${() => handleSlotSelect(slot)}
+                                                >
+                                                    ${time}
+                                                </button>
+                                            `;
+                                        })}
+                                    </div>
+                                `}
+                            </div>
+                        `}
+
+                        ${selectedSlot && html`
+                            <div class="form-group">
+                                <label>Notes (Optional)</label>
+                                <textarea
+                                    class="form-control"
+                                    rows="3"
+                                    placeholder="Any specific topics or questions you'd like to discuss?"
+                                    value=${notes}
+                                    onInput=${(e) => setNotes(e.target.value)}
+                                ></textarea>
+                            </div>
+
+                            <div class="booking-summary">
+                                <h3>Booking Summary</h3>
+                                <div class="summary-row">
+                                    <span>Coach:</span>
+                                    <span>${coach.full_name}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Date:</span>
+                                    <span>${new Date(selectedSlot.start_time).toLocaleDateString('en-US', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    })}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Time:</span>
+                                    <span>${new Date(selectedSlot.start_time).toLocaleTimeString('en-US', {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Duration:</span>
+                                    <span>${duration} minutes</span>
+                                </div>
+                                <div class="summary-row summary-total">
+                                    <span>Total:</span>
+                                    <span>${formatPrice(totalPrice)}</span>
+                                </div>
+                            </div>
+
+                            <div style=${{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                                <button class="btn-secondary" onClick=${onClose} style=${{ flex: 1 }}>Cancel</button>
+                                <button
+                                    class="btn-primary"
+                                    onClick=${handleConfirmBooking}
+                                    disabled=${loading}
+                                    style=${{ flex: 1 }}
+                                >
+                                    ${loading ? 'Processing...' : 'Confirm Booking'}
+                                </button>
+                            </div>
+                        `}
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+};
+
+const CoachDetailModal = ({ coach, onClose, session }) => {
     console.log('Opening coach detail modal for', coach.full_name);
+    const [showBooking, setShowBooking] = useState(false);
 
     // Map database fields to component fields
     const rating = coach.rating_average || coach.rating || 0;
@@ -1127,6 +1347,15 @@ const CoachDetailModal = ({ coach, onClose }) => {
     const languages = coach.languages || [];
     const specialties = coach.specialties || [];
     const bio = coach.bio || '';
+
+    const handleBookClick = () => {
+        if (!session) {
+            alert('Please sign in to book a session');
+            window.location.hash = '#login';
+            return;
+        }
+        setShowBooking(true);
+    };
 
     return html`
         <div class="coach-detail-modal" onClick=${onClose}>
@@ -1142,10 +1371,7 @@ const CoachDetailModal = ({ coach, onClose }) => {
                             <p class="coach-detail-title">${coach.title}</p>
                             <p class="coach-detail-location">📍 ${location}</p>
                         </div>
-                        <button class="btn-book-prominent" onClick=${() => {
-                            console.log('Book now clicked for', coach.full_name);
-                            alert('Booking feature coming soon! Check the debug console for details.');
-                        }}>
+                        <button class="btn-book-prominent" onClick=${handleBookClick}>
                             ${t('coach.book')}
                         </button>
                     </div>
@@ -1185,6 +1411,13 @@ const CoachDetailModal = ({ coach, onClose }) => {
                     ` : ''}
                 </div>
             </div>
+            ${showBooking && html`
+                <${BookingModal}
+                    coach=${coach}
+                    session=${session}
+                    onClose=${() => setShowBooking(false)}
+                />
+            `}
         </div>
     `;
 };
@@ -1280,36 +1513,373 @@ const DashboardOverview = ({ userType }) => {
 };
 
 const DashboardBookings = ({ session, userType }) => {
-    console.log('Loading bookings dashboard');
+    const [bookings, setBookings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        loadBookings();
+    }, []);
+
+    const loadBookings = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_BASE}/bookings`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+            const data = await response.json();
+            setBookings(data.data || []);
+        } catch (error) {
+            console.error('Failed to load bookings:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCancelBooking = async (bookingId) => {
+        if (!confirm('Are you sure you want to cancel this booking?')) {
+            return;
+        }
+
+        const reason = prompt('Please provide a reason for cancellation (optional):');
+
+        try {
+            const response = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ cancellation_reason: reason || 'No reason provided' })
+            });
+
+            if (response.ok) {
+                setMessage('Booking cancelled successfully');
+                loadBookings();
+                setTimeout(() => setMessage(''), 3000);
+            } else {
+                const data = await response.json();
+                alert('Failed to cancel booking: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Cancel booking error:', error);
+            alert('Failed to cancel booking');
+        }
+    };
+
+    const getStatusClass = (status) => {
+        const classes = {
+            'pending': 'booking-status pending',
+            'confirmed': 'booking-status confirmed',
+            'completed': 'booking-status completed',
+            'cancelled': 'booking-status cancelled'
+        };
+        return classes[status] || 'booking-status';
+    };
+
+    const formatDateTime = (dateTimeStr) => {
+        const date = new Date(dateTimeStr);
+        return {
+            date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+            time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        };
+    };
+
+    if (loading) {
+        return html`
+            <div class="spinner"></div>
+        `;
+    }
+
+    if (bookings.length === 0) {
+        return html`
+            <div>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📅</div>
+                    <div class="empty-state-text">No bookings yet</div>
+                    <div class="empty-state-subtext">
+                        ${userType === 'coach'
+                            ? 'Bookings from clients will appear here.'
+                            : 'Browse coaches and book your first session!'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
 
     return html`
         <div>
-            <div class="empty-state">
-                <div class="empty-state-icon">📅</div>
-                <div class="empty-state-text">No bookings yet</div>
-                <div class="empty-state-subtext">
-                    ${userType === 'coach'
-                        ? 'Bookings from clients will appear here.'
-                        : 'Browse coaches and book your first session!'}
+            ${message && html`
+                <div class="success-message" style=${{ marginBottom: '20px', padding: '12px', background: '#d4edda', color: '#155724', borderRadius: '4px' }}>
+                    ${message}
                 </div>
+            `}
+
+            <div class="bookings-list">
+                ${bookings.map(booking => {
+                    const dt = formatDateTime(booking.start_time);
+                    const canCancel = booking.status === 'pending' || booking.status === 'confirmed';
+
+                    return html`
+                        <div key=${booking.id} class="booking-card">
+                            <div class="booking-card-header">
+                                <div>
+                                    <h3>${userType === 'coach' ? 'Client Booking' : `Session with Coach`}</h3>
+                                    <div class=${getStatusClass(booking.status)}>
+                                        ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                                    </div>
+                                </div>
+                                <div class="booking-card-price">
+                                    ${formatPrice(booking.amount)}
+                                </div>
+                            </div>
+
+                            <div class="booking-card-body">
+                                <div class="booking-detail-row">
+                                    <span class="booking-detail-label">📅 Date:</span>
+                                    <span>${dt.date}</span>
+                                </div>
+                                <div class="booking-detail-row">
+                                    <span class="booking-detail-label">🕐 Time:</span>
+                                    <span>${dt.time}</span>
+                                </div>
+                                <div class="booking-detail-row">
+                                    <span class="booking-detail-label">⏱️ Duration:</span>
+                                    <span>${booking.duration_minutes} minutes</span>
+                                </div>
+                                <div class="booking-detail-row">
+                                    <span class="booking-detail-label">📍 Type:</span>
+                                    <span>${booking.meeting_type === 'online' ? 'Online' : 'On-site'}</span>
+                                </div>
+
+                                ${booking.meeting_link && html`
+                                    <div class="booking-detail-row">
+                                        <span class="booking-detail-label">🔗 Meeting Link:</span>
+                                        <a href=${booking.meeting_link} target="_blank" class="btn-small btn-secondary">
+                                            Join Meeting
+                                        </a>
+                                    </div>
+                                `}
+
+                                ${booking.client_notes && userType === 'coach' && html`
+                                    <div class="booking-detail-row">
+                                        <span class="booking-detail-label">📝 Client Notes:</span>
+                                        <span>${booking.client_notes}</span>
+                                    </div>
+                                `}
+
+                                ${booking.coach_notes && userType === 'client' && html`
+                                    <div class="booking-detail-row">
+                                        <span class="booking-detail-label">📝 Coach Notes:</span>
+                                        <span>${booking.coach_notes}</span>
+                                    </div>
+                                `}
+                            </div>
+
+                            <div class="booking-card-actions">
+                                ${canCancel && html`
+                                    <button
+                                        class="btn-small btn-secondary"
+                                        onClick=${() => handleCancelBooking(booking.id)}
+                                    >
+                                        Cancel Booking
+                                    </button>
+                                `}
+                                ${booking.status === 'cancelled' && booking.cancellation_reason && html`
+                                    <div class="booking-detail-row" style=${{ fontSize: '14px', color: '#666' }}>
+                                        <span>Cancellation reason: ${booking.cancellation_reason}</span>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                })}
             </div>
         </div>
     `;
 };
 
 const DashboardAvailability = ({ session }) => {
-    console.log('Loading availability dashboard');
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
+    const [weeklySlots, setWeeklySlots] = useState([]);
+
+    const daysOfWeek = [
+        { id: 0, name: 'Sunday', short: 'Sun' },
+        { id: 1, name: 'Monday', short: 'Mon' },
+        { id: 2, name: 'Tuesday', short: 'Tue' },
+        { id: 3, name: 'Wednesday', short: 'Wed' },
+        { id: 4, name: 'Thursday', short: 'Thu' },
+        { id: 5, name: 'Friday', short: 'Fri' },
+        { id: 6, name: 'Saturday', short: 'Sat' }
+    ];
+
+    useEffect(() => {
+        loadAvailability();
+    }, []);
+
+    const loadAvailability = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/coaches/${session.user.id}/availability`);
+            const data = await response.json();
+
+            if (data.data) {
+                setWeeklySlots(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to load availability:', error);
+        }
+    };
+
+    const getSlotsForDay = (dayId) => {
+        return weeklySlots.filter(slot => slot.day_of_week === dayId);
+    };
+
+    const addSlot = (dayId) => {
+        const newSlot = {
+            day_of_week: dayId,
+            start_time: '09:00',
+            end_time: '17:00',
+            is_active: true,
+            temp_id: Date.now() // Temporary ID for local state
+        };
+        setWeeklySlots([...weeklySlots, newSlot]);
+    };
+
+    const removeSlot = (tempId, slotId) => {
+        setWeeklySlots(weeklySlots.filter(slot =>
+            tempId ? slot.temp_id !== tempId : slot.id !== slotId
+        ));
+    };
+
+    const updateSlot = (tempId, slotId, field, value) => {
+        setWeeklySlots(weeklySlots.map(slot => {
+            if ((tempId && slot.temp_id === tempId) || (!tempId && slot.id === slotId)) {
+                return { ...slot, [field]: value };
+            }
+            return slot;
+        }));
+    };
+
+    const saveAvailability = async () => {
+        setLoading(true);
+        setMessage('');
+
+        try {
+            const slots = weeklySlots.map(slot => ({
+                day_of_week: slot.day_of_week,
+                start_time: slot.start_time,
+                end_time: slot.end_time,
+                is_active: slot.is_active !== false
+            }));
+
+            const response = await fetch(`${API_BASE}/coaches/me/availability`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ slots })
+            });
+
+            if (response.ok) {
+                setMessage('Availability updated successfully!');
+                await loadAvailability(); // Reload to get IDs
+                setTimeout(() => setMessage(''), 3000);
+            } else {
+                const error = await response.json();
+                setMessage('Error: ' + (error.error || 'Failed to update availability'));
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            setMessage('Error: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return html`
         <div>
-            <h3>Set Your Availability</h3>
-            <div class="empty-state">
-                <div class="empty-state-icon">📅</div>
-                <div class="empty-state-text">Availability Calendar</div>
-                <div class="empty-state-subtext">
-                    Set your weekly schedule and manage specific date overrides.
-                    <br/><strong>Coming soon!</strong>
+            <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3>Weekly Availability</h3>
+                <button class="btn-primary" onClick=${saveAvailability} disabled=${loading}>
+                    ${loading ? 'Saving...' : 'Save Changes'}
+                </button>
+            </div>
+
+            ${message && html`
+                <div class="message" style=${{
+                    padding: '12px',
+                    borderRadius: '4px',
+                    marginBottom: '20px',
+                    background: message.includes('Error') ? '#fee' : '#efe',
+                    color: message.includes('Error') ? '#c00' : '#060'
+                }}>
+                    ${message}
                 </div>
+            `}
+
+            <div class="availability-calendar">
+                ${daysOfWeek.map(day => html`
+                    <div key=${day.id} class="availability-day">
+                        <div class="availability-day-header">
+                            <strong>${day.name}</strong>
+                            <button
+                                class="btn-small btn-secondary"
+                                onClick=${() => addSlot(day.id)}
+                                style=${{ fontSize: '12px', padding: '4px 8px' }}
+                            >
+                                + Add Time
+                            </button>
+                        </div>
+
+                        <div class="availability-slots">
+                            ${getSlotsForDay(day.id).length === 0 && html`
+                                <div class="availability-empty">No availability set</div>
+                            `}
+
+                            ${getSlotsForDay(day.id).map(slot => html`
+                                <div key=${slot.id || slot.temp_id} class="availability-slot">
+                                    <input
+                                        type="time"
+                                        class="time-input"
+                                        value=${slot.start_time}
+                                        onChange=${(e) => updateSlot(slot.temp_id, slot.id, 'start_time', e.target.value)}
+                                    />
+                                    <span>to</span>
+                                    <input
+                                        type="time"
+                                        class="time-input"
+                                        value=${slot.end_time}
+                                        onChange=${(e) => updateSlot(slot.temp_id, slot.id, 'end_time', e.target.value)}
+                                    />
+                                    <button
+                                        class="btn-remove"
+                                        onClick=${() => removeSlot(slot.temp_id, slot.id)}
+                                        style=${{
+                                            background: '#fee',
+                                            color: '#c00',
+                                            border: '1px solid #fcc',
+                                            borderRadius: '4px',
+                                            padding: '4px 8px',
+                                            cursor: 'pointer',
+                                            fontSize: '12px'
+                                        }}
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            `)}
+                        </div>
+                    </div>
+                `)}
+            </div>
+
+            <div class="form-hint" style=${{ marginTop: '20px', padding: '12px', background: '#f0f8ff', borderRadius: '4px' }}>
+                💡 <strong>Tip:</strong> Set your regular weekly schedule here. You can add multiple time slots for each day.
+                Clients will see available booking slots based on this schedule.
             </div>
         </div>
     `;
@@ -1451,23 +2021,161 @@ const DashboardProBono = ({ session }) => {
 };
 
 const DashboardProfile = ({ session, userType }) => {
-    const [fullName, setFullName] = useState(session.user.user_metadata?.full_name || '');
-    const [bio, setBio] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
+    const [formData, setFormData] = useState({
+        full_name: session.user.user_metadata?.full_name || '',
+        avatar_url: '',
+        title: '',
+        bio: '',
+        location: '',
+        hourly_rate: '',
+        currency: 'EUR',
+        specialties: '',
+        languages: '',
+        session_types_online: true,
+        session_types_onsite: false
+    });
 
-    console.log('Loading profile dashboard');
+    // Load coach profile if coach
+    useEffect(() => {
+        if (userType === 'coach') {
+            loadCoachProfile();
+        }
+    }, [userType]);
+
+    const loadCoachProfile = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/coaches/${session.user.id}`);
+            const data = await response.json();
+
+            if (data.data) {
+                const coach = data.data;
+                setFormData({
+                    full_name: coach.full_name || '',
+                    avatar_url: coach.avatar_url || '',
+                    title: coach.title || '',
+                    bio: coach.bio || '',
+                    location: coach.location || '',
+                    hourly_rate: coach.hourly_rate || '',
+                    currency: coach.currency || 'EUR',
+                    specialties: coach.specialties?.join(', ') || '',
+                    languages: coach.languages?.join(', ') || '',
+                    session_types_online: coach.session_types?.includes('online') || true,
+                    session_types_onsite: coach.session_types?.includes('onsite') || false
+                });
+            }
+        } catch (error) {
+            console.error('Failed to load coach profile:', error);
+        }
+    };
+
+    const handleSave = async () => {
+        setLoading(true);
+        setMessage('');
+
+        try {
+            const sessionTypesArray = [];
+            if (formData.session_types_online) sessionTypesArray.push('online');
+            if (formData.session_types_onsite) sessionTypesArray.push('onsite');
+
+            const profileData = {
+                full_name: formData.full_name,
+                avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                onboarding_completed: true
+            };
+
+            // Add coach-specific fields if coach
+            if (userType === 'coach') {
+                Object.assign(profileData, {
+                    title: formData.title,
+                    bio: formData.bio,
+                    location: formData.location,
+                    hourly_rate: parseFloat(formData.hourly_rate) || 0,
+                    currency: formData.currency,
+                    specialties: formData.specialties.split(',').map(s => s.trim()).filter(Boolean),
+                    languages: formData.languages.split(',').map(s => s.trim()).filter(Boolean),
+                    session_types: sessionTypesArray
+                });
+            }
+
+            const response = await fetch(`${API_BASE}/coaches`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(profileData)
+            });
+
+            if (response.ok) {
+                setMessage('Profile updated successfully!');
+                setTimeout(() => setMessage(''), 3000);
+            } else {
+                const error = await response.json();
+                setMessage('Error: ' + (error.error || 'Failed to update profile'));
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            setMessage('Error: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return html`
         <div>
-            <h3>${t('profile.update')}</h3>
+            <h3>${t('dashboard.profile')}</h3>
 
-            <div style=${{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px', marginTop: '20px' }}>
+            ${message && html`
+                <div class="message ${message.includes('Error') ? 'error' : 'success'}" style=${{
+                    padding: '12px',
+                    borderRadius: '4px',
+                    marginBottom: '20px',
+                    background: message.includes('Error') ? '#fee' : '#efe',
+                    color: message.includes('Error') ? '#c00' : '#060'
+                }}>
+                    ${message}
+                </div>
+            `}
+
+            <div style=${{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', marginTop: '20px' }}>
+
+                <!-- Avatar Upload -->
                 <div>
-                    <label class="filter-label">Full Name</label>
+                    <label class="filter-label">Profile Picture URL</label>
+                    <div style=${{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        ${formData.avatar_url && html`
+                            <img src=${formData.avatar_url} alt="Avatar" style=${{
+                                width: '80px',
+                                height: '80px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                border: '2px solid var(--border-color)'
+                            }} />
+                        `}
+                        <div style=${{ flex: 1 }}>
+                            <input
+                                type="url"
+                                class="filter-input"
+                                placeholder="https://example.com/avatar.jpg"
+                                value=${formData.avatar_url}
+                                onChange=${(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+                            />
+                            <div class="form-hint">Enter image URL or leave empty for auto-generated avatar</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Basic Info -->
+                <div>
+                    <label class="filter-label">Full Name *</label>
                     <input
                         type="text"
                         class="filter-input"
-                        value=${fullName}
-                        onChange=${(e) => setFullName(e.target.value)}
+                        value=${formData.full_name}
+                        onChange=${(e) => setFormData({ ...formData, full_name: e.target.value })}
+                        required
                     />
                 </div>
 
@@ -1482,30 +2190,115 @@ const DashboardProfile = ({ session, userType }) => {
                     />
                 </div>
 
+                <!-- Coach-specific fields -->
                 ${userType === 'coach' && html`
+                    <div>
+                        <label class="filter-label">Professional Title *</label>
+                        <input
+                            type="text"
+                            class="filter-input"
+                            placeholder="e.g., Executive Leadership Coach"
+                            value=${formData.title}
+                            onChange=${(e) => setFormData({ ...formData, title: e.target.value })}
+                            required
+                        />
+                    </div>
+
                     <div>
                         <label class="filter-label">Bio</label>
                         <textarea
                             class="filter-input"
-                            value=${bio}
-                            onChange=${(e) => setBio(e.target.value)}
-                            style=${{ minHeight: '100px', resize: 'vertical' }}
+                            placeholder="Tell clients about your expertise and coaching approach..."
+                            value=${formData.bio}
+                            onChange=${(e) => setFormData({ ...formData, bio: e.target.value })}
+                            style=${{ minHeight: '120px', resize: 'vertical' }}
                         />
+                    </div>
+
+                    <div class="form-row">
+                        <div style=${{ flex: 1 }}>
+                            <label class="filter-label">Location</label>
+                            <input
+                                type="text"
+                                class="filter-input"
+                                placeholder="City, Country"
+                                value=${formData.location}
+                                onChange=${(e) => setFormData({ ...formData, location: e.target.value })}
+                            />
+                        </div>
+                        <div style=${{ width: '200px' }}>
+                            <label class="filter-label">Hourly Rate (€)</label>
+                            <input
+                                type="number"
+                                class="filter-input"
+                                placeholder="100"
+                                value=${formData.hourly_rate}
+                                onChange=${(e) => setFormData({ ...formData, hourly_rate: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="filter-label">Specialties</label>
+                        <input
+                            type="text"
+                            class="filter-input"
+                            placeholder="Leadership, Career Transition, Executive Coaching"
+                            value=${formData.specialties}
+                            onChange=${(e) => setFormData({ ...formData, specialties: e.target.value })}
+                        />
+                        <div class="form-hint">Separate with commas</div>
+                    </div>
+
+                    <div>
+                        <label class="filter-label">Languages</label>
+                        <input
+                            type="text"
+                            class="filter-input"
+                            placeholder="en, de, es"
+                            value=${formData.languages}
+                            onChange=${(e) => setFormData({ ...formData, languages: e.target.value })}
+                        />
+                        <div class="form-hint">Use language codes: en, de, es, fr, it</div>
+                    </div>
+
+                    <div>
+                        <label class="filter-label">Session Types</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked=${formData.session_types_online}
+                                    onChange=${(e) => setFormData({ ...formData, session_types_online: e.target.checked })}
+                                />
+                                <span>💻 Online Sessions</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked=${formData.session_types_onsite}
+                                    onChange=${(e) => setFormData({ ...formData, session_types_onsite: e.target.checked })}
+                                />
+                                <span>📍 On-site Sessions</span>
+                            </label>
+                        </div>
                     </div>
                 `}
 
-                <button class="btn-primary" onClick=${() => {
-                    console.log('Profile update clicked', { fullName, bio });
-                    alert('Profile updates will be connected to API soon!');
-                }}>
-                    Save Changes
+                <button
+                    class="btn-primary"
+                    onClick=${handleSave}
+                    disabled=${loading}
+                    style=${{ marginTop: '10px' }}
+                >
+                    ${loading ? 'Saving...' : 'Save Changes'}
                 </button>
             </div>
         </div>
     `;
 };
 
-const Home = () => {
+const Home = ({ session }) => {
     const [searchFilters, setSearchFilters] = useState(null);
 
     const handleSearch = (filters) => {
@@ -1516,7 +2309,7 @@ const Home = () => {
     return html`
     <div>
             <${Hero} onSearch=${handleSearch} />
-            <${CoachList} searchFilters=${searchFilters} />
+            <${CoachList} searchFilters=${searchFilters} session=${session} />
         </div>
     `;
 };
@@ -1599,13 +2392,13 @@ const App = () => {
 
     let Component;
     switch (route) {
-        case '#home': Component = Home; break;
-        case '#coaches': Component = CoachList; break;
+        case '#home': Component = () => html`<${Home} session=${session} />`; break;
+        case '#coaches': Component = () => html`<${CoachList} session=${session} />`; break;
         case '#login': Component = Auth; break;
         case '#onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
         case '#dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
         case '#signout': Component = SignOut; break;
-        default: Component = Home;
+        default: Component = () => html`<${Home} session=${session} />`;
     }
 
     return html`
