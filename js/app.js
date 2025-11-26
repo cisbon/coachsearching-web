@@ -443,6 +443,27 @@ const Auth = () => {
 
             console.log('Auth successful, data:', data);
 
+            // Check if we got a session (critical for signup)
+            if (!isLogin) {
+                console.log('📊 SIGNUP DIAGNOSTIC:');
+                console.log('  ✓ User created:', !!data.user);
+                console.log('  ✓ Session created:', !!data.session);
+                console.log('  ✓ Email confirmed:', !!data.user?.email_confirmed_at);
+
+                if (data.user && !data.session) {
+                    console.error('❌ CRITICAL: User created but NO SESSION!');
+                    console.error('❌ This means "Enable email confirmations" is ENABLED in Supabase.');
+                    console.error('❌ FIX: Supabase Dashboard → Authentication → Settings');
+                    console.error('❌ ACTION: UNCHECK "Enable email confirmations" and Save');
+
+                    setMessage('Account created! However, email confirmation is required before login. Please check your inbox, then try logging in again. (Or ask admin to disable email confirmation requirement in Supabase settings)');
+                    setLoading(false);
+                    return;
+                }
+
+                console.log('✅ Session created successfully! User is now logged in.');
+            }
+
             if (!isLogin) {
                 // For signup, always redirect to appropriate page
                 const needsOnboarding = userType === 'coach';
