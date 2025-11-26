@@ -171,11 +171,231 @@ END $$;
 -- Grant permissions
 GRANT SELECT ON public.cs_user_profiles TO anon, authenticated;
 
+-- ============================================
+-- PHASE 1: BOOKING SYSTEM SCHEMA UPDATES
+-- ============================================
+
+-- Create coach availability table
+CREATE TABLE IF NOT EXISTS public.cs_coach_availability (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    coach_id UUID REFERENCES public.cs_coaches(id) ON DELETE CASCADE,
+    day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(coach_id, day_of_week, start_time)
+);
+
+-- Create coach availability overrides table
+CREATE TABLE IF NOT EXISTS public.cs_coach_availability_overrides (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    coach_id UUID REFERENCES public.cs_coaches(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    is_available BOOLEAN NOT NULL,
+    start_time TIME,
+    end_time TIME,
+    reason TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(coach_id, date, start_time)
+);
+
+-- Create notifications table
+CREATE TABLE IF NOT EXISTS public.cs_notifications (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    data JSONB,
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Update cs_bookings table with new columns
+DO $$
+BEGIN
+    -- Add duration_minutes if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='duration_minutes') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN duration_minutes INTEGER;
+        UPDATE public.cs_bookings SET duration_minutes = EXTRACT(EPOCH FROM (end_time - start_time))/60 WHERE duration_minutes IS NULL;
+        ALTER TABLE public.cs_bookings ALTER COLUMN duration_minutes SET NOT NULL;
+    END IF;
+
+    -- Add meeting_type if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='meeting_type') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN meeting_type TEXT DEFAULT 'online' CHECK (meeting_type IN ('online', 'onsite'));
+    END IF;
+
+    -- Add meeting_location if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='meeting_location') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN meeting_location TEXT;
+    END IF;
+
+    -- Add platform_fee if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='platform_fee') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN platform_fee DECIMAL(10, 2);
+    END IF;
+
+    -- Add coach_payout if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='coach_payout') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN coach_payout DECIMAL(10, 2);
+    END IF;
+
+    -- Add stripe_charge_id if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='stripe_charge_id') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN stripe_charge_id TEXT;
+    END IF;
+
+    -- Add client_notes if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='client_notes') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN client_notes TEXT;
+    END IF;
+
+    -- Add coach_notes if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='coach_notes') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN coach_notes TEXT;
+    END IF;
+
+    -- Add cancelled_at if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='cancelled_at') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN cancelled_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+
+    -- Add cancelled_by if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='cancelled_by') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN cancelled_by UUID REFERENCES auth.users(id);
+    END IF;
+
+    -- Add cancellation_reason if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='cancellation_reason') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN cancellation_reason TEXT;
+    END IF;
+
+    -- Add completed_at if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='completed_at') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN completed_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+
+    -- Add updated_at if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='cs_bookings' AND column_name='updated_at') THEN
+        ALTER TABLE public.cs_bookings ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    END IF;
+
+    -- Update status check constraint to include no_show
+    ALTER TABLE public.cs_bookings DROP CONSTRAINT IF EXISTS cs_bookings_status_check;
+    ALTER TABLE public.cs_bookings ADD CONSTRAINT cs_bookings_status_check
+        CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed', 'no_show'));
+END $$;
+
+-- Enable RLS on new tables
+ALTER TABLE public.cs_coach_availability ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cs_coach_availability_overrides ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cs_notifications ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for coach availability
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_coach_availability' AND policyname = 'Availability viewable by everyone') THEN
+        CREATE POLICY "Availability viewable by everyone" ON public.cs_coach_availability FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_coach_availability' AND policyname = 'Coaches can insert own availability') THEN
+        CREATE POLICY "Coaches can insert own availability" ON public.cs_coach_availability FOR INSERT WITH CHECK ((select auth.uid()) = coach_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_coach_availability' AND policyname = 'Coaches can update own availability') THEN
+        CREATE POLICY "Coaches can update own availability" ON public.cs_coach_availability FOR UPDATE USING ((select auth.uid()) = coach_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_coach_availability' AND policyname = 'Coaches can delete own availability') THEN
+        CREATE POLICY "Coaches can delete own availability" ON public.cs_coach_availability FOR DELETE USING ((select auth.uid()) = coach_id);
+    END IF;
+END $$;
+
+-- RLS Policies for coach availability overrides
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_coach_availability_overrides' AND policyname = 'Availability overrides viewable by everyone') THEN
+        CREATE POLICY "Availability overrides viewable by everyone" ON public.cs_coach_availability_overrides FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_coach_availability_overrides' AND policyname = 'Coaches can insert own overrides') THEN
+        CREATE POLICY "Coaches can insert own overrides" ON public.cs_coach_availability_overrides FOR INSERT WITH CHECK ((select auth.uid()) = coach_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_coach_availability_overrides' AND policyname = 'Coaches can update own overrides') THEN
+        CREATE POLICY "Coaches can update own overrides" ON public.cs_coach_availability_overrides FOR UPDATE USING ((select auth.uid()) = coach_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_coach_availability_overrides' AND policyname = 'Coaches can delete own overrides') THEN
+        CREATE POLICY "Coaches can delete own overrides" ON public.cs_coach_availability_overrides FOR DELETE USING ((select auth.uid()) = coach_id);
+    END IF;
+END $$;
+
+-- RLS Policies for notifications
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_notifications' AND policyname = 'Users can view own notifications') THEN
+        CREATE POLICY "Users can view own notifications" ON public.cs_notifications FOR SELECT USING ((select auth.uid()) = user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_notifications' AND policyname = 'Users can update own notifications') THEN
+        CREATE POLICY "Users can update own notifications" ON public.cs_notifications FOR UPDATE USING ((select auth.uid()) = user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_notifications' AND policyname = 'System can insert notifications') THEN
+        CREATE POLICY "System can insert notifications" ON public.cs_notifications FOR INSERT WITH CHECK (true);
+    END IF;
+END $$;
+
+-- Update bookings RLS policy to allow both parties to update
+DO $$
+BEGIN
+    -- Drop old policy if exists
+    DROP POLICY IF EXISTS "Coaches can update bookings" ON public.cs_bookings;
+
+    -- Create new policy if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'cs_bookings' AND policyname = 'Involved parties can update bookings') THEN
+        CREATE POLICY "Involved parties can update bookings" ON public.cs_bookings FOR UPDATE USING (
+            (select auth.uid()) = coach_id OR (select auth.uid()) = client_id
+        );
+    END IF;
+END $$;
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_coach_availability_coach_day ON public.cs_coach_availability(coach_id, day_of_week);
+CREATE INDEX IF NOT EXISTS idx_coach_overrides_coach_date ON public.cs_coach_availability_overrides(coach_id, date);
+CREATE INDEX IF NOT EXISTS idx_bookings_coach_time ON public.cs_bookings(coach_id, start_time, status);
+CREATE INDEX IF NOT EXISTS idx_bookings_client ON public.cs_bookings(client_id, status);
+CREATE INDEX IF NOT EXISTS idx_bookings_payment_intent ON public.cs_bookings(stripe_payment_intent_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON public.cs_notifications(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_reviews_coach ON public.cs_reviews(coach_id);
+
 -- Success message
 DO $$
 BEGIN
+    RAISE NOTICE '========================================';
     RAISE NOTICE 'Schema update completed successfully!';
-    RAISE NOTICE 'New tables created: cs_businesses, cs_clients';
-    RAISE NOTICE 'cs_coaches table updated with new columns';
-    RAISE NOTICE 'All RLS policies configured';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'New tables created:';
+    RAISE NOTICE '  - cs_businesses';
+    RAISE NOTICE '  - cs_clients';
+    RAISE NOTICE '  - cs_coach_availability';
+    RAISE NOTICE '  - cs_coach_availability_overrides';
+    RAISE NOTICE '  - cs_notifications';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Tables updated:';
+    RAISE NOTICE '  - cs_coaches (new columns)';
+    RAISE NOTICE '  - cs_bookings (booking flow columns)';
+    RAISE NOTICE '';
+    RAISE NOTICE 'All RLS policies and indexes configured!';
+    RAISE NOTICE '========================================';
 END $$;

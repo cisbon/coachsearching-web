@@ -102,6 +102,32 @@ CREATE TABLE public.cs_packages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Coach Availability (Weekly Recurring Schedule)
+CREATE TABLE public.cs_coach_availability (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    coach_id UUID REFERENCES public.cs_coaches(id) ON DELETE CASCADE,
+    day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), -- 0 = Sunday, 6 = Saturday
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(coach_id, day_of_week, start_time) -- Prevent duplicate time slots
+);
+
+-- Coach Availability Overrides (Specific Date Exceptions)
+CREATE TABLE public.cs_coach_availability_overrides (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    coach_id UUID REFERENCES public.cs_coaches(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    is_available BOOLEAN NOT NULL, -- true = add available time, false = block time
+    start_time TIME,
+    end_time TIME,
+    reason TEXT, -- e.g., "Vacation", "Conference", "Special availability"
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(coach_id, date, start_time)
+);
+
 -- Bookings (Paid and Pro-bono)
 CREATE TABLE public.cs_bookings (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -111,13 +137,26 @@ CREATE TABLE public.cs_bookings (
     slot_id UUID, -- Optional link to pro_bono_slots if applicable
     start_time TIMESTAMP WITH TIME ZONE NOT NULL,
     end_time TIMESTAMP WITH TIME ZONE NOT NULL,
-    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed')),
+    duration_minutes INTEGER NOT NULL,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed', 'no_show')),
     type TEXT DEFAULT 'paid' CHECK (type IN ('paid', 'pro_bono')),
-    amount DECIMAL(10, 2),
-    currency TEXT,
-    stripe_payment_intent_id TEXT,
+    meeting_type TEXT DEFAULT 'online' CHECK (meeting_type IN ('online', 'onsite')),
     meeting_link TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    meeting_location TEXT, -- Physical address for onsite sessions
+    amount DECIMAL(10, 2),
+    currency TEXT DEFAULT 'EUR',
+    platform_fee DECIMAL(10, 2), -- 10% platform fee
+    coach_payout DECIMAL(10, 2), -- Amount coach receives
+    stripe_payment_intent_id TEXT UNIQUE,
+    stripe_charge_id TEXT,
+    client_notes TEXT, -- Notes from client about session
+    coach_notes TEXT, -- Private notes from coach
+    cancelled_at TIMESTAMP WITH TIME ZONE,
+    cancelled_by UUID REFERENCES auth.users(id),
+    cancellation_reason TEXT,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Reviews
@@ -130,6 +169,19 @@ CREATE TABLE public.cs_reviews (
     comment TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(booking_id) -- One review per booking
+);
+
+-- Notifications (In-app and Email)
+CREATE TABLE public.cs_notifications (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL, -- 'booking_confirmed', 'booking_cancelled', 'session_reminder', 'review_received', etc.
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    data JSONB, -- Additional data (booking_id, coach_id, etc.)
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- VIEW for User Profiles (Exposing auth.users metadata to REST API)
@@ -176,8 +228,11 @@ ALTER TABLE public.cs_clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_packages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_pro_bono_slots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cs_coach_availability ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cs_coach_availability_overrides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cs_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cs_notifications ENABLE ROW LEVEL SECURITY;
 
 -- Feature Flags: Public read
 CREATE POLICY "Feature flags are viewable by everyone" ON public.cs_feature_flags FOR SELECT USING (true);
@@ -216,18 +271,46 @@ CREATE POLICY "Coaches can insert own slots" ON public.cs_pro_bono_slots FOR INS
 CREATE POLICY "Coaches can update own slots" ON public.cs_pro_bono_slots FOR UPDATE USING ((select auth.uid()) = coach_id);
 CREATE POLICY "Coaches can delete own slots" ON public.cs_pro_bono_slots FOR DELETE USING ((select auth.uid()) = coach_id);
 
+-- Coach Availability: Public read for scheduling, coach manage
+CREATE POLICY "Availability viewable by everyone" ON public.cs_coach_availability FOR SELECT USING (true);
+CREATE POLICY "Coaches can insert own availability" ON public.cs_coach_availability FOR INSERT WITH CHECK ((select auth.uid()) = coach_id);
+CREATE POLICY "Coaches can update own availability" ON public.cs_coach_availability FOR UPDATE USING ((select auth.uid()) = coach_id);
+CREATE POLICY "Coaches can delete own availability" ON public.cs_coach_availability FOR DELETE USING ((select auth.uid()) = coach_id);
+
+-- Coach Availability Overrides: Public read, coach manage
+CREATE POLICY "Availability overrides viewable by everyone" ON public.cs_coach_availability_overrides FOR SELECT USING (true);
+CREATE POLICY "Coaches can insert own overrides" ON public.cs_coach_availability_overrides FOR INSERT WITH CHECK ((select auth.uid()) = coach_id);
+CREATE POLICY "Coaches can update own overrides" ON public.cs_coach_availability_overrides FOR UPDATE USING ((select auth.uid()) = coach_id);
+CREATE POLICY "Coaches can delete own overrides" ON public.cs_coach_availability_overrides FOR DELETE USING ((select auth.uid()) = coach_id);
+
 -- Bookings: Viewable by involved parties
 CREATE POLICY "View own bookings" ON public.cs_bookings FOR SELECT USING (
     (select auth.uid()) = client_id OR (select auth.uid()) = coach_id
 );
 CREATE POLICY "Clients can insert bookings" ON public.cs_bookings FOR INSERT WITH CHECK ((select auth.uid()) = client_id);
-CREATE POLICY "Coaches can update bookings" ON public.cs_bookings FOR UPDATE USING ((select auth.uid()) = coach_id);
+CREATE POLICY "Involved parties can update bookings" ON public.cs_bookings FOR UPDATE USING (
+    (select auth.uid()) = coach_id OR (select auth.uid()) = client_id
+);
+
+-- Notifications: Users can view and update their own
+CREATE POLICY "Users can view own notifications" ON public.cs_notifications FOR SELECT USING ((select auth.uid()) = user_id);
+CREATE POLICY "Users can update own notifications" ON public.cs_notifications FOR UPDATE USING ((select auth.uid()) = user_id);
+CREATE POLICY "System can insert notifications" ON public.cs_notifications FOR INSERT WITH CHECK (true); -- Allow system to create notifications
 
 -- Reviews: Public read published reviews, clients can write
 CREATE POLICY "Reviews are viewable by everyone" ON public.cs_reviews FOR SELECT USING (true);
 CREATE POLICY "Clients can insert own reviews" ON public.cs_reviews FOR INSERT WITH CHECK ((select auth.uid()) = client_id);
 CREATE POLICY "Clients can update own reviews" ON public.cs_reviews FOR UPDATE USING ((select auth.uid()) = client_id);
 CREATE POLICY "Clients can delete own reviews" ON public.cs_reviews FOR DELETE USING ((select auth.uid()) = client_id);
+
+-- Indexes for Performance
+CREATE INDEX idx_coach_availability_coach_day ON public.cs_coach_availability(coach_id, day_of_week);
+CREATE INDEX idx_coach_overrides_coach_date ON public.cs_coach_availability_overrides(coach_id, date);
+CREATE INDEX idx_bookings_coach_time ON public.cs_bookings(coach_id, start_time, status);
+CREATE INDEX idx_bookings_client ON public.cs_bookings(client_id, status);
+CREATE INDEX idx_bookings_payment_intent ON public.cs_bookings(stripe_payment_intent_id);
+CREATE INDEX idx_notifications_user_read ON public.cs_notifications(user_id, is_read);
+CREATE INDEX idx_reviews_coach ON public.cs_reviews(coach_id);
 
 -- Permissions for View and RPC
 GRANT SELECT ON public.cs_user_profiles TO anon, authenticated;
