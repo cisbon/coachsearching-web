@@ -2453,6 +2453,722 @@ const Home = ({ session }) => {
     `;
 };
 
+// =====================================================
+// REVIEW & RATING SYSTEM
+// =====================================================
+
+const StarRating = ({ rating, size = 'medium', interactive = false, onChange }) => {
+    const [hoverRating, setHoverRating] = useState(0);
+    const [selectedRating, setSelectedRating] = useState(rating || 0);
+
+    const sizes = {
+        small: '16px',
+        medium: '20px',
+        large: '24px'
+    };
+
+    const handleClick = (value) => {
+        if (interactive) {
+            setSelectedRating(value);
+            if (onChange) onChange(value);
+        }
+    };
+
+    const displayRating = interactive ? (hoverRating || selectedRating) : rating;
+
+    return html`
+        <div style=${{ display: 'flex', gap: '4px' }}>
+            ${[1, 2, 3, 4, 5].map(star => html`
+                <span
+                    key=${star}
+                    onClick=${() => handleClick(star)}
+                    onMouseEnter=${() => interactive && setHoverRating(star)}
+                    onMouseLeave=${() => interactive && setHoverRating(0)}
+                    style=${{
+                        fontSize: sizes[size],
+                        color: star <= displayRating ? '#FFB800' : '#E0E0E0',
+                        cursor: interactive ? 'pointer' : 'default',
+                        transition: 'color 0.2s'
+                    }}
+                >
+                    ★
+                </span>
+            `)}
+        </div>
+    `;
+};
+
+const ReviewCard = ({ review, isCoach = false, onRespond }) => {
+    const [showResponseForm, setShowResponseForm] = useState(false);
+    const [response, setResponse] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmitResponse = async () => {
+        if (!response.trim()) return;
+
+        setSubmitting(true);
+        if (onRespond) {
+            await onRespond(review.id, response);
+        }
+        setSubmitting(false);
+        setShowResponseForm(false);
+    };
+
+    const formatDate = (dateStr) => {
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    return html`
+        <div class="review-card" style=${{
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            padding: '20px',
+            marginBottom: '16px',
+            background: 'white'
+        }}>
+            <div style=${{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div>
+                    <div style=${{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                        <${StarRating} rating=${review.rating} size="medium" />
+                        ${review.is_verified_booking && html`
+                            <span style=${{
+                                background: '#E8F5E9',
+                                color: '#2E7D32',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: '600'
+                            }}>
+                                ✓ Verified Booking
+                            </span>
+                        `}
+                    </div>
+                    ${review.title && html`
+                        <h4 style=${{ margin: '0 0 8px 0', fontSize: '16px' }}>${review.title}</h4>
+                    `}
+                </div>
+                <span style=${{ fontSize: '14px', color: 'var(--text-muted)' }}>
+                    ${formatDate(review.created_at)}
+                </span>
+            </div>
+
+            <p style=${{ margin: '0 0 16px 0', lineHeight: '1.6' }}>
+                ${review.content}
+            </p>
+
+            ${review.coach_response && html`
+                <div style=${{
+                    background: '#F5F5F5',
+                    padding: '12px 16px',
+                    borderRadius: '6px',
+                    borderLeft: '3px solid var(--primary-petrol)',
+                    marginTop: '12px'
+                }}>
+                    <div style=${{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <strong style=${{ fontSize: '14px' }}>Coach Response</strong>
+                        <span style=${{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                            ${formatDate(review.coach_responded_at)}
+                        </span>
+                    </div>
+                    <p style=${{ margin: 0, fontSize: '14px', lineHeight: '1.6' }}>
+                        ${review.coach_response}
+                    </p>
+                </div>
+            `}
+
+            ${isCoach && !review.coach_response && html`
+                <div>
+                    ${!showResponseForm ? html`
+                        <button
+                            class="btn-secondary"
+                            onClick=${() => setShowResponseForm(true)}
+                            style=${{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                            Respond to Review
+                        </button>
+                    ` : html`
+                        <div style=${{ marginTop: '12px' }}>
+                            <textarea
+                                class="form-control"
+                                rows="3"
+                                placeholder="Write your response..."
+                                value=${response}
+                                onInput=${(e) => setResponse(e.target.value)}
+                                style=${{ marginBottom: '8px' }}
+                            ></textarea>
+                            <div style=${{ display: 'flex', gap: '8px' }}>
+                                <button
+                                    class="btn-primary"
+                                    onClick=${handleSubmitResponse}
+                                    disabled=${submitting || !response.trim()}
+                                >
+                                    ${submitting ? 'Submitting...' : 'Submit Response'}
+                                </button>
+                                <button
+                                    class="btn-secondary"
+                                    onClick=${() => setShowResponseForm(false)}
+                                    disabled=${submitting}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    `}
+                </div>
+            `}
+        </div>
+    `;
+};
+
+const WriteReviewModal = ({ booking, onClose, onSubmit }) => {
+    const [rating, setRating] = useState(5);
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
+        if (!content.trim()) {
+            alert('Please write your review');
+            return;
+        }
+
+        setSubmitting(true);
+        if (onSubmit) {
+            await onSubmit({ rating, title, content });
+        }
+        setSubmitting(false);
+    };
+
+    return html`
+        <div class="booking-modal" onClick=${onClose}>
+            <div class="booking-content" onClick=${(e) => e.stopPropagation()} style=${{ maxWidth: '600px' }}>
+                <div class="booking-header">
+                    <h2>Write a Review</h2>
+                    <button class="modal-close-btn" onClick=${onClose}>×</button>
+                </div>
+
+                <div style=${{ padding: '20px' }}>
+                    <div class="form-group">
+                        <label>Your Rating *</label>
+                        <${StarRating} rating=${rating} size="large" interactive=${true} onChange=${setRating} />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Review Title (Optional)</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            placeholder="e.g., Great coaching session!"
+                            value=${title}
+                            onInput=${(e) => setTitle(e.target.value)}
+                            maxLength="100"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Your Review *</label>
+                        <textarea
+                            class="form-control"
+                            rows="6"
+                            placeholder="Share your experience with this coach..."
+                            value=${content}
+                            onInput=${(e) => setContent(e.target.value)}
+                            required
+                        ></textarea>
+                        <div class="form-hint">${content.length}/1000 characters</div>
+                    </div>
+
+                    <div style=${{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                        <button
+                            class="btn-primary"
+                            onClick=${handleSubmit}
+                            disabled=${submitting || !content.trim()}
+                            style=${{ flex: 1 }}
+                        >
+                            ${submitting ? 'Submitting...' : 'Submit Review'}
+                        </button>
+                        <button
+                            class="btn-secondary"
+                            onClick=${onClose}
+                            disabled=${submitting}
+                            style=${{ flex: 1 }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// =====================================================
+// MESSAGING SYSTEM
+// =====================================================
+
+const MessagingInbox = ({ session }) => {
+    const [conversations, setConversations] = useState([]);
+    const [selectedConversation, setSelectedConversation] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadConversations();
+    }, []);
+
+    const loadConversations = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/conversations`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+            const data = await response.json();
+            setConversations(data.data || []);
+        } catch (error) {
+            console.error('Failed to load conversations:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return html`<div class="spinner"></div>`;
+    }
+
+    if (selectedConversation) {
+        return html`
+            <${ConversationView}
+                conversation=${selectedConversation}
+                session=${session}
+                onBack=${() => setSelectedConversation(null)}
+            />
+        `;
+    }
+
+    return html`
+        <div>
+            <h3 style=${{ marginBottom: '20px' }}>Messages</h3>
+
+            ${conversations.length === 0 ? html`
+                <div class="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <div class="empty-state-text">No messages yet</div>
+                    <div class="empty-state-subtext">Start a conversation with a coach!</div>
+                </div>
+            ` : html`
+                <div class="conversations-list">
+                    ${conversations.map(conv => html`
+                        <div
+                            key=${conv.id}
+                            class="conversation-item"
+                            onClick=${() => setSelectedConversation(conv)}
+                            style=${{
+                                padding: '16px',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '8px',
+                                marginBottom: '12px',
+                                cursor: 'pointer',
+                                background: conv.unread_count > 0 ? '#F0F9FA' : 'white',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <div style=${{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                <strong>${conv.other_participant_name}</strong>
+                                <span style=${{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                                    ${new Date(conv.last_message_at).toLocaleDateString()}
+                                </span>
+                            </div>
+                            <div style=${{ fontSize: '14px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                ${conv.last_message_preview}
+                            </div>
+                            ${conv.unread_count > 0 && html`
+                                <span style=${{
+                                    display: 'inline-block',
+                                    background: 'var(--primary-petrol)',
+                                    color: 'white',
+                                    borderRadius: '12px',
+                                    padding: '2px 8px',
+                                    fontSize: '12px',
+                                    marginTop: '8px'
+                                }}>
+                                    ${conv.unread_count} new
+                                </span>
+                            `}
+                        </div>
+                    `)}
+                </div>
+            `}
+        </div>
+    `;
+};
+
+const ConversationView = ({ conversation, session, onBack }) => {
+    const [messages, setMessages] = useState([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [sending, setSending] = useState(false);
+    const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        loadMessages();
+        const interval = setInterval(loadMessages, 5000); // Poll every 5 seconds
+        return () => clearInterval(interval);
+    }, [conversation.id]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const loadMessages = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/conversations/${conversation.id}/messages`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+            const data = await response.json();
+            setMessages(data.data || []);
+        } catch (error) {
+            console.error('Failed to load messages:', error);
+        }
+    };
+
+    const handleSend = async () => {
+        if (!newMessage.trim()) return;
+
+        setSending(true);
+        try {
+            const response = await fetch(`${API_BASE}/conversations/${conversation.id}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ content: newMessage })
+            });
+
+            if (response.ok) {
+                setNewMessage('');
+                await loadMessages();
+            }
+        } catch (error) {
+            console.error('Failed to send message:', error);
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
+    return html`
+        <div style=${{ display: 'flex', flexDirection: 'column', height: '600px' }}>
+            <div style=${{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px',
+                borderBottom: '1px solid var(--border-color)',
+                background: 'white'
+            }}>
+                <button class="btn-secondary" onClick=${onBack} style=${{ padding: '6px 12px' }}>
+                    ← Back
+                </button>
+                <strong>${conversation.other_participant_name}</strong>
+            </div>
+
+            <div style=${{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '20px',
+                background: '#F5F5F5'
+            }}>
+                ${messages.map(msg => {
+                    const isOwn = msg.sender_id === session.user.id;
+                    return html`
+                        <div
+                            key=${msg.id}
+                            style=${{
+                                display: 'flex',
+                                justifyContent: isOwn ? 'flex-end' : 'flex-start',
+                                marginBottom: '12px'
+                            }}
+                        >
+                            <div style=${{
+                                maxWidth: '70%',
+                                padding: '12px 16px',
+                                borderRadius: '12px',
+                                background: isOwn ? 'var(--primary-petrol)' : 'white',
+                                color: isOwn ? 'white' : 'var(--text-main)',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                            }}>
+                                <div style=${{ fontSize: '14px', lineHeight: '1.5' }}>${msg.content}</div>
+                                <div style=${{
+                                    fontSize: '11px',
+                                    marginTop: '4px',
+                                    opacity: 0.7
+                                }}>
+                                    ${new Date(msg.created_at).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                })}
+                <div ref=${messagesEndRef} />
+            </div>
+
+            <div style=${{
+                padding: '16px',
+                borderTop: '1px solid var(--border-color)',
+                background: 'white'
+            }}>
+                <div style=${{ display: 'flex', gap: '12px' }}>
+                    <textarea
+                        class="form-control"
+                        rows="2"
+                        placeholder="Type your message..."
+                        value=${newMessage}
+                        onInput=${(e) => setNewMessage(e.target.value)}
+                        onKeyPress=${handleKeyPress}
+                        disabled=${sending}
+                        style=${{ flex: 1, resize: 'none' }}
+                    ></textarea>
+                    <button
+                        class="btn-primary"
+                        onClick=${handleSend}
+                        disabled=${sending || !newMessage.trim()}
+                        style=${{ alignSelf: 'flex-end' }}
+                    >
+                        ${sending ? 'Sending...' : 'Send'}
+                    </button>
+                </div>
+                <div class="form-hint" style=${{ marginTop: '4px' }}>Press Enter to send, Shift+Enter for new line</div>
+            </div>
+        </div>
+    `;
+};
+
+// =====================================================
+// NOTIFICATIONS
+// =====================================================
+
+const NotificationBell = ({ session }) => {
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [showDropdown, setShowDropdown] = useState(false);
+
+    useEffect(() => {
+        if (session) {
+            loadNotifications();
+            const interval = setInterval(loadNotifications, 30000); // Poll every 30 seconds
+            return () => clearInterval(interval);
+        }
+    }, [session]);
+
+    const loadNotifications = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/notifications`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+            const data = await response.json();
+            const notifs = data.data || [];
+            setNotifications(notifs.slice(0, 5)); // Show last 5
+            setUnreadCount(notifs.filter(n => !n.is_read).length);
+        } catch (error) {
+            console.error('Failed to load notifications:', error);
+        }
+    };
+
+    const markAsRead = async (notificationId) => {
+        try {
+            await fetch(`${API_BASE}/notifications/${notificationId}/read`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+            loadNotifications();
+        } catch (error) {
+            console.error('Failed to mark notification as read:', error);
+        }
+    };
+
+    return html`
+        <div style=${{ position: 'relative' }}>
+            <button
+                class="btn-secondary"
+                onClick=${() => setShowDropdown(!showDropdown)}
+                style=${{
+                    position: 'relative',
+                    padding: '8px 12px',
+                    background: unreadCount > 0 ? 'var(--petrol-light)' : 'transparent',
+                    color: unreadCount > 0 ? 'white' : 'inherit'
+                }}
+            >
+                🔔
+                ${unreadCount > 0 && html`
+                    <span style=${{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        background: 'red',
+                        color: 'white',
+                        borderRadius: '50%',
+                        width: '18px',
+                        height: '18px',
+                        fontSize: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold'
+                    }}>
+                        ${unreadCount}
+                    </span>
+                `}
+            </button>
+
+            ${showDropdown && html`
+                <div style=${{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '8px',
+                    width: '320px',
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                    background: 'white',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    zIndex: 1000
+                }}>
+                    <div style=${{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid var(--border-color)',
+                        fontWeight: '600'
+                    }}>
+                        Notifications
+                    </div>
+
+                    ${notifications.length === 0 ? html`
+                        <div style=${{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                            No notifications
+                        </div>
+                    ` : html`
+                        <div>
+                            ${notifications.map(notif => html`
+                                <div
+                                    key=${notif.id}
+                                    onClick=${() => {
+                                        markAsRead(notif.id);
+                                        if (notif.action_url) window.location.hash = notif.action_url;
+                                    }}
+                                    style=${{
+                                        padding: '12px 16px',
+                                        borderBottom: '1px solid var(--border-color)',
+                                        cursor: 'pointer',
+                                        background: notif.is_read ? 'white' : '#F0F9FA',
+                                        transition: 'background 0.2s'
+                                    }}
+                                >
+                                    <div style=${{ fontWeight: notif.is_read ? 'normal' : '600', fontSize: '14px', marginBottom: '4px' }}>
+                                        ${notif.title}
+                                    </div>
+                                    <div style=${{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                                        ${notif.body}
+                                    </div>
+                                    <div style=${{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                        ${new Date(notif.created_at).toLocaleDateString()}
+                                    </div>
+                                </div>
+                            `)}
+                        </div>
+                    `}
+
+                    ${notifications.length > 0 && html`
+                        <div style=${{ padding: '8px 16px', borderTop: '1px solid var(--border-color)', textAlign: 'center' }}>
+                            <a href="#notifications" style=${{ fontSize: '13px', color: 'var(--primary-petrol)' }}>
+                                View All Notifications
+                            </a>
+                        </div>
+                    `}
+                </div>
+            `}
+        </div>
+    `;
+};
+
+// =====================================================
+// FAVORITES MANAGEMENT
+// =====================================================
+
+const FavoriteButton = ({ coachId, session, isFavorited, onToggle }) => {
+    const [loading, setLoading] = useState(false);
+
+    const handleToggle = async () => {
+        if (!session) {
+            alert('Please sign in to save favorites');
+            window.location.hash = '#login';
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const endpoint = isFavorited
+                ? `${API_BASE}/favorites/${coachId}`
+                : `${API_BASE}/favorites/${coachId}`;
+
+            const response = await fetch(endpoint, {
+                method: isFavorited ? 'DELETE' : 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+
+            if (response.ok && onToggle) {
+                onToggle(!isFavorited);
+            }
+        } catch (error) {
+            console.error('Failed to toggle favorite:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return html`
+        <button
+            class="btn-secondary"
+            onClick=${handleToggle}
+            disabled=${loading}
+            style=${{
+                padding: '6px 12px',
+                background: isFavorited ? 'var(--petrol-light)' : 'white',
+                color: isFavorited ? 'white' : 'inherit',
+                border: `1px solid ${isFavorited ? 'var(--petrol-light)' : 'var(--border-color)'}`
+            }}
+            title=${isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+        >
+            ${isFavorited ? '❤️' : '🤍'} ${isFavorited ? 'Saved' : 'Save'}
+        </button>
+    `;
+};
+
 const App = () => {
     const [route, setRoute] = useState(window.location.hash || '#home');
     const [session, setSession] = useState(null);
