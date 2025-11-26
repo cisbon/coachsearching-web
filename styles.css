@@ -186,6 +186,17 @@ header {
     background: transparent;
 }
 
+.search-input.rate-select {
+    cursor: pointer;
+    padding-right: 8px;
+}
+
+.search-input-group:has(.rate-select) {
+    flex: 0 1 auto;
+    min-width: 140px;
+    max-width: 180px;
+}
+
 .filter-toggle {
     flex-shrink: 0;
     display: flex;
@@ -510,6 +521,7 @@ header {
     .search-row .search-btn {
         width: 100%;
         min-width: auto;
+        max-width: none;
     }
 
     .location-row {

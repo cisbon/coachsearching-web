@@ -782,13 +782,14 @@ const Hero = ({ onSearch }) => {
     const [location, setLocation] = useState('');
     const [radius, setRadius] = useState('25');
     const [date, setDate] = useState('');
+    const [maxRate, setMaxRate] = useState('');
     const [gettingLocation, setGettingLocation] = useState(false);
 
     const handleSearch = (e) => {
         e.preventDefault();
-        console.log('Search:', { searchTerm, sessionType, location, radius, date });
+        console.log('Search:', { searchTerm, sessionType, location, radius, date, maxRate });
         if (onSearch) {
-            onSearch({ searchTerm, sessionType, location, radius, date });
+            onSearch({ searchTerm, sessionType, location, radius, date, maxRate });
         }
     };
 
@@ -928,6 +929,22 @@ const Hero = ({ onSearch }) => {
                                 >
                                     📍 ${t('search.onsite')}
                                 </button>
+                            </div>
+                            <div class="search-input-group">
+                                <span class="search-icon">💰</span>
+                                <select
+                                    class="search-input rate-select"
+                                    value=${maxRate}
+                                    onChange=${(e) => setMaxRate(e.target.value)}
+                                >
+                                    <option value="">Max ${CURRENCY_SYMBOLS[currentCurrency]}/hr</option>
+                                    <option value="50">${formatPrice(50)}/hr</option>
+                                    <option value="75">${formatPrice(75)}/hr</option>
+                                    <option value="100">${formatPrice(100)}/hr</option>
+                                    <option value="150">${formatPrice(150)}/hr</option>
+                                    <option value="200">${formatPrice(200)}/hr</option>
+                                    <option value="300">${formatPrice(300)}/hr</option>
+                                </select>
                             </div>
                             <button type="submit" class="search-btn">${t('search.btn')}</button>
                         </div>
