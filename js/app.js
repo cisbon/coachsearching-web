@@ -604,11 +604,101 @@ const CoachOnboarding = ({ session }) => {
         languages: 'en',
         session_types_online: true,
         session_types_onsite: false,
-        avatar_url: ''
+        avatar_url: '',
+        promo_code: ''
     });
+
+    // Promo code validation state
+    const [promoStatus, setPromoStatus] = useState('idle'); // idle, validating, valid, invalid, expired
+    const [promoDetails, setPromoDetails] = useState(null);
+    const [promoValidating, setPromoValidating] = useState(false);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    // Validate promo code
+    const validatePromoCode = async (code) => {
+        if (!code || code.length < 3) {
+            setPromoStatus('idle');
+            setPromoDetails(null);
+            return;
+        }
+
+        setPromoValidating(true);
+        setPromoStatus('validating');
+
+        try {
+            if (!window.supabaseClient) {
+                throw new Error('Database not available');
+            }
+
+            // Query the promo_codes table for coach registration codes
+            const { data, error } = await window.supabaseClient
+                .from('cs_promo_codes')
+                .select('*')
+                .eq('code', code.toUpperCase())
+                .eq('is_active', true)
+                .or('target_type.eq.coach,target_type.eq.all')
+                .maybeSingle();
+
+            if (error) {
+                console.error('Promo code validation error:', error);
+                setPromoStatus('invalid');
+                setPromoDetails(null);
+                return;
+            }
+
+            if (!data) {
+                setPromoStatus('invalid');
+                setPromoDetails(null);
+                return;
+            }
+
+            // Check expiry
+            if (data.expires_at && new Date(data.expires_at) < new Date()) {
+                setPromoStatus('expired');
+                setPromoDetails(null);
+                return;
+            }
+
+            // Check usage limit
+            if (data.max_uses && data.current_uses >= data.max_uses) {
+                setPromoStatus('invalid');
+                setPromoDetails(null);
+                return;
+            }
+
+            // Valid promo code!
+            setPromoStatus('valid');
+            setPromoDetails({
+                id: data.id,
+                code: data.code,
+                discount_type: data.discount_type, // 'percentage', 'fixed', 'free_trial'
+                discount_value: data.discount_value,
+                free_days: data.free_days || 30,
+                description: data.description
+            });
+        } catch (err) {
+            console.error('Error validating promo code:', err);
+            setPromoStatus('invalid');
+            setPromoDetails(null);
+        } finally {
+            setPromoValidating(false);
+        }
+    };
+
+    // Debounced promo code validation
+    const handlePromoCodeChange = (value) => {
+        handleChange('promo_code', value);
+        // Clear timeout if exists
+        if (window.promoCodeTimeout) {
+            clearTimeout(window.promoCodeTimeout);
+        }
+        // Debounce validation
+        window.promoCodeTimeout = setTimeout(() => {
+            validatePromoCode(value);
+        }, 500);
     };
 
     const handleNext = () => {
@@ -682,6 +772,23 @@ const CoachOnboarding = ({ session }) => {
             if (formData.session_types_online) sessionTypesArray.push('online');
             if (formData.session_types_onsite) sessionTypesArray.push('onsite');
 
+            // Calculate trial end date if promo code gives free trial
+            let trialEndsAt = null;
+            let subscriptionDiscount = null;
+            if (promoStatus === 'valid' && promoDetails) {
+                if (promoDetails.discount_type === 'free_trial') {
+                    const trialDays = promoDetails.free_days || 30;
+                    trialEndsAt = new Date();
+                    trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
+                } else if (promoDetails.discount_type === 'percentage') {
+                    subscriptionDiscount = {
+                        type: 'percentage',
+                        value: promoDetails.discount_value,
+                        promo_code: promoDetails.code
+                    };
+                }
+            }
+
             const coachProfile = {
                 user_id: session.user.id,
                 full_name: formData.full_name,
@@ -696,7 +803,10 @@ const CoachOnboarding = ({ session }) => {
                 offers_virtual: formData.session_types_online,
                 offers_onsite: formData.session_types_onsite,
                 avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
-                onboarding_completed: true
+                onboarding_completed: true,
+                trial_ends_at: trialEndsAt ? trialEndsAt.toISOString() : null,
+                promo_code_used: promoStatus === 'valid' ? promoDetails?.code : null,
+                subscription_discount: subscriptionDiscount
             };
 
             console.log('💾 Saving coach profile to Supabase:', coachProfile);
@@ -715,7 +825,36 @@ const CoachOnboarding = ({ session }) => {
 
             console.log('✅ Coach profile saved successfully:', data);
 
-            setMessage('✓ Profile completed successfully! Redirecting to dashboard...');
+            // Update promo code usage count if a valid code was used
+            if (promoStatus === 'valid' && promoDetails?.id) {
+                try {
+                    await window.supabaseClient
+                        .from('cs_promo_codes')
+                        .update({ current_uses: promoDetails.current_uses ? promoDetails.current_uses + 1 : 1 })
+                        .eq('id', promoDetails.id);
+
+                    // Record the promo code usage
+                    await window.supabaseClient
+                        .from('cs_promo_code_uses')
+                        .insert([{
+                            promo_code_id: promoDetails.id,
+                            user_id: session.user.id,
+                            used_at: new Date().toISOString(),
+                            context: 'coach_registration'
+                        }]);
+
+                    console.log('✅ Promo code usage recorded');
+                } catch (promoErr) {
+                    console.warn('Failed to update promo code usage:', promoErr);
+                    // Don't fail the registration if promo tracking fails
+                }
+            }
+
+            const successMsg = promoStatus === 'valid' && promoDetails
+                ? `✓ Profile completed! ${promoDetails.discount_type === 'free_trial' ? `You have ${promoDetails.free_days} days free!` : `${promoDetails.discount_value}% discount applied!`} Redirecting...`
+                : '✓ Profile completed successfully! Redirecting to dashboard...';
+
+            setMessage(successMsg);
             setTimeout(() => {
                 window.location.hash = '#dashboard';
             }, 1500);
@@ -1022,6 +1161,96 @@ const CoachOnboarding = ({ session }) => {
                                 />
                                 <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
                                     Leave blank for auto-generated avatar
+                                </div>
+                            </div>
+
+                            <!-- Promo Code Section -->
+                            <div style=${{
+                                marginTop: '8px',
+                                padding: '20px',
+                                background: 'linear-gradient(135deg, #f0fafa 0%, #ffffff 100%)',
+                                borderRadius: '12px',
+                                border: '2px dashed #006266'
+                            }}>
+                                <label style=${{...labelStyle, display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                    <span style=${{ fontSize: '18px' }}>🎁</span>
+                                    ${t('onboard.promoCode') || 'Have a Promo Code?'}
+                                </label>
+                                <div style=${{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                                    <div style=${{ flex: 1 }}>
+                                        <input
+                                            type="text"
+                                            style=${{
+                                                ...inputStyle,
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '2px',
+                                                fontWeight: '600',
+                                                borderColor: promoStatus === 'valid' ? '#10B981' : promoStatus === 'invalid' || promoStatus === 'expired' ? '#EF4444' : '#E5E7EB'
+                                            }}
+                                            placeholder="WELCOME30"
+                                            value=${formData.promo_code}
+                                            onChange=${(e) => handlePromoCodeChange(e.target.value)}
+                                            onFocus=${(e) => e.target.style.borderColor = '#006266'}
+                                            onBlur=${(e) => {
+                                                if (promoStatus === 'valid') e.target.style.borderColor = '#10B981';
+                                                else if (promoStatus === 'invalid' || promoStatus === 'expired') e.target.style.borderColor = '#EF4444';
+                                                else e.target.style.borderColor = '#E5E7EB';
+                                            }}
+                                        />
+
+                                        ${/* Validation feedback */ ''}
+                                        ${promoStatus === 'validating' && html`
+                                            <div style=${{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6B7280' }}>
+                                                <span style=${{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                                                ${t('onboard.promoValidating') || 'Checking code...'}
+                                            </div>
+                                        `}
+
+                                        ${promoStatus === 'valid' && promoDetails && html`
+                                            <div style=${{
+                                                marginTop: '12px',
+                                                padding: '14px',
+                                                background: 'linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 100%)',
+                                                borderRadius: '10px',
+                                                border: '1px solid #10B981'
+                                            }}>
+                                                <div style=${{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                                    <span style=${{ fontSize: '20px' }}>✅</span>
+                                                    <span style=${{ fontWeight: '700', color: '#065F46', fontSize: '15px' }}>
+                                                        ${t('onboard.promoApplied') || 'Promo Code Applied!'}
+                                                    </span>
+                                                </div>
+                                                <div style=${{ fontSize: '14px', color: '#047857', fontWeight: '500' }}>
+                                                    ${promoDetails.discount_type === 'free_trial'
+                                                        ? `🎉 ${promoDetails.free_days} ${t('onboard.promoDaysFree') || 'days FREE access!'}`
+                                                        : promoDetails.discount_type === 'percentage'
+                                                        ? `💰 ${promoDetails.discount_value}% ${t('onboard.promoDiscountOff') || 'off your subscription!'}`
+                                                        : promoDetails.description || 'Special discount applied!'
+                                                    }
+                                                </div>
+                                            </div>
+                                        `}
+
+                                        ${promoStatus === 'invalid' && formData.promo_code.length >= 3 && html`
+                                            <div style=${{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#DC2626' }}>
+                                                <span>❌</span>
+                                                ${t('onboard.promoInvalid') || 'Invalid promo code'}
+                                            </div>
+                                        `}
+
+                                        ${promoStatus === 'expired' && html`
+                                            <div style=${{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#DC2626' }}>
+                                                <span>⏰</span>
+                                                ${t('onboard.promoExpired') || 'This promo code has expired'}
+                                            </div>
+                                        `}
+
+                                        ${promoStatus === 'idle' && html`
+                                            <div style=${{ marginTop: '8px', fontSize: '13px', color: '#9CA3AF' }}>
+                                                ${t('onboard.promoHint') || 'Enter your code to get a special discount or free trial'}
+                                            </div>
+                                        `}
+                                    </div>
                                 </div>
                             </div>
                         </div>

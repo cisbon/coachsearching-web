@@ -89,6 +89,16 @@ const translations = {
         "promo.expired": "This promo code has expired",
         "promo.popularCodes": "Popular codes",
 
+        // Onboarding Promo Code
+        "onboard.promoCode": "Have a Promo Code?",
+        "onboard.promoValidating": "Checking code...",
+        "onboard.promoApplied": "Promo Code Applied!",
+        "onboard.promoDaysFree": "days FREE access!",
+        "onboard.promoDiscountOff": "off your subscription!",
+        "onboard.promoInvalid": "Invalid promo code",
+        "onboard.promoExpired": "This promo code has expired",
+        "onboard.promoHint": "Enter your code to get a special discount or free trial",
+
         // Booking
         "booking.title": "Book a Session",
         "booking.select_package": "Select a Package",
@@ -392,6 +402,16 @@ const translations = {
         "promo.invalid": "Ungültiger Promo-Code",
         "promo.expired": "Dieser Promo-Code ist abgelaufen",
         "promo.popularCodes": "Beliebte Codes",
+
+        // Onboarding Promo Code
+        "onboard.promoCode": "Haben Sie einen Promo-Code?",
+        "onboard.promoValidating": "Code wird geprüft...",
+        "onboard.promoApplied": "Promo-Code angewendet!",
+        "onboard.promoDaysFree": "Tage KOSTENLOSER Zugang!",
+        "onboard.promoDiscountOff": "Rabatt auf Ihr Abonnement!",
+        "onboard.promoInvalid": "Ungültiger Promo-Code",
+        "onboard.promoExpired": "Dieser Promo-Code ist abgelaufen",
+        "onboard.promoHint": "Geben Sie Ihren Code ein für einen Rabatt oder kostenlose Testphase",
 
         // Booking
         "booking.title": "Sitzung buchen",
@@ -697,6 +717,16 @@ const translations = {
         "promo.expired": "Este código promocional ha expirado",
         "promo.popularCodes": "Códigos populares",
 
+        // Onboarding Promo Code
+        "onboard.promoCode": "¿Tienes un Código Promocional?",
+        "onboard.promoValidating": "Verificando código...",
+        "onboard.promoApplied": "¡Código Promocional Aplicado!",
+        "onboard.promoDaysFree": "días de acceso GRATIS!",
+        "onboard.promoDiscountOff": "de descuento en tu suscripción!",
+        "onboard.promoInvalid": "Código promocional inválido",
+        "onboard.promoExpired": "Este código promocional ha expirado",
+        "onboard.promoHint": "Ingresa tu código para obtener un descuento o prueba gratuita",
+
         // Booking
         "booking.title": "Reservar Sesión",
         "booking.select_package": "Seleccionar Paquete",
@@ -1001,6 +1031,16 @@ const translations = {
         "promo.expired": "Ce code promo a expiré",
         "promo.popularCodes": "Codes populaires",
 
+        // Onboarding Promo Code
+        "onboard.promoCode": "Avez-vous un Code Promo?",
+        "onboard.promoValidating": "Vérification du code...",
+        "onboard.promoApplied": "Code Promo Appliqué!",
+        "onboard.promoDaysFree": "jours d'accès GRATUIT!",
+        "onboard.promoDiscountOff": "de réduction sur votre abonnement!",
+        "onboard.promoInvalid": "Code promo invalide",
+        "onboard.promoExpired": "Ce code promo a expiré",
+        "onboard.promoHint": "Entrez votre code pour obtenir une réduction ou un essai gratuit",
+
         // Booking
         "booking.title": "Réserver une Séance",
         "booking.select_package": "Sélectionner un Forfait",
@@ -1304,6 +1344,16 @@ const translations = {
         "promo.invalid": "Codice promo non valido",
         "promo.expired": "Questo codice promo è scaduto",
         "promo.popularCodes": "Codici popolari",
+
+        // Onboarding Promo Code
+        "onboard.promoCode": "Hai un Codice Promo?",
+        "onboard.promoValidating": "Verifica del codice...",
+        "onboard.promoApplied": "Codice Promo Applicato!",
+        "onboard.promoDaysFree": "giorni di accesso GRATUITO!",
+        "onboard.promoDiscountOff": "di sconto sul tuo abbonamento!",
+        "onboard.promoInvalid": "Codice promo non valido",
+        "onboard.promoExpired": "Questo codice promo è scaduto",
+        "onboard.promoHint": "Inserisci il tuo codice per ottenere uno sconto o una prova gratuita",
 
         // Booking
         "booking.title": "Prenota una Sessione",
