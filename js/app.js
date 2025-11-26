@@ -444,24 +444,20 @@ const Auth = () => {
             console.log('Auth successful, data:', data);
 
             if (!isLogin) {
-                if (data.user && !data.session) {
-                    setMessage('Success! Please check your email to confirm your account.');
-                    console.log('Email confirmation required');
-                } else if (data.user && data.session) {
-                    const needsOnboarding = userType === 'coach' && data.session;
-                    if (needsOnboarding) {
-                        setMessage('Registration successful! Complete your coach profile...');
-                        console.log('Coach registration complete, redirecting to onboarding...');
-                        setTimeout(() => {
-                            window.location.hash = '#onboarding';
-                        }, 500);
-                    } else {
-                        setMessage('Registration successful! Redirecting...');
-                        console.log('Registration complete with session, redirecting...');
-                        setTimeout(() => {
-                            window.location.hash = '#dashboard';
-                        }, 500);
-                    }
+                // For signup, always redirect to appropriate page
+                const needsOnboarding = userType === 'coach';
+                if (needsOnboarding) {
+                    setMessage('Registration successful! Complete your coach profile...');
+                    console.log('Coach registration, redirecting to onboarding...');
+                    setTimeout(() => {
+                        window.location.hash = '#onboarding';
+                    }, 500);
+                } else {
+                    setMessage('Registration successful! You can browse coaches. Please verify your email to book sessions.');
+                    console.log('Client registration, redirecting to coaches...');
+                    setTimeout(() => {
+                        window.location.hash = '#coaches';
+                    }, 500);
                 }
             } else {
                 console.log('Login successful, waiting for session state update...');
@@ -486,7 +482,7 @@ const Auth = () => {
                 <h2 class="section-title text-center">${isLogin ? t('auth.signin') : t('auth.signup')}</h2>
 
                 ${message && html`
-                    <div class="alert ${message.includes('Error') || message.includes('error') || message.includes('failed') ? 'alert-error' : 'alert-success'}">
+                    <div class="alert ${message.includes('Error') || message.includes('error') || message.includes('failed') || message.includes('not confirmed') ? 'alert-error' : 'alert-success'}">
                         ${message}
                     </div>
                 `}
@@ -1384,6 +1380,12 @@ const BookingModal = ({ coach, session, onClose }) => {
 
     const handleConfirmBooking = async () => {
         if (!selectedSlot) return;
+
+        // Check if email is verified before allowing booking
+        if (!session.user?.email_confirmed_at) {
+            alert('⚠️ Please verify your email address before booking a session.\n\nCheck your inbox for the verification email or click "Resend Email" in the banner above.');
+            return;
+        }
 
         setLoading(true);
         try {
