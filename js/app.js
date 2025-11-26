@@ -771,7 +771,7 @@ const CoachOnboarding = ({ session }) => {
                         ${step === 1 ? '👋 Welcome, Coach!' : '✨ Almost There!'}
                     </h1>
                     <p style=${{ fontSize: '16px', color: '#6B7280' }}>
-                        ${step === 1 ? 'Let's set up your profile to attract clients' : 'Tell us about your expertise and availability'}
+                        ${step === 1 ? 'Set up your profile to attract clients' : 'Tell us about your expertise and availability'}
                     </p>
 
                     <!-- Progress Bar -->
