@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Reminder - Tomorrow</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #006A67 0%, #008C87 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .reminder-badge {
+            background-color: #FF9800;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .session-card {
+            background: linear-gradient(135deg, #006A67 0%, #008C87 100%);
+            padding: 30px;
+            border-radius: 12px;
+            color: white;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .session-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .session-card .time {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        .session-info {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            text-align: left;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .info-row strong {
+            min-width: 90px;
+            opacity: 0.9;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 32px;
+            background-color: #ffffff;
+            color: #006A67;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 5px;
+        }
+        .button-primary {
+            background-color: #FF9800;
+            color: white;
+        }
+        .checklist {
+            background-color: #E8F5F4;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .checklist-item {
+            margin: 12px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        .checklist-item:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            font-size: 20px;
+            color: #006A67;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 30px;
+            text-align: center;
+            color: #666666;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #006A67;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>CoachSearching</h1>
+        </div>
+
+        <div class="content">
+            <center>
+                <div class="reminder-badge">⏰ SESSION TOMORROW</div>
+            </center>
+
+            <p>Hi {{client_name}},</p>
+
+            <p>This is a friendly reminder that your coaching session with <strong>{{coach_name}}</strong> is coming up soon!</p>
+
+            <div class="session-card">
+                <div style="opacity: 0.9; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Tomorrow</div>
+                <h2>{{session_date}}</h2>
+                <div class="time">{{session_time}}</div>
+                <div style="opacity: 0.9; margin-top: 5px;">{{timezone}}</div>
+
+                <div class="session-info">
+                    <div class="info-row">
+                        <strong>Coach:</strong>
+                        <span>{{coach_name}}</span>
+                    </div>
+                    <div class="info-row">
+                        <strong>Service:</strong>
+                        <span>{{service_name}}</span>
+                    </div>
+                    <div class="info-row">
+                        <strong>Duration:</strong>
+                        <span>{{duration}} minutes</span>
+                    </div>
+                    <div class="info-row">
+                        <strong>Type:</strong>
+                        <span>{{location_type}}</span>
+                    </div>
+                </div>
+            </div>
+
+            {{#if meeting_link}}
+            <center>
+                <a href="{{meeting_link}}" class="button button-primary">Join Video Session</a>
+                <a href="{{calendar_link}}" class="button">Add to Calendar</a>
+            </center>
+
+            <div style="background-color: #FFF3E0; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FF9800;">
+                <strong>💻 Video Session Link:</strong><br>
+                <a href="{{meeting_link}}" style="color: #006A67; word-break: break-all;">{{meeting_link}}</a><br>
+                <small style="color: #666;">We recommend joining 5 minutes early to test your connection.</small>
+            </div>
+            {{else}}
+            <center>
+                <a href="{{location_details_url}}" class="button button-primary">View Location Details</a>
+                <a href="{{calendar_link}}" class="button">Add to Calendar</a>
+            </center>
+
+            <div style="background-color: #FFF3E0; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FF9800;">
+                <strong>📍 Meeting Location:</strong><br>
+                {{location_address}}<br>
+                <small style="color: #666;">Please arrive 5 minutes early.</small>
+            </div>
+            {{/if}}
+
+            <div class="checklist">
+                <h3 style="color: #006A67; margin-top: 0;">Pre-Session Checklist:</h3>
+                <div class="checklist-item">{{#if is_online}}Test your camera and microphone{{else}}Know the exact location and parking details{{/if}}</div>
+                <div class="checklist-item">Review any materials sent by your coach</div>
+                <div class="checklist-item">Prepare your questions and discussion topics</div>
+                <div class="checklist-item">Have a notepad ready for key takeaways</div>
+                {{#if is_online}}
+                <div class="checklist-item">Find a quiet, well-lit space for the call</div>
+                {{/if}}
+            </div>
+
+            {{#if coach_preparation_notes}}
+            <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0 0 10px 0;"><strong>📝 Preparation Notes from {{coach_name}}:</strong></p>
+                <p style="margin: 0; color: #555;">{{coach_preparation_notes}}</p>
+            </div>
+            {{/if}}
+
+            <h3 style="color: #006A67; margin-top: 30px;">Need to Make Changes?</h3>
+            <p>If you need to reschedule or cancel, please do so as soon as possible:</p>
+            <center>
+                <a href="{{reschedule_url}}" class="button">Reschedule Session</a>
+                <a href="{{cancel_url}}" class="button">Cancel Session</a>
+            </center>
+
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+                <strong>Cancellation Policy:</strong> {{cancellation_policy}}
+            </p>
+
+            <p style="margin-top: 30px;">Have questions for your coach? <a href="{{message_url}}" style="color: #006A67;">Send them a message</a></p>
+
+            <p style="margin-top: 20px;">Looking forward to your session!<br>
+            <strong>The CoachSearching Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Booking Reference: {{booking_id}}</strong></p>
+            <p style="margin-top: 15px;">
+                <a href="{{dashboard_url}}">My Bookings</a> |
+                <a href="{{support_url}}">Support</a> |
+                <a href="{{help_url}}">Help Center</a>
+            </p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999999;">
+                CoachSearching.com • Europe's Leading Coaching Platform
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #006A67 0%, #008C87 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .success-badge {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .invoice-box {
+            border: 2px solid #006A67;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 30px 0;
+        }
+        .invoice-header {
+            background-color: #006A67;
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .invoice-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .invoice-number {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .invoice-body {
+            padding: 30px;
+        }
+        .invoice-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .invoice-row:last-child {
+            border-bottom: none;
+        }
+        .invoice-row.total {
+            border-top: 2px solid #006A67;
+            margin-top: 10px;
+            padding-top: 15px;
+            font-weight: 600;
+            font-size: 18px;
+            color: #006A67;
+        }
+        .payment-method {
+            background-color: #f9f9f9;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 32px;
+            background-color: #006A67;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .info-box {
+            background-color: #E8F5F4;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 30px;
+            text-align: center;
+            color: #666666;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #006A67;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>CoachSearching</h1>
+        </div>
+
+        <div class="content">
+            <center>
+                <div class="success-badge">✓ PAYMENT SUCCESSFUL</div>
+            </center>
+
+            <h2 style="text-align: center; color: #006A67; margin-top: 10px;">Payment Received</h2>
+
+            <p>Hi {{client_name}},</p>
+
+            <p>Thank you! Your payment has been successfully processed. Here's your receipt for your records.</p>
+
+            <div class="invoice-box">
+                <div class="invoice-header">
+                    <div>
+                        <h2>Invoice</h2>
+                        <div class="invoice-number">{{invoice_number}}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; opacity: 0.9;">Date</div>
+                        <div>{{invoice_date}}</div>
+                    </div>
+                </div>
+
+                <div class="invoice-body">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                        <div>
+                            <strong>Bill To:</strong><br>
+                            {{client_name}}<br>
+                            {{client_email}}
+                            {{#if billing_address}}
+                            <br>{{billing_address}}
+                            {{/if}}
+                        </div>
+                        <div style="text-align: right;">
+                            <strong>Coach:</strong><br>
+                            {{coach_name}}<br>
+                            {{coach_specialty}}
+                        </div>
+                    </div>
+
+                    <div class="invoice-row" style="font-weight: 600; color: #666; font-size: 14px;">
+                        <span>DESCRIPTION</span>
+                        <span>AMOUNT</span>
+                    </div>
+
+                    <div class="invoice-row">
+                        <div>
+                            <strong>{{service_name}}</strong><br>
+                            <span style="font-size: 14px; color: #666;">
+                                {{session_date}} at {{session_time}}<br>
+                                Duration: {{duration}} minutes
+                            </span>
+                        </div>
+                        <div style="text-align: right;">
+                            <strong>€{{service_price}}</strong>
+                        </div>
+                    </div>
+
+                    {{#if discount_amount}}
+                    <div class="invoice-row" style="color: #4CAF50;">
+                        <span>Discount ({{discount_code}})</span>
+                        <span>-€{{discount_amount}}</span>
+                    </div>
+                    {{/if}}
+
+                    <div class="invoice-row" style="font-size: 14px; color: #666;">
+                        <span>Platform Fee</span>
+                        <span>€{{platform_fee}}</span>
+                    </div>
+
+                    {{#if vat_amount}}
+                    <div class="invoice-row" style="font-size: 14px; color: #666;">
+                        <span>VAT ({{vat_rate}}%)</span>
+                        <span>€{{vat_amount}}</span>
+                    </div>
+                    {{/if}}
+
+                    <div class="invoice-row total">
+                        <span>TOTAL PAID</span>
+                        <span>€{{total_amount}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-method">
+                <div style="font-size: 24px;">💳</div>
+                <div>
+                    <strong>Payment Method</strong><br>
+                    <span style="font-size: 14px; color: #666;">{{payment_method}} •••• {{card_last4}}</span><br>
+                    <span style="font-size: 13px; color: #999;">Transaction ID: {{transaction_id}}</span>
+                </div>
+            </div>
+
+            <center>
+                <a href="{{download_invoice_url}}" class="button">Download PDF Invoice</a>
+                <a href="{{booking_details_url}}" class="button" style="background-color: white; color: #006A67; border: 2px solid #006A67;">View Booking</a>
+            </center>
+
+            <div class="info-box">
+                <strong>📅 What's Next?</strong><br>
+                Your session with {{coach_name}} is confirmed for <strong>{{session_date}} at {{session_time}}</strong>.<br>
+                You'll receive a reminder 24 hours before your session.
+            </div>
+
+            {{#if refund_policy}}
+            <h3 style="color: #006A67; margin-top: 30px;">Refund Policy</h3>
+            <p style="font-size: 14px; color: #666;">{{refund_policy}}</p>
+            {{/if}}
+
+            <h3 style="color: #006A67; margin-top: 30px;">Need Help?</h3>
+            <p>If you have any questions about this payment or need to request a refund, please contact our support team.</p>
+
+            <center>
+                <a href="{{support_url}}" class="button" style="background-color: white; color: #006A67; border: 2px solid #006A67;">Contact Support</a>
+            </center>
+
+            {{#if is_business_account}}
+            <div style="background-color: #FFF3E0; padding: 15px 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #FF9800;">
+                <strong>🏢 Business Account</strong><br>
+                This invoice is issued under your business account. VAT details and full billing information are included for your accounting records.
+            </div>
+            {{/if}}
+
+            <p style="margin-top: 30px;">Thank you for choosing CoachSearching!<br>
+            <strong>The CoachSearching Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Invoice #{{invoice_number}}</strong></p>
+            <p style="margin-top: 10px; font-size: 13px;">
+                CoachSearching.com<br>
+                {{company_address}}<br>
+                VAT: {{company_vat_number}}
+            </p>
+            <p style="margin-top: 15px;">
+                <a href="{{dashboard_url}}">My Account</a> |
+                <a href="{{invoice_history_url}}">Invoice History</a> |
+                <a href="{{support_url}}">Support</a>
+            </p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999999;">
+                This is an automated receipt. Please do not reply to this email.<br>
+                For support inquiries, visit our <a href="{{help_url}}" style="color: #006A67;">Help Center</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

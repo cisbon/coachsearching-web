@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payout Processed</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #006A67 0%, #008C87 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .payout-badge {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 600;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .amount-card {
+            background: linear-gradient(135deg, #006A67 0%, #008C87 100%);
+            padding: 40px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .amount-card .label {
+            font-size: 14px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .amount-card .amount {
+            font-size: 48px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        .amount-card .period {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        .payout-details {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-row strong {
+            color: #666;
+        }
+        .earnings-breakdown {
+            margin: 30px 0;
+        }
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background-color: #f9f9f9;
+            margin: 8px 0;
+            border-radius: 6px;
+        }
+        .breakdown-row.total {
+            background-color: #E8F5F4;
+            border: 2px solid #006A67;
+            font-weight: 600;
+            color: #006A67;
+            margin-top: 15px;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 32px;
+            background-color: #006A67;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .info-box {
+            background-color: #E8F5F4;
+            border-left: 4px solid #006A67;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 30px;
+            text-align: center;
+            color: #666666;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #006A67;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>CoachSearching</h1>
+        </div>
+
+        <div class="content">
+            <center>
+                <div class="payout-badge">💰 PAYOUT PROCESSED</div>
+            </center>
+
+            <h2 style="text-align: center; color: #006A67; margin-top: 10px;">Your Earnings Are On The Way!</h2>
+
+            <p>Hi {{coach_name}},</p>
+
+            <p>Great news! Your weekly payout has been processed and is on its way to your bank account.</p>
+
+            <div class="amount-card">
+                <div class="label">Total Payout</div>
+                <div class="amount">€{{payout_amount}}</div>
+                <div class="period">{{period_start}} - {{period_end}}</div>
+            </div>
+
+            <div class="payout-details">
+                <h3 style="margin: 0 0 15px 0; color: #006A67;">Payout Details</h3>
+                <div class="detail-row">
+                    <strong>Payout ID:</strong>
+                    <span>{{payout_id}}</span>
+                </div>
+                <div class="detail-row">
+                    <strong>Period:</strong>
+                    <span>{{period_start}} to {{period_end}}</span>
+                </div>
+                <div class="detail-row">
+                    <strong>Payment Method:</strong>
+                    <span>SEPA Transfer</span>
+                </div>
+                <div class="detail-row">
+                    <strong>Bank Account:</strong>
+                    <span>{{bank_account_last4}}</span>
+                </div>
+                <div class="detail-row">
+                    <strong>Expected Arrival:</strong>
+                    <span style="color: #4CAF50; font-weight: 600;">{{arrival_date}}</span>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>⏱️ Processing Time</strong><br>
+                SEPA transfers typically arrive within 1-2 business days. You should see the funds in your account by {{arrival_date}}.
+            </div>
+
+            <div class="earnings-breakdown">
+                <h3 style="color: #006A67;">Earnings Breakdown</h3>
+
+                <div class="breakdown-row">
+                    <div>
+                        <strong>Total Session Revenue</strong><br>
+                        <span style="font-size: 14px; color: #666;">{{session_count}} sessions completed</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong>€{{gross_revenue}}</strong>
+                    </div>
+                </div>
+
+                <div class="breakdown-row">
+                    <div>
+                        <strong>Platform Fee</strong><br>
+                        <span style="font-size: 14px; color: #666;">{{commission_rate}}% commission{{#if is_founding_coach}} (Founding Coach Rate!){{/if}}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong style="color: #999;">-€{{platform_fee}}</strong>
+                    </div>
+                </div>
+
+                {{#if refunds_amount}}
+                <div class="breakdown-row">
+                    <div>
+                        <strong>Refunds</strong><br>
+                        <span style="font-size: 14px; color: #666;">{{refunds_count}} refund(s) processed</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong style="color: #999;">-€{{refunds_amount}}</strong>
+                    </div>
+                </div>
+                {{/if}}
+
+                {{#if adjustments_amount}}
+                <div class="breakdown-row">
+                    <div>
+                        <strong>Adjustments</strong><br>
+                        <span style="font-size: 14px; color: #666;">{{adjustments_note}}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong>€{{adjustments_amount}}</strong>
+                    </div>
+                </div>
+                {{/if}}
+
+                <div class="breakdown-row total">
+                    <strong>NET PAYOUT</strong>
+                    <strong>€{{payout_amount}}</strong>
+                </div>
+            </div>
+
+            <center>
+                <a href="{{earnings_dashboard_url}}" class="button">View Earnings Dashboard</a>
+                <a href="{{download_statement_url}}" class="button" style="background-color: white; color: #006A67; border: 2px solid #006A67;">Download Statement</a>
+            </center>
+
+            {{#if is_founding_coach}}
+            <div style="background-color: #FFF3E0; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #FF9800;">
+                <strong>🌟 Founding Coach Benefits</strong><br>
+                You're enjoying our exclusive 10% commission rate (vs. standard 15%). This rate is locked for 12 months from your signup date.<br>
+                <span style="font-size: 14px; color: #666; margin-top: 5px; display: block;">
+                    Lock-in expires: {{founding_rate_expires}}
+                </span>
+            </div>
+            {{/if}}
+
+            <h3 style="color: #006A67; margin-top: 30px;">Your Performance This Period</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 32px; font-weight: 700; color: #006A67;">{{session_count}}</div>
+                    <div style="font-size: 14px; color: #666; margin-top: 5px;">Sessions</div>
+                </div>
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 32px; font-weight: 700; color: #006A67;">{{avg_rating}}</div>
+                    <div style="font-size: 14px; color: #666; margin-top: 5px;">Avg Rating</div>
+                </div>
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 32px; font-weight: 700; color: #006A67;">{{total_hours}}</div>
+                    <div style="font-size: 14px; color: #666; margin-top: 5px;">Total Hours</div>
+                </div>
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 32px; font-weight: 700; color: #006A67;">{{new_clients}}</div>
+                    <div style="font-size: 14px; color: #666; margin-top: 5px;">New Clients</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>📊 Tax Information</strong><br>
+                As a self-employed professional, you're responsible for reporting this income on your tax returns. We'll provide a comprehensive annual statement in January for tax purposes.<br>
+                <a href="{{tax_documents_url}}" style="color: #006A67;">Download tax documents →</a>
+            </div>
+
+            <h3 style="color: #006A67; margin-top: 30px;">Questions About Your Payout?</h3>
+            <p>If you have any questions about this payout or notice any discrepancies, please don't hesitate to reach out to our finance team.</p>
+
+            <center>
+                <a href="{{support_url}}" class="button" style="background-color: white; color: #006A67; border: 2px solid #006A67;">Contact Finance Support</a>
+            </center>
+
+            <p style="margin-top: 30px;">Keep up the great work!<br>
+            <strong>The CoachSearching Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Payout ID: {{payout_id}}</strong></p>
+            <p style="margin-top: 10px; font-size: 13px;">
+                CoachSearching.com<br>
+                {{company_address}}<br>
+                Business Registration: {{company_registration}}
+            </p>
+            <p style="margin-top: 15px;">
+                <a href="{{earnings_dashboard_url}}">Earnings Dashboard</a> |
+                <a href="{{payout_history_url}}">Payout History</a> |
+                <a href="{{support_url}}">Support</a>
+            </p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999999;">
+                This is an automated notification. For questions, contact our finance team.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Was Your Session?</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #006A67 0%, #008C87 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .coach-card {
+            background-color: #f9f9f9;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .coach-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #006A67;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: 600;
+        }
+        .coach-info h3 {
+            margin: 0 0 5px 0;
+            color: #006A67;
+        }
+        .coach-info p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .rating-prompt {
+            background: linear-gradient(135deg, #006A67 0%, #008C87 100%);
+            padding: 30px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .rating-prompt h2 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+        }
+        .stars {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            font-size: 40px;
+        }
+        .star {
+            color: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .button {
+            display: inline-block;
+            padding: 16px 40px;
+            background-color: #ffffff;
+            color: #006A67;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .impact-box {
+            background-color: #E8F5F4;
+            border-left: 4px solid #006A67;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 30px;
+            text-align: center;
+            color: #666666;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #006A67;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>CoachSearching</h1>
+        </div>
+
+        <div class="content">
+            <h2 style="color: #006A67;">How was your session?</h2>
+
+            <p>Hi {{client_name}},</p>
+
+            <p>We hope your coaching session was valuable! We'd love to hear about your experience with {{coach_name}}.</p>
+
+            <div class="coach-card">
+                {{#if coach_avatar_url}}
+                <img src="{{coach_avatar_url}}" alt="{{coach_name}}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                {{else}}
+                <div class="coach-avatar">{{coach_initials}}</div>
+                {{/if}}
+                <div class="coach-info">
+                    <h3>{{coach_name}}</h3>
+                    <p>{{service_name}}</p>
+                    <p style="margin-top: 5px;">{{session_date}} • {{duration}} minutes</p>
+                </div>
+            </div>
+
+            <div class="rating-prompt">
+                <h2>Share Your Experience</h2>
+                <p style="margin: 0 0 20px 0;">Your feedback helps others find the right coach and helps coaches improve their services.</p>
+
+                <div class="stars">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                </div>
+
+                <a href="{{review_url}}" class="button">Write a Review</a>
+            </div>
+
+            <div class="impact-box">
+                <strong>💡 Your review helps:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Other clients make informed decisions</li>
+                    <li>{{coach_name}} understand what's working well</li>
+                    <li>Build trust in the coaching community</li>
+                    <li>Improve the quality of services on our platform</li>
+                </ul>
+            </div>
+
+            <h3 style="color: #006A67; margin-top: 30px;">What to Include in Your Review:</h3>
+            <ul style="line-height: 1.8;">
+                <li><strong>Professionalism:</strong> Was the coach well-prepared and respectful?</li>
+                <li><strong>Expertise:</strong> Did they demonstrate deep knowledge in their field?</li>
+                <li><strong>Communication:</strong> Were they clear, attentive, and easy to understand?</li>
+                <li><strong>Value:</strong> Did you achieve your goals for the session?</li>
+                <li><strong>Overall Experience:</strong> Would you recommend this coach to others?</li>
+            </ul>
+
+            <center>
+                <a href="{{review_url}}" class="button" style="background-color: #006A67; color: white; margin-top: 20px;">Write Your Review Now</a>
+            </center>
+
+            <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 30px 0; text-align: center;">
+                <h3 style="color: #006A67; margin-top: 0;">Want to Continue Your Journey?</h3>
+                <p>Book another session with {{coach_name}} or explore other coaches in our network.</p>
+                <a href="{{book_again_url}}" style="color: #006A67; font-weight: 600;">Book Another Session →</a>
+            </div>
+
+            <p style="margin-top: 30px; font-size: 14px; color: #666;">
+                <strong>Privacy note:</strong> Your review will be publicly visible on {{coach_name}}'s profile. Please don't include personal or sensitive information. You can choose to remain anonymous if preferred.
+            </p>
+
+            <p style="margin-top: 20px;">Thank you for being part of our community!<br>
+            <strong>The CoachSearching Team</strong></p>
+
+            <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 13px; color: #999;">
+                Not interested in leaving a review? <a href="{{unsubscribe_review_emails}}" style="color: #999;">Click here</a> to stop receiving review requests.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Session Reference: {{booking_id}}</strong></p>
+            <p style="margin-top: 15px;">
+                <a href="{{dashboard_url}}">My Sessions</a> |
+                <a href="{{browse_coaches_url}}">Browse Coaches</a> |
+                <a href="{{support_url}}">Support</a>
+            </p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999999;">
+                CoachSearching.com • Europe's Leading Coaching Platform
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to CoachSearching</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #006A67 0%, #008C87 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #006A67;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 32px;
+            background-color: #006A67;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #005552;
+        }
+        .features {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        .feature-item {
+            margin: 15px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .feature-item:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #006A67;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 30px;
+            text-align: center;
+            color: #666666;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #006A67;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>CoachSearching</h1>
+        </div>
+
+        <div class="content">
+            <h2>Welcome to CoachSearching, {{first_name}}!</h2>
+
+            <p>We're thrilled to have you join our community of {{user_type_greeting}}. CoachSearching is Europe's leading platform connecting individuals with expert coaches across all specialties.</p>
+
+            {{#if is_coach}}
+            <div class="features">
+                <h3 style="color: #006A67; margin-top: 0;">Get Started as a Coach:</h3>
+                <div class="feature-item">Complete your profile with credentials and specialties</div>
+                <div class="feature-item">Set your availability and hourly rate</div>
+                <div class="feature-item">Enjoy our founding coach rate: <strong>10% commission</strong> (locked for 12 months!)</div>
+                <div class="feature-item">Receive weekly payouts via SEPA every Monday</div>
+            </div>
+
+            <center>
+                <a href="{{dashboard_url}}" class="button">Complete Your Profile</a>
+            </center>
+
+            <p style="margin-top: 30px;"><strong>Pro tip:</strong> Coaches with complete profiles and verified credentials receive 3x more bookings!</p>
+            {{else}}
+            <div class="features">
+                <h3 style="color: #006A67; margin-top: 0;">What You Can Do:</h3>
+                <div class="feature-item">Browse verified coaches across all specialties</div>
+                <div class="feature-item">Book sessions instantly with real-time availability</div>
+                <div class="feature-item">Secure payments with full GDPR compliance</div>
+                <div class="feature-item">Message coaches directly before booking</div>
+            </div>
+
+            <center>
+                <a href="{{browse_coaches_url}}" class="button">Browse Coaches</a>
+            </center>
+
+            <p style="margin-top: 30px;"><strong>Special offer:</strong> Use code <strong>WELCOME15</strong> for 15% off your first session!</p>
+            {{/if}}
+
+            <p style="margin-top: 30px;">If you have any questions, our support team is here to help. Just reply to this email.</p>
+
+            <p style="margin-top: 20px;">Best regards,<br>
+            <strong>The CoachSearching Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p><strong>CoachSearching.com</strong></p>
+            <p>Connecting you with expert coaches across Europe</p>
+            <p style="margin-top: 15px;">
+                <a href="{{settings_url}}">Email Preferences</a> |
+                <a href="{{help_url}}">Help Center</a> |
+                <a href="{{privacy_url}}">Privacy Policy</a>
+            </p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999999;">
+                You received this email because you signed up for CoachSearching.<br>
+                If you didn't create this account, please <a href="{{support_url}}">contact us</a>.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
