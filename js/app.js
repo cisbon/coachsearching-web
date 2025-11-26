@@ -126,7 +126,7 @@ const legalContent = {
             <h3>coachsearching.com</h3>
             <h2>Information according to § 5 TMG</h2>
             <p><strong>Represented by:</strong><br/>Michael Gross</p>
-            <p><strong>Contact:</strong><br/>Email: info[at]coachsearching.com</p>
+            <p><strong>Contact:</strong><br/>Email: legal[at]coachsearching.com</p>
         `
     },
     privacy: {
