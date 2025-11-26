@@ -1262,7 +1262,7 @@ const DashboardOverview = ({ userType }) => {
                     <div class="stat-label">Upcoming Sessions</div>
                     <div class="stat-value">0</div>
                 </div>
-                ${userRole === 'coach' && html`
+                ${userType === 'coach' && html`
                     <div class="stat-card">
                         <div class="stat-label">Pro-bono Hours</div>
                         <div class="stat-value">0</div>
