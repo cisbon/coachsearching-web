@@ -1327,11 +1327,10 @@ const BookingModal = ({ coach, session, onClose }) => {
 
             const { data: bookings, error: bookError } = await window.supabaseClient
                 .from('cs_bookings')
-                .select('start_time, end_time')
+                .select('start_time, end_time, status')
                 .eq('coach_id', coach.id)
                 .gte('start_time', startOfDay.toISOString())
-                .lte('start_time', endOfDay.toISOString())
-                .in('status', ['pending', 'confirmed']);
+                .lte('start_time', endOfDay.toISOString());
 
             if (bookError) {
                 console.error('❌ Error loading bookings:', bookError);
@@ -1357,8 +1356,12 @@ const BookingModal = ({ coach, session, onClose }) => {
 
                     // Check if slot end time is within availability
                     if (slotEnd <= endDate) {
-                        // Check if slot conflicts with existing bookings
+                        // Check if slot conflicts with existing bookings (only pending or confirmed)
                         const hasConflict = bookings?.some(booking => {
+                            // Only check pending and confirmed bookings
+                            if (booking.status !== 'pending' && booking.status !== 'confirmed') {
+                                return false;
+                            }
                             const bookingStart = new Date(booking.start_time);
                             const bookingEnd = new Date(booking.end_time);
                             return (
@@ -1408,11 +1411,13 @@ const BookingModal = ({ coach, session, onClose }) => {
                 .from('cs_clients')
                 .select('id')
                 .eq('user_id', session.user.id)
-                .single();
+                .maybeSingle(); // Use maybeSingle() instead of single() to avoid error on no rows
 
-            if (clientFetchError && clientFetchError.code !== 'PGRST116') {
+            console.log('📋 Client fetch result:', { existingClient, clientFetchError });
+
+            if (clientFetchError) {
                 console.error('❌ Error fetching client:', clientFetchError);
-                throw new Error('Failed to fetch client profile');
+                // Continue to try creating client instead of throwing
             }
 
             if (existingClient) {
@@ -1425,14 +1430,16 @@ const BookingModal = ({ coach, session, onClose }) => {
                     .from('cs_clients')
                     .insert([{
                         user_id: session.user.id,
-                        full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
+                        full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+                        email: session.user.email,
+                        phone: session.user.user_metadata?.phone || null
                     }])
                     .select()
                     .single();
 
                 if (createError) {
                     console.error('❌ Error creating client:', createError);
-                    throw createError;
+                    throw new Error('Failed to create client profile. Please make sure the cs_clients table exists and has proper RLS policies.');
                 }
 
                 clientId = newClient.id;
