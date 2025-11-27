@@ -96,9 +96,20 @@ class OpenRouter {
     }
 
     /**
+     * Language-specific response instructions
+     */
+    private array $languageInstructions = [
+        'en' => 'Respond in English.',
+        'de' => 'Antworte auf Deutsch. Alle Texte, Zusammenfassungen und Begründungen müssen auf Deutsch sein.',
+        'es' => 'Responde en español. Todos los textos, resúmenes y razones deben estar en español.',
+        'fr' => 'Réponds en français. Tous les textes, résumés et raisons doivent être en français.',
+        'it' => 'Rispondi in italiano. Tutti i testi, i riepiloghi e le motivazioni devono essere in italiano.'
+    ];
+
+    /**
      * AI-powered coach matching based on user answers
      */
-    public function matchCoaches(array $userAnswers, array $coaches, int $topN = 10): array {
+    public function matchCoaches(array $userAnswers, array $coaches, int $topN = 10, string $language = 'en'): array {
         if (empty($coaches)) {
             return ['success' => false, 'error' => 'No coaches available'];
         }
@@ -125,9 +136,9 @@ class OpenRouter {
             ];
         }, $coaches);
 
-        // Build the matching prompt
-        $systemPrompt = $this->buildMatchingSystemPrompt();
-        $userPrompt = $this->buildMatchingUserPrompt($userAnswers, $coachSummaries);
+        // Build the matching prompt with language support
+        $systemPrompt = $this->buildMatchingSystemPrompt($language);
+        $userPrompt = $this->buildMatchingUserPrompt($userAnswers, $coachSummaries, $language);
 
         $result = $this->chat([
             ['role' => 'system', 'content' => $systemPrompt],
@@ -198,9 +209,13 @@ class OpenRouter {
     /**
      * Build system prompt for coach matching
      */
-    private function buildMatchingSystemPrompt(): string {
+    private function buildMatchingSystemPrompt(string $language = 'en'): string {
+        $langInstruction = $this->languageInstructions[$language] ?? $this->languageInstructions['en'];
+
         return <<<PROMPT
 You are an expert coaching matchmaker for CoachSearching, a European coaching marketplace. Your role is to analyze client needs and match them with the most suitable coaches.
+
+**IMPORTANT LANGUAGE INSTRUCTION:** {$langInstruction}
 
 MATCHING CRITERIA (in order of importance):
 1. **Goal Alignment (35%)**: Match client's coaching goals with coach's specialties and expertise
@@ -235,6 +250,8 @@ OUTPUT FORMAT: Return valid JSON with this structure:
   "overall_insights": "Optional: General observations about the matches"
 }
 
+Remember: All "reasons", "summary", and "overall_insights" text MUST be written in the specified language above.
+
 Be thoughtful and nuanced. Consider soft factors like coaching approach alignment, personality fit based on bio, and whether the coach's experience areas truly match what the client needs.
 PROMPT;
     }
@@ -242,9 +259,10 @@ PROMPT;
     /**
      * Build user prompt with client answers and coach data
      */
-    private function buildMatchingUserPrompt(array $answers, array $coaches): string {
+    private function buildMatchingUserPrompt(array $answers, array $coaches, string $language = 'en'): string {
         $answersJson = json_encode($answers, JSON_PRETTY_PRINT);
         $coachesJson = json_encode($coaches, JSON_PRETTY_PRINT);
+        $langInstruction = $this->languageInstructions[$language] ?? $this->languageInstructions['en'];
 
         // Map goal codes to readable goals
         $goalMap = [
@@ -289,6 +307,8 @@ PROMPT;
         return <<<PROMPT
 Please match this client with the most suitable coaches:
 
+**REMINDER:** {$langInstruction}
+
 ## CLIENT PROFILE
 
 **Primary Coaching Goal:** {$readableGoal}
@@ -307,16 +327,20 @@ Please match this client with the most suitable coaches:
 
 {$coachesJson}
 
-Please analyze each coach and return the top 10 matches ranked by compatibility score. Focus on finding coaches whose expertise, approach, and offerings best align with this client's specific needs and preferences.
+Please analyze each coach and return the top 10 matches ranked by compatibility score. Focus on finding coaches whose expertise, approach, and offerings best align with this client's specific needs and preferences. Remember to write all text responses in the language specified above.
 PROMPT;
     }
 
     /**
      * Generate personalized coach recommendation explanation
      */
-    public function explainMatch(array $coach, array $userAnswers): array {
+    public function explainMatch(array $coach, array $userAnswers, string $language = 'en'): array {
+        $langInstruction = $this->languageInstructions[$language] ?? $this->languageInstructions['en'];
+
         $systemPrompt = <<<PROMPT
 You are a helpful coaching advisor. Generate a brief, personalized explanation (2-3 sentences) of why this coach might be a good match for the client. Be specific and reference both the client's stated goals and the coach's relevant experience.
+
+**IMPORTANT:** {$langInstruction}
 PROMPT;
 
         $coachInfo = json_encode([
@@ -334,7 +358,7 @@ Client's quiz answers: {$answersInfo}
 
 Coach profile: {$coachInfo}
 
-Generate a personalized 2-3 sentence explanation of why this coach could be a good match.
+Generate a personalized 2-3 sentence explanation of why this coach could be a good match. Write your response in the language specified above.
 PROMPT;
 
         return $this->chat([

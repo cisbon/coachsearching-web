@@ -1468,18 +1468,18 @@ const Hero = ({ onSearch }) => {
                 <div class="discovery-options">
                     <button class="discovery-option quiz-option" onClick=${() => window.location.hash = '#quiz'}>
                         <span class="discovery-icon">🎯</span>
-                        <span class="discovery-label">Take the Quiz</span>
-                        <span class="discovery-desc">Get matched in 2 minutes</span>
+                        <span class="discovery-label">${t('discovery.takeQuiz')}</span>
+                        <span class="discovery-desc">${t('discovery.takeQuizDesc')}</span>
                     </button>
                     <button class="discovery-option browse-option" onClick=${() => document.querySelector('.coach-list')?.scrollIntoView({ behavior: 'smooth' })}>
                         <span class="discovery-icon">🔍</span>
-                        <span class="discovery-label">Browse Coaches</span>
-                        <span class="discovery-desc">Explore all coaches</span>
+                        <span class="discovery-label">${t('discovery.browse')}</span>
+                        <span class="discovery-desc">${t('discovery.browseDesc')}</span>
                     </button>
                     <button class="discovery-option ai-option" onClick=${() => window.location.hash = '#ai-match'}>
                         <span class="discovery-icon">✨</span>
-                        <span class="discovery-label">AI Matching</span>
-                        <span class="discovery-desc">Smart recommendations</span>
+                        <span class="discovery-label">${t('discovery.aiMatch')}</span>
+                        <span class="discovery-desc">${t('discovery.aiMatchDesc')}</span>
                     </button>
                 </div>
             </div>
@@ -6190,60 +6190,47 @@ class ErrorBoundary extends React.Component {
 // MATCHING QUIZ COMPONENT
 // =====================================================
 
-const QUIZ_QUESTIONS = [
+const getQuizQuestions = () => [
     {
         id: 'goal',
-        question: 'What is your primary goal?',
+        question: t('quiz.q.goal'),
         type: 'single',
         options: [
-            { value: 'career', label: '🚀 Career Growth', desc: 'Advance in my profession' },
-            { value: 'leadership', label: '👔 Leadership Development', desc: 'Become a better leader' },
-            { value: 'life', label: '🌟 Life Balance', desc: 'Find more balance and fulfillment' },
-            { value: 'business', label: '💼 Business Growth', desc: 'Grow my business or startup' },
-            { value: 'transition', label: '🔄 Career Transition', desc: 'Change careers or industries' }
-        ]
-    },
-    {
-        id: 'challenge',
-        question: 'What is your biggest challenge right now?',
-        type: 'single',
-        options: [
-            { value: 'confidence', label: '💪 Building Confidence', desc: 'Believing in myself more' },
-            { value: 'communication', label: '💬 Communication', desc: 'Speaking up and being heard' },
-            { value: 'decision', label: '🎯 Decision Making', desc: 'Making important decisions' },
-            { value: 'stress', label: '😰 Managing Stress', desc: 'Handling pressure better' },
-            { value: 'motivation', label: '🔥 Finding Motivation', desc: 'Staying driven and focused' }
+            { value: 'career', label: `🚀 ${t('quiz.q.goal.career')}`, desc: t('quiz.q.goal.careerDesc') },
+            { value: 'leadership', label: `👔 ${t('quiz.q.goal.leadership')}`, desc: t('quiz.q.goal.leadershipDesc') },
+            { value: 'life', label: `🌟 ${t('quiz.q.goal.life')}`, desc: t('quiz.q.goal.lifeDesc') },
+            { value: 'business', label: `💼 ${t('quiz.q.goal.business')}`, desc: t('quiz.q.goal.businessDesc') }
         ]
     },
     {
         id: 'style',
-        question: 'What coaching style resonates with you?',
+        question: t('quiz.q.style'),
         type: 'single',
         options: [
-            { value: 'supportive', label: '🤗 Supportive & Empathetic', desc: 'Patient, understanding approach' },
-            { value: 'direct', label: '🎯 Direct & Action-Oriented', desc: 'Straight to the point' },
-            { value: 'analytical', label: '📊 Analytical & Strategic', desc: 'Data-driven, structured' },
-            { value: 'creative', label: '🎨 Creative & Intuitive', desc: 'Innovative, outside the box' }
+            { value: 'supportive', label: `🤗 ${t('quiz.q.style.supportive')}`, desc: t('quiz.q.style.supportiveDesc') },
+            { value: 'direct', label: `🎯 ${t('quiz.q.style.direct')}`, desc: t('quiz.q.style.directDesc') },
+            { value: 'analytical', label: `📊 ${t('quiz.q.style.analytical')}`, desc: t('quiz.q.style.analyticalDesc') },
+            { value: 'creative', label: `🎨 ${t('quiz.q.style.creative')}`, desc: t('quiz.q.style.creativeDesc') }
         ]
     },
     {
         id: 'session_type',
-        question: 'How would you prefer to meet?',
+        question: t('quiz.q.session'),
         type: 'single',
         options: [
-            { value: 'online', label: '💻 Online Only', desc: 'Video calls work best for me' },
-            { value: 'in_person', label: '🤝 In-Person Only', desc: 'I prefer face-to-face' },
-            { value: 'hybrid', label: '🔄 Either Works', desc: 'I\'m flexible' }
+            { value: 'online', label: `💻 ${t('quiz.q.session.online')}`, desc: t('quiz.q.session.onlineDesc') },
+            { value: 'in_person', label: `🤝 ${t('quiz.q.session.inPerson')}`, desc: t('quiz.q.session.inPersonDesc') },
+            { value: 'hybrid', label: `🔄 ${t('quiz.q.session.hybrid')}`, desc: t('quiz.q.session.hybridDesc') }
         ]
     },
     {
         id: 'budget',
-        question: 'What\'s your budget per session?',
+        question: t('quiz.q.budget'),
         type: 'single',
         options: [
-            { value: 'budget', label: '💰 Under €75', desc: 'Budget-friendly options' },
-            { value: 'mid', label: '💎 €75 - €150', desc: 'Mid-range investment' },
-            { value: 'premium', label: '👑 €150+', desc: 'Premium coaching experience' }
+            { value: 'budget', label: `💰 ${t('quiz.q.budget.low')}`, desc: t('quiz.q.budget.lowDesc') },
+            { value: 'mid', label: `💎 ${t('quiz.q.budget.mid')}`, desc: t('quiz.q.budget.midDesc') },
+            { value: 'premium', label: `👑 ${t('quiz.q.budget.premium')}`, desc: t('quiz.q.budget.premiumDesc') }
         ]
     }
 ];
@@ -6255,15 +6242,17 @@ const MatchingQuiz = ({ session }) => {
     const [matchedCoaches, setMatchedCoaches] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const currentQuestion = QUIZ_QUESTIONS[currentStep];
-    const progress = ((currentStep) / QUIZ_QUESTIONS.length) * 100;
+    // Get questions with current language translations
+    const quizQuestions = getQuizQuestions();
+    const currentQuestion = quizQuestions[currentStep];
+    const progress = ((currentStep) / quizQuestions.length) * 100;
 
     const handleAnswer = (value) => {
         setAnswers({ ...answers, [currentQuestion.id]: value });
 
         // Auto-advance after short delay
         setTimeout(() => {
-            if (currentStep < QUIZ_QUESTIONS.length - 1) {
+            if (currentStep < quizQuestions.length - 1) {
                 setCurrentStep(currentStep + 1);
             } else {
                 findMatches();
@@ -6335,8 +6324,8 @@ const MatchingQuiz = ({ session }) => {
                 <div class="loading-animation">
                     <div class="spinner-large"></div>
                 </div>
-                <h2>Finding Your Perfect Matches...</h2>
-                <p>Analyzing your preferences and matching with coaches</p>
+                <h2>${t('quiz.processing.title')}</h2>
+                <p>${t('quiz.processing.step1')}</p>
             </div>
         `;
     }
@@ -6346,8 +6335,8 @@ const MatchingQuiz = ({ session }) => {
             <div class="quiz-results">
                 <div class="container">
                     <div class="results-header">
-                        <h1>🎯 Your Top Matches</h1>
-                        <p>Based on your preferences, here are coaches who would be perfect for you</p>
+                        <h1>🎯 ${t('quiz.results.title')}</h1>
+                        <p>${t('quiz.results.subtitle')}</p>
                     </div>
 
                     <div class="matched-coaches">
@@ -6356,7 +6345,7 @@ const MatchingQuiz = ({ session }) => {
                                 <div class="match-rank">#${index + 1}</div>
                                 <div class="match-score">
                                     <span class="score-value">${coach.matchScore}%</span>
-                                    <span class="score-label">Match</span>
+                                    <span class="score-label">${t('quiz.match')}</span>
                                 </div>
                                 <img src=${coach.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(coach.full_name)}`} alt=${coach.full_name} class="coach-avatar" />
                                 <div class="coach-info">
@@ -6368,7 +6357,7 @@ const MatchingQuiz = ({ session }) => {
                                     </div>
                                 </div>
                                 <button class="btn-primary" onClick=${() => window.location.hash = '#coaches'}>
-                                    View Profile
+                                    ${t('quiz.viewProfile')}
                                 </button>
                             </div>
                         `)}
@@ -6376,10 +6365,10 @@ const MatchingQuiz = ({ session }) => {
 
                     <div class="results-actions">
                         <button class="btn-secondary" onClick=${startOver}>
-                            ← Take Quiz Again
+                            ← ${t('quiz.results.retake')}
                         </button>
                         <button class="btn-primary" onClick=${() => window.location.hash = '#coaches'}>
-                            Browse All Coaches →
+                            ${t('quiz.results.browseAll')} →
                         </button>
                     </div>
                 </div>
@@ -6395,7 +6384,7 @@ const MatchingQuiz = ({ session }) => {
                     <div class="progress-track">
                         <div class="progress-fill" style=${{ width: `${progress}%` }}></div>
                     </div>
-                    <span class="progress-text">${currentStep + 1} of ${QUIZ_QUESTIONS.length}</span>
+                    <span class="progress-text">${currentStep + 1} / ${quizQuestions.length}</span>
                 </div>
 
                 <!-- Question -->
@@ -6420,11 +6409,11 @@ const MatchingQuiz = ({ session }) => {
                 <div class="quiz-nav">
                     ${currentStep > 0 && html`
                         <button class="btn-secondary" onClick=${goBack}>
-                            ← Back
+                            ← ${t('quiz.back')}
                         </button>
                     `}
                     <button class="btn-ghost" onClick=${() => window.location.hash = '#home'}>
-                        Skip Quiz
+                        ${t('quiz.intro.skip')}
                     </button>
                 </div>
             </div>
@@ -6479,37 +6468,37 @@ const AIMatchPage = ({ session }) => {
         <div class="ai-match-page">
             <div class="container">
                 <div class="ai-header">
-                    <h1>✨ AI-Powered Coach Matching</h1>
-                    <p>Tell us about your goals and challenges, and we'll recommend the perfect coach for you.</p>
+                    <h1>✨ ${t('aiMatch.title')}</h1>
+                    <p>${t('aiMatch.subtitle')}</p>
                 </div>
 
                 <form class="ai-form" onSubmit=${handleSubmit}>
                     <textarea
                         class="ai-input"
-                        placeholder="Example: I'm a mid-level manager looking to develop my leadership skills. I struggle with delegating tasks and want to learn how to inspire my team better. I prefer online sessions and have a budget of around €100 per session..."
+                        placeholder=${t('aiMatch.placeholder')}
                         value=${input}
                         onInput=${(e) => setInput(e.target.value)}
                         rows="5"
                     ></textarea>
                     <button type="submit" class="btn-primary btn-large" disabled=${loading || !input.trim()}>
-                        ${loading ? 'Finding Matches...' : '✨ Find My Perfect Coach'}
+                        ${loading ? t('aiMatch.finding') : `✨ ${t('aiMatch.findBtn')}`}
                     </button>
                 </form>
 
                 ${loading && html`
                     <div class="ai-loading">
                         <div class="spinner-large"></div>
-                        <p>Analyzing your needs and finding the best matches...</p>
+                        <p>${t('aiMatch.analyzing')}</p>
                     </div>
                 `}
 
                 ${recommendations.length > 0 && html`
                     <div class="ai-results">
-                        <h2>Your AI-Recommended Coaches</h2>
+                        <h2>${t('aiMatch.resultsTitle')}</h2>
                         <div class="recommendation-list">
                             ${recommendations.map(coach => html`
                                 <div key=${coach.id} class="recommendation-card">
-                                    <div class="match-badge">${coach.matchScore}% Match</div>
+                                    <div class="match-badge">${coach.matchScore}% ${t('aiMatch.match')}</div>
                                     <img src=${coach.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(coach.full_name)}`} alt=${coach.full_name} />
                                     <div class="rec-info">
                                         <h3>${coach.full_name}</h3>
@@ -6518,7 +6507,7 @@ const AIMatchPage = ({ session }) => {
                                         <div class="rec-meta">
                                             <span>${formatPrice(coach.hourly_rate)}/hr</span>
                                             <button class="btn-primary btn-sm" onClick=${() => window.location.hash = '#coaches'}>
-                                                View Profile
+                                                ${t('aiMatch.viewProfile')}
                                             </button>
                                         </div>
                                     </div>
@@ -6529,8 +6518,8 @@ const AIMatchPage = ({ session }) => {
                 `}
 
                 <div class="ai-alternative">
-                    <p>Prefer a guided experience?</p>
-                    <a href="#quiz" class="btn-secondary">Take the Quiz Instead →</a>
+                    <p>${t('aiMatch.alternative')}</p>
+                    <a href="#quiz" class="btn-secondary">${t('aiMatch.alternativeBtn')} →</a>
                 </div>
             </div>
         </div>

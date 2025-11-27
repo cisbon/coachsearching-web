@@ -403,10 +403,11 @@ function getQuizMatches() {
     $answers = $data['answers'] ?? [];
     $limit = $data['limit'] ?? 10;
     $useAI = $data['use_ai'] ?? false;
+    $language = $data['language'] ?? 'en'; // Support language parameter
 
     // Try AI matching if requested and configured
     if ($useAI) {
-        $aiResult = getAIQuizMatchesInternal($answers, $limit);
+        $aiResult = getAIQuizMatchesInternal($answers, $limit, $language);
         if ($aiResult['success']) {
             jsonResponse([
                 'matches' => $aiResult['matches'],
@@ -438,8 +439,9 @@ function getAIQuizMatches() {
     $data = json_decode(file_get_contents('php://input'), true);
     $answers = $data['answers'] ?? [];
     $limit = $data['limit'] ?? 10;
+    $language = $data['language'] ?? 'en'; // Support language parameter
 
-    $result = getAIQuizMatchesInternal($answers, $limit);
+    $result = getAIQuizMatchesInternal($answers, $limit, $language);
 
     if (!$result['success']) {
         // Fall back to rule-based matching
@@ -467,7 +469,7 @@ function getAIQuizMatches() {
 /**
  * Internal AI matching function
  */
-function getAIQuizMatchesInternal($answers, $limit = 10) {
+function getAIQuizMatchesInternal($answers, $limit = 10, $language = 'en') {
     $openRouter = new OpenRouter();
 
     // Check if AI is configured
@@ -487,8 +489,8 @@ function getAIQuizMatchesInternal($answers, $limit = 10) {
         ];
     }
 
-    // Use OpenRouter to get AI-powered matches
-    $result = $openRouter->matchCoaches($answers, $coaches, $limit);
+    // Use OpenRouter to get AI-powered matches with language support
+    $result = $openRouter->matchCoaches($answers, $coaches, $limit, $language);
 
     if (!$result['success']) {
         return $result;
