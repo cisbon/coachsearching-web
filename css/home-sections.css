@@ -287,12 +287,53 @@
 }
 
 /* ==========================================================================
+   Success Stats Section
+   ========================================================================== */
+
+.success-stats-section {
+    padding: 80px 0;
+    background: linear-gradient(135deg, var(--primary-petrol, #006266) 0%, var(--petrol-dark, #004a4d) 100%);
+    color: white;
+}
+
+.success-stats-section .section-header h2 {
+    color: white;
+}
+
+.success-stats-section .section-header p {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.success-stats-section .stat-value {
+    color: white;
+}
+
+.success-stats-section .stat-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ==========================================================================
+   Testimonials Section
+   ========================================================================== */
+
+.testimonials-section {
+    padding: 80px 0;
+    background: var(--bg-body, #f5f5f5);
+}
+
+.testimonials-section .section-header {
+    margin-bottom: 48px;
+}
+
+/* ==========================================================================
    Responsive Adjustments
    ========================================================================== */
 
 @media (max-width: 640px) {
     .coaching-categories-section,
-    .how-it-works-section-home {
+    .how-it-works-section-home,
+    .success-stats-section,
+    .testimonials-section {
         padding: 50px 0;
     }
 

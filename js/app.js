@@ -21,6 +21,14 @@ import { HowItWorksPage } from './pages/HowItWorksPage.js';
 import { CategoryPage, CategoriesIndexPage, COACHING_CATEGORIES } from './pages/CategoryPage.js';
 import { CoachProfilePage } from './pages/CoachProfilePage.js';
 
+// Conversion Optimization Components
+import {
+    RecentActivityToast,
+    TestimonialCarousel,
+    SuccessStats,
+    ExitIntentPopup,
+} from './components/conversion/SocialProof.js';
+
 console.log('App.js: React global', React);
 console.log('App.js: ReactDOM global', ReactDOM);
 console.log('App.js: htm imported');
@@ -5151,12 +5159,32 @@ const Home = ({ session }) => {
         setSearchFilters(filters);
     };
 
+    // Sample recent activities for social proof
+    const recentActivities = [
+        { name: 'Sarah', action: 'just booked a session', coachName: 'Dr. Marcus Klein', timeAgo: '2 minutes ago' },
+        { name: 'Thomas', action: 'started their coaching journey', coachName: 'Elena Rodriguez', timeAgo: '5 minutes ago' },
+        { name: 'Maria', action: 'left a 5-star review', coachName: 'James Wilson', timeAgo: '8 minutes ago' },
+        { name: 'Michael', action: 'completed their 10th session', coachName: 'Anna Schmidt', timeAgo: '12 minutes ago' },
+    ];
+
     return html`
         <div>
             <${Hero} onSearch=${handleSearch} />
             <${TrustBadgesSection} />
             <${CoachingCategoriesSection} />
             <${HowItWorksSection} />
+
+            <!-- Success Statistics Section -->
+            <section class="success-stats-section">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>${t('home.stats.title') || 'Trusted by Thousands'}</h2>
+                        <p>${t('home.stats.subtitle') || 'Join our growing community of successful coaching partnerships'}</p>
+                    </div>
+                    <${SuccessStats} />
+                </div>
+            </section>
+
             <div class="featured-coaches-section">
                 <div class="container">
                     <div class="section-header">
@@ -5166,6 +5194,20 @@ const Home = ({ session }) => {
                 </div>
             </div>
             <${CoachList} searchFilters=${searchFilters} session=${session} />
+
+            <!-- Testimonials Section -->
+            <section class="testimonials-section">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>${t('home.testimonials.title') || 'What Our Clients Say'}</h2>
+                        <p>${t('home.testimonials.subtitle') || 'Real stories from people who transformed their lives'}</p>
+                    </div>
+                    <${TestimonialCarousel} />
+                </div>
+            </section>
+
+            <!-- Recent Activity Toast (Social Proof) -->
+            <${RecentActivityToast} activities=${recentActivities} />
         </div>
     `;
 };
