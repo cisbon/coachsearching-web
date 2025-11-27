@@ -1924,6 +1924,57 @@ const FilterSidebar = ({ filters, onChange, onReset }) => {
                 </div>
             </div>
 
+            <!-- Minimum Rating -->
+            <div class="filter-section">
+                <h4>Minimum Rating</h4>
+                <div class="rating-filter">
+                    ${[4, 4.5, 5].map(rating => html`
+                        <label key=${rating} class="filter-radio">
+                            <input
+                                type="radio"
+                                name="minRating"
+                                checked=${filters.minRating === rating}
+                                onChange=${() => onChange({ ...filters, minRating: rating })}
+                            />
+                            <span class="rating-option">
+                                ⭐ ${rating}+
+                            </span>
+                        </label>
+                    `)}
+                    ${filters.minRating && html`
+                        <button
+                            class="clear-rating-btn"
+                            onClick=${() => onChange({ ...filters, minRating: null })}
+                        >
+                            Clear
+                        </button>
+                    `}
+                </div>
+            </div>
+
+            <!-- Session Format -->
+            <div class="filter-section">
+                <h4>Session Format</h4>
+                <div class="filter-checkboxes">
+                    <label class="filter-checkbox">
+                        <input
+                            type="checkbox"
+                            checked=${filters.onlineOnly}
+                            onChange=${(e) => onChange({ ...filters, onlineOnly: e.target.checked })}
+                        />
+                        <span>💻 Online Sessions</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input
+                            type="checkbox"
+                            checked=${filters.inPersonOnly}
+                            onChange=${(e) => onChange({ ...filters, inPersonOnly: e.target.checked })}
+                        />
+                        <span>🏢 In-Person Sessions</span>
+                    </label>
+                </div>
+            </div>
+
             <!-- Trust Features -->
             <div class="filter-section">
                 <h4>Features</h4>
@@ -1952,7 +2003,27 @@ const FilterSidebar = ({ filters, onChange, onReset }) => {
                         />
                         <span>✓ Verified Only</span>
                     </label>
+                    <label class="filter-checkbox">
+                        <input
+                            type="checkbox"
+                            checked=${filters.topRated}
+                            onChange=${(e) => onChange({ ...filters, topRated: e.target.checked })}
+                        />
+                        <span>🏆 Top Rated</span>
+                    </label>
                 </div>
+            </div>
+
+            <!-- Experience Level -->
+            <div class="filter-section">
+                <h4>Experience</h4>
+                <select class="filter-select" value=${filters.experience || ''} onChange=${(e) => onChange({ ...filters, experience: e.target.value })}>
+                    <option value="">Any Experience</option>
+                    <option value="1">1+ years</option>
+                    <option value="3">3+ years</option>
+                    <option value="5">5+ years</option>
+                    <option value="10">10+ years</option>
+                </select>
             </div>
         </div>
     `;
@@ -1972,7 +2043,12 @@ const CoachList = ({ searchFilters, session }) => {
         languages: [],
         hasVideo: false,
         freeIntro: false,
-        verified: false
+        verified: false,
+        topRated: false,
+        minRating: null,
+        onlineOnly: false,
+        inPersonOnly: false,
+        experience: ''
     });
 
     const resetFilters = () => {
@@ -1984,7 +2060,12 @@ const CoachList = ({ searchFilters, session }) => {
             languages: [],
             hasVideo: false,
             freeIntro: false,
-            verified: false
+            verified: false,
+            topRated: false,
+            minRating: null,
+            onlineOnly: false,
+            inPersonOnly: false,
+            experience: ''
         });
     };
 
@@ -2034,13 +2115,43 @@ const CoachList = ({ searchFilters, session }) => {
 
         // Feature filters
         if (filters.hasVideo) {
-            result = result.filter(coach => coach.intro_video_url || coach.video_url);
+            result = result.filter(coach => coach.intro_video_url || coach.video_url || coach.video_intro_url);
         }
         if (filters.freeIntro) {
             result = result.filter(coach => coach.offers_free_intro || coach.free_discovery_call);
         }
         if (filters.verified) {
             result = result.filter(coach => coach.is_verified || coach.verified);
+        }
+        if (filters.topRated) {
+            result = result.filter(coach => (coach.rating_average || coach.rating || 0) >= 4.5);
+        }
+
+        // Rating filter
+        if (filters.minRating) {
+            result = result.filter(coach => (coach.rating_average || coach.rating || 0) >= filters.minRating);
+        }
+
+        // Session format filters
+        if (filters.onlineOnly) {
+            result = result.filter(coach =>
+                coach.session_formats?.includes('online') ||
+                coach.offers_online ||
+                !coach.session_formats // Assume online if not specified
+            );
+        }
+        if (filters.inPersonOnly) {
+            result = result.filter(coach =>
+                coach.session_formats?.includes('in-person') ||
+                coach.offers_in_person ||
+                coach.location
+            );
+        }
+
+        // Experience filter
+        if (filters.experience) {
+            const minYears = Number(filters.experience);
+            result = result.filter(coach => (coach.years_experience || 0) >= minYears);
         }
 
         // Sorting
@@ -2123,7 +2234,12 @@ const CoachList = ({ searchFilters, session }) => {
         ...(filters.languages || []),
         filters.hasVideo,
         filters.freeIntro,
-        filters.verified
+        filters.verified,
+        filters.topRated,
+        filters.minRating,
+        filters.onlineOnly,
+        filters.inPersonOnly,
+        filters.experience
     ].filter(Boolean).length;
 
     return html`

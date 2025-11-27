@@ -350,6 +350,48 @@
     border-color: var(--petrol-primary, #006266);
 }
 
+/* Rating Filter */
+.rating-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.rating-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.clear-rating-btn {
+    padding: 4px 10px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.clear-rating-btn:hover {
+    background: #e0e0e0;
+}
+
+/* Filter Checkboxes Grid */
+.filter-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-checkboxes .filter-checkbox span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 /* Price Range */
 .price-range-inputs {
     display: flex;
