@@ -9,6 +9,9 @@
 @import url('./css/quiz.css');
 @import url('./css/seo-pages.css');
 @import url('./css/booking.css');
+@import url('./css/admin.css');
+@import url('./css/marketing-pages.css');
+@import url('./css/utils.css');
 
 :root {
     /* Petrol color palette - ONLY these 3 colors allowed */
