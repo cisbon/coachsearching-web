@@ -1,0 +1,1053 @@
+/**
+ * CoachSearching - Payment Dashboard Styles
+ *
+ * Styles for:
+ * - PayoutDashboard
+ * - BalanceOverview
+ * - TransactionHistory
+ * - EarningsChart
+ * - RefundRequestModal
+ * - PaymentReceipt
+ * - PayoutScheduleCard
+ */
+
+/* ============================================
+   Payout Dashboard Layout
+   ============================================ */
+
+.payout-dashboard {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.payout-dashboard .dashboard-header {
+    margin-bottom: 32px;
+}
+
+.payout-dashboard .dashboard-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 8px;
+}
+
+.payout-dashboard .dashboard-subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.dashboard-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-tabs .tab {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dashboard-tabs .tab:hover {
+    background: var(--bg-body);
+    color: var(--text-main);
+}
+
+.dashboard-tabs .tab.active {
+    background: var(--primary-petrol);
+    color: white;
+}
+
+.dashboard-content {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.overview-grid {
+    display: grid;
+    gap: 24px;
+}
+
+.recent-section h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-main);
+}
+
+.recent-section .btn-link {
+    margin-top: 16px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--primary-petrol);
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.recent-section .btn-link:hover {
+    text-decoration: underline;
+}
+
+/* ============================================
+   Balance Overview
+   ============================================ */
+
+.balance-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.balance-overview.loading {
+    min-height: 120px;
+}
+
+.balance-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.balance-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.balance-card.primary {
+    background: linear-gradient(135deg, var(--primary-petrol) 0%, var(--petrol-dark) 100%);
+    color: white;
+    border: none;
+}
+
+.balance-card.primary .balance-label {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.balance-card.primary .balance-amount {
+    color: white;
+}
+
+.balance-card.payout {
+    border-left: 4px solid var(--petrol-light);
+}
+
+.balance-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(0, 98, 102, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-petrol);
+    flex-shrink: 0;
+}
+
+.balance-card.primary .balance-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.balance-icon.pending {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.balance-icon.total {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.balance-icon.payout {
+    background: rgba(79, 203, 206, 0.1);
+    color: var(--petrol-light);
+}
+
+.balance-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.balance-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.balance-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.balance-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   Transaction History
+   ============================================ */
+
+.transaction-history {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.transaction-history .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.transaction-history .section-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-body);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.filter-tab {
+    padding: 6px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-tab:hover {
+    color: var(--text-main);
+}
+
+.filter-tab.active {
+    background: white;
+    color: var(--primary-petrol);
+    box-shadow: var(--shadow-sm);
+}
+
+.transactions-loading {
+    padding: 20px;
+}
+
+.transaction-skeleton {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+}
+
+.skeleton-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-content {
+    flex: 1;
+}
+
+.skeleton-line {
+    height: 14px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.skeleton-line.short {
+    width: 60%;
+}
+
+.skeleton-amount {
+    width: 80px;
+    height: 20px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.transactions-list {
+    padding: 0 20px;
+}
+
+.transaction-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.transaction-icon.payment {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.transaction-icon.payout {
+    background: rgba(0, 98, 102, 0.1);
+    color: var(--primary-petrol);
+}
+
+.transaction-icon.refund {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.transaction-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.transaction-description {
+    font-weight: 500;
+    color: var(--text-main);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.transaction-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.transaction-time {
+    color: var(--text-muted);
+}
+
+.transaction-amount {
+    text-align: right;
+}
+
+.transaction-amount .amount {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.transaction-amount.negative .amount {
+    color: #dc3545;
+}
+
+.transaction-amount .net-amount {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.empty-state {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-state svg {
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.page-info {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   Status Badges
+   ============================================ */
+
+.status-badge {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.status-badge.status-success {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.status-badge.status-pending {
+    background: rgba(255, 193, 7, 0.1);
+    color: #d39e00;
+}
+
+.status-badge.status-refunded {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+.status-badge.status-failed {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+/* ============================================
+   Earnings Chart
+   ============================================ */
+
+.earnings-chart {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.earnings-chart .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.earnings-chart .section-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.period-selector {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-body);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.period-btn {
+    padding: 6px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.period-btn:hover {
+    color: var(--text-main);
+}
+
+.period-btn.active {
+    background: white;
+    color: var(--primary-petrol);
+    box-shadow: var(--shadow-sm);
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 20px;
+}
+
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.chart-summary {
+    display: flex;
+    gap: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* ============================================
+   Refund Request Modal
+   ============================================ */
+
+.refund-modal {
+    max-width: 480px;
+}
+
+.refund-modal .modal-header {
+    text-align: center;
+    padding: 24px 24px 16px;
+}
+
+.refund-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(0, 98, 102, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    color: var(--primary-petrol);
+}
+
+.refund-modal h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.modal-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.time-remaining-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: #856404;
+}
+
+.booking-summary {
+    background: var(--bg-body);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.booking-summary .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.booking-summary .summary-row:last-child {
+    border-bottom: none;
+}
+
+.booking-summary .refund-amount {
+    font-weight: 600;
+}
+
+.booking-summary .refund-amount span:last-child {
+    color: var(--primary-petrol);
+    font-size: 1.1rem;
+}
+
+.error-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 16px;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 8px;
+    color: #dc3545;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.error-message svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.form-actions .btn {
+    flex: 1;
+}
+
+/* ============================================
+   Payment Receipt
+   ============================================ */
+
+.receipt-modal {
+    max-width: 560px;
+}
+
+.receipt-content {
+    padding: 32px;
+    background: white;
+}
+
+.receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid var(--primary-petrol);
+}
+
+.receipt-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-petrol);
+}
+
+.receipt-type {
+    text-align: right;
+}
+
+.receipt-type h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.receipt-number {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.receipt-date {
+    text-align: right;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+}
+
+.receipt-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.detail-section h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.detail-section p {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.receipt-items table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+}
+
+.receipt-items th,
+.receipt-items td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.receipt-items th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    background: var(--bg-body);
+}
+
+.receipt-items th:last-child,
+.receipt-items td:last-child {
+    text-align: right;
+}
+
+.receipt-summary {
+    margin-bottom: 32px;
+}
+
+.receipt-summary .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 0.95rem;
+}
+
+.receipt-summary .total {
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 2px solid var(--text-main);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.receipt-footer {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+.receipt-footer p {
+    margin-bottom: 8px;
+    color: var(--text-muted);
+}
+
+.receipt-support {
+    font-size: 0.85rem;
+}
+
+.receipt-actions {
+    display: flex;
+    gap: 12px;
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-body);
+}
+
+.receipt-actions .btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Print styles */
+@media print {
+    .receipt-modal {
+        box-shadow: none;
+        border: none;
+    }
+
+    .modal-close,
+    .receipt-actions {
+        display: none !important;
+    }
+
+    .receipt-content {
+        padding: 0;
+    }
+}
+
+/* ============================================
+   Payout Schedule Card
+   ============================================ */
+
+.payout-schedule-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.payout-schedule-card.loading {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payout-schedule-card .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.payout-schedule-card .card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(0, 98, 102, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-petrol);
+}
+
+.payout-schedule-card h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.payout-amount {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-petrol);
+    margin-bottom: 20px;
+}
+
+.payout-details {
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+}
+
+.payout-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.payout-details .detail-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.payout-details .detail-value {
+    font-weight: 500;
+}
+
+.payout-details .capitalize {
+    text-transform: capitalize;
+}
+
+/* ============================================
+   Payouts Content Layout
+   ============================================ */
+
+.payouts-content {
+    display: grid;
+    gap: 24px;
+}
+
+.payouts-content .payout-history h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+/* ============================================
+   Client Payment History
+   ============================================ */
+
+.client-payment-history h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-main);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+    .payout-dashboard {
+        padding: 16px;
+    }
+
+    .balance-overview {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .balance-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .balance-icon {
+        margin: 0 auto;
+    }
+
+    .balance-content {
+        align-items: center;
+    }
+
+    .dashboard-tabs {
+        overflow-x: auto;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+    }
+
+    .filter-tabs {
+        flex-wrap: wrap;
+    }
+
+    .transaction-history .section-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .transaction-item {
+        flex-wrap: wrap;
+    }
+
+    .transaction-details {
+        flex-basis: calc(100% - 56px);
+    }
+
+    .transaction-amount {
+        flex-basis: 100%;
+        text-align: left;
+        margin-top: 8px;
+        padding-left: 56px;
+    }
+
+    .chart-summary {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .receipt-details {
+        grid-template-columns: 1fr;
+    }
+
+    .receipt-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .balance-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .balance-amount {
+        font-size: 1.25rem;
+    }
+
+    .payout-amount {
+        font-size: 1.5rem;
+    }
+}
+
+/* ============================================
+   Loading Skeleton Utility
+   ============================================ */
+
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+    height: 80px;
+    width: 100%;
+}
+
+/* ============================================
+   Form Styles for Modals
+   ============================================ */
+
+.refund-modal .form-group {
+    margin-bottom: 16px;
+}
+
+.refund-modal label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-main);
+}
+
+.refund-modal textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.refund-modal textarea:focus {
+    outline: none;
+    border-color: var(--primary-petrol);
+}
+
+.refund-modal textarea::placeholder {
+    color: var(--text-muted);
+}

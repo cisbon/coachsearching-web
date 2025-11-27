@@ -879,6 +879,14 @@ function CoachDashboard({ coach, user }) {
             case 'earnings':
                 return html`<${EarningsDashboard} coachId=${coach.id} />`;
             case 'payments':
+                // Use the new comprehensive PayoutDashboard if available, otherwise fall back to StripeOnboarding
+                const PayoutDashboard = window.PaymentComponents?.PayoutDashboard;
+                if (PayoutDashboard) {
+                    return html`
+                        <${PayoutDashboard} coachId=${coach.id} coach=${coach} />
+                        <${StripeOnboarding} coachId=${coach.id} />
+                    `;
+                }
                 return html`<${StripeOnboarding} coachId=${coach.id} />`;
             case 'settings':
                 return html`<${BookingSettings} coachId=${coach.id} />`;
