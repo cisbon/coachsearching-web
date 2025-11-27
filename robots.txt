@@ -1,0 +1,51 @@
+# robots.txt for CoachSearching
+# https://coachsearching.com
+
+# Allow all crawlers
+User-agent: *
+
+# Allow indexing of all public pages
+Allow: /
+
+# Disallow admin and API paths
+Disallow: /api/
+Disallow: /#admin
+Disallow: /#dashboard
+
+# Disallow authentication pages
+Disallow: /#login
+Disallow: /#register
+
+# Disallow utility files
+Disallow: /js/vendor/
+Disallow: /*.json$
+
+# Allow CSS and JS for rendering
+Allow: /css/
+Allow: /js/*.js
+
+# Sitemap location
+Sitemap: https://coachsearching.com/sitemap.xml
+
+# Crawl-delay for polite crawling (optional, not all bots respect this)
+Crawl-delay: 1
+
+# Google-specific rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing-specific rules
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Block bad bots (optional)
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /

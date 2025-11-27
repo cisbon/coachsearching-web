@@ -30,5 +30,9 @@ export { default as dom } from './dom.js';
 export * from './performance.js';
 export { default as performance } from './performance.js';
 
+// SEO utilities
+export * from './seo.js';
+export { default as seo } from './seo.js';
+
 // Legacy error handler export
 export { handleError, logError } from './errorHandler.js';
