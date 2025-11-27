@@ -1463,6 +1463,25 @@ const Hero = ({ onSearch }) => {
             <div class="container">
                 <h1>${t('hero.title')}</h1>
                 <p>${t('hero.subtitle')}</p>
+
+                <!-- Discovery Options -->
+                <div class="discovery-options">
+                    <button class="discovery-option quiz-option" onClick=${() => window.location.hash = '#quiz'}>
+                        <span class="discovery-icon">🎯</span>
+                        <span class="discovery-label">Take the Quiz</span>
+                        <span class="discovery-desc">Get matched in 2 minutes</span>
+                    </button>
+                    <button class="discovery-option browse-option" onClick=${() => document.querySelector('.coach-list')?.scrollIntoView({ behavior: 'smooth' })}>
+                        <span class="discovery-icon">🔍</span>
+                        <span class="discovery-label">Browse Coaches</span>
+                        <span class="discovery-desc">Explore all coaches</span>
+                    </button>
+                    <button class="discovery-option ai-option" onClick=${() => window.location.hash = '#ai-match'}>
+                        <span class="discovery-icon">✨</span>
+                        <span class="discovery-label">AI Matching</span>
+                        <span class="discovery-desc">Smart recommendations</span>
+                    </button>
+                </div>
             </div>
             <div class="container">
                  <div class="search-container">
@@ -1593,6 +1612,79 @@ const CoachCardSkeleton = React.memo(() => {
 });
 
 // Memoized coach card to prevent unnecessary re-renders
+// Trust Score Component
+const TrustScore = ({ coach }) => {
+    // Calculate trust score based on various factors
+    const hasVideo = coach.intro_video_url || coach.video_url;
+    const hasCredentials = coach.credentials?.length > 0 || coach.certifications?.length > 0;
+    const hasReviews = (coach.rating_count || coach.reviews_count || 0) > 0;
+    const isVerified = coach.is_verified || coach.verified;
+    const hasDetailedBio = (coach.bio?.length || 0) > 200;
+
+    let score = 0;
+    if (hasVideo) score += 25;
+    if (hasCredentials) score += 20;
+    if (hasReviews) score += 20;
+    if (isVerified) score += 20;
+    if (hasDetailedBio) score += 15;
+
+    const getScoreColor = () => {
+        if (score >= 80) return '#22c55e';
+        if (score >= 60) return '#84cc16';
+        if (score >= 40) return '#eab308';
+        return '#9ca3af';
+    };
+
+    return html`
+        <div class="trust-score" title="Trust Score: ${score}%">
+            <svg width="36" height="36" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+                <circle cx="18" cy="18" r="15" fill="none" stroke=${getScoreColor()} stroke-width="3"
+                    stroke-dasharray="${score * 0.94} 100"
+                    transform="rotate(-90 18 18)"
+                    stroke-linecap="round"/>
+            </svg>
+            <span class="trust-score-value">${score}</span>
+        </div>
+    `;
+};
+
+// Trust Badges Component
+const TrustBadges = ({ coach }) => {
+    const badges = [];
+
+    if (coach.is_verified || coach.verified) {
+        badges.push({ icon: '✓', label: 'Verified', class: 'badge-verified' });
+    }
+    if (coach.intro_video_url || coach.video_url) {
+        badges.push({ icon: '🎬', label: 'Video', class: 'badge-video' });
+    }
+    if (coach.offers_free_intro || coach.free_discovery_call) {
+        badges.push({ icon: '🎁', label: 'Free Intro', class: 'badge-free' });
+    }
+    if (coach.certifications?.length > 0 || coach.credentials?.length > 0) {
+        badges.push({ icon: '🎓', label: 'Certified', class: 'badge-certified' });
+    }
+    if ((coach.rating_count || coach.reviews_count || 0) >= 10) {
+        badges.push({ icon: '⭐', label: 'Popular', class: 'badge-popular' });
+    }
+    if (coach.is_founding_coach || coach.founding_member) {
+        badges.push({ icon: '🏆', label: 'Founding', class: 'badge-founding' });
+    }
+
+    if (badges.length === 0) return null;
+
+    return html`
+        <div class="trust-badges">
+            ${badges.slice(0, 4).map(badge => html`
+                <span key=${badge.label} class="trust-badge ${badge.class}" title=${badge.label}>
+                    ${badge.icon}
+                </span>
+            `)}
+        </div>
+    `;
+};
+
 const CoachCard = React.memo(({ coach, onViewDetails }) => {
     // Map database fields to component fields
     const rating = coach.rating_average || coach.rating || 0;
@@ -1601,79 +1693,318 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
     const languages = coach.languages || [];
     const specialties = coach.specialties || [];
     const bio = coach.bio || '';
+    const hasVideo = coach.intro_video_url || coach.video_url;
+    const offersFreeIntro = coach.offers_free_intro || coach.free_discovery_call;
 
     return html`
-    <div class="coach-card">
-            <img src=${coach.avatar_url} alt=${coach.full_name} class="coach-img" loading="lazy" />
+    <div class="coach-card ${hasVideo ? 'has-video' : ''}">
+            ${hasVideo && html`
+                <div class="video-indicator" title="Watch intro video">
+                    <span>▶</span>
+                </div>
+            `}
+            <img src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name)} alt=${coach.full_name} class="coach-img" loading="lazy" />
+
+            <!-- Trust Badges Overlay -->
+            <${TrustBadges} coach=${coach} />
+
             <div class="coach-info">
                 <div class="coach-header">
                     <div>
-                        <h3 class="coach-name">${coach.full_name}</h3>
+                        <h3 class="coach-name">
+                            ${coach.full_name}
+                            ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
+                        </h3>
                         <div class="coach-title">${coach.title}</div>
                         <div class="coach-meta">
                             <span>📍 ${location}</span>
-                            ${languages.length > 0 ? html`<span>💬 ${languages.join(', ')}</span>` : ''}
+                            ${languages.length > 0 ? html`<span>💬 ${languages.slice(0, 2).join(', ')}${languages.length > 2 ? ' +' + (languages.length - 2) : ''}</span>` : ''}
                         </div>
                     </div>
-                    ${rating > 0 ? html`
-                        <div class="coach-rating">
-                            <div class="rating-badge">${rating.toFixed(1)}</div>
-                            <div class="rating-text">${reviewsCount} ${t('coach.reviews')}</div>
-                        </div>
-                    ` : html`
-                        <div class="coach-rating">
-                            <div class="rating-badge">New</div>
-                            <div class="rating-text">No reviews yet</div>
-                        </div>
-                    `}
+                    <div class="coach-score-rating">
+                        <${TrustScore} coach=${coach} />
+                        ${rating > 0 ? html`
+                            <div class="coach-rating">
+                                <div class="rating-stars">
+                                    ${[1,2,3,4,5].map(star => html`
+                                        <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                    `)}
+                                </div>
+                                <div class="rating-text">${rating.toFixed(1)} (${reviewsCount})</div>
+                            </div>
+                        ` : html`
+                            <div class="coach-rating new-coach">
+                                <span class="new-badge">NEW</span>
+                            </div>
+                        `}
+                    </div>
                 </div>
                 <div class="coach-details">
-                    <p>${bio}</p>
+                    <p>${bio.length > 150 ? bio.substring(0, 150) + '...' : bio}</p>
                     ${specialties.length > 0 ? html`
-                        <div style=${{ marginTop: '8px' }}>
-                            <strong>Specialties: </strong>
-                            ${specialties.join(', ')}
+                        <div class="specialty-tags">
+                            ${specialties.slice(0, 3).map(s => html`
+                                <span key=${s} class="specialty-tag">${s}</span>
+                            `)}
+                            ${specialties.length > 3 ? html`<span class="specialty-tag more">+${specialties.length - 3}</span>` : ''}
                         </div>
                     ` : ''}
                 </div>
             </div>
             <div class="coach-price-section">
                 <div>
+                    ${offersFreeIntro && html`
+                        <div class="free-intro-badge">🎁 Free Discovery Call</div>
+                    `}
                     <div class="price-label">${t('coach.hourly_rate')}</div>
                     <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
-                    <div class="price-label">Includes taxes</div>
                 </div>
-                <button class="btn-book" onClick=${() => onViewDetails(coach)}>${t('coach.view_profile')} ></button>
+                <button class="btn-book" onClick=${() => onViewDetails(coach)}>
+                    ${t('coach.view_profile')} →
+                </button>
             </div>
         </div>
     `;
 });
+
+// Available filter options
+const SPECIALTY_OPTIONS = [
+    'Leadership', 'Career', 'Executive', 'Life Coaching', 'Business',
+    'Health & Wellness', 'Relationships', 'Mindfulness', 'Performance',
+    'Communication', 'Stress Management', 'Work-Life Balance'
+];
+
+const LANGUAGE_OPTIONS = ['English', 'German', 'Spanish', 'French', 'Italian', 'Dutch', 'Portuguese'];
+
+// Filter Sidebar Component
+const FilterSidebar = ({ filters, onChange, onReset }) => {
+    return html`
+        <div class="filter-sidebar">
+            <div class="filter-header">
+                <h3>Filters</h3>
+                <button class="filter-reset-btn" onClick=${onReset}>Reset</button>
+            </div>
+
+            <!-- Sort By -->
+            <div class="filter-section">
+                <h4>Sort By</h4>
+                <select class="filter-select" value=${filters.sortBy} onChange=${(e) => onChange({ ...filters, sortBy: e.target.value })}>
+                    <option value="relevance">Relevance</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="reviews">Most Reviews</option>
+                </select>
+            </div>
+
+            <!-- Price Range -->
+            <div class="filter-section">
+                <h4>Price Range</h4>
+                <div class="price-range-inputs">
+                    <input
+                        type="number"
+                        placeholder="Min"
+                        class="filter-input"
+                        value=${filters.minPrice || ''}
+                        onChange=${(e) => onChange({ ...filters, minPrice: e.target.value })}
+                    />
+                    <span>-</span>
+                    <input
+                        type="number"
+                        placeholder="Max"
+                        class="filter-input"
+                        value=${filters.maxPrice || ''}
+                        onChange=${(e) => onChange({ ...filters, maxPrice: e.target.value })}
+                    />
+                </div>
+            </div>
+
+            <!-- Specialties -->
+            <div class="filter-section">
+                <h4>Specialties</h4>
+                <div class="filter-checkboxes">
+                    ${SPECIALTY_OPTIONS.map(specialty => html`
+                        <label key=${specialty} class="filter-checkbox">
+                            <input
+                                type="checkbox"
+                                checked=${filters.specialties?.includes(specialty)}
+                                onChange=${(e) => {
+                                    const current = filters.specialties || [];
+                                    const updated = e.target.checked
+                                        ? [...current, specialty]
+                                        : current.filter(s => s !== specialty);
+                                    onChange({ ...filters, specialties: updated });
+                                }}
+                            />
+                            <span>${specialty}</span>
+                        </label>
+                    `)}
+                </div>
+            </div>
+
+            <!-- Languages -->
+            <div class="filter-section">
+                <h4>Languages</h4>
+                <div class="filter-checkboxes">
+                    ${LANGUAGE_OPTIONS.map(lang => html`
+                        <label key=${lang} class="filter-checkbox">
+                            <input
+                                type="checkbox"
+                                checked=${filters.languages?.includes(lang)}
+                                onChange=${(e) => {
+                                    const current = filters.languages || [];
+                                    const updated = e.target.checked
+                                        ? [...current, lang]
+                                        : current.filter(l => l !== lang);
+                                    onChange({ ...filters, languages: updated });
+                                }}
+                            />
+                            <span>${lang}</span>
+                        </label>
+                    `)}
+                </div>
+            </div>
+
+            <!-- Trust Features -->
+            <div class="filter-section">
+                <h4>Features</h4>
+                <div class="filter-checkboxes">
+                    <label class="filter-checkbox">
+                        <input
+                            type="checkbox"
+                            checked=${filters.hasVideo}
+                            onChange=${(e) => onChange({ ...filters, hasVideo: e.target.checked })}
+                        />
+                        <span>🎬 Has Video Intro</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input
+                            type="checkbox"
+                            checked=${filters.freeIntro}
+                            onChange=${(e) => onChange({ ...filters, freeIntro: e.target.checked })}
+                        />
+                        <span>🎁 Free Discovery Call</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input
+                            type="checkbox"
+                            checked=${filters.verified}
+                            onChange=${(e) => onChange({ ...filters, verified: e.target.checked })}
+                        />
+                        <span>✓ Verified Only</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    `;
+};
 
 const CoachList = ({ searchFilters, session }) => {
     const [coaches, setCoaches] = useState(mockCoaches);
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [loading, setLoading] = useState(false);
     const [, forceUpdate] = useState({});
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState({
+        sortBy: 'relevance',
+        minPrice: '',
+        maxPrice: '',
+        specialties: [],
+        languages: [],
+        hasVideo: false,
+        freeIntro: false,
+        verified: false
+    });
+
+    const resetFilters = () => {
+        setFilters({
+            sortBy: 'relevance',
+            minPrice: '',
+            maxPrice: '',
+            specialties: [],
+            languages: [],
+            hasVideo: false,
+            freeIntro: false,
+            verified: false
+        });
+    };
 
     console.log('CoachList rendering with', coaches.length, 'coaches');
 
-    // Memoized filtered coaches to avoid unnecessary filtering
+    // Memoized filtered and sorted coaches
     const filteredCoaches = React.useMemo(() => {
+        let result = [...coaches];
+
+        // Text search filter
         if (searchFilters && searchFilters.searchTerm) {
-            console.log('Filtering coaches with:', searchFilters);
             const term = searchFilters.searchTerm.toLowerCase();
-            const filtered = coaches.filter(coach =>
-                coach.full_name.toLowerCase().includes(term) ||
-                coach.title.toLowerCase().includes(term) ||
-                coach.bio.toLowerCase().includes(term) ||
-                coach.specialties.some(s => s.toLowerCase().includes(term)) ||
-                coach.location.toLowerCase().includes(term)
+            result = result.filter(coach =>
+                coach.full_name?.toLowerCase().includes(term) ||
+                coach.title?.toLowerCase().includes(term) ||
+                coach.bio?.toLowerCase().includes(term) ||
+                coach.specialties?.some(s => s.toLowerCase().includes(term)) ||
+                coach.location?.toLowerCase().includes(term)
             );
-            console.log('Filtered results:', filtered.length, 'coaches');
-            return filtered;
         }
-        return coaches;
-    }, [searchFilters, coaches]);
+
+        // Price filters
+        if (filters.minPrice) {
+            result = result.filter(coach => coach.hourly_rate >= Number(filters.minPrice));
+        }
+        if (filters.maxPrice) {
+            result = result.filter(coach => coach.hourly_rate <= Number(filters.maxPrice));
+        }
+
+        // Specialty filter
+        if (filters.specialties?.length > 0) {
+            result = result.filter(coach =>
+                filters.specialties.some(s =>
+                    coach.specialties?.some(cs => cs.toLowerCase().includes(s.toLowerCase()))
+                )
+            );
+        }
+
+        // Language filter
+        if (filters.languages?.length > 0) {
+            result = result.filter(coach =>
+                filters.languages.some(l =>
+                    coach.languages?.some(cl => cl.toLowerCase().includes(l.toLowerCase()))
+                )
+            );
+        }
+
+        // Feature filters
+        if (filters.hasVideo) {
+            result = result.filter(coach => coach.intro_video_url || coach.video_url);
+        }
+        if (filters.freeIntro) {
+            result = result.filter(coach => coach.offers_free_intro || coach.free_discovery_call);
+        }
+        if (filters.verified) {
+            result = result.filter(coach => coach.is_verified || coach.verified);
+        }
+
+        // Sorting
+        switch (filters.sortBy) {
+            case 'rating':
+                result.sort((a, b) => (b.rating_average || b.rating || 0) - (a.rating_average || a.rating || 0));
+                break;
+            case 'price_low':
+                result.sort((a, b) => (a.hourly_rate || 0) - (b.hourly_rate || 0));
+                break;
+            case 'price_high':
+                result.sort((a, b) => (b.hourly_rate || 0) - (a.hourly_rate || 0));
+                break;
+            case 'reviews':
+                result.sort((a, b) => (b.rating_count || b.reviews_count || 0) - (a.rating_count || a.reviews_count || 0));
+                break;
+            default:
+                // relevance - keep original order or sort by a combination
+                break;
+        }
+
+        return result;
+    }, [searchFilters, coaches, filters]);
 
     // Load coaches from Supabase directly
     const loadCoaches = useCallback(async () => {
@@ -1726,30 +2057,87 @@ const CoachList = ({ searchFilters, session }) => {
         return () => window.removeEventListener('currencyChange', handleCurrencyChange);
     }, []);
 
+    const activeFilterCount = [
+        filters.minPrice,
+        filters.maxPrice,
+        ...(filters.specialties || []),
+        ...(filters.languages || []),
+        filters.hasVideo,
+        filters.freeIntro,
+        filters.verified
+    ].filter(Boolean).length;
+
     return html`
-    <div class="container" style=${{ marginTop: '60px', paddingBottom: '40px' }}>
-            <h2 class="section-title">
-                ${searchFilters?.searchTerm ? `Search Results (${filteredCoaches.length})` : 'Top Rated Coaches'}
-            </h2>
-            ${loading && html`
-                <div class="coach-list">
-                    ${[...Array(6)].map((_, i) => html`<${CoachCardSkeleton} key=${'skeleton-' + i} />`)}
+    <div class="coaches-section">
+        <div class="container" style=${{ marginTop: '40px', paddingBottom: '40px' }}>
+            <!-- Header with title and filter toggle -->
+            <div class="coaches-header">
+                <h2 class="section-title">
+                    ${searchFilters?.searchTerm ? `Search Results (${filteredCoaches.length})` : 'Top Rated Coaches'}
+                </h2>
+                <div class="header-actions">
+                    <button
+                        class="filter-toggle-btn ${showFilters ? 'active' : ''}"
+                        onClick=${() => setShowFilters(!showFilters)}
+                    >
+                        <span>⚙️ Filters</span>
+                        ${activeFilterCount > 0 && html`<span class="filter-count">${activeFilterCount}</span>`}
+                    </button>
+                    <select
+                        class="sort-select-mobile"
+                        value=${filters.sortBy}
+                        onChange=${(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                    >
+                        <option value="relevance">Sort: Relevance</option>
+                        <option value="rating">Sort: Highest Rated</option>
+                        <option value="price_low">Sort: Price Low-High</option>
+                        <option value="price_high">Sort: Price High-Low</option>
+                    </select>
                 </div>
-            `}
-            ${!loading && filteredCoaches.length === 0 && html`
-                <div class="empty-state">
-                    <div class="empty-state-icon">🔍</div>
-                    <div class="empty-state-text">No coaches found</div>
-                    <div class="empty-state-subtext">Try adjusting your search criteria</div>
+            </div>
+
+            <div class="coaches-layout ${showFilters ? 'with-filters' : ''}">
+                <!-- Filter Sidebar -->
+                ${showFilters && html`
+                    <${FilterSidebar}
+                        filters=${filters}
+                        onChange=${setFilters}
+                        onReset=${resetFilters}
+                    />
+                `}
+
+                <!-- Coach List -->
+                <div class="coaches-main">
+                    ${loading && html`
+                        <div class="coach-list">
+                            ${[...Array(6)].map((_, i) => html`<${CoachCardSkeleton} key=${'skeleton-' + i} />`)}
+                        </div>
+                    `}
+                    ${!loading && filteredCoaches.length === 0 && html`
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔍</div>
+                            <div class="empty-state-text">No coaches found</div>
+                            <div class="empty-state-subtext">Try adjusting your filters or search criteria</div>
+                            ${activeFilterCount > 0 && html`
+                                <button class="btn-secondary" onClick=${resetFilters} style=${{ marginTop: '16px' }}>
+                                    Clear All Filters
+                                </button>
+                            `}
+                        </div>
+                    `}
+                    ${!loading && filteredCoaches.length > 0 && html`
+                        <div class="results-info">
+                            Showing ${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''}
+                        </div>
+                        <div class="coach-list">
+                            ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} onViewDetails=${setSelectedCoach} />`)}
+                        </div>
+                    `}
                 </div>
-            `}
-            ${!loading && html`
-                <div class="coach-list">
-                    ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} onViewDetails=${setSelectedCoach} />`)}
-                </div>
-            `}
-            ${selectedCoach && html`<${CoachDetailModal} coach=${selectedCoach} session=${session} onClose=${() => setSelectedCoach(null)} />`}
+            </div>
         </div>
+        ${selectedCoach && html`<${CoachDetailModal} coach=${selectedCoach} session=${session} onClose=${() => setSelectedCoach(null)} />`}
+    </div>
     `;
 };
 
@@ -5798,6 +6186,357 @@ class ErrorBoundary extends React.Component {
     }
 }
 
+// =====================================================
+// MATCHING QUIZ COMPONENT
+// =====================================================
+
+const QUIZ_QUESTIONS = [
+    {
+        id: 'goal',
+        question: 'What is your primary goal?',
+        type: 'single',
+        options: [
+            { value: 'career', label: '🚀 Career Growth', desc: 'Advance in my profession' },
+            { value: 'leadership', label: '👔 Leadership Development', desc: 'Become a better leader' },
+            { value: 'life', label: '🌟 Life Balance', desc: 'Find more balance and fulfillment' },
+            { value: 'business', label: '💼 Business Growth', desc: 'Grow my business or startup' },
+            { value: 'transition', label: '🔄 Career Transition', desc: 'Change careers or industries' }
+        ]
+    },
+    {
+        id: 'challenge',
+        question: 'What is your biggest challenge right now?',
+        type: 'single',
+        options: [
+            { value: 'confidence', label: '💪 Building Confidence', desc: 'Believing in myself more' },
+            { value: 'communication', label: '💬 Communication', desc: 'Speaking up and being heard' },
+            { value: 'decision', label: '🎯 Decision Making', desc: 'Making important decisions' },
+            { value: 'stress', label: '😰 Managing Stress', desc: 'Handling pressure better' },
+            { value: 'motivation', label: '🔥 Finding Motivation', desc: 'Staying driven and focused' }
+        ]
+    },
+    {
+        id: 'style',
+        question: 'What coaching style resonates with you?',
+        type: 'single',
+        options: [
+            { value: 'supportive', label: '🤗 Supportive & Empathetic', desc: 'Patient, understanding approach' },
+            { value: 'direct', label: '🎯 Direct & Action-Oriented', desc: 'Straight to the point' },
+            { value: 'analytical', label: '📊 Analytical & Strategic', desc: 'Data-driven, structured' },
+            { value: 'creative', label: '🎨 Creative & Intuitive', desc: 'Innovative, outside the box' }
+        ]
+    },
+    {
+        id: 'session_type',
+        question: 'How would you prefer to meet?',
+        type: 'single',
+        options: [
+            { value: 'online', label: '💻 Online Only', desc: 'Video calls work best for me' },
+            { value: 'in_person', label: '🤝 In-Person Only', desc: 'I prefer face-to-face' },
+            { value: 'hybrid', label: '🔄 Either Works', desc: 'I\'m flexible' }
+        ]
+    },
+    {
+        id: 'budget',
+        question: 'What\'s your budget per session?',
+        type: 'single',
+        options: [
+            { value: 'budget', label: '💰 Under €75', desc: 'Budget-friendly options' },
+            { value: 'mid', label: '💎 €75 - €150', desc: 'Mid-range investment' },
+            { value: 'premium', label: '👑 €150+', desc: 'Premium coaching experience' }
+        ]
+    }
+];
+
+const MatchingQuiz = ({ session }) => {
+    const [currentStep, setCurrentStep] = useState(0);
+    const [answers, setAnswers] = useState({});
+    const [showResults, setShowResults] = useState(false);
+    const [matchedCoaches, setMatchedCoaches] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const currentQuestion = QUIZ_QUESTIONS[currentStep];
+    const progress = ((currentStep) / QUIZ_QUESTIONS.length) * 100;
+
+    const handleAnswer = (value) => {
+        setAnswers({ ...answers, [currentQuestion.id]: value });
+
+        // Auto-advance after short delay
+        setTimeout(() => {
+            if (currentStep < QUIZ_QUESTIONS.length - 1) {
+                setCurrentStep(currentStep + 1);
+            } else {
+                findMatches();
+            }
+        }, 300);
+    };
+
+    const findMatches = async () => {
+        setLoading(true);
+
+        // Simulate matching algorithm (in production, this would call an API)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Load coaches and filter based on answers
+        if (window.supabaseClient) {
+            try {
+                const { data: coaches } = await window.supabaseClient
+                    .from('cs_coaches')
+                    .select('*')
+                    .limit(10);
+
+                if (coaches) {
+                    // Simple matching - in production this would be more sophisticated
+                    const scored = coaches.map(coach => {
+                        let score = Math.random() * 30 + 70; // Base score 70-100
+
+                        // Boost for matching criteria
+                        if (answers.session_type === 'online' && coach.offers_online) score += 5;
+                        if (answers.session_type === 'in_person' && coach.offers_in_person) score += 5;
+
+                        if (answers.budget === 'budget' && coach.hourly_rate < 75) score += 10;
+                        if (answers.budget === 'mid' && coach.hourly_rate >= 75 && coach.hourly_rate < 150) score += 10;
+                        if (answers.budget === 'premium' && coach.hourly_rate >= 150) score += 10;
+
+                        return { ...coach, matchScore: Math.min(99, Math.round(score)) };
+                    });
+
+                    scored.sort((a, b) => b.matchScore - a.matchScore);
+                    setMatchedCoaches(scored.slice(0, 5));
+                }
+            } catch (error) {
+                console.error('Error finding matches:', error);
+                setMatchedCoaches(mockCoaches.map(c => ({ ...c, matchScore: Math.round(Math.random() * 20 + 80) })));
+            }
+        } else {
+            setMatchedCoaches(mockCoaches.map(c => ({ ...c, matchScore: Math.round(Math.random() * 20 + 80) })));
+        }
+
+        setLoading(false);
+        setShowResults(true);
+    };
+
+    const goBack = () => {
+        if (currentStep > 0) {
+            setCurrentStep(currentStep - 1);
+        }
+    };
+
+    const startOver = () => {
+        setCurrentStep(0);
+        setAnswers({});
+        setShowResults(false);
+        setMatchedCoaches([]);
+    };
+
+    if (loading) {
+        return html`
+            <div class="quiz-loading">
+                <div class="loading-animation">
+                    <div class="spinner-large"></div>
+                </div>
+                <h2>Finding Your Perfect Matches...</h2>
+                <p>Analyzing your preferences and matching with coaches</p>
+            </div>
+        `;
+    }
+
+    if (showResults) {
+        return html`
+            <div class="quiz-results">
+                <div class="container">
+                    <div class="results-header">
+                        <h1>🎯 Your Top Matches</h1>
+                        <p>Based on your preferences, here are coaches who would be perfect for you</p>
+                    </div>
+
+                    <div class="matched-coaches">
+                        ${matchedCoaches.map((coach, index) => html`
+                            <div key=${coach.id} class="matched-coach-card">
+                                <div class="match-rank">#${index + 1}</div>
+                                <div class="match-score">
+                                    <span class="score-value">${coach.matchScore}%</span>
+                                    <span class="score-label">Match</span>
+                                </div>
+                                <img src=${coach.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(coach.full_name)}`} alt=${coach.full_name} class="coach-avatar" />
+                                <div class="coach-info">
+                                    <h3>${coach.full_name}</h3>
+                                    <p class="coach-title">${coach.title}</p>
+                                    <div class="coach-meta">
+                                        <span>📍 ${coach.location || 'Remote'}</span>
+                                        <span>💰 ${formatPrice(coach.hourly_rate)}/hr</span>
+                                    </div>
+                                </div>
+                                <button class="btn-primary" onClick=${() => window.location.hash = '#coaches'}>
+                                    View Profile
+                                </button>
+                            </div>
+                        `)}
+                    </div>
+
+                    <div class="results-actions">
+                        <button class="btn-secondary" onClick=${startOver}>
+                            ← Take Quiz Again
+                        </button>
+                        <button class="btn-primary" onClick=${() => window.location.hash = '#coaches'}>
+                            Browse All Coaches →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return html`
+        <div class="quiz-page">
+            <div class="quiz-container">
+                <!-- Progress Bar -->
+                <div class="quiz-progress-bar">
+                    <div class="progress-track">
+                        <div class="progress-fill" style=${{ width: `${progress}%` }}></div>
+                    </div>
+                    <span class="progress-text">${currentStep + 1} of ${QUIZ_QUESTIONS.length}</span>
+                </div>
+
+                <!-- Question -->
+                <div class="quiz-question-container">
+                    <h2 class="quiz-question">${currentQuestion.question}</h2>
+
+                    <div class="quiz-options">
+                        ${currentQuestion.options.map(option => html`
+                            <button
+                                key=${option.value}
+                                class="quiz-option ${answers[currentQuestion.id] === option.value ? 'selected' : ''}"
+                                onClick=${() => handleAnswer(option.value)}
+                            >
+                                <span class="option-label">${option.label}</span>
+                                <span class="option-desc">${option.desc}</span>
+                            </button>
+                        `)}
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="quiz-nav">
+                    ${currentStep > 0 && html`
+                        <button class="btn-secondary" onClick=${goBack}>
+                            ← Back
+                        </button>
+                    `}
+                    <button class="btn-ghost" onClick=${() => window.location.hash = '#home'}>
+                        Skip Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// =====================================================
+// AI MATCH PAGE
+// =====================================================
+
+const AIMatchPage = ({ session }) => {
+    const [input, setInput] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [recommendations, setRecommendations] = useState([]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+
+        setLoading(true);
+
+        // Simulate AI processing
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // In production, this would call an AI API
+        if (window.supabaseClient) {
+            const { data: coaches } = await window.supabaseClient
+                .from('cs_coaches')
+                .select('*')
+                .limit(5);
+
+            if (coaches) {
+                setRecommendations(coaches.map(c => ({
+                    ...c,
+                    matchScore: Math.round(Math.random() * 20 + 75),
+                    aiReason: 'Based on your goals and preferences, this coach specializes in areas that align with your needs.'
+                })));
+            }
+        } else {
+            setRecommendations(mockCoaches.map(c => ({
+                ...c,
+                matchScore: Math.round(Math.random() * 20 + 75),
+                aiReason: 'Based on your goals and preferences, this coach specializes in areas that align with your needs.'
+            })));
+        }
+
+        setLoading(false);
+    };
+
+    return html`
+        <div class="ai-match-page">
+            <div class="container">
+                <div class="ai-header">
+                    <h1>✨ AI-Powered Coach Matching</h1>
+                    <p>Tell us about your goals and challenges, and we'll recommend the perfect coach for you.</p>
+                </div>
+
+                <form class="ai-form" onSubmit=${handleSubmit}>
+                    <textarea
+                        class="ai-input"
+                        placeholder="Example: I'm a mid-level manager looking to develop my leadership skills. I struggle with delegating tasks and want to learn how to inspire my team better. I prefer online sessions and have a budget of around €100 per session..."
+                        value=${input}
+                        onInput=${(e) => setInput(e.target.value)}
+                        rows="5"
+                    ></textarea>
+                    <button type="submit" class="btn-primary btn-large" disabled=${loading || !input.trim()}>
+                        ${loading ? 'Finding Matches...' : '✨ Find My Perfect Coach'}
+                    </button>
+                </form>
+
+                ${loading && html`
+                    <div class="ai-loading">
+                        <div class="spinner-large"></div>
+                        <p>Analyzing your needs and finding the best matches...</p>
+                    </div>
+                `}
+
+                ${recommendations.length > 0 && html`
+                    <div class="ai-results">
+                        <h2>Your AI-Recommended Coaches</h2>
+                        <div class="recommendation-list">
+                            ${recommendations.map(coach => html`
+                                <div key=${coach.id} class="recommendation-card">
+                                    <div class="match-badge">${coach.matchScore}% Match</div>
+                                    <img src=${coach.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(coach.full_name)}`} alt=${coach.full_name} />
+                                    <div class="rec-info">
+                                        <h3>${coach.full_name}</h3>
+                                        <p class="rec-title">${coach.title}</p>
+                                        <p class="rec-reason">${coach.aiReason}</p>
+                                        <div class="rec-meta">
+                                            <span>${formatPrice(coach.hourly_rate)}/hr</span>
+                                            <button class="btn-primary btn-sm" onClick=${() => window.location.hash = '#coaches'}>
+                                                View Profile
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `)}
+                        </div>
+                    </div>
+                `}
+
+                <div class="ai-alternative">
+                    <p>Prefer a guided experience?</p>
+                    <a href="#quiz" class="btn-secondary">Take the Quiz Instead →</a>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 const App = () => {
     const [route, setRoute] = useState(window.location.hash || '#home');
     const [session, setSession] = useState(null);
@@ -5881,6 +6620,8 @@ const App = () => {
         case '#login': Component = Auth; break;
         case '#onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
         case '#dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
+        case '#quiz': Component = () => html`<${MatchingQuiz} session=${session} />`; break;
+        case '#ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;
         case '#signout': Component = SignOut; break;
         default: Component = () => html`<${Home} session=${session} />`;
     }

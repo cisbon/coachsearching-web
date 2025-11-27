@@ -810,3 +810,436 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* =============================================
+   DISCOVERY OPTIONS (Hero Section)
+============================================= */
+.discovery-options {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin: 32px 0;
+    flex-wrap: wrap;
+}
+
+.discovery-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 32px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 160px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.discovery-option:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-petrol, #006266);
+}
+
+.discovery-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.discovery-label {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-main, #1a1a1a);
+}
+
+.discovery-desc {
+    font-size: 13px;
+    color: var(--text-muted, #666);
+    margin-top: 4px;
+}
+
+.quiz-option {
+    background: linear-gradient(135deg, #E8F5F5 0%, #fff 100%);
+}
+
+.ai-option {
+    background: linear-gradient(135deg, #FFF8E1 0%, #fff 100%);
+}
+
+/* =============================================
+   TRUST SCORE & BADGES
+============================================= */
+.trust-score {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trust-score-value {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.trust-badges {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    gap: 4px;
+    z-index: 5;
+}
+
+.trust-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.badge-verified {
+    background: #22c55e;
+    color: white;
+}
+
+.badge-video {
+    background: #3b82f6;
+    color: white;
+}
+
+.badge-free {
+    background: #f59e0b;
+    color: white;
+}
+
+.badge-certified {
+    background: #8b5cf6;
+    color: white;
+}
+
+.badge-popular {
+    background: #ec4899;
+    color: white;
+}
+
+.badge-founding {
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    color: white;
+}
+
+.verified-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #22c55e;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+/* Video Indicator */
+.video-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 48px;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+.coach-card.has-video:hover .video-indicator {
+    opacity: 1;
+}
+
+.coach-card.has-video .coach-img {
+    position: relative;
+}
+
+/* Rating Stars */
+.rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.rating-stars .star {
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+.rating-stars .star.filled {
+    color: #fbbf24;
+}
+
+.coach-score-rating {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.new-badge {
+    background: var(--primary-petrol);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Specialty Tags */
+.specialty-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.specialty-tag {
+    background: #f0f0f0;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.specialty-tag.more {
+    background: var(--primary-petrol);
+    color: white;
+}
+
+/* Free Discovery Badge */
+.free-intro-badge {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+/* =============================================
+   FILTER SIDEBAR
+============================================= */
+.coaches-section {
+    background: var(--bg-body);
+}
+
+.coaches-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.filter-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.filter-toggle-btn:hover,
+.filter-toggle-btn.active {
+    background: var(--primary-petrol);
+    color: white;
+    border-color: var(--primary-petrol);
+}
+
+.filter-count {
+    background: #ef4444;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.sort-select-mobile {
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.coaches-layout {
+    display: flex;
+    gap: 24px;
+}
+
+.coaches-layout.with-filters .filter-sidebar {
+    display: block;
+}
+
+.filter-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.filter-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.filter-reset-btn {
+    background: none;
+    border: none;
+    color: var(--primary-petrol);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.filter-reset-btn:hover {
+    text-decoration: underline;
+}
+
+.filter-section {
+    margin-bottom: 20px;
+}
+
+.filter-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-main);
+}
+
+.filter-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.filter-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.filter-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-petrol);
+}
+
+.coaches-main {
+    flex: 1;
+}
+
+.results-info {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 900px) {
+    .discovery-options {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .discovery-option {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .coaches-layout {
+        flex-direction: column;
+    }
+
+    .filter-sidebar {
+        width: 100%;
+        position: static;
+        max-height: none;
+    }
+
+    .coaches-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
