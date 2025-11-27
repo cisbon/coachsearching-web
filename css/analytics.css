@@ -1,0 +1,740 @@
+/**
+ * CoachSearching - Analytics Dashboard Styles
+ *
+ * Styles for:
+ * - AdminAnalyticsDashboard
+ * - PlatformStats
+ * - RevenueChart
+ * - UserGrowthChart
+ * - CoachPerformanceMetrics
+ * - BookingTrendsChart
+ * - ExportReports
+ */
+
+/* ============================================
+   Analytics Dashboard Layout
+   ============================================ */
+
+.admin-analytics-dashboard {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.admin-analytics-dashboard .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.admin-analytics-dashboard .header-content h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.admin-analytics-dashboard .header-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.admin-analytics-dashboard .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+/* ============================================
+   Date Range Picker
+   ============================================ */
+
+.date-range-picker {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-body);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.date-range-picker .period-btn {
+    padding: 8px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.date-range-picker .period-btn:hover {
+    color: var(--text-main);
+}
+
+.date-range-picker .period-btn.active {
+    background: white;
+    color: var(--primary-petrol);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ============================================
+   Export Reports
+   ============================================ */
+
+.export-reports {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.export-reports h4 {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.export-buttons .btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+}
+
+/* ============================================
+   Platform Stats Grid
+   ============================================ */
+
+.platform-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.platform-stats.loading {
+    min-height: 100px;
+}
+
+.stat-card-skeleton {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    min-height: 100px;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card.primary {
+    background: linear-gradient(135deg, var(--primary-petrol) 0%, var(--petrol-dark) 100%);
+    border: none;
+    color: white;
+}
+
+.stat-card.success { border-left: 4px solid #28a745; }
+.stat-card.info { border-left: 4px solid #17a2b8; }
+.stat-card.purple { border-left: 4px solid #6f42c1; }
+.stat-card.orange { border-left: 4px solid #fd7e14; }
+.stat-card.teal { border-left: 4px solid var(--petrol-light); }
+.stat-card.green { border-left: 4px solid #20c997; }
+.stat-card.blue { border-left: 4px solid #007bff; }
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(0, 98, 102, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-petrol);
+    flex-shrink: 0;
+}
+
+.stat-card.primary .stat-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.stat-card.primary .stat-label {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.stat-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.stat-card.primary .stat-value {
+    color: white;
+}
+
+.stat-change {
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.stat-change.up {
+    color: #28a745;
+}
+
+.stat-change.down {
+    color: #dc3545;
+}
+
+.stat-card.primary .stat-change.up {
+    color: #90EE90;
+}
+
+.stat-card.primary .stat-change.down {
+    color: #FFB6C1;
+}
+
+/* ============================================
+   Analytics Grid Layout
+   ============================================ */
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.grid-item {
+    min-width: 0;
+}
+
+.grid-item.large {
+    grid-column: span 2;
+}
+
+/* ============================================
+   Analytics Card Base
+   ============================================ */
+
+.analytics-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.analytics-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.analytics-card .card-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.analytics-card .chart-container {
+    padding: 20px;
+    position: relative;
+}
+
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 200px;
+}
+
+/* ============================================
+   View Toggle
+   ============================================ */
+
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-body);
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.view-toggle button {
+    padding: 6px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.view-toggle button:hover {
+    color: var(--text-main);
+}
+
+.view-toggle button.active {
+    background: white;
+    color: var(--primary-petrol);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ============================================
+   Revenue Chart
+   ============================================ */
+
+.revenue-chart .chart-summary {
+    display: flex;
+    gap: 32px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-body);
+}
+
+.revenue-chart .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.revenue-chart .summary-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.revenue-chart .summary-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* ============================================
+   User Growth Chart
+   ============================================ */
+
+.growth-metrics {
+    display: flex;
+    gap: 24px;
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.growth-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-body);
+    border-radius: 8px;
+}
+
+.growth-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.growth-icon.clients {
+    background: rgba(0, 98, 102, 0.1);
+    color: var(--primary-petrol);
+}
+
+.growth-icon.coaches {
+    background: rgba(255, 159, 64, 0.1);
+    color: #fd7e14;
+}
+
+.growth-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.growth-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.growth-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.growth-change {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.growth-change.up {
+    color: #28a745;
+}
+
+/* ============================================
+   Coach Performance Table
+   ============================================ */
+
+.coach-performance .sort-select {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    background: white;
+    cursor: pointer;
+}
+
+.coach-list-loading {
+    padding: 20px;
+}
+
+.coach-row-skeleton {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.coach-performance-table {
+    padding: 0 20px 20px;
+}
+
+.coach-performance-table .table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 2px solid var(--border-color);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.coach-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+}
+
+.coach-row:last-child {
+    border-bottom: none;
+}
+
+.col-coach {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rank {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.coach-row:nth-child(2) .rank {
+    background: linear-gradient(135deg, #ffd700, #ffb300);
+    color: white;
+}
+
+.coach-row:nth-child(3) .rank {
+    background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
+    color: white;
+}
+
+.coach-row:nth-child(4) .rank {
+    background: linear-gradient(135deg, #cd7f32, #b8690e);
+    color: white;
+}
+
+.coach-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--primary-petrol);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+}
+
+.coach-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.coach-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.coach-name {
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.coach-specialty {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.col-revenue,
+.col-bookings,
+.col-rating,
+.col-retention {
+    font-weight: 500;
+}
+
+.col-rating .star {
+    color: #ffc107;
+}
+
+/* ============================================
+   Booking Trends Chart
+   ============================================ */
+
+.booking-trends .trends-summary {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-body);
+}
+
+.trends-insight {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.trends-insight strong {
+    color: var(--primary-petrol);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 1024px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .grid-item.large {
+        grid-column: span 1;
+    }
+
+    .coach-performance-table .table-header,
+    .coach-row {
+        grid-template-columns: 2fr 1fr 1fr;
+    }
+
+    .col-retention,
+    .coach-performance-table .table-header span:last-child {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-analytics-dashboard {
+        padding: 16px;
+    }
+
+    .admin-analytics-dashboard .dashboard-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-analytics-dashboard .header-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .date-range-picker {
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .platform-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .stat-icon {
+        margin: 0 auto;
+    }
+
+    .stat-content {
+        align-items: center;
+    }
+
+    .growth-metrics {
+        flex-direction: column;
+    }
+
+    .revenue-chart .chart-summary {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .coach-performance-table .table-header,
+    .coach-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .col-bookings,
+    .col-rating,
+    .coach-performance-table .table-header span:nth-child(3),
+    .coach-performance-table .table-header span:nth-child(4) {
+        display: none;
+    }
+
+    .export-reports {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .export-buttons {
+        justify-content: stretch;
+    }
+
+    .export-buttons .btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .platform-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-value {
+        font-size: 1.15rem;
+    }
+}
+
+/* ============================================
+   Loading Spinner
+   ============================================ */
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary-petrol);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner.small {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ============================================
+   Skeleton Lines
+   ============================================ */
+
+.skeleton-line {
+    height: 14px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.skeleton-line.short {
+    width: 60%;
+}
