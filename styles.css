@@ -927,8 +927,15 @@ footer {
     height: 15px;
     object-fit: cover;
     border-radius: 2px;
-    display: inline-block;
-    vertical-align: middle;
+    display: block;
+    flex-shrink: 0;
+}
+
+.lang-btn span,
+.lang-option span {
+    display: flex;
+    align-items: center;
+    line-height: 1;
 }
 
 .lang-dropdown {

@@ -5,9 +5,14 @@ import {
     TrustScore,
     TrustSignalsBar,
     CoachVideoPlayer,
+    YouTubePlayer,
     CredentialsList,
     ReviewCard,
-    PricingCard
+    PricingCard,
+    TestimonialHighlight,
+    CoachStatsBanner,
+    GuaranteeBadge,
+    SampleVideoSection
 } from './coachProfile.js';
 
 const React = window.React;
@@ -129,7 +134,7 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
 
                 <div class="profile-modal-content">
                     <!-- Header Section -->
-                    <div class="profile-header">
+                    <div class="profile-header profile-header-enhanced">
                         <div class="profile-header-bg"></div>
                         <div class="profile-header-content">
                             <div class="profile-video-section">
@@ -212,6 +217,9 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
 
                         ${!loading && activeTab === 'overview' && html`
                             <div class="tab-overview">
+                                <!-- Coach Stats Banner -->
+                                <${CoachStatsBanner} coach=${coach} />
+
                                 <section class="profile-section">
                                     <h3>${t('profile.about') || 'About'}</h3>
                                     <div class="profile-bio">${coach.bio || t('profile.noBio') || 'No bio provided yet.'}</div>
@@ -228,6 +236,14 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
                                     </section>
                                 `}
 
+                                <!-- Testimonial Highlight -->
+                                ${reviews.length > 0 && html`
+                                    <section class="profile-section">
+                                        <h3>${t('profile.featuredReview') || 'What Clients Say'}</h3>
+                                        <${TestimonialHighlight} testimonials=${reviews} />
+                                    </section>
+                                `}
+
                                 ${coach.session_types?.length > 0 && html`
                                     <section class="profile-section">
                                         <h3>${t('profile.sessionTypes') || 'Session Types'}</h3>
@@ -235,12 +251,63 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
                                             ${coach.session_types.map(type => html`
                                                 <div class="session-type-item" key=${type}>
                                                     <span class="type-icon">${type === 'online' ? '💻' : '🏢'}</span>
-                                                    <span class="type-label">${type === 'online' ? (t('session.online') || 'Online') : (t('session.onsite') || 'On-site')}</span>
+                                                    <span class="type-label">${type === 'online' ? (t('session.online') || 'Online') : (t('session.inPerson') || 'In-Person')}</span>
                                                 </div>
                                             `)}
                                         </div>
                                     </section>
                                 `}
+
+                                <!-- Sample Coaching Video -->
+                                <${SampleVideoSection} coachName=${coach.full_name} />
+
+                                <!-- Why Choose This Coach -->
+                                <div class="why-choose-section">
+                                    <h4>${t('profile.whyChoose') || 'Why Choose This Coach'}</h4>
+                                    <ul class="why-choose-list">
+                                        ${isVerified && html`
+                                            <li class="why-choose-item">
+                                                <div class="why-choose-icon">✓</div>
+                                                <div class="why-choose-text">
+                                                    <strong>${t('why.verified') || 'Verified Professional'}</strong>
+                                                    <span>${t('why.verifiedDesc') || 'Identity and credentials have been verified'}</span>
+                                                </div>
+                                            </li>
+                                        `}
+                                        ${yearsExp > 0 && html`
+                                            <li class="why-choose-item">
+                                                <div class="why-choose-icon">🏆</div>
+                                                <div class="why-choose-text">
+                                                    <strong>${yearsExp}+ ${t('why.years') || 'Years of Experience'}</strong>
+                                                    <span>${t('why.yearsDesc') || 'Proven track record of helping clients succeed'}</span>
+                                                </div>
+                                            </li>
+                                        `}
+                                        ${rating >= 4 && html`
+                                            <li class="why-choose-item">
+                                                <div class="why-choose-icon">⭐</div>
+                                                <div class="why-choose-text">
+                                                    <strong>${t('why.highlyRated') || 'Highly Rated'}</strong>
+                                                    <span>${rating.toFixed(1)}/5 ${t('why.fromReviews') || 'from'} ${reviewsCount} ${t('why.reviews') || 'reviews'}</span>
+                                                </div>
+                                            </li>
+                                        `}
+                                        <li class="why-choose-item">
+                                            <div class="why-choose-icon">💬</div>
+                                            <div class="why-choose-text">
+                                                <strong>${t('why.personalized') || 'Personalized Approach'}</strong>
+                                                <span>${t('why.personalizedDesc') || 'Tailored coaching to meet your unique goals'}</span>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Guarantee Badges -->
+                                <div class="guarantees-row">
+                                    <${GuaranteeBadge} type="satisfaction" />
+                                    <${GuaranteeBadge} type="secure" />
+                                    <${GuaranteeBadge} type="verified" />
+                                </div>
 
                                 ${(coach.website_url || coach.linkedin_url) && html`
                                     <section class="profile-section">

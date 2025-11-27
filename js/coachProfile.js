@@ -146,6 +146,69 @@ export const TrustSignalsBar = React.memo(({ coach }) => {
 });
 
 // =============================================
+// YOUTUBE VIDEO PLAYER COMPONENT
+// =============================================
+
+const getYouTubeVideoId = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+};
+
+export const YouTubePlayer = React.memo(({ videoUrl, thumbnailUrl, title, autoplay = false }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    const videoId = getYouTubeVideoId(videoUrl);
+    const defaultThumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
+
+    const handlePlay = useCallback(() => {
+        setIsPlaying(true);
+    }, []);
+
+    if (!videoId) {
+        return html`
+            <div class="video-placeholder">
+                <div class="video-placeholder-icon">🎥</div>
+                <div class="video-placeholder-text">${t('video.noVideo') || 'No video available'}</div>
+            </div>
+        `;
+    }
+
+    return html`
+        <div class="youtube-player ${isPlaying ? 'playing' : ''}">
+            ${!isPlaying && html`
+                <div class="video-thumbnail" onClick=${handlePlay}>
+                    <img
+                        src=${thumbnailUrl || defaultThumbnail}
+                        alt=${title || 'Video'}
+                        loading="lazy"
+                        onError=${(e) => { e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`; }}
+                    />
+                    <div class="video-play-button youtube-play">
+                        <svg viewBox="0 0 68 48" width="68" height="48">
+                            <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#f00"/>
+                            <path d="M45 24L27 14v20" fill="#fff"/>
+                        </svg>
+                    </div>
+                    <div class="video-duration-badge">${t('video.watchVideo') || 'Watch Video'}</div>
+                </div>
+            `}
+            ${isPlaying && html`
+                <iframe
+                    src=${`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`}
+                    title=${title || 'Video'}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    class="youtube-iframe"
+                />
+            `}
+        </div>
+    `;
+});
+
+// =============================================
 // VIDEO PLAYER COMPONENT
 // =============================================
 
@@ -154,12 +217,15 @@ export const CoachVideoPlayer = React.memo(({ videoUrl, thumbnailUrl, coachName,
     const [isLoaded, setIsLoaded] = useState(false);
     const videoRef = useRef(null);
 
+    // Check if it's a YouTube URL
+    const youtubeId = getYouTubeVideoId(videoUrl);
+
     const handlePlay = useCallback(() => {
         setIsPlaying(true);
-        if (videoRef.current) {
+        if (videoRef.current && !youtubeId) {
             videoRef.current.play();
         }
-    }, []);
+    }, [youtubeId]);
 
     const handleVideoLoad = useCallback(() => {
         setIsLoaded(true);
@@ -172,6 +238,11 @@ export const CoachVideoPlayer = React.memo(({ videoUrl, thumbnailUrl, coachName,
                 <div class="video-placeholder-text">${t('video.noVideo') || 'No video introduction yet'}</div>
             </div>
         `;
+    }
+
+    // If it's a YouTube URL, use the YouTube player
+    if (youtubeId) {
+        return html`<${YouTubePlayer} videoUrl=${videoUrl} thumbnailUrl=${thumbnailUrl} title=${`${coachName} introduction video`} />`;
     }
 
     return html`
@@ -735,12 +806,152 @@ export const VideoUpload = ({ onUpload, maxDuration = 120, currentVideoUrl }) =>
     `;
 };
 
+// =============================================
+// TESTIMONIAL HIGHLIGHT COMPONENT
+// =============================================
+
+export const TestimonialHighlight = React.memo(({ testimonials }) => {
+    if (!testimonials || testimonials.length === 0) return null;
+
+    const featured = testimonials[0];
+
+    return html`
+        <div class="testimonial-highlight">
+            <div class="testimonial-quote-mark">"</div>
+            <blockquote class="testimonial-text">
+                ${featured.comment}
+            </blockquote>
+            <div class="testimonial-author">
+                <img
+                    src=${featured.client_avatar || 'https://via.placeholder.com/48'}
+                    alt=${featured.client_name || 'Client'}
+                    class="testimonial-avatar"
+                />
+                <div class="testimonial-author-info">
+                    <div class="testimonial-author-name">${featured.client_name || 'Verified Client'}</div>
+                    <div class="testimonial-rating">
+                        ${Array(5).fill(0).map((_, i) => html`
+                            <span class="star ${i < featured.rating ? 'filled' : ''}" key=${i}>★</span>
+                        `)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+});
+
+// =============================================
+// COACH STATS BANNER COMPONENT
+// =============================================
+
+export const CoachStatsBanner = React.memo(({ coach }) => {
+    const stats = [
+        {
+            value: coach.total_sessions || 0,
+            label: t('stats.sessions') || 'Sessions',
+            icon: '📅'
+        },
+        {
+            value: coach.years_experience || 0,
+            label: t('stats.years') || 'Years Exp.',
+            icon: '🏆'
+        },
+        {
+            value: coach.client_satisfaction ? `${coach.client_satisfaction}%` : (coach.rating_average ? `${Math.round(coach.rating_average * 20)}%` : '—'),
+            label: t('stats.satisfaction') || 'Satisfaction',
+            icon: '❤️'
+        },
+        {
+            value: coach.response_time_hours ? `<${coach.response_time_hours}h` : '<24h',
+            label: t('stats.response') || 'Response',
+            icon: '⚡'
+        }
+    ];
+
+    return html`
+        <div class="coach-stats-banner">
+            ${stats.map((stat, i) => html`
+                <div class="coach-stat-item" key=${i}>
+                    <span class="stat-icon">${stat.icon}</span>
+                    <span class="stat-value">${stat.value}</span>
+                    <span class="stat-label">${stat.label}</span>
+                </div>
+            `)}
+        </div>
+    `;
+});
+
+// =============================================
+// GUARANTEE BADGE COMPONENT
+// =============================================
+
+export const GuaranteeBadge = React.memo(({ type = 'satisfaction' }) => {
+    const badges = {
+        satisfaction: {
+            icon: '✓',
+            title: t('guarantee.satisfaction') || '100% Satisfaction',
+            subtitle: t('guarantee.satisfactionSub') || 'Money-back guarantee'
+        },
+        secure: {
+            icon: '🔒',
+            title: t('guarantee.secure') || 'Secure Booking',
+            subtitle: t('guarantee.secureSub') || 'Your data is protected'
+        },
+        verified: {
+            icon: '✓',
+            title: t('guarantee.verified') || 'Verified Coach',
+            subtitle: t('guarantee.verifiedSub') || 'Identity confirmed'
+        }
+    };
+
+    const badge = badges[type];
+
+    return html`
+        <div class="guarantee-badge">
+            <div class="guarantee-icon">${badge.icon}</div>
+            <div class="guarantee-content">
+                <div class="guarantee-title">${badge.title}</div>
+                <div class="guarantee-subtitle">${badge.subtitle}</div>
+            </div>
+        </div>
+    `;
+});
+
+// =============================================
+// SAMPLE VIDEO SECTION (for demo purposes)
+// =============================================
+
+export const SampleVideoSection = React.memo(({ coachName }) => {
+    // Sample coaching-related YouTube video for demonstration
+    const sampleVideoUrl = 'https://www.youtube.com/watch?v=UgRsY5VS8aQ';
+
+    return html`
+        <div class="sample-video-section">
+            <div class="sample-video-header">
+                <h4>${t('video.sampleTitle') || 'Sample Coaching Session'}</h4>
+                <p class="sample-video-description">
+                    ${t('video.sampleDesc') || 'Get a glimpse of what a coaching session looks like'}
+                </p>
+            </div>
+            <${YouTubePlayer}
+                videoUrl=${sampleVideoUrl}
+                title=${`Sample coaching session with ${coachName}`}
+            />
+            <div class="sample-video-note">
+                <span class="note-icon">ℹ️</span>
+                <span>${t('video.sampleNote') || 'This is a sample video for demonstration purposes'}</span>
+            </div>
+        </div>
+    `;
+});
+
 // Export all components
 export default {
     TrustScore,
     VerificationBadge,
     TrustSignalsBar,
     CoachVideoPlayer,
+    YouTubePlayer,
     CoachCardEnhanced,
     CoachCardFeatured,
     CredentialsList,
@@ -748,5 +959,9 @@ export default {
     PricingCard,
     ProfileCompletionChecklist,
     PlatformStats,
-    VideoUpload
+    VideoUpload,
+    TestimonialHighlight,
+    CoachStatsBanner,
+    GuaranteeBadge,
+    SampleVideoSection
 };
