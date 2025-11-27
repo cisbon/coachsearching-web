@@ -16,7 +16,7 @@ const translations = {
         "search.placeholder": "Search by name, title, or bio...",
         "search.btn": "Search",
         "search.online": "Online",
-        "search.onsite": "On-Site",
+        "search.onsite": "In-Person",
         "search.locationPlaceholder": "Location (e.g., New York, NY)",
         "search.within": "Within",
 
@@ -851,7 +851,7 @@ const translations = {
         "search.placeholder": "Suche nach Name, Titel oder Bio...",
         "search.btn": "Suchen",
         "search.online": "Online",
-        "search.onsite": "Vor Ort",
+        "search.onsite": "Persönlich",
         "search.locationPlaceholder": "Standort (z.B. Berlin, Deutschland)",
         "search.within": "Innerhalb",
 
@@ -1743,7 +1743,7 @@ const translations = {
         "search.placeholder": "Rechercher par nom, titre ou bio...",
         "search.btn": "Rechercher",
         "search.online": "En ligne",
-        "search.onsite": "Sur place",
+        "search.onsite": "En personne",
         "search.locationPlaceholder": "Localisation (ex. Paris, France)",
         "search.within": "Dans un rayon de",
 

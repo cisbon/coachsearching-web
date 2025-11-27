@@ -179,6 +179,7 @@ header {
     border-radius: 4px;
     background: white;
     transition: border-color 0.2s;
+    height: 54px;
 }
 
 .search-input-group:focus-within {
@@ -189,6 +190,11 @@ header {
     padding: 0 12px;
     color: var(--text-muted);
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    line-height: 1;
 }
 
 .search-input {
@@ -238,10 +244,11 @@ header {
     border: 2px solid var(--border-color);
     border-radius: 4px;
     overflow: hidden;
+    height: 54px;
 }
 
 .filter-toggle-btn {
-    padding: 0 20px;
+    padding: 0 24px;
     background: white;
     border: none;
     cursor: pointer;
@@ -250,6 +257,10 @@ header {
     color: var(--text-main);
     transition: all 0.2s;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .filter-toggle-btn:first-child {
@@ -277,6 +288,10 @@ header {
     border-radius: 4px;
     transition: background-color 0.2s;
     white-space: nowrap;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .search-btn:hover {
