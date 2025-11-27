@@ -19,6 +19,7 @@ import { FAQPage } from './pages/FAQPage.js';
 import { AboutPage } from './pages/AboutPage.js';
 import { HowItWorksPage } from './pages/HowItWorksPage.js';
 import { CategoryPage, CategoriesIndexPage, COACHING_CATEGORIES } from './pages/CategoryPage.js';
+import { CoachProfilePage } from './pages/CoachProfilePage.js';
 
 console.log('App.js: React global', React);
 console.log('App.js: ReactDOM global', ReactDOM);
@@ -1809,9 +1810,9 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
                     <div class="price-label">${t('coach.hourly_rate')}</div>
                     <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
                 </div>
-                <button class="btn-book" onClick=${() => onViewDetails(coach)}>
+                <a href="#coach/${coach.id}" class="btn-book">
                     ${t('coach.view_profile')} →
-                </button>
+                </a>
             </div>
         </div>
     `;
@@ -6775,8 +6776,8 @@ const App = () => {
         // Category pages like #coaching/executive-coaching
         Component = () => html`<${CategoryPage} categorySlug=${routeParam} />`;
     } else if (routePath.startsWith('#coach/') && routeParam) {
-        // Coach profile pages (existing functionality - handled by CoachList)
-        Component = () => html`<${CoachList} session=${session} coachId=${routeParam} />`;
+        // Coach profile pages - SEO-optimized full page
+        Component = () => html`<${CoachProfilePage} coachId=${routeParam} session=${session} />`;
     } else {
         // Static routes
         switch (route) {
