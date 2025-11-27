@@ -195,9 +195,15 @@ export const QuizIntro = ({ onStart, onSkip }) => {
 // QUIZ LOADING/PROCESSING SCREEN
 // =============================================
 
-export const QuizProcessing = () => {
+export const QuizProcessing = ({ useAI = true }) => {
     const [step, setStep] = useState(0);
-    const steps = [
+    const steps = useAI ? [
+        t('quiz.processing.step1') || 'Analyzing your preferences...',
+        t('quiz.processing.aiStep1') || 'AI is reviewing coach profiles...',
+        t('quiz.processing.aiStep2') || 'Evaluating compatibility factors...',
+        t('quiz.processing.aiStep3') || 'Generating personalized insights...',
+        t('quiz.processing.step4') || 'Preparing your results...'
+    ] : [
         t('quiz.processing.step1') || 'Analyzing your preferences...',
         t('quiz.processing.step2') || 'Finding matching coaches...',
         t('quiz.processing.step3') || 'Calculating match scores...',
@@ -218,6 +224,12 @@ export const QuizProcessing = () => {
                 <div class="processing-pulse"></div>
             </div>
             <h2 class="processing-title">${t('quiz.processing.title') || 'Finding Your Matches'}</h2>
+            ${useAI && html`
+                <span class="ai-badge">
+                    <span class="ai-icon">✨</span>
+                    ${t('quiz.processing.aiPowered') || 'AI-Powered Matching'}
+                </span>
+            `}
             <p class="processing-step">${steps[step]}</p>
         </div>
     `;
@@ -227,8 +239,9 @@ export const QuizProcessing = () => {
 // MATCH CARD COMPONENT
 // =============================================
 
-export const MatchCard = ({ coach, matchScore, rank, onViewDetails, formatPrice }) => {
+export const MatchCard = ({ coach, matchScore, rank, onViewDetails, formatPrice, matchReasons, compatibilitySummary }) => {
     const matchPercentage = Math.round(matchScore);
+    const [showReasons, setShowReasons] = useState(false);
 
     return html`
         <div class="match-card rank-${rank}">
@@ -272,6 +285,39 @@ export const MatchCard = ({ coach, matchScore, rank, onViewDetails, formatPrice 
             <div class="match-info">
                 <h3 class="match-name">${coach.full_name}</h3>
                 <p class="match-title">${coach.title}</p>
+
+                <!-- AI Compatibility Summary -->
+                ${compatibilitySummary && html`
+                    <p class="ai-compatibility-summary">
+                        <span class="ai-icon">✨</span>
+                        ${compatibilitySummary}
+                    </p>
+                `}
+
+                <!-- AI Match Reasons (expandable) -->
+                ${matchReasons && matchReasons.length > 0 && html`
+                    <div class="match-reasons-section">
+                        <button
+                            class="toggle-reasons-btn"
+                            onClick=${() => setShowReasons(!showReasons)}
+                        >
+                            ${showReasons
+                                ? (t('quiz.hideReasons') || 'Hide reasons')
+                                : (t('quiz.whyMatch') || 'Why this match?')}
+                            <span class="toggle-icon">${showReasons ? '▲' : '▼'}</span>
+                        </button>
+                        ${showReasons && html`
+                            <ul class="match-reasons-list">
+                                ${matchReasons.map((reason, i) => html`
+                                    <li key=${i} class="match-reason">
+                                        <span class="reason-icon">✓</span>
+                                        ${reason}
+                                    </li>
+                                `)}
+                            </ul>
+                        `}
+                    </div>
+                `}
 
                 <div class="match-meta">
                     ${coach.location || coach.city ? html`
@@ -328,7 +374,9 @@ export const QuizResults = ({
     onRetake,
     onBrowseAll,
     formatPrice,
-    session
+    session,
+    aiPowered = false,
+    aiInsights = null
 }) => {
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [showEmailCapture, setShowEmailCapture] = useState(false);
@@ -370,7 +418,24 @@ export const QuizResults = ({
                 <p class="results-subtitle">
                     ${t('quiz.results.subtitle') || 'Based on your preferences, here are your best matches'}
                 </p>
+                ${aiPowered && html`
+                    <div class="ai-powered-badge">
+                        <span class="ai-icon">✨</span>
+                        ${t('quiz.results.aiPowered') || 'AI-Powered Recommendations'}
+                    </div>
+                `}
             </div>
+
+            <!-- AI Insights Section -->
+            ${aiInsights && html`
+                <div class="ai-insights-section">
+                    <div class="ai-insights-header">
+                        <span class="ai-icon">🤖</span>
+                        <h3>${t('quiz.results.aiInsights') || 'AI Analysis'}</h3>
+                    </div>
+                    <p class="ai-insights-text">${aiInsights}</p>
+                </div>
+            `}
 
             <!-- Top Matches -->
             <div class="top-matches">
@@ -387,6 +452,8 @@ export const QuizResults = ({
                             rank=${index + 1}
                             onViewDetails=${(coach) => setSelectedCoach(coach)}
                             formatPrice=${formatPrice}
+                            matchReasons=${match.match_reasons}
+                            compatibilitySummary=${match.compatibility_summary}
                         />
                     `)}
                 </div>
@@ -486,11 +553,15 @@ export const QuizResults = ({
 // MAIN QUIZ CONTAINER
 // =============================================
 
+// API configuration
+const API_BASE = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
+
 export const MatchingQuiz = ({
     onComplete,
     onSkip,
     session,
-    formatPrice
+    formatPrice,
+    enableAI = true // Enable AI matching by default
 }) => {
     const [stage, setStage] = useState('intro'); // intro, questions, processing, results
     const [questions, setQuestions] = useState([]);
@@ -498,6 +569,8 @@ export const MatchingQuiz = ({
     const [answers, setAnswers] = useState({});
     const [matches, setMatches] = useState([]);
     const [quizSessionId, setQuizSessionId] = useState(null);
+    const [aiPowered, setAiPowered] = useState(false);
+    const [aiInsights, setAiInsights] = useState(null);
 
     // Load quiz questions
     useEffect(() => {
@@ -589,37 +662,94 @@ export const MatchingQuiz = ({
 
     const processQuizResults = async () => {
         try {
-            const supabase = window.supabaseClient;
-            if (!supabase) {
-                // Fallback: just load coaches sorted by trust score
-                const { data } = await supabase
-                    .from('cs_coaches')
-                    .select('*')
-                    .eq('onboarding_completed', true)
-                    .order('trust_score', { ascending: false })
-                    .limit(10);
+            // Try AI-powered matching first if enabled
+            if (enableAI) {
+                try {
+                    const aiResponse = await fetch(`${API_BASE}/index.php?path=quiz/ai-matches`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            answers: answers,
+                            limit: 10
+                        })
+                    });
 
-                const fallbackMatches = (data || []).map((coach, i) => ({
-                    coach_id: coach.id,
-                    match_score: 85 - (i * 5),
-                    coach_data: coach
-                }));
+                    const aiResult = await aiResponse.json();
 
-                setMatches(fallbackMatches);
-                setStage('results');
-                return;
+                    if (aiResult.ai_powered && aiResult.matches?.length > 0) {
+                        console.log('AI matching successful:', aiResult);
+                        setMatches(aiResult.matches);
+                        setAiPowered(true);
+                        setAiInsights(aiResult.ai_insights || null);
+
+                        // Save quiz results
+                        await saveQuizResults(aiResult.matches);
+
+                        // Small delay for visual effect
+                        setTimeout(() => {
+                            setStage('results');
+                        }, 2000);
+                        return;
+                    }
+
+                    // AI returned but didn't work - log and continue to fallback
+                    if (aiResult.fallback_reason) {
+                        console.log('AI matching fallback:', aiResult.fallback_reason);
+                    }
+
+                    // Use the matches from the fallback if available
+                    if (aiResult.matches?.length > 0) {
+                        setMatches(aiResult.matches);
+                        setAiPowered(false);
+
+                        await saveQuizResults(aiResult.matches);
+
+                        setTimeout(() => {
+                            setStage('results');
+                        }, 2000);
+                        return;
+                    }
+                } catch (aiError) {
+                    console.error('AI matching request failed:', aiError);
+                    // Continue to fallback methods
+                }
             }
 
-            // Use the matching function
-            const { data: matchResults, error } = await supabase
-                .rpc('get_quiz_matched_coaches', {
-                    quiz_answers: answers,
-                    limit_count: 10
+            // Fallback: Try standard API matching
+            try {
+                const response = await fetch(`${API_BASE}/index.php?path=quiz/matches`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        answers: answers,
+                        limit: 10
+                    })
                 });
 
-            if (error) {
-                console.error('Matching error:', error);
-                // Fallback to basic sorting
+                const result = await response.json();
+
+                if (result.matches?.length > 0) {
+                    setMatches(result.matches);
+                    setAiPowered(false);
+
+                    await saveQuizResults(result.matches);
+
+                    setTimeout(() => {
+                        setStage('results');
+                    }, 2000);
+                    return;
+                }
+            } catch (apiError) {
+                console.error('API matching failed:', apiError);
+            }
+
+            // Final fallback: Direct Supabase query
+            const supabase = window.supabaseClient;
+            if (supabase) {
                 const { data: coaches } = await supabase
                     .from('cs_coaches')
                     .select('*')
@@ -635,11 +765,23 @@ export const MatchingQuiz = ({
                 }));
 
                 setMatches(fallbackMatches);
-            } else {
-                setMatches(matchResults || []);
+                setAiPowered(false);
             }
 
-            // Update quiz response with results
+            setTimeout(() => {
+                setStage('results');
+            }, 2000);
+        } catch (error) {
+            console.error('Error processing quiz:', error);
+            setStage('results');
+        }
+    };
+
+    const saveQuizResults = async (matchResults) => {
+        try {
+            const supabase = window.supabaseClient;
+            if (!supabase || !quizSessionId) return;
+
             await supabase
                 .from('cs_quiz_responses')
                 .update({
@@ -652,14 +794,8 @@ export const MatchingQuiz = ({
                     completed_at: new Date().toISOString()
                 })
                 .eq('session_id', quizSessionId);
-
-            // Small delay for visual effect
-            setTimeout(() => {
-                setStage('results');
-            }, 2000);
         } catch (error) {
-            console.error('Error processing quiz:', error);
-            setStage('results');
+            console.error('Error saving quiz results:', error);
         }
     };
 
@@ -668,6 +804,8 @@ export const MatchingQuiz = ({
         setCurrentIndex(0);
         setMatches([]);
         setQuizSessionId(null);
+        setAiPowered(false);
+        setAiInsights(null);
         setStage('intro');
     };
 
@@ -697,7 +835,7 @@ export const MatchingQuiz = ({
             `}
 
             ${stage === 'processing' && html`
-                <${QuizProcessing} />
+                <${QuizProcessing} useAI=${enableAI} />
             `}
 
             ${stage === 'results' && html`
@@ -709,6 +847,8 @@ export const MatchingQuiz = ({
                     onBrowseAll=${onSkip}
                     formatPrice=${formatPrice}
                     session=${session}
+                    aiPowered=${aiPowered}
+                    aiInsights=${aiInsights}
                 />
             `}
         </div>

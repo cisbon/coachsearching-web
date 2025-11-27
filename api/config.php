@@ -33,6 +33,11 @@ define('SUPABASE_ANON_KEY', getenv('SUPABASE_ANON_KEY') ?: 'your-anon-key');
 define('STRIPE_SECRET_KEY', getenv('STRIPE_SECRET_KEY') ?: 'sk_test_...');
 define('STRIPE_CONNECT_CLIENT_ID', getenv('STRIPE_CONNECT_CLIENT_ID') ?: 'ca_...');
 
+// OpenRouter AI Configuration
+define('OPENROUTER_API_KEY', getenv('OPENROUTER_API_KEY') ?: '');
+define('OPENROUTER_MODEL', getenv('OPENROUTER_MODEL') ?: 'anthropic/claude-3.5-sonnet');
+define('OPENROUTER_API_URL', 'https://openrouter.ai/api/v1/chat/completions');
+
 // Rate Limiting
 define('RATE_LIMIT_REQUESTS', 60);
 define('RATE_LIMIT_WINDOW', 60); // seconds

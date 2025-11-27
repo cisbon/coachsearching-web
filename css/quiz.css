@@ -1504,3 +1504,186 @@
         gap: 12px;
     }
 }
+
+/* =============================================
+   AI MATCHING STYLES
+============================================= */
+
+/* AI Badge in Processing */
+.quiz-processing .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+.quiz-processing .ai-icon {
+    font-size: 16px;
+}
+
+@keyframes shimmer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+/* AI Powered Badge in Results */
+.ai-powered-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 12px;
+}
+
+.ai-powered-badge .ai-icon {
+    font-size: 14px;
+}
+
+/* AI Insights Section */
+.ai-insights-section {
+    background: linear-gradient(135deg, #F3E8FF 0%, #EDE9FE 100%);
+    border: 1px solid #DDD6FE;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.ai-insights-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ai-insights-header .ai-icon {
+    font-size: 24px;
+}
+
+.ai-insights-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #5B21B6;
+    margin: 0;
+}
+
+.ai-insights-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #4C1D95;
+    margin: 0;
+}
+
+/* AI Compatibility Summary in Match Card */
+.ai-compatibility-summary {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #F5F3FF;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #5B21B6;
+    margin-bottom: 12px;
+}
+
+.ai-compatibility-summary .ai-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* Match Reasons Section */
+.match-reasons-section {
+    margin-bottom: 12px;
+}
+
+.toggle-reasons-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--petrol-primary, #006266);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.2s ease;
+}
+
+.toggle-reasons-btn:hover {
+    color: var(--petrol-dark, #004A4D);
+}
+
+.toggle-reasons-btn .toggle-icon {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+}
+
+.match-reasons-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.match-reason {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #444;
+    line-height: 1.4;
+}
+
+.match-reason .reason-icon {
+    color: #22C55E;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* AI Badge Animation */
+@keyframes ai-glow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    }
+}
+
+.ai-powered-badge {
+    animation: ai-glow 2s ease-in-out infinite;
+}
+
+/* Dark mode support for AI elements */
+@media (prefers-color-scheme: dark) {
+    .ai-insights-section {
+        background: linear-gradient(135deg, #2E1065 0%, #312E81 100%);
+        border-color: #4C1D95;
+    }
+
+    .ai-insights-header h3,
+    .ai-insights-text {
+        color: #E9D5FF;
+    }
+
+    .ai-compatibility-summary {
+        background: #2E1065;
+        color: #E9D5FF;
+    }
+}

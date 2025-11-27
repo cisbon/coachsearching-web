@@ -3,9 +3,11 @@
  * api/endpoints/discovery.php
  * Coach Discovery System API Endpoints
  * Handles search, quiz, and concierge matching functionality
+ * Includes AI-powered matching via OpenRouter
  */
 
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../lib/OpenRouter.php';
 
 // Route handling
 $method = $_SERVER['REQUEST_METHOD'];
@@ -266,6 +268,14 @@ function handleQuiz($method, $action, $id) {
             getQuizMatches();
             break;
 
+        case 'ai-matches':
+            if ($method !== 'POST') {
+                jsonResponse(['error' => 'Method not allowed'], 405);
+                return;
+            }
+            getAIQuizMatches();
+            break;
+
         case 'response':
             if ($id) {
                 getQuizResponse($id);
@@ -392,13 +402,128 @@ function getQuizMatches() {
     $data = json_decode(file_get_contents('php://input'), true);
     $answers = $data['answers'] ?? [];
     $limit = $data['limit'] ?? 10;
+    $useAI = $data['use_ai'] ?? false;
 
+    // Try AI matching if requested and configured
+    if ($useAI) {
+        $aiResult = getAIQuizMatchesInternal($answers, $limit);
+        if ($aiResult['success']) {
+            jsonResponse([
+                'matches' => $aiResult['matches'],
+                'total' => count($aiResult['matches']),
+                'ai_powered' => true,
+                'ai_insights' => $aiResult['ai_insights'] ?? null
+            ]);
+            return;
+        }
+        // Fall back to rule-based if AI fails
+        error_log("AI matching failed, falling back to rules: " . ($aiResult['error'] ?? 'Unknown'));
+    }
+
+    // Rule-based matching
     $matches = calculateMatches($answers, $limit);
 
     jsonResponse([
         'matches' => $matches,
-        'total' => count($matches)
+        'total' => count($matches),
+        'ai_powered' => false
     ]);
+}
+
+/**
+ * AI-Powered Quiz Matches Endpoint
+ * POST /quiz/ai-matches
+ */
+function getAIQuizMatches() {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $answers = $data['answers'] ?? [];
+    $limit = $data['limit'] ?? 10;
+
+    $result = getAIQuizMatchesInternal($answers, $limit);
+
+    if (!$result['success']) {
+        // Fall back to rule-based matching
+        error_log("AI matching failed: " . ($result['error'] ?? 'Unknown error'));
+
+        $fallbackMatches = calculateMatches($answers, $limit);
+        jsonResponse([
+            'matches' => $fallbackMatches,
+            'total' => count($fallbackMatches),
+            'ai_powered' => false,
+            'fallback_reason' => $result['error'] ?? 'AI matching unavailable'
+        ]);
+        return;
+    }
+
+    jsonResponse([
+        'matches' => $result['matches'],
+        'total' => count($result['matches']),
+        'ai_powered' => true,
+        'ai_insights' => $result['ai_insights'] ?? null,
+        'model_used' => $result['model_used'] ?? null
+    ]);
+}
+
+/**
+ * Internal AI matching function
+ */
+function getAIQuizMatchesInternal($answers, $limit = 10) {
+    $openRouter = new OpenRouter();
+
+    // Check if AI is configured
+    if (!$openRouter->isConfigured()) {
+        return [
+            'success' => false,
+            'error' => 'OpenRouter API not configured'
+        ];
+    }
+
+    // Fetch all active coaches
+    $coaches = fetchActiveCoaches();
+    if (empty($coaches)) {
+        return [
+            'success' => false,
+            'error' => 'No coaches available'
+        ];
+    }
+
+    // Use OpenRouter to get AI-powered matches
+    $result = $openRouter->matchCoaches($answers, $coaches, $limit);
+
+    if (!$result['success']) {
+        return $result;
+    }
+
+    return [
+        'success' => true,
+        'matches' => $result['matches'],
+        'ai_insights' => $result['ai_insights'] ?? null,
+        'model_used' => $result['model_used'] ?? null
+    ];
+}
+
+/**
+ * Fetch active coaches from database
+ */
+function fetchActiveCoaches() {
+    $url = SUPABASE_URL . '/rest/v1/cs_coaches?select=*&onboarding_completed=eq.true';
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => getSupabaseHeaders()
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode !== 200) {
+        error_log("Failed to fetch coaches: HTTP $httpCode");
+        return [];
+    }
+
+    return json_decode($response, true) ?? [];
 }
 
 function calculateMatches($answers, $limit = 10) {
