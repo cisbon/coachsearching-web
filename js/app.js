@@ -14,6 +14,12 @@ import { SessionNotesWizard, SessionNotesDashboard } from './sessionNotes.js';
 import { ReferralDashboard, ReferralWidget } from './referrals.js';
 import { PromoCodeWidget, PromoCodeBanner, PromoCodeManager } from './promoCode.js';
 
+// SEO Content Pages
+import { FAQPage } from './pages/FAQPage.js';
+import { AboutPage } from './pages/AboutPage.js';
+import { HowItWorksPage } from './pages/HowItWorksPage.js';
+import { CategoryPage, CategoriesIndexPage, COACHING_CATEGORIES } from './pages/CategoryPage.js';
+
 console.log('App.js: React global', React);
 console.log('App.js: ReactDOM global', ReactDOM);
 console.log('App.js: htm imported');
@@ -226,16 +232,62 @@ const LegalModal = ({ isOpen, onClose, type }) => {
 
 const Footer = ({ onOpenLegal }) => {
     return html`
-        <footer>
-            <div class="container footer-content">
-                <div>
-                    <div class="logo" style=${{ fontSize: '1.2rem' }}>coach<span>searching</span>.com</div>
-                    <div style=${{ color: '#888', fontSize: '0.85rem', marginTop: '8px' }}>© 2025 coachsearching.com</div>
-                </div>
-                <div class="footer-links">
-                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }} role="button">Imprint</a>
-                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('privacy'); }} role="button">Privacy</a>
-                    <a href="#" class="footer-link" onClick=${(e) => { e.preventDefault(); onOpenLegal('terms'); }} role="button">Terms</a>
+        <footer class="site-footer">
+            <div class="container">
+                <div class="footer-grid">
+                    <!-- Brand Column -->
+                    <div class="footer-brand">
+                        <div class="logo" style=${{ fontSize: '1.4rem', marginBottom: '12px' }}>coach<span>searching</span>.com</div>
+                        <p style=${{ color: '#9ca3af', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '16px' }}>
+                            Find your perfect coach and start your transformation journey today.
+                        </p>
+                        <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>© 2025 coachsearching.com</div>
+                    </div>
+
+                    <!-- Coaching Types Column -->
+                    <div class="footer-column">
+                        <h4>Coaching Types</h4>
+                        <ul>
+                            <li><a href="#coaching/executive-coaching">Executive Coaching</a></li>
+                            <li><a href="#coaching/life-coaching">Life Coaching</a></li>
+                            <li><a href="#coaching/career-coaching">Career Coaching</a></li>
+                            <li><a href="#coaching/business-coaching">Business Coaching</a></li>
+                            <li><a href="#categories">View All Categories</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- More Coaching Column -->
+                    <div class="footer-column">
+                        <h4>More Coaching</h4>
+                        <ul>
+                            <li><a href="#coaching/leadership">Leadership Coaching</a></li>
+                            <li><a href="#coaching/health-wellness">Health & Wellness</a></li>
+                            <li><a href="#coaching/mindfulness">Mindfulness Coaching</a></li>
+                            <li><a href="#coaching/relationship-coaching">Relationship Coaching</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Company Column -->
+                    <div class="footer-column">
+                        <h4>Company</h4>
+                        <ul>
+                            <li><a href="#about">About Us</a></li>
+                            <li><a href="#how-it-works">How It Works</a></li>
+                            <li><a href="#faq">FAQ</a></li>
+                            <li><a href="#coaches">Find a Coach</a></li>
+                            <li><a href="#quiz">Take the Quiz</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Legal Column -->
+                    <div class="footer-column">
+                        <h4>Legal</h4>
+                        <ul>
+                            <li><a href="#" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }}>Imprint</a></li>
+                            <li><a href="#" onClick=${(e) => { e.preventDefault(); onOpenLegal('privacy'); }}>Privacy Policy</a></li>
+                            <li><a href="#" onClick=${(e) => { e.preventDefault(); onOpenLegal('terms'); }}>Terms of Service</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </footer>
@@ -4991,6 +5043,105 @@ const DashboardProfile = ({ session, userType }) => {
     `;
 };
 
+// Coaching Categories Section for Home Page
+const CoachingCategoriesSection = () => {
+    const categories = [
+        { slug: 'executive-coaching', title: 'Executive Coaching', icon: '👔', description: 'Leadership development for C-suite and senior managers' },
+        { slug: 'life-coaching', title: 'Life Coaching', icon: '🌟', description: 'Find purpose and create lasting positive change' },
+        { slug: 'career-coaching', title: 'Career Coaching', icon: '💼', description: 'Navigate transitions and advance your career' },
+        { slug: 'business-coaching', title: 'Business Coaching', icon: '📊', description: 'Grow your business with expert guidance' },
+        { slug: 'leadership', title: 'Leadership Coaching', icon: '👑', description: 'Build influence and inspire your team' },
+        { slug: 'health-wellness', title: 'Health & Wellness', icon: '💪', description: 'Achieve optimal health and wellbeing' },
+        { slug: 'mindfulness', title: 'Mindfulness Coaching', icon: '🧘', description: 'Reduce stress and find inner peace' },
+        { slug: 'relationship-coaching', title: 'Relationship Coaching', icon: '💑', description: 'Build stronger, healthier relationships' },
+    ];
+
+    return html`
+        <section class="coaching-categories-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>${t('home.categories.title') || 'Find Your Perfect Coach'}</h2>
+                    <p>${t('home.categories.subtitle') || 'Explore our coaching specialties and discover how we can help you grow'}</p>
+                </div>
+                <div class="categories-grid-home">
+                    ${categories.map(cat => html`
+                        <a href="#coaching/${cat.slug}" class="category-card-home" key=${cat.slug}>
+                            <div class="category-icon-home">${cat.icon}</div>
+                            <h3>${cat.title}</h3>
+                            <p>${cat.description}</p>
+                        </a>
+                    `)}
+                </div>
+                <div class="categories-cta-home">
+                    <a href="#categories" class="btn-secondary">View All Categories</a>
+                    <a href="#quiz" class="btn-primary">Find Your Match</a>
+                </div>
+            </div>
+        </section>
+    `;
+};
+
+// How It Works Section for Home Page
+const HowItWorksSection = () => {
+    const steps = [
+        { number: '1', title: t('home.howItWorks.step1.title') || 'Find Your Coach', description: t('home.howItWorks.step1.desc') || 'Browse verified coaches or take our matching quiz', icon: '🔍' },
+        { number: '2', title: t('home.howItWorks.step2.title') || 'Book a Session', description: t('home.howItWorks.step2.desc') || 'Choose a time and format that works for you', icon: '📅' },
+        { number: '3', title: t('home.howItWorks.step3.title') || 'Transform', description: t('home.howItWorks.step3.desc') || 'Work with your coach to achieve your goals', icon: '🚀' },
+    ];
+
+    return html`
+        <section class="how-it-works-section-home">
+            <div class="container">
+                <div class="section-header">
+                    <h2>${t('home.howItWorks.title') || 'How It Works'}</h2>
+                    <p>${t('home.howItWorks.subtitle') || 'Start your transformation in three simple steps'}</p>
+                </div>
+                <div class="steps-grid-home">
+                    ${steps.map(step => html`
+                        <div class="step-card-home" key=${step.number}>
+                            <div class="step-icon-home">${step.icon}</div>
+                            <div class="step-number-home">${step.number}</div>
+                            <h3>${step.title}</h3>
+                            <p>${step.description}</p>
+                        </div>
+                    `)}
+                </div>
+                <div class="hiw-cta-home">
+                    <a href="#how-it-works" class="btn-link">Learn more about how it works →</a>
+                </div>
+            </div>
+        </section>
+    `;
+};
+
+// Trust Badges Section
+const TrustBadgesSection = () => {
+    return html`
+        <section class="trust-section-home">
+            <div class="container">
+                <div class="trust-badges-home">
+                    <div class="trust-badge-home">
+                        <span class="trust-icon">✓</span>
+                        <span class="trust-text">500+ Verified Coaches</span>
+                    </div>
+                    <div class="trust-badge-home">
+                        <span class="trust-icon">⭐</span>
+                        <span class="trust-text">4.9 Average Rating</span>
+                    </div>
+                    <div class="trust-badge-home">
+                        <span class="trust-icon">🔒</span>
+                        <span class="trust-text">Secure Payments</span>
+                    </div>
+                    <div class="trust-badge-home">
+                        <span class="trust-icon">💯</span>
+                        <span class="trust-text">Satisfaction Guaranteed</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+};
+
 const Home = ({ session }) => {
     const [searchFilters, setSearchFilters] = useState(null);
 
@@ -5000,8 +5151,19 @@ const Home = ({ session }) => {
     };
 
     return html`
-    <div>
+        <div>
             <${Hero} onSearch=${handleSearch} />
+            <${TrustBadgesSection} />
+            <${CoachingCategoriesSection} />
+            <${HowItWorksSection} />
+            <div class="featured-coaches-section">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>${t('home.featuredCoaches.title') || 'Featured Coaches'}</h2>
+                        <p>${t('home.featuredCoaches.subtitle') || 'Connect with our top-rated verified professionals'}</p>
+                    </div>
+                </div>
+            </div>
             <${CoachList} searchFilters=${searchFilters} session=${session} />
         </div>
     `;
@@ -6601,16 +6763,38 @@ const App = () => {
     }
 
     let Component;
-    switch (route) {
-        case '#home': Component = () => html`<${Home} session=${session} />`; break;
-        case '#coaches': Component = () => html`<${CoachList} session=${session} />`; break;
-        case '#login': Component = Auth; break;
-        case '#onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
-        case '#dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
-        case '#quiz': Component = () => html`<${MatchingQuiz} session=${session} />`; break;
-        case '#ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;
-        case '#signout': Component = SignOut; break;
-        default: Component = () => html`<${Home} session=${session} />`;
+
+    // Parse route for dynamic routing
+    const routePath = route.split('?')[0]; // Remove query params
+    const routeParts = routePath.replace('#', '').split('/');
+    const baseRoute = routeParts[0];
+    const routeParam = routeParts[1] || null;
+
+    // Handle dynamic routes first
+    if (routePath.startsWith('#coaching/') && routeParam) {
+        // Category pages like #coaching/executive-coaching
+        Component = () => html`<${CategoryPage} categorySlug=${routeParam} />`;
+    } else if (routePath.startsWith('#coach/') && routeParam) {
+        // Coach profile pages (existing functionality - handled by CoachList)
+        Component = () => html`<${CoachList} session=${session} coachId=${routeParam} />`;
+    } else {
+        // Static routes
+        switch (route) {
+            case '#home': Component = () => html`<${Home} session=${session} />`; break;
+            case '#coaches': Component = () => html`<${CoachList} session=${session} />`; break;
+            case '#login': Component = Auth; break;
+            case '#onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
+            case '#dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
+            case '#quiz': Component = () => html`<${MatchingQuiz} session=${session} />`; break;
+            case '#ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;
+            case '#signout': Component = SignOut; break;
+            // New content pages
+            case '#faq': Component = () => html`<${FAQPage} />`; break;
+            case '#about': Component = () => html`<${AboutPage} />`; break;
+            case '#how-it-works': Component = () => html`<${HowItWorksPage} />`; break;
+            case '#categories': Component = () => html`<${CategoriesIndexPage} />`; break;
+            default: Component = () => html`<${Home} session=${session} />`;
+        }
     }
 
     return html`

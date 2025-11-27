@@ -13,6 +13,7 @@
 @import url('./css/marketing-pages.css');
 @import url('./css/loading-animations.css');
 @import url('./css/seo-content-pages.css');
+@import url('./css/home-sections.css');
 @import url('./css/utils.css');
 
 :root {
@@ -595,13 +596,76 @@ header {
 }
 
 /* Footer */
-footer {
+footer, .site-footer {
     background-color: #1a1a1a;
     color: white;
-    padding: 40px 0;
+    padding: 60px 0 40px;
     margin-top: auto;
 }
 
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr repeat(4, 1fr);
+    gap: 40px;
+}
+
+@media (max-width: 992px) {
+    .footer-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .footer-brand {
+        grid-column: 1 / -1;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+    }
+}
+
+.footer-brand .logo {
+    color: white;
+}
+
+.footer-brand .logo span {
+    color: var(--petrol-light);
+}
+
+.footer-column h4 {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-column ul li {
+    margin-bottom: 10px;
+}
+
+.footer-column ul li a {
+    color: #9ca3af;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.footer-column ul li a:hover {
+    color: var(--petrol-light);
+}
+
+/* Legacy footer styles for backward compatibility */
 .footer-content {
     display: flex;
     justify-content: space-between;

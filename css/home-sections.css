@@ -1,0 +1,319 @@
+/**
+ * Home Page Sections Styles
+ * Styles for coaching categories, how it works, and trust sections
+ */
+
+/* ==========================================================================
+   Section Headers
+   ========================================================================== */
+
+.section-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.section-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-main, #1a1a1a);
+    margin-bottom: 12px;
+}
+
+.section-header p {
+    font-size: 1.125rem;
+    color: var(--text-muted, #6b7280);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ==========================================================================
+   Trust Badges Section
+   ========================================================================== */
+
+.trust-section-home {
+    background: linear-gradient(135deg, var(--primary-petrol, #006266) 0%, var(--petrol-dark, #004a4d) 100%);
+    padding: 24px 0;
+}
+
+.trust-badges-home {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 40px;
+}
+
+.trust-badge-home {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+}
+
+.trust-badge-home .trust-icon {
+    font-size: 1.25rem;
+}
+
+.trust-badge-home .trust-text {
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .trust-badges-home {
+        gap: 20px;
+    }
+
+    .trust-badge-home {
+        flex: 0 0 calc(50% - 20px);
+        justify-content: center;
+    }
+}
+
+/* ==========================================================================
+   Coaching Categories Section
+   ========================================================================== */
+
+.coaching-categories-section {
+    padding: 80px 0;
+    background: var(--bg-body, #f5f5f5);
+}
+
+.categories-grid-home {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+@media (max-width: 992px) {
+    .categories-grid-home {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .categories-grid-home {
+        grid-template-columns: 1fr;
+    }
+}
+
+.category-card-home {
+    display: block;
+    padding: 28px 24px;
+    background: white;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    text-decoration: none;
+    color: var(--text-main);
+    transition: all 0.3s ease;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.category-card-home:hover {
+    border-color: var(--primary-petrol);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(0, 98, 102, 0.15);
+}
+
+.category-icon-home {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+}
+
+.category-card-home h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-main);
+}
+
+.category-card-home p {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.categories-cta-home {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+/* ==========================================================================
+   How It Works Section (Home)
+   ========================================================================== */
+
+.how-it-works-section-home {
+    padding: 80px 0;
+    background: white;
+}
+
+.steps-grid-home {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin-bottom: 32px;
+}
+
+@media (max-width: 768px) {
+    .steps-grid-home {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+}
+
+.step-card-home {
+    text-align: center;
+    position: relative;
+    padding: 24px;
+}
+
+.step-icon-home {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.step-number-home {
+    position: absolute;
+    top: 0;
+    right: 50%;
+    transform: translateX(80px);
+    width: 32px;
+    height: 32px;
+    background: var(--primary-petrol);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .step-number-home {
+        right: auto;
+        left: 50%;
+        transform: translateX(30px);
+    }
+}
+
+.step-card-home h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-main);
+}
+
+.step-card-home p {
+    font-size: 0.9375rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.hiw-cta-home {
+    text-align: center;
+}
+
+.hiw-cta-home .btn-link {
+    color: var(--primary-petrol);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.hiw-cta-home .btn-link:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Featured Coaches Section
+   ========================================================================== */
+
+.featured-coaches-section {
+    padding: 60px 0 20px;
+    background: var(--bg-body, #f5f5f5);
+}
+
+/* ==========================================================================
+   CTA Section (Home)
+   ========================================================================== */
+
+.cta-section-home {
+    padding: 80px 0;
+    background: linear-gradient(135deg, var(--primary-petrol) 0%, var(--petrol-dark) 100%);
+    color: white;
+    text-align: center;
+}
+
+.cta-section-home h2 {
+    font-size: 2rem;
+    margin-bottom: 16px;
+}
+
+.cta-section-home p {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto 32px;
+}
+
+.cta-buttons-home {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.cta-buttons-home .btn-primary {
+    background: white;
+    color: var(--primary-petrol);
+}
+
+.cta-buttons-home .btn-primary:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.cta-buttons-home .btn-secondary {
+    background: transparent;
+    border: 2px solid white;
+    color: white;
+}
+
+.cta-buttons-home .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media (max-width: 640px) {
+    .coaching-categories-section,
+    .how-it-works-section-home {
+        padding: 50px 0;
+    }
+
+    .section-header h2 {
+        font-size: 1.75rem;
+    }
+
+    .section-header p {
+        font-size: 1rem;
+    }
+
+    .categories-cta-home,
+    .cta-buttons-home {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .categories-cta-home a,
+    .cta-buttons-home a {
+        width: 100%;
+        max-width: 300px;
+        text-align: center;
+    }
+}
