@@ -206,15 +206,53 @@ const getErrorIcon = (type) => {
 };
 
 /**
+ * Check if in development mode
+ * @returns {boolean}
+ */
+const isDevelopment = () => {
+    return window.DEBUG_MODE === true ||
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('.local');
+};
+
+/**
  * Log error for debugging (only in development)
+ * @param {Error|unknown} error - Error to log
+ * @param {string} [context=''] - Context where error occurred
  */
 export const logError = (error, context = '') => {
-    if (process.env.NODE_ENV === 'development' || window.DEBUG_MODE) {
+    if (isDevelopment()) {
         console.group(`🔴 Error${context ? ` in ${context}` : ''}`);
         console.error('Original error:', error);
         console.log('Parsed error:', parseError(error));
         console.trace('Stack trace:');
         console.groupEnd();
+    }
+};
+
+/**
+ * Handle error with consistent behavior
+ * @param {Error|unknown} error - Error to handle
+ * @param {Object} [options] - Options
+ * @param {string} [options.context] - Context where error occurred
+ * @param {boolean} [options.showToast=true] - Show toast notification
+ * @param {boolean} [options.log=true] - Log to console
+ * @param {boolean} [options.rethrow=false] - Rethrow the error
+ */
+export const handleError = (error, options = {}) => {
+    const { context = '', showToast = true, log = true, rethrow = false } = options;
+
+    if (log) {
+        logError(error, context);
+    }
+
+    if (showToast) {
+        showError(error);
+    }
+
+    if (rethrow) {
+        throw error;
     }
 };
 
@@ -268,6 +306,8 @@ export default {
     parseError,
     showError,
     logError,
+    handleError,
     withErrorHandling,
-    withRetry
+    withRetry,
+    isDevelopment
 };

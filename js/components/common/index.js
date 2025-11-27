@@ -5,3 +5,4 @@
 export { Spinner, PageLoading, Skeleton, CardSkeleton } from './Loading.js';
 export { Button, IconButton } from './Button.js';
 export { Alert, EmailVerificationBanner } from './Alert.js';
+export { LazyImage, AvatarImage, BackgroundImage } from './LazyImage.js';
