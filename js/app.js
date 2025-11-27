@@ -359,8 +359,6 @@ const Navbar = ({ session }) => {
             <div class="container nav-flex">
                 <a href="#" class="logo" onClick=${() => window.location.hash = '#home'}>coach<span>searching</span>.com</a>
                 <nav class="nav-links" role="navigation">
-                    <a href="#home">${t('nav.home')}</a>
-                    <a href="#coaches">${t('nav.coaches')}</a>
                     ${session ? html`
                         <a href="#dashboard">${t('nav.dashboard')}</a>
                         <a href="#signout" class="nav-auth-btn">Sign Out</a>
