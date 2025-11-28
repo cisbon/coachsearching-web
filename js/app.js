@@ -1428,7 +1428,7 @@ const Hero = () => {
                         <span class="discovery-label">${t('discovery.takeQuiz')}</span>
                         <span class="discovery-desc">${t('discovery.takeQuizDesc')}</span>
                     </button>
-                    <button class="discovery-option browse-option" onClick=${() => document.querySelector('.coach-list')?.scrollIntoView({ behavior: 'smooth' })}>
+                    <button class="discovery-option browse-option" onClick=${() => window.location.href = 'https://cisbon.github.io/coachsearching-web/#coaches'}>
                         <span class="discovery-icon">🔍</span>
                         <span class="discovery-label">${t('discovery.browse')}</span>
                         <span class="discovery-desc">${t('discovery.browseDesc')}</span>
@@ -1835,7 +1835,7 @@ const CoachList = ({ searchFilters, session }) => {
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [loading, setLoading] = useState(false);
     const [, forceUpdate] = useState({});
-    const [showFilters, setShowFilters] = useState(false);
+    const [showFilters, setShowFilters] = useState(true);
     const [filters, setFilters] = useState({
         sortBy: 'relevance',
         minPrice: '',
