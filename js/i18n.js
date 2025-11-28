@@ -28,6 +28,17 @@ const translations = {
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. All rights reserved.",
+        "footer.tagline": "Find your perfect coach and start your transformation journey today.",
+        "footer.coachingTypes": "Coaching Types",
+        "footer.moreCoaching": "More Coaching",
+        "footer.company": "Company",
+        "footer.aboutUs": "About Us",
+        "footer.howItWorks": "How It Works",
+        "footer.faq": "FAQ",
+        "footer.legal": "Legal",
+        "footer.imprint": "Imprint",
+        "footer.privacy": "Privacy Policy",
+        "footer.terms": "Terms of Service",
 
         // Dashboard
         "dashboard.welcome": "Welcome",
@@ -329,6 +340,10 @@ const translations = {
         "trust.reviewsDesc": "Real feedback from verified clients",
         "trust.secure": "Secure Payments",
         "trust.secureDesc": "Protected transactions through Stripe",
+        "trust.verifiedCoaches": "500+ Verified Coaches",
+        "trust.avgRating": "4.9 Average Rating",
+        "trust.securePayments": "Secure Payments",
+        "trust.satisfaction": "Satisfaction Guaranteed",
 
         // Verification Badges
         "badge.identity": "Identity Verified",
@@ -1010,6 +1025,22 @@ const translations = {
         "category.mindfulness.desc": "Reduce stress, find inner peace, and improve focus",
         "category.relationship.title": "Relationship Coaching",
         "category.relationship.desc": "Build stronger, healthier personal and professional relationships",
+        "category.findMatch": "Find Your Match",
+
+        // Category Page
+        "categoryPage.findCoaches": "Find Coaches",
+        "categoryPage.topRatedCoaches": "Top-rated coaches in this specialty",
+        "categoryPage.viewAllCoaches": "View All Coaches",
+        "categoryPage.notFound": "Category Not Found",
+        "categoryPage.notFoundDesc": "Sorry, we couldn't find this coaching category.",
+        "categoryPage.readyToStart": "Ready to Start Your Journey?",
+        "categoryPage.findPerfectCoach": "Find your perfect coach and take the first step toward transformation.",
+        "categoryPage.getMatched": "Get Matched",
+        "categoryPage.categories": "Coaching Categories",
+        "categoryPage.exploreSpecialties": "Explore our coaching specialties to find the perfect type of coach for your goals.",
+        "categoryPage.learnMore": "Learn More",
+        "categoryPage.notSureTitle": "Not Sure Which Type You Need?",
+        "categoryPage.notSureDesc": "Take our quick quiz to get personalized coach recommendations.",
 
         // Social Proof & Conversion
         "social.personViewing": "person viewing",
@@ -1186,6 +1217,17 @@ const translations = {
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. Alle Rechte vorbehalten.",
+        "footer.tagline": "Finden Sie Ihren perfekten Coach und starten Sie noch heute Ihre Transformation.",
+        "footer.coachingTypes": "Coaching-Arten",
+        "footer.moreCoaching": "Mehr Coaching",
+        "footer.company": "Unternehmen",
+        "footer.aboutUs": "Über uns",
+        "footer.howItWorks": "So funktioniert es",
+        "footer.faq": "FAQ",
+        "footer.legal": "Rechtliches",
+        "footer.imprint": "Impressum",
+        "footer.privacy": "Datenschutz",
+        "footer.terms": "AGB",
 
         // Dashboard
         "dashboard.welcome": "Willkommen",
@@ -1716,6 +1758,22 @@ const translations = {
         "category.mindfulness.desc": "Stress reduzieren, inneren Frieden finden und Fokus verbessern",
         "category.relationship.title": "Beziehungs-Coaching",
         "category.relationship.desc": "Stärkere, gesündere persönliche und berufliche Beziehungen aufbauen",
+        "category.findMatch": "Finden Sie Ihren Match",
+
+        // Category Page
+        "categoryPage.findCoaches": "Coaches finden",
+        "categoryPage.topRatedCoaches": "Bestbewertete Coaches in diesem Bereich",
+        "categoryPage.viewAllCoaches": "Alle Coaches anzeigen",
+        "categoryPage.notFound": "Kategorie nicht gefunden",
+        "categoryPage.notFoundDesc": "Leider konnten wir diese Coaching-Kategorie nicht finden.",
+        "categoryPage.readyToStart": "Bereit, Ihre Reise zu beginnen?",
+        "categoryPage.findPerfectCoach": "Finden Sie Ihren perfekten Coach und machen Sie den ersten Schritt zur Transformation.",
+        "categoryPage.getMatched": "Matching starten",
+        "categoryPage.categories": "Coaching-Kategorien",
+        "categoryPage.exploreSpecialties": "Entdecken Sie unsere Coaching-Spezialitäten und finden Sie den perfekten Coach für Ihre Ziele.",
+        "categoryPage.learnMore": "Mehr erfahren",
+        "categoryPage.notSureTitle": "Nicht sicher, welchen Typ Sie brauchen?",
+        "categoryPage.notSureDesc": "Machen Sie unser Quiz für personalisierte Coach-Empfehlungen.",
 
         // Social Proof & Conversion
         "social.personViewing": "Person sieht zu",
@@ -1743,6 +1801,10 @@ const translations = {
         "trust.good": "Gut",
         "trust.building": "Im Aufbau",
         "trust.new": "Neu",
+        "trust.verifiedCoaches": "500+ Verifizierte Coaches",
+        "trust.avgRating": "4.9 Durchschnittliche Bewertung",
+        "trust.securePayments": "Sichere Zahlungen",
+        "trust.satisfaction": "Zufriedenheitsgarantie",
         "badge.identity": "Identität verifiziert",
         "badge.credentials": "Qualifikationen verifiziert",
         "badge.video": "Video-Intro",
@@ -1874,6 +1936,17 @@ const translations = {
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. Todos los derechos reservados.",
+        "footer.tagline": "Encuentra tu coach perfecto y comienza tu viaje de transformación hoy.",
+        "footer.coachingTypes": "Tipos de Coaching",
+        "footer.moreCoaching": "Más Coaching",
+        "footer.company": "Empresa",
+        "footer.aboutUs": "Sobre Nosotros",
+        "footer.howItWorks": "Cómo Funciona",
+        "footer.faq": "Preguntas Frecuentes",
+        "footer.legal": "Legal",
+        "footer.imprint": "Aviso Legal",
+        "footer.privacy": "Política de Privacidad",
+        "footer.terms": "Términos de Servicio",
 
         // Dashboard
         "dashboard.welcome": "Bienvenido",
@@ -2404,6 +2477,22 @@ const translations = {
         "category.mindfulness.desc": "Reduce el estrés, encuentra paz interior y mejora el enfoque",
         "category.relationship.title": "Coaching de Relaciones",
         "category.relationship.desc": "Construye relaciones personales y profesionales más fuertes y saludables",
+        "category.findMatch": "Encuentra Tu Match",
+
+        // Category Page
+        "categoryPage.findCoaches": "Encontrar Coaches",
+        "categoryPage.topRatedCoaches": "Coaches mejor calificados en esta especialidad",
+        "categoryPage.viewAllCoaches": "Ver Todos los Coaches",
+        "categoryPage.notFound": "Categoría No Encontrada",
+        "categoryPage.notFoundDesc": "Lo sentimos, no pudimos encontrar esta categoría de coaching.",
+        "categoryPage.readyToStart": "¿Listo para Comenzar Tu Viaje?",
+        "categoryPage.findPerfectCoach": "Encuentra tu coach perfecto y da el primer paso hacia la transformación.",
+        "categoryPage.getMatched": "Obtener Match",
+        "categoryPage.categories": "Categorías de Coaching",
+        "categoryPage.exploreSpecialties": "Explora nuestras especialidades de coaching para encontrar el tipo perfecto de coach para tus objetivos.",
+        "categoryPage.learnMore": "Saber Más",
+        "categoryPage.notSureTitle": "¿No Estás Seguro del Tipo Que Necesitas?",
+        "categoryPage.notSureDesc": "Haz nuestro quiz para obtener recomendaciones de coaches personalizadas.",
 
         // Social Proof & Conversion
         "social.personViewing": "persona viendo",
@@ -2432,6 +2521,10 @@ const translations = {
         "trust.responseTime": "Respuesta Rápida",
         "trust.guarantee": "Garantía de Satisfacción",
         "trust.securePayment": "Pago Seguro",
+        "trust.verifiedCoaches": "500+ Coaches Verificados",
+        "trust.avgRating": "4.9 Calificación Promedio",
+        "trust.securePayments": "Pagos Seguros",
+        "trust.satisfaction": "Satisfacción Garantizada",
         "trust.moneyBack": "Garantía de Devolución",
 
         // Video Elements
@@ -2558,6 +2651,17 @@ const translations = {
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. Tous droits réservés.",
+        "footer.tagline": "Trouvez votre coach parfait et commencez votre transformation aujourd'hui.",
+        "footer.coachingTypes": "Types de Coaching",
+        "footer.moreCoaching": "Plus de Coaching",
+        "footer.company": "Entreprise",
+        "footer.aboutUs": "À Propos",
+        "footer.howItWorks": "Comment Ça Marche",
+        "footer.faq": "FAQ",
+        "footer.legal": "Mentions Légales",
+        "footer.imprint": "Mentions Légales",
+        "footer.privacy": "Politique de Confidentialité",
+        "footer.terms": "Conditions d'Utilisation",
 
         // Dashboard
         "dashboard.welcome": "Bienvenue",
@@ -3088,6 +3192,22 @@ const translations = {
         "category.mindfulness.desc": "Réduisez le stress, trouvez la paix intérieure et améliorez la concentration",
         "category.relationship.title": "Coaching Relationnel",
         "category.relationship.desc": "Construisez des relations personnelles et professionnelles plus fortes et saines",
+        "category.findMatch": "Trouvez Votre Match",
+
+        // Category Page
+        "categoryPage.findCoaches": "Trouver des Coachs",
+        "categoryPage.topRatedCoaches": "Coachs les mieux notés dans cette spécialité",
+        "categoryPage.viewAllCoaches": "Voir Tous les Coachs",
+        "categoryPage.notFound": "Catégorie Non Trouvée",
+        "categoryPage.notFoundDesc": "Désolé, nous n'avons pas pu trouver cette catégorie de coaching.",
+        "categoryPage.readyToStart": "Prêt à Commencer Votre Parcours ?",
+        "categoryPage.findPerfectCoach": "Trouvez votre coach parfait et faites le premier pas vers la transformation.",
+        "categoryPage.getMatched": "Être Matché",
+        "categoryPage.categories": "Catégories de Coaching",
+        "categoryPage.exploreSpecialties": "Explorez nos spécialités de coaching pour trouver le type de coach parfait pour vos objectifs.",
+        "categoryPage.learnMore": "En Savoir Plus",
+        "categoryPage.notSureTitle": "Pas Sûr du Type Dont Vous Avez Besoin ?",
+        "categoryPage.notSureDesc": "Faites notre quiz pour obtenir des recommandations de coachs personnalisées.",
 
         // Social Proof & Conversion
         "social.personViewing": "personne consulte",
@@ -3117,6 +3237,10 @@ const translations = {
         "trust.guarantee": "Garantie Satisfaction",
         "trust.securePayment": "Paiement Sécurisé",
         "trust.moneyBack": "Garantie de Remboursement",
+        "trust.verifiedCoaches": "500+ Coachs Vérifiés",
+        "trust.avgRating": "4.9 Note Moyenne",
+        "trust.securePayments": "Paiements Sécurisés",
+        "trust.satisfaction": "Satisfaction Garantie",
 
         // Video Elements
         "video.watchIntro": "Voir la Vidéo d'Intro",
@@ -3242,6 +3366,17 @@ const translations = {
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. Tutti i diritti riservati.",
+        "footer.tagline": "Trova il tuo coach perfetto e inizia il tuo viaggio di trasformazione oggi.",
+        "footer.coachingTypes": "Tipi di Coaching",
+        "footer.moreCoaching": "Altro Coaching",
+        "footer.company": "Azienda",
+        "footer.aboutUs": "Chi Siamo",
+        "footer.howItWorks": "Come Funziona",
+        "footer.faq": "FAQ",
+        "footer.legal": "Legale",
+        "footer.imprint": "Note Legali",
+        "footer.privacy": "Privacy Policy",
+        "footer.terms": "Termini di Servizio",
 
         // Dashboard
         "dashboard.welcome": "Benvenuto",
@@ -3772,6 +3907,22 @@ const translations = {
         "category.mindfulness.desc": "Riduci lo stress, trova la pace interiore e migliora la concentrazione",
         "category.relationship.title": "Coaching Relazionale",
         "category.relationship.desc": "Costruisci relazioni personali e professionali più forti e sane",
+        "category.findMatch": "Trova il Tuo Match",
+
+        // Category Page
+        "categoryPage.findCoaches": "Trova Coach",
+        "categoryPage.topRatedCoaches": "Coach più votati in questa specialità",
+        "categoryPage.viewAllCoaches": "Vedi Tutti i Coach",
+        "categoryPage.notFound": "Categoria Non Trovata",
+        "categoryPage.notFoundDesc": "Spiacenti, non siamo riusciti a trovare questa categoria di coaching.",
+        "categoryPage.readyToStart": "Pronto per Iniziare il Tuo Percorso?",
+        "categoryPage.findPerfectCoach": "Trova il tuo coach perfetto e fai il primo passo verso la trasformazione.",
+        "categoryPage.getMatched": "Trova il Match",
+        "categoryPage.categories": "Categorie di Coaching",
+        "categoryPage.exploreSpecialties": "Esplora le nostre specialità di coaching per trovare il tipo perfetto di coach per i tuoi obiettivi.",
+        "categoryPage.learnMore": "Scopri di Più",
+        "categoryPage.notSureTitle": "Non Sei Sicuro del Tipo di Cui Hai Bisogno?",
+        "categoryPage.notSureDesc": "Fai il nostro quiz per ricevere raccomandazioni di coach personalizzate.",
 
         // Social Proof & Conversion
         "social.personViewing": "persona sta visualizzando",
@@ -3801,6 +3952,10 @@ const translations = {
         "trust.guarantee": "Garanzia di Soddisfazione",
         "trust.securePayment": "Pagamento Sicuro",
         "trust.moneyBack": "Garanzia di Rimborso",
+        "trust.verifiedCoaches": "500+ Coach Verificati",
+        "trust.avgRating": "4.9 Valutazione Media",
+        "trust.securePayments": "Pagamenti Sicuri",
+        "trust.satisfaction": "Soddisfazione Garantita",
 
         // Video Elements
         "video.watchIntro": "Guarda Video Intro",

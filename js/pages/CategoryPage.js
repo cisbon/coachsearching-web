@@ -324,34 +324,37 @@ export const COACHING_CATEGORIES = {
 // Helper Components
 // ============================================================================
 
-function CategoryHero({ category }) {
+function CategoryHero({ category, categorySlug }) {
+    const title = t(`categoryPage.${categorySlug}.title`) || category.title;
+    const description = t(`categoryPage.${categorySlug}.description`) || category.description;
+
     return html`
         <section class="category-hero">
             <div class="container">
                 <div class="category-icon-large">${category.icon}</div>
-                <h1>${category.title}</h1>
-                <p class="hero-description">${category.description}</p>
+                <h1>${title}</h1>
+                <p class="hero-description">${description}</p>
                 <div class="hero-cta">
                     <a href="#coaches?specialty=${encodeURIComponent(category.title)}" class="btn btn-primary btn-lg">
-                        Find ${category.title.replace(' Coaching', '')} Coaches
+                        ${t('categoryPage.findCoaches') || 'Find Coaches'}
                     </a>
-                    <a href="#quiz" class="btn btn-secondary btn-lg">Take the Quiz</a>
+                    <a href="#quiz" class="btn btn-secondary btn-lg">${t('category.takeQuiz') || 'Take the Quiz'}</a>
                 </div>
             </div>
         </section>
     `;
 }
 
-function BenefitsList({ benefits }) {
+function BenefitsList({ benefits, categorySlug }) {
     return html`
         <section class="category-benefits">
             <div class="container">
-                <h2>Benefits of ${benefits.title || 'This Coaching'}</h2>
+                <h2>${t('category.benefits') || 'Benefits'}</h2>
                 <div class="benefits-grid">
                     ${benefits.items.map((benefit, i) => html`
                         <div class="benefit-card" key=${i}>
                             <div class="benefit-icon">✓</div>
-                            <p>${benefit}</p>
+                            <p>${t(`categoryPage.${categorySlug}.benefit${i+1}`) || benefit}</p>
                         </div>
                     `)}
                 </div>
@@ -360,14 +363,14 @@ function BenefitsList({ benefits }) {
     `;
 }
 
-function IdealForSection({ items }) {
+function IdealForSection({ items, categorySlug }) {
     return html`
         <section class="category-ideal-for">
             <div class="container">
-                <h2>Who Is This For?</h2>
+                <h2>${t('category.whoIsFor') || 'Who is it for?'}</h2>
                 <ul class="ideal-for-list">
                     ${items.map((item, i) => html`
-                        <li key=${i}>${item}</li>
+                        <li key=${i}>${t(`categoryPage.${categorySlug}.idealFor${i+1}`) || item}</li>
                     `)}
                 </ul>
             </div>
@@ -375,16 +378,16 @@ function IdealForSection({ items }) {
     `;
 }
 
-function CategoryFAQ({ faqs, categoryTitle }) {
+function CategoryFAQ({ faqs, categoryTitle, categorySlug }) {
     return html`
         <section class="category-faq">
             <div class="container">
-                <h2>Frequently Asked Questions About ${categoryTitle}</h2>
+                <h2>${t('seo.faq') || 'Frequently Asked Questions'}</h2>
                 <div class="faq-list">
                     ${faqs.map((faq, i) => html`
                         <div class="faq-item" key=${i}>
-                            <h3>${faq.question}</h3>
-                            <p>${faq.answer}</p>
+                            <h3>${t(`categoryPage.${categorySlug}.faq${i+1}Q`) || faq.question}</h3>
+                            <p>${t(`categoryPage.${categorySlug}.faq${i+1}A`) || faq.answer}</p>
                         </div>
                     `)}
                 </div>
@@ -403,14 +406,15 @@ function RelatedCategories({ categories, currentSlug }) {
     return html`
         <section class="related-categories">
             <div class="container">
-                <h2>Related Coaching Types</h2>
+                <h2>${t('category.relatedCategories') || 'Related Categories'}</h2>
                 <div class="related-grid">
                     ${related.map(slug => {
                         const cat = COACHING_CATEGORIES[slug];
+                        const title = t(`categoryPage.${slug}.title`) || cat.title;
                         return html`
                             <a href="#coaching/${slug}" class="related-card" key=${slug}>
                                 <span class="related-icon">${cat.icon}</span>
-                                <span class="related-title">${cat.title}</span>
+                                <span class="related-title">${title}</span>
                             </a>
                         `;
                     })}
@@ -425,13 +429,13 @@ function CoachPreview() {
     return html`
         <section class="category-coaches-preview">
             <div class="container">
-                <h2>Featured Coaches</h2>
-                <p class="section-subtitle">Top-rated coaches in this specialty</p>
+                <h2>${t('home.featuredCoaches.title') || 'Featured Coaches'}</h2>
+                <p class="section-subtitle">${t('categoryPage.topRatedCoaches') || 'Top-rated coaches in this specialty'}</p>
                 <div class="coaches-placeholder">
-                    <p>Loading coaches...</p>
+                    <p>${t('common.loading') || 'Loading...'}</p>
                 </div>
                 <div class="view-all-link">
-                    <a href="#coaches" class="btn btn-link">View All Coaches →</a>
+                    <a href="#coaches" class="btn btn-link">${t('categoryPage.viewAllCoaches') || 'View All Coaches'} →</a>
                 </div>
             </div>
         </section>
@@ -450,9 +454,9 @@ export function CategoryPage({ categorySlug }) {
         return html`
             <div class="category-not-found">
                 <div class="container">
-                    <h1>Category Not Found</h1>
-                    <p>Sorry, we couldn't find this coaching category.</p>
-                    <a href="#coaches" class="btn btn-primary">Browse All Coaches</a>
+                    <h1>${t('categoryPage.notFound') || 'Category Not Found'}</h1>
+                    <p>${t('categoryPage.notFoundDesc') || "Sorry, we couldn't find this coaching category."}</p>
+                    <a href="#coaches" class="btn btn-primary">${t('seo.browseAll') || 'Browse All Coaches'}</a>
                 </div>
             </div>
         `;
@@ -495,31 +499,34 @@ export function CategoryPage({ categorySlug }) {
         });
     }, [categorySlug, category]);
 
+    const title = t(`categoryPage.${categorySlug}.title`) || category.title;
+    const longDescription = t(`categoryPage.${categorySlug}.longDescription`) || category.longDescription;
+
     return html`
         <div class="category-page">
             <!-- Hero -->
-            <${CategoryHero} category=${category} />
+            <${CategoryHero} category=${category} categorySlug=${categorySlug} />
 
             <!-- Long Description -->
             <section class="category-description">
                 <div class="container">
                     <div class="description-content">
-                        <p>${category.longDescription}</p>
+                        <p>${longDescription}</p>
                     </div>
                 </div>
             </section>
 
             <!-- Benefits -->
-            <${BenefitsList} benefits=${{ items: category.benefits, title: category.title }} />
+            <${BenefitsList} benefits=${{ items: category.benefits, title: title }} categorySlug=${categorySlug} />
 
             <!-- Who Is This For -->
-            <${IdealForSection} items=${category.idealFor} />
+            <${IdealForSection} items=${category.idealFor} categorySlug=${categorySlug} />
 
             <!-- Featured Coaches -->
             <${CoachPreview} />
 
             <!-- FAQ -->
-            <${CategoryFAQ} faqs=${category.faqs} categoryTitle=${category.title} />
+            <${CategoryFAQ} faqs=${category.faqs} categoryTitle=${title} categorySlug=${categorySlug} />
 
             <!-- Related Categories -->
             <${RelatedCategories}
@@ -530,14 +537,14 @@ export function CategoryPage({ categorySlug }) {
             <!-- CTA -->
             <section class="category-cta">
                 <div class="container">
-                    <h2>Ready to Start Your ${category.title} Journey?</h2>
-                    <p>Find your perfect coach and take the first step toward transformation.</p>
+                    <h2>${t('categoryPage.readyToStart') || 'Ready to Start Your Journey?'}</h2>
+                    <p>${t('categoryPage.findPerfectCoach') || 'Find your perfect coach and take the first step toward transformation.'}</p>
                     <div class="cta-buttons">
                         <a href="#coaches?specialty=${encodeURIComponent(category.title)}" class="btn btn-primary btn-lg">
-                            Find a Coach Now
+                            ${t('category.findCoach') || 'Find a Coach'}
                         </a>
                         <a href="#quiz" class="btn btn-secondary btn-lg">
-                            Get Matched
+                            ${t('categoryPage.getMatched') || 'Get Matched'}
                         </a>
                     </div>
                 </div>
@@ -552,14 +559,14 @@ export function CategoryPage({ categorySlug }) {
 export function CategoriesIndexPage() {
     useEffect(() => {
         setPageMeta({
-            title: 'Coaching Categories | Find Your Specialty',
-            description: 'Explore all coaching categories on CoachSearching. From executive coaching to life coaching, find the right type of coach for your needs.',
+            title: t('categoryPage.indexTitle') || 'Coaching Categories | Find Your Specialty',
+            description: t('categoryPage.indexDescription') || 'Explore all coaching categories on CoachSearching. From executive coaching to life coaching, find the right type of coach for your needs.',
             url: 'https://coachsearching.com/#categories',
         });
 
         setStructuredData('breadcrumb-schema', generateBreadcrumbSchema([
-            { name: 'Home', url: 'https://coachsearching.com' },
-            { name: 'Categories', url: 'https://coachsearching.com/#categories' },
+            { name: t('nav.home') || 'Home', url: 'https://coachsearching.com' },
+            { name: t('categoryPage.categories') || 'Categories', url: 'https://coachsearching.com/#categories' },
         ]));
     }, []);
 
@@ -567,25 +574,25 @@ export function CategoriesIndexPage() {
         <div class="categories-index-page">
             <div class="container">
                 <header class="categories-header">
-                    <h1>Coaching Categories</h1>
-                    <p>Explore our coaching specialties to find the perfect type of coach for your goals.</p>
+                    <h1>${t('categoryPage.categories') || 'Coaching Categories'}</h1>
+                    <p>${t('categoryPage.exploreSpecialties') || 'Explore our coaching specialties to find the perfect type of coach for your goals.'}</p>
                 </header>
 
                 <div class="categories-grid">
                     ${Object.entries(COACHING_CATEGORIES).map(([slug, category]) => html`
                         <a href="#coaching/${slug}" class="category-card" key=${slug}>
                             <div class="category-icon">${category.icon}</div>
-                            <h2 class="category-title">${category.title}</h2>
-                            <p class="category-description">${category.description}</p>
-                            <span class="category-link">Learn More →</span>
+                            <h2 class="category-title">${t(`categoryPage.${slug}.title`) || category.title}</h2>
+                            <p class="category-description">${t(`categoryPage.${slug}.description`) || category.description}</p>
+                            <span class="category-link">${t('categoryPage.learnMore') || 'Learn More'} →</span>
                         </a>
                     `)}
                 </div>
 
                 <section class="categories-cta">
-                    <h2>Not Sure Which Type You Need?</h2>
-                    <p>Take our quick quiz to get personalized coach recommendations.</p>
-                    <a href="#quiz" class="btn btn-primary btn-lg">Take the Quiz</a>
+                    <h2>${t('categoryPage.notSureTitle') || 'Not Sure Which Type You Need?'}</h2>
+                    <p>${t('categoryPage.notSureDesc') || 'Take our quick quiz to get personalized coach recommendations.'}</p>
+                    <a href="#quiz" class="btn btn-primary btn-lg">${t('category.takeQuiz') || 'Take the Quiz'}</a>
                 </section>
             </div>
         </div>

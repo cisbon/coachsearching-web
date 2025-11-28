@@ -23,7 +23,6 @@ import { CoachProfilePage } from './pages/CoachProfilePage.js';
 
 // Conversion Optimization Components
 import {
-    RecentActivityToast,
     TestimonialCarousel,
     SuccessStats,
     ExitIntentPopup,
@@ -248,53 +247,53 @@ const Footer = ({ onOpenLegal }) => {
                     <div class="footer-brand">
                         <div class="logo" style=${{ fontSize: '1.4rem', marginBottom: '12px' }}>coach<span>searching</span>.com</div>
                         <p style=${{ color: '#9ca3af', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '16px' }}>
-                            Find your perfect coach and start your transformation journey today.
+                            ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
-                        <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>© 2025 coachsearching.com</div>
+                        <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
                     </div>
 
                     <!-- Coaching Types Column -->
                     <div class="footer-column">
-                        <h4>Coaching Types</h4>
+                        <h4>${t('footer.coachingTypes') || 'Coaching Types'}</h4>
                         <ul>
-                            <li><a href="#coaching/executive-coaching">Executive Coaching</a></li>
-                            <li><a href="#coaching/life-coaching">Life Coaching</a></li>
-                            <li><a href="#coaching/career-coaching">Career Coaching</a></li>
-                            <li><a href="#coaching/business-coaching">Business Coaching</a></li>
-                            <li><a href="#categories">View All Categories</a></li>
+                            <li><a href="#coaching/executive-coaching">${t('category.executive.title')}</a></li>
+                            <li><a href="#coaching/life-coaching">${t('category.life.title')}</a></li>
+                            <li><a href="#coaching/career-coaching">${t('category.career.title')}</a></li>
+                            <li><a href="#coaching/business-coaching">${t('category.business.title')}</a></li>
+                            <li><a href="#categories">${t('category.browseAll')}</a></li>
                         </ul>
                     </div>
 
                     <!-- More Coaching Column -->
                     <div class="footer-column">
-                        <h4>More Coaching</h4>
+                        <h4>${t('footer.moreCoaching') || 'More Coaching'}</h4>
                         <ul>
-                            <li><a href="#coaching/leadership">Leadership Coaching</a></li>
-                            <li><a href="#coaching/health-wellness">Health & Wellness</a></li>
-                            <li><a href="#coaching/mindfulness">Mindfulness Coaching</a></li>
-                            <li><a href="#coaching/relationship-coaching">Relationship Coaching</a></li>
+                            <li><a href="#coaching/leadership">${t('category.leadership.title')}</a></li>
+                            <li><a href="#coaching/health-wellness">${t('category.health.title')}</a></li>
+                            <li><a href="#coaching/mindfulness">${t('category.mindfulness.title')}</a></li>
+                            <li><a href="#coaching/relationship-coaching">${t('category.relationship.title')}</a></li>
                         </ul>
                     </div>
 
                     <!-- Company Column -->
                     <div class="footer-column">
-                        <h4>Company</h4>
+                        <h4>${t('footer.company') || 'Company'}</h4>
                         <ul>
-                            <li><a href="#about">About Us</a></li>
-                            <li><a href="#how-it-works">How It Works</a></li>
-                            <li><a href="#faq">FAQ</a></li>
-                            <li><a href="#coaches">Find a Coach</a></li>
-                            <li><a href="#quiz">Take the Quiz</a></li>
+                            <li><a href="#about">${t('footer.aboutUs') || 'About Us'}</a></li>
+                            <li><a href="#how-it-works">${t('footer.howItWorks') || 'How It Works'}</a></li>
+                            <li><a href="#faq">${t('footer.faq') || 'FAQ'}</a></li>
+                            <li><a href="#coaches">${t('nav.coaches') || 'Find a Coach'}</a></li>
+                            <li><a href="#quiz">${t('category.takeQuiz') || 'Take the Quiz'}</a></li>
                         </ul>
                     </div>
 
                     <!-- Legal Column -->
                     <div class="footer-column">
-                        <h4>Legal</h4>
+                        <h4>${t('footer.legal') || 'Legal'}</h4>
                         <ul>
-                            <li><a href="#" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }}>Imprint</a></li>
-                            <li><a href="#" onClick=${(e) => { e.preventDefault(); onOpenLegal('privacy'); }}>Privacy Policy</a></li>
-                            <li><a href="#" onClick=${(e) => { e.preventDefault(); onOpenLegal('terms'); }}>Terms of Service</a></li>
+                            <li><a href="#" onClick=${(e) => { e.preventDefault(); onOpenLegal('imprint'); }}>${t('footer.imprint') || 'Imprint'}</a></li>
+                            <li><a href="#" onClick=${(e) => { e.preventDefault(); onOpenLegal('privacy'); }}>${t('footer.privacy') || 'Privacy Policy'}</a></li>
+                            <li><a href="#" onClick=${(e) => { e.preventDefault(); onOpenLegal('terms'); }}>${t('footer.terms') || 'Terms of Service'}</a></li>
                         </ul>
                     </div>
                 </div>
@@ -1415,108 +1414,7 @@ const SignOut = () => {
     `;
 };
 
-const Hero = ({ onSearch }) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [sessionType, setSessionType] = useState('online');
-    const [location, setLocation] = useState('');
-    const [radius, setRadius] = useState('25');
-    const [date, setDate] = useState('');
-    const [maxRate, setMaxRate] = useState('');
-    const [gettingLocation, setGettingLocation] = useState(false);
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        console.log('Search:', { searchTerm, sessionType, location, radius, date, maxRate });
-        if (onSearch) {
-            onSearch({ searchTerm, sessionType, location, radius, date, maxRate });
-        }
-    };
-
-    const handleUseMyLocation = () => {
-        if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser');
-            return;
-        }
-
-        setGettingLocation(true);
-        console.log('Getting user location...');
-
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                console.log('Location received:', { latitude, longitude });
-
-                // Reverse geocode to get city name
-                try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-                        { headers: { 'User-Agent': 'CoachSearching/1.0' } }
-                    );
-                    const data = await response.json();
-                    console.log('Geocoding response:', data);
-                    const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county;
-                    const country = data.address?.country;
-                    const locationString = city ? `${city}, ${country}` : `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-
-                    console.log('Location set to:', locationString);
-                    setLocation(locationString);
-                } catch (error) {
-                    console.error('Geocoding error:', error);
-                    setLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
-                }
-
-                setGettingLocation(false);
-            },
-            (error) => {
-                console.error('Geolocation error code:', error.code);
-                console.error('Geolocation error message:', error.message);
-                console.error('Geolocation error:', error);
-
-                let errorMessage = '';
-                const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-                switch(error.code) {
-                    case 1: // PERMISSION_DENIED
-                        if (isIOS || isSafari) {
-                            errorMessage = 'Location access is blocked.\n\n';
-                            errorMessage += 'To enable on iPad/iPhone:\n';
-                            errorMessage += '1. Open Settings app\n';
-                            errorMessage += '2. Go to Privacy & Security → Location Services\n';
-                            errorMessage += '3. Enable Location Services\n';
-                            errorMessage += '4. Scroll down to Safari → Allow "While Using"\n';
-                            errorMessage += '5. Return here and try again\n\n';
-                            errorMessage += 'Or just type your location manually!';
-                        } else {
-                            errorMessage = 'Location access was denied.\n\n';
-                            errorMessage += 'To enable:\n';
-                            errorMessage += '• Click the location icon in your browser address bar\n';
-                            errorMessage += '• Select "Allow" for location access\n';
-                            errorMessage += '• Try again\n\n';
-                            errorMessage += 'Or just type your location manually!';
-                        }
-                        break;
-                    case 2: // POSITION_UNAVAILABLE
-                        errorMessage = 'Location information is unavailable. Please enter your location manually.';
-                        break;
-                    case 3: // TIMEOUT
-                        errorMessage = 'Location request timed out. Please try again or enter your location manually.';
-                        break;
-                    default:
-                        errorMessage = 'Unable to get your location. Please enter it manually.';
-                }
-
-                alert(errorMessage);
-                setGettingLocation(false);
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            }
-        );
-    };
-
+const Hero = () => {
     return html`
         <section class="hero">
             <div class="container">
@@ -1540,103 +1438,6 @@ const Hero = ({ onSearch }) => {
                         <span class="discovery-label">${t('discovery.aiMatch')}</span>
                         <span class="discovery-desc">${t('discovery.aiMatchDesc')}</span>
                     </button>
-                </div>
-            </div>
-            <div class="container">
-                 <div class="search-container">
-                    <form class="search-form" onSubmit=${handleSearch}>
-                        <div class="search-row">
-                            <div class="search-input-group">
-                                <span class="search-icon">🔍</span>
-                                <input
-                                    type="text"
-                                    class="search-input"
-                                    placeholder=${t('search.placeholder')}
-                                    value=${searchTerm}
-                                    onChange=${(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
-                            <div class="search-input-group">
-                                <span class="search-icon">📅</span>
-                                <input
-                                    type="date"
-                                    class="search-input"
-                                    placeholder="Date"
-                                    value=${date}
-                                    onChange=${(e) => setDate(e.target.value)}
-                                />
-                            </div>
-                            <div class="filter-toggle">
-                                <button
-                                    type="button"
-                                    class="filter-toggle-btn ${sessionType === 'online' ? 'active' : ''}"
-                                    onClick=${() => {
-                                        setSessionType('online');
-                                        console.log('Session type: Online');
-                                    }}
-                                >
-                                    💻 ${t('search.online')}
-                                </button>
-                                <button
-                                    type="button"
-                                    class="filter-toggle-btn ${sessionType === 'onsite' ? 'active' : ''}"
-                                    onClick=${() => {
-                                        setSessionType('onsite');
-                                        console.log('Session type: On-Site');
-                                    }}
-                                >
-                                    📍 ${t('search.onsite')}
-                                </button>
-                            </div>
-                            <div class="search-input-group">
-                                <span class="search-icon">💰</span>
-                                <select
-                                    class="search-input rate-select"
-                                    value=${maxRate}
-                                    onChange=${(e) => setMaxRate(e.target.value)}
-                                >
-                                    <option value="">Max ${CURRENCY_SYMBOLS[currentCurrency]}/hr</option>
-                                    <option value="50">${formatPrice(50)}/hr</option>
-                                    <option value="75">${formatPrice(75)}/hr</option>
-                                    <option value="100">${formatPrice(100)}/hr</option>
-                                    <option value="150">${formatPrice(150)}/hr</option>
-                                    <option value="200">${formatPrice(200)}/hr</option>
-                                    <option value="300">${formatPrice(300)}/hr</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="search-btn">${t('search.btn')}</button>
-                        </div>
-                        ${sessionType === 'onsite' ? html`
-                            <div class="location-row">
-                                <div class="location-input-wrapper">
-                                    <span class="search-icon">📍</span>
-                                    <input
-                                        type="text"
-                                        class="location-input"
-                                        placeholder=${t('search.locationPlaceholder')}
-                                        value=${location}
-                                        onChange=${(e) => setLocation(e.target.value)}
-                                    />
-                                    <button
-                                        type="button"
-                                        class="use-location-btn"
-                                        onClick=${handleUseMyLocation}
-                                        disabled=${gettingLocation}
-                                        title="Use my current location"
-                                    >
-                                        ${gettingLocation ? '⌛' : '📍'}
-                                    </button>
-                                </div>
-                                <select class="radius-select" value=${radius} onChange=${(e) => setRadius(e.target.value)}>
-                                    <option value="10">${t('search.within')} 10 km</option>
-                                    <option value="25">${t('search.within')} 25 km</option>
-                                    <option value="50">${t('search.within')} 50 km</option>
-                                    <option value="100">${t('search.within')} 100 km</option>
-                                    <option value="200">${t('search.within')} 200 km</option>
-                                </select>
-                            </div>
-                        ` : ''}
-                    </form>
                 </div>
             </div>
         </section>
@@ -5171,14 +4972,14 @@ const DashboardProfile = ({ session, userType }) => {
 // Coaching Categories Section for Home Page
 const CoachingCategoriesSection = () => {
     const categories = [
-        { slug: 'executive-coaching', title: 'Executive Coaching', icon: '👔', description: 'Leadership development for C-suite and senior managers' },
-        { slug: 'life-coaching', title: 'Life Coaching', icon: '🌟', description: 'Find purpose and create lasting positive change' },
-        { slug: 'career-coaching', title: 'Career Coaching', icon: '💼', description: 'Navigate transitions and advance your career' },
-        { slug: 'business-coaching', title: 'Business Coaching', icon: '📊', description: 'Grow your business with expert guidance' },
-        { slug: 'leadership', title: 'Leadership Coaching', icon: '👑', description: 'Build influence and inspire your team' },
-        { slug: 'health-wellness', title: 'Health & Wellness', icon: '💪', description: 'Achieve optimal health and wellbeing' },
-        { slug: 'mindfulness', title: 'Mindfulness Coaching', icon: '🧘', description: 'Reduce stress and find inner peace' },
-        { slug: 'relationship-coaching', title: 'Relationship Coaching', icon: '💑', description: 'Build stronger, healthier relationships' },
+        { slug: 'executive-coaching', titleKey: 'category.executive.title', icon: '👔', descKey: 'category.executive.desc' },
+        { slug: 'life-coaching', titleKey: 'category.life.title', icon: '🌟', descKey: 'category.life.desc' },
+        { slug: 'career-coaching', titleKey: 'category.career.title', icon: '💼', descKey: 'category.career.desc' },
+        { slug: 'business-coaching', titleKey: 'category.business.title', icon: '📊', descKey: 'category.business.desc' },
+        { slug: 'leadership', titleKey: 'category.leadership.title', icon: '👑', descKey: 'category.leadership.desc' },
+        { slug: 'health-wellness', titleKey: 'category.health.title', icon: '💪', descKey: 'category.health.desc' },
+        { slug: 'mindfulness', titleKey: 'category.mindfulness.title', icon: '🧘', descKey: 'category.mindfulness.desc' },
+        { slug: 'relationship-coaching', titleKey: 'category.relationship.title', icon: '💑', descKey: 'category.relationship.desc' },
     ];
 
     return html`
@@ -5192,14 +4993,14 @@ const CoachingCategoriesSection = () => {
                     ${categories.map(cat => html`
                         <a href="#coaching/${cat.slug}" class="category-card-home" key=${cat.slug}>
                             <div class="category-icon-home">${cat.icon}</div>
-                            <h3>${cat.title}</h3>
-                            <p>${cat.description}</p>
+                            <h3>${t(cat.titleKey)}</h3>
+                            <p>${t(cat.descKey)}</p>
                         </a>
                     `)}
                 </div>
                 <div class="categories-cta-home">
-                    <a href="#categories" class="btn-secondary">View All Categories</a>
-                    <a href="#quiz" class="btn-primary">Find Your Match</a>
+                    <a href="#categories" class="btn-secondary">${t('category.browseAll') || 'View All Categories'}</a>
+                    <a href="#quiz" class="btn-primary">${t('category.findMatch') || 'Find Your Match'}</a>
                 </div>
             </div>
         </section>
@@ -5247,19 +5048,19 @@ const TrustBadgesSection = () => {
                 <div class="trust-badges-home">
                     <div class="trust-badge-home">
                         <span class="trust-icon">✓</span>
-                        <span class="trust-text">500+ Verified Coaches</span>
+                        <span class="trust-text">${t('trust.verifiedCoaches') || '500+ Verified Coaches'}</span>
                     </div>
                     <div class="trust-badge-home">
                         <span class="trust-icon">⭐</span>
-                        <span class="trust-text">4.9 Average Rating</span>
+                        <span class="trust-text">${t('trust.avgRating') || '4.9 Average Rating'}</span>
                     </div>
                     <div class="trust-badge-home">
                         <span class="trust-icon">🔒</span>
-                        <span class="trust-text">Secure Payments</span>
+                        <span class="trust-text">${t('trust.securePayments') || 'Secure Payments'}</span>
                     </div>
                     <div class="trust-badge-home">
                         <span class="trust-icon">💯</span>
-                        <span class="trust-text">Satisfaction Guaranteed</span>
+                        <span class="trust-text">${t('trust.satisfaction') || 'Satisfaction Guaranteed'}</span>
                     </div>
                 </div>
             </div>
@@ -5268,24 +5069,9 @@ const TrustBadgesSection = () => {
 };
 
 const Home = ({ session }) => {
-    const [searchFilters, setSearchFilters] = useState(null);
-
-    const handleSearch = (filters) => {
-        console.log('Home: Search filters received:', filters);
-        setSearchFilters(filters);
-    };
-
-    // Sample recent activities for social proof
-    const recentActivities = [
-        { name: 'Sarah', action: 'just booked a session', coachName: 'Dr. Marcus Klein', timeAgo: '2 minutes ago' },
-        { name: 'Thomas', action: 'started their coaching journey', coachName: 'Elena Rodriguez', timeAgo: '5 minutes ago' },
-        { name: 'Maria', action: 'left a 5-star review', coachName: 'James Wilson', timeAgo: '8 minutes ago' },
-        { name: 'Michael', action: 'completed their 10th session', coachName: 'Anna Schmidt', timeAgo: '12 minutes ago' },
-    ];
-
     return html`
         <div>
-            <${Hero} onSearch=${handleSearch} />
+            <${Hero} />
             <${TrustBadgesSection} />
             <${CoachingCategoriesSection} />
             <${HowItWorksSection} />
@@ -5309,7 +5095,7 @@ const Home = ({ session }) => {
                     </div>
                 </div>
             </div>
-            <${CoachList} searchFilters=${searchFilters} session=${session} />
+            <${CoachList} session=${session} />
 
             <!-- Testimonials Section -->
             <section class="testimonials-section">
@@ -5321,9 +5107,6 @@ const Home = ({ session }) => {
                     <${TestimonialCarousel} />
                 </div>
             </section>
-
-            <!-- Recent Activity Toast (Social Proof) -->
-            <${RecentActivityToast} activities=${recentActivities} />
         </div>
     `;
 };
