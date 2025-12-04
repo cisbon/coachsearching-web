@@ -5033,7 +5033,7 @@ const HowItWorksSection = () => {
                     `)}
                 </div>
                 <div class="hiw-cta-home">
-                    <a href="#how-it-works" class="btn-link">Learn more about how it works →</a>
+                    <a href="#how-it-works" class="btn-link">${t('home.howItWorks.learnMore') || 'Learn more about how it works →'}</a>
                 </div>
             </div>
         </section>
