@@ -7,6 +7,10 @@ const translations = {
         "nav.coaches": "Find a Coach",
         "nav.dashboard": "Dashboard",
         "nav.login": "Login",
+        "nav.browseCoaches": "Browse Coaches",
+        "nav.register": "Register",
+        "nav.signIn": "Sign in",
+        "nav.signOut": "Sign Out",
 
         // Hero
         "hero.title": "Find Your Perfect Coach",
@@ -1632,6 +1636,10 @@ const translations = {
         "nav.coaches": "Coach finden",
         "nav.dashboard": "Dashboard",
         "nav.login": "Anmelden",
+        "nav.browseCoaches": "Coaches durchsuchen",
+        "nav.register": "Registrieren",
+        "nav.signIn": "Anmelden",
+        "nav.signOut": "Abmelden",
 
         // Hero
         "hero.title": "Finde deinen perfekten Coach",
@@ -2802,6 +2810,10 @@ const translations = {
         "nav.coaches": "Buscar Coach",
         "nav.dashboard": "Panel",
         "nav.login": "Entrar",
+        "nav.browseCoaches": "Ver Coaches",
+        "nav.register": "Registrarse",
+        "nav.signIn": "Iniciar sesión",
+        "nav.signOut": "Cerrar sesión",
 
         // Hero
         "hero.title": "Encuentra tu Coach Perfecto",
@@ -3968,6 +3980,10 @@ const translations = {
         "nav.coaches": "Trouver un Coach",
         "nav.dashboard": "Tableau de bord",
         "nav.login": "Connexion",
+        "nav.browseCoaches": "Parcourir les Coaches",
+        "nav.register": "S'inscrire",
+        "nav.signIn": "Se connecter",
+        "nav.signOut": "Se déconnecter",
 
         // Hero
         "hero.title": "Trouvez votre Coach Idéal",
@@ -5144,6 +5160,10 @@ const translations = {
         "nav.coaches": "Trova un Coach",
         "nav.dashboard": "Dashboard",
         "nav.login": "Accedi",
+        "nav.browseCoaches": "Sfoglia i Coach",
+        "nav.register": "Registrati",
+        "nav.signIn": "Accedi",
+        "nav.signOut": "Esci",
 
         // Hero
         "hero.title": "Trova il tuo Coach Perfetto",

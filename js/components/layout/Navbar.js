@@ -66,15 +66,29 @@ export function Navbar() {
                             class="nav-auth-btn"
                             onClick=${(e) => { e.preventDefault(); handleSignOut(); }}
                         >
-                            Sign Out
+                            ${t('nav.signOut')}
                         </a>
                     ` : html`
                         <a
-                            href="#login"
-                            class="nav-auth-btn"
+                            href="#coaches"
+                            class="nav-browse-coaches"
                             onClick=${() => setMobileMenuOpen(false)}
                         >
-                            Sign In / Register
+                            ${t('nav.browseCoaches')}
+                        </a>
+                        <a
+                            href="#login?mode=register"
+                            class="nav-auth-btn nav-register-btn"
+                            onClick=${() => setMobileMenuOpen(false)}
+                        >
+                            ${t('nav.register')}
+                        </a>
+                        <a
+                            href="#login"
+                            class="nav-auth-btn nav-signin-btn"
+                            onClick=${() => setMobileMenuOpen(false)}
+                        >
+                            ${t('nav.signIn')}
                         </a>
                     `}
                     <${CurrencySelector} />
