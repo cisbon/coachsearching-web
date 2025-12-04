@@ -17,175 +17,175 @@ const { useState, useEffect, useMemo, useCallback } = React;
 const html = htm.bind(React.createElement);
 
 // ============================================================================
-// FAQ Data - Comprehensive Q&A organized by category
+// FAQ Data - Using translation keys
 // ============================================================================
 
-const FAQ_CATEGORIES = {
+const getFAQCategories = () => ({
     general: {
-        title: 'General Questions',
+        title: t('faqPage.general.title'),
         icon: '❓',
         faqs: [
             {
-                question: 'What is CoachSearching?',
-                answer: 'CoachSearching is a professional platform that connects clients with certified coaches for business, life, career, and personal development coaching. We verify all coaches on our platform to ensure they have the proper qualifications and experience to help you achieve your goals.',
+                question: t('faqPage.general.q1'),
+                answer: t('faqPage.general.a1'),
             },
             {
-                question: 'How does CoachSearching work?',
-                answer: 'It\'s simple: 1) Search for coaches by specialty, location, or language. 2) Review coach profiles, certifications, and client reviews. 3) Book a session directly through our secure platform. 4) Meet with your coach online or in-person. 5) Leave a review to help others find great coaches.',
+                question: t('faqPage.general.q2'),
+                answer: t('faqPage.general.a2'),
             },
             {
-                question: 'Is CoachSearching free to use?',
-                answer: 'Yes, browsing coaches and creating an account is completely free. You only pay when you book a coaching session. Each coach sets their own rates, which are clearly displayed on their profile.',
+                question: t('faqPage.general.q3'),
+                answer: t('faqPage.general.a3'),
             },
             {
-                question: 'What types of coaching are available?',
-                answer: 'We offer a wide range of coaching specialties including: Executive & Leadership Coaching, Career Development, Life Coaching, Business Coaching, Health & Wellness, Relationship Coaching, Financial Coaching, Mindfulness & Stress Management, and many more specialized areas.',
+                question: t('faqPage.general.q4'),
+                answer: t('faqPage.general.a4'),
             },
             {
-                question: 'How is CoachSearching different from other platforms?',
-                answer: 'CoachSearching stands out through our rigorous coach verification process, transparent pricing, multi-language support (English, German, Spanish, French, Italian), and our focus on matching you with the right coach through our AI-powered quiz. We also offer both online and in-person session options.',
+                question: t('faqPage.general.q5'),
+                answer: t('faqPage.general.a5'),
             },
         ],
     },
     booking: {
-        title: 'Booking & Sessions',
+        title: t('faqPage.booking.title'),
         icon: '📅',
         faqs: [
             {
-                question: 'How do I book a coaching session?',
-                answer: 'Find a coach you like, view their available time slots, select a date and time that works for you, choose your session format (online or in-person), and complete the booking. You\'ll receive a confirmation email with all the details.',
+                question: t('faqPage.booking.q1'),
+                answer: t('faqPage.booking.a1'),
             },
             {
-                question: 'What session formats are available?',
-                answer: 'Coaches offer various formats: Online sessions via video call (Zoom, Google Meet, etc.), phone sessions, and in-person meetings at the coach\'s location or a mutually agreed place. Each coach specifies which formats they offer on their profile.',
+                question: t('faqPage.booking.q2'),
+                answer: t('faqPage.booking.a2'),
             },
             {
-                question: 'How long are coaching sessions?',
-                answer: 'Session lengths vary by coach, but common options include 30-minute, 60-minute, 90-minute, and 120-minute sessions. The duration and pricing are clearly shown on each coach\'s profile.',
+                question: t('faqPage.booking.q3'),
+                answer: t('faqPage.booking.a3'),
             },
             {
-                question: 'Can I reschedule or cancel a booking?',
-                answer: 'Yes, you can reschedule or cancel bookings according to the coach\'s cancellation policy. Most coaches allow free cancellation up to 24-48 hours before the session. Check the specific coach\'s policy before booking.',
+                question: t('faqPage.booking.q4'),
+                answer: t('faqPage.booking.a4'),
             },
             {
-                question: 'What if I need to cancel last minute?',
-                answer: 'Last-minute cancellations may be subject to the coach\'s cancellation policy, which could include partial or full session fees. We recommend contacting your coach directly if you have an emergency.',
+                question: t('faqPage.booking.q5'),
+                answer: t('faqPage.booking.a5'),
             },
             {
-                question: 'Can I book multiple sessions at once?',
-                answer: 'Yes, many coaches offer session packages at discounted rates. You can also book recurring sessions with the same coach for ongoing support. Check individual coach profiles for package options.',
+                question: t('faqPage.booking.q6'),
+                answer: t('faqPage.booking.a6'),
             },
         ],
     },
     payment: {
-        title: 'Payment & Pricing',
+        title: t('faqPage.payment.title'),
         icon: '💳',
         faqs: [
             {
-                question: 'What payment methods are accepted?',
-                answer: 'We accept all major credit and debit cards (Visa, Mastercard, American Express), as well as Apple Pay and Google Pay. All payments are processed securely through Stripe.',
+                question: t('faqPage.payment.q1'),
+                answer: t('faqPage.payment.a1'),
             },
             {
-                question: 'When am I charged for a session?',
-                answer: 'You\'re charged immediately when you book a session. The payment is held securely and released to the coach after the session is completed.',
+                question: t('faqPage.payment.q2'),
+                answer: t('faqPage.payment.a2'),
             },
             {
-                question: 'Are there any hidden fees?',
-                answer: 'No hidden fees. The price you see on a coach\'s profile is the price you pay. A small platform fee is included in the displayed price to cover our services.',
+                question: t('faqPage.payment.q3'),
+                answer: t('faqPage.payment.a3'),
             },
             {
-                question: 'What currency are prices shown in?',
-                answer: 'Prices are shown in EUR by default, but you can switch to USD or GBP using the currency selector. Actual charges will be in the currency you select.',
+                question: t('faqPage.payment.q4'),
+                answer: t('faqPage.payment.a4'),
             },
             {
-                question: 'Can I get a refund?',
-                answer: 'Refund policies vary by coach and situation. If a coach cancels, you receive a full refund. For client cancellations, refer to the coach\'s cancellation policy. Contact support for any payment issues.',
+                question: t('faqPage.payment.q5'),
+                answer: t('faqPage.payment.a5'),
             },
             {
-                question: 'Do coaches offer free consultations?',
-                answer: 'Many coaches offer a free 15-30 minute discovery call to discuss your needs before you commit to paid sessions. Look for "Free Consultation" badges on coach profiles.',
+                question: t('faqPage.payment.q6'),
+                answer: t('faqPage.payment.a6'),
             },
         ],
     },
     coaches: {
-        title: 'For Coaches',
+        title: t('faqPage.coaches.title'),
         icon: '👨‍🏫',
         faqs: [
             {
-                question: 'How can I become a coach on CoachSearching?',
-                answer: 'Click "Become a Coach" and complete your profile with your qualifications, certifications, experience, and coaching specialties. Our team will review your application, usually within 2-3 business days.',
+                question: t('faqPage.coaches.q1'),
+                answer: t('faqPage.coaches.a1'),
             },
             {
-                question: 'What are the requirements to join as a coach?',
-                answer: 'We require: Relevant coaching certifications (ICF, EMCC, or equivalent), professional experience in your coaching area, professional liability insurance, and a commitment to our code of ethics.',
+                question: t('faqPage.coaches.q2'),
+                answer: t('faqPage.coaches.a2'),
             },
             {
-                question: 'How much does it cost to list as a coach?',
-                answer: 'Listing your profile is free. We charge a small platform fee (15%) on completed sessions to cover payment processing, marketing, and platform maintenance.',
+                question: t('faqPage.coaches.q3'),
+                answer: t('faqPage.coaches.a3'),
             },
             {
-                question: 'How do I get paid?',
-                answer: 'Payments are processed through Stripe Connect. After completing a session, funds are transferred to your connected bank account within 2-7 business days, depending on your country.',
+                question: t('faqPage.coaches.q4'),
+                answer: t('faqPage.coaches.a4'),
             },
             {
-                question: 'Can I set my own rates and availability?',
-                answer: 'Absolutely! You have full control over your hourly rates, session durations, availability schedule, and cancellation policy. You can update these at any time from your dashboard.',
+                question: t('faqPage.coaches.q5'),
+                answer: t('faqPage.coaches.a5'),
             },
             {
-                question: 'How do I get more clients?',
-                answer: 'Tips for attracting clients: Complete your profile fully, add a professional photo, request reviews from clients, write a compelling bio, list all your certifications, respond quickly to inquiries, and maintain high ratings.',
+                question: t('faqPage.coaches.q6'),
+                answer: t('faqPage.coaches.a6'),
             },
         ],
     },
     trust: {
-        title: 'Trust & Safety',
+        title: t('faqPage.trust.title'),
         icon: '🔒',
         faqs: [
             {
-                question: 'Are coaches verified?',
-                answer: 'Yes, all coaches go through our verification process which includes: Identity verification, credential checking, certification validation, and review of professional experience. Look for the "Verified" badge on coach profiles.',
+                question: t('faqPage.trust.q1'),
+                answer: t('faqPage.trust.a1'),
             },
             {
-                question: 'How is my personal information protected?',
-                answer: 'We use bank-level encryption (SSL/TLS) to protect your data. We never share your personal information with third parties without consent. Read our Privacy Policy for complete details.',
+                question: t('faqPage.trust.q2'),
+                answer: t('faqPage.trust.a2'),
             },
             {
-                question: 'What if I have a problem with a coach?',
-                answer: 'Contact our support team immediately. We take all concerns seriously and have processes to mediate disputes, issue refunds when appropriate, and remove coaches who violate our terms.',
+                question: t('faqPage.trust.q3'),
+                answer: t('faqPage.trust.a3'),
             },
             {
-                question: 'How are reviews handled?',
-                answer: 'Only clients who have completed a session can leave reviews. All reviews are moderated to ensure they\'re genuine and appropriate. Coaches cannot remove negative reviews unless they violate our guidelines.',
+                question: t('faqPage.trust.q4'),
+                answer: t('faqPage.trust.a4'),
             },
             {
-                question: 'Is my payment information secure?',
-                answer: 'Yes, all payments are processed through Stripe, a PCI-DSS Level 1 certified payment processor. We never store your full credit card details on our servers.',
+                question: t('faqPage.trust.q5'),
+                answer: t('faqPage.trust.a5'),
             },
         ],
     },
     technical: {
-        title: 'Technical Questions',
+        title: t('faqPage.technical.title'),
         icon: '⚙️',
         faqs: [
             {
-                question: 'What do I need for online sessions?',
-                answer: 'You\'ll need: A stable internet connection, a device with a camera and microphone (computer, tablet, or smartphone), a quiet, private space, and any video conferencing software your coach uses (usually Zoom or Google Meet).',
+                question: t('faqPage.technical.q1'),
+                answer: t('faqPage.technical.a1'),
             },
             {
-                question: 'Is there a mobile app?',
-                answer: 'CoachSearching works as a progressive web app (PWA). You can add it to your home screen on iOS or Android for an app-like experience. A dedicated mobile app is coming soon!',
+                question: t('faqPage.technical.q2'),
+                answer: t('faqPage.technical.a2'),
             },
             {
-                question: 'What browsers are supported?',
-                answer: 'We support all modern browsers including Chrome, Firefox, Safari, and Edge. For the best experience, we recommend keeping your browser updated to the latest version.',
+                question: t('faqPage.technical.q3'),
+                answer: t('faqPage.technical.a3'),
             },
             {
-                question: 'I\'m having technical issues. What should I do?',
-                answer: 'Try: Refreshing the page, clearing your browser cache, trying a different browser, checking your internet connection. If problems persist, contact our support team with details about the issue.',
+                question: t('faqPage.technical.q4'),
+                answer: t('faqPage.technical.a4'),
             },
         ],
     },
-};
+});
 
 // ============================================================================
 // FAQ Components
@@ -195,6 +195,8 @@ const FAQ_CATEGORIES = {
  * Single FAQ Item with collapsible answer
  */
 function FAQItem({ question, answer, isOpen, onToggle }) {
+    if (!question || !answer) return null;
+
     return html`
         <div class="faq-item ${isOpen ? 'open' : ''}">
             <button
@@ -216,6 +218,9 @@ function FAQItem({ question, answer, isOpen, onToggle }) {
  * FAQ Category Section
  */
 function FAQCategory({ id, title, icon, faqs, openItems, onToggle }) {
+    const validFaqs = faqs.filter(faq => faq.question && faq.answer);
+    if (validFaqs.length === 0) return null;
+
     return html`
         <section class="faq-category" id=${id}>
             <h2 class="faq-category-title">
@@ -223,7 +228,7 @@ function FAQCategory({ id, title, icon, faqs, openItems, onToggle }) {
                 ${title}
             </h2>
             <div class="faq-list">
-                ${faqs.map((faq, index) => html`
+                ${validFaqs.map((faq, index) => html`
                     <${FAQItem}
                         key=${index}
                         question=${faq.question}
@@ -242,8 +247,8 @@ function FAQCategory({ id, title, icon, faqs, openItems, onToggle }) {
  */
 function FAQNav({ categories, activeCategory, onSelect }) {
     return html`
-        <nav class="faq-nav" aria-label="FAQ Categories">
-            <h3>Categories</h3>
+        <nav class="faq-nav" aria-label=${t('faqPage.categories')}>
+            <h3>${t('faqPage.categories')}</h3>
             <ul>
                 ${Object.entries(categories).map(([id, cat]) => html`
                     <li key=${id}>
@@ -270,10 +275,10 @@ function FAQSearch({ value, onChange }) {
         <div class="faq-search">
             <input
                 type="search"
-                placeholder="Search FAQs..."
+                placeholder=${t('faqPage.searchPlaceholder')}
                 value=${value}
                 onInput=${(e) => onChange(e.target.value)}
-                aria-label="Search frequently asked questions"
+                aria-label=${t('faqPage.searchLabel')}
             />
             <span class="search-icon">🔍</span>
         </div>
@@ -289,22 +294,26 @@ export function FAQPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('general');
 
+    const FAQ_CATEGORIES = getFAQCategories();
+
     // Set SEO meta tags
     useEffect(() => {
         setPageMeta({
-            title: 'Frequently Asked Questions',
-            description: 'Find answers to common questions about CoachSearching. Learn about booking coaching sessions, payment, coach verification, and more.',
+            title: t('faqPage.pageTitle'),
+            description: t('faqPage.pageDescription'),
             url: 'https://coachsearching.com/#faq',
         });
 
         // Generate FAQ schema for all FAQs
-        const allFaqs = Object.values(FAQ_CATEGORIES).flatMap(cat => cat.faqs);
+        const allFaqs = Object.values(FAQ_CATEGORIES).flatMap(cat =>
+            cat.faqs.filter(faq => faq.question && faq.answer)
+        );
         setStructuredData('faq-schema', generateFAQSchema(allFaqs));
 
         // Breadcrumb schema
         setStructuredData('breadcrumb-schema', generateBreadcrumbSchema([
-            { name: 'Home', url: 'https://coachsearching.com' },
-            { name: 'FAQ', url: 'https://coachsearching.com/#faq' },
+            { name: t('nav.home'), url: 'https://coachsearching.com' },
+            { name: t('faqPage.title'), url: 'https://coachsearching.com/#faq' },
         ]));
 
         return () => {
@@ -322,8 +331,9 @@ export function FAQPage() {
         Object.entries(FAQ_CATEGORIES).forEach(([id, category]) => {
             const matchingFaqs = category.faqs.filter(
                 faq =>
-                    faq.question.toLowerCase().includes(query) ||
-                    faq.answer.toLowerCase().includes(query)
+                    faq.question && faq.answer &&
+                    (faq.question.toLowerCase().includes(query) ||
+                    faq.answer.toLowerCase().includes(query))
             );
 
             if (matchingFaqs.length > 0) {
@@ -332,7 +342,7 @@ export function FAQPage() {
         });
 
         return filtered;
-    }, [searchQuery]);
+    }, [searchQuery, FAQ_CATEGORIES]);
 
     const handleToggle = useCallback((itemId) => {
         setOpenItems(prev => {
@@ -361,8 +371,8 @@ export function FAQPage() {
             <div class="container">
                 <!-- Header -->
                 <header class="faq-header">
-                    <h1>Frequently Asked Questions</h1>
-                    <p>Find answers to common questions about CoachSearching and how our platform works.</p>
+                    <h1>${t('faqPage.title')}</h1>
+                    <p>${t('faqPage.subtitle')}</p>
                     <${FAQSearch} value=${searchQuery} onChange=${setSearchQuery} />
                 </header>
 
@@ -378,9 +388,9 @@ export function FAQPage() {
 
                         <!-- Quick Contact -->
                         <div class="faq-contact">
-                            <h3>Still have questions?</h3>
-                            <p>Can't find what you're looking for? We're here to help.</p>
-                            <a href="#contact" class="btn btn-primary">Contact Support</a>
+                            <h3>${t('faqPage.stillHaveQuestions')}</h3>
+                            <p>${t('faqPage.cantFindAnswer')}</p>
+                            <a href="#contact" class="btn btn-primary">${t('faqPage.contactSupport')}</a>
                         </div>
                     </aside>
 
@@ -400,9 +410,9 @@ export function FAQPage() {
                             `)}
                         ` : html`
                             <div class="faq-no-results">
-                                <p>No FAQs found matching "${searchQuery}"</p>
+                                <p>${t('faqPage.noResults')} "${searchQuery}"</p>
                                 <button class="btn btn-secondary" onClick=${() => setSearchQuery('')}>
-                                    Clear Search
+                                    ${t('faqPage.clearSearch')}
                                 </button>
                             </div>
                         `}
@@ -411,11 +421,11 @@ export function FAQPage() {
 
                 <!-- CTA Section -->
                 <section class="faq-cta">
-                    <h2>Ready to Find Your Coach?</h2>
-                    <p>Browse our verified coaches and start your transformation journey today.</p>
+                    <h2>${t('faqPage.readyToFind')}</h2>
+                    <p>${t('faqPage.browseCoachesText')}</p>
                     <div class="cta-buttons">
-                        <a href="#coaches" class="btn btn-primary btn-lg">Find a Coach</a>
-                        <a href="#quiz" class="btn btn-secondary btn-lg">Take the Quiz</a>
+                        <a href="#coaches" class="btn btn-primary btn-lg">${t('faqPage.findCoach')}</a>
+                        <a href="#quiz" class="btn btn-secondary btn-lg">${t('faqPage.takeQuiz')}</a>
                     </div>
                 </section>
             </div>

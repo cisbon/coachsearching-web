@@ -17,112 +17,139 @@ const { useEffect } = React;
 const html = htm.bind(React.createElement);
 
 // ============================================================================
-// Team Data
+// Team Data (using translation keys)
 // ============================================================================
 
-const TEAM_MEMBERS = [
+const getTeamMembers = () => [
     {
         name: 'Michael Gross',
-        role: 'Founder & CEO',
+        role: t('about.team.role1'),
         image: 'https://i.pravatar.cc/200?img=11',
-        bio: 'Former executive coach with 15+ years experience helping leaders unlock their potential.',
+        bio: t('about.team.bio1'),
         linkedin: '#',
     },
     {
         name: 'Sarah Miller',
-        role: 'Head of Coach Relations',
+        role: t('about.team.role2'),
         image: 'https://i.pravatar.cc/200?img=5',
-        bio: 'Certified ICF coach passionate about connecting clients with the right coaches.',
+        bio: t('about.team.bio2'),
         linkedin: '#',
     },
     {
         name: 'Thomas Weber',
-        role: 'Head of Technology',
+        role: t('about.team.role3'),
         image: 'https://i.pravatar.cc/200?img=12',
-        bio: 'Tech entrepreneur focused on building platforms that create meaningful connections.',
+        bio: t('about.team.bio3'),
         linkedin: '#',
     },
 ];
 
 // ============================================================================
-// Stats Data
+// Stats Data (using translation keys)
 // ============================================================================
 
-const STATS = [
-    { value: '500+', label: 'Verified Coaches' },
-    { value: '10,000+', label: 'Sessions Completed' },
-    { value: '50+', label: 'Specialties' },
-    { value: '25+', label: 'Countries' },
-    { value: '4.9', label: 'Average Rating' },
-    { value: '98%', label: 'Client Satisfaction' },
+const getStats = () => [
+    { value: '500+', label: t('about.stats.verifiedCoaches') },
+    { value: '10,000+', label: t('about.stats.sessionsCompleted') },
+    { value: '50+', label: t('about.stats.specialties') },
+    { value: '25+', label: t('about.stats.countries') },
+    { value: '4.9', label: t('about.stats.avgRating') },
+    { value: '98%', label: t('about.stats.satisfaction') },
 ];
 
 // ============================================================================
-// Values Data
+// Values Data (using translation keys)
 // ============================================================================
 
-const VALUES = [
+const getValues = () => [
     {
         icon: '✓',
-        title: 'Quality First',
-        description: 'Every coach on our platform is thoroughly vetted for credentials, experience, and professionalism.',
+        title: t('about.values.quality'),
+        description: t('about.values.qualityDesc'),
     },
     {
         icon: '🤝',
-        title: 'Perfect Matches',
-        description: 'Our AI-powered matching system helps you find coaches who truly understand your goals and challenges.',
+        title: t('about.values.matches'),
+        description: t('about.values.matchesDesc'),
     },
     {
         icon: '🔒',
-        title: 'Trust & Safety',
-        description: 'Your privacy and security are paramount. We use enterprise-grade protection for all data.',
+        title: t('about.values.trust'),
+        description: t('about.values.trustDesc'),
     },
     {
         icon: '🌍',
-        title: 'Global Access',
-        description: 'Connect with coaches worldwide. Online sessions break down geographical barriers.',
+        title: t('about.values.global'),
+        description: t('about.values.globalDesc'),
     },
     {
         icon: '💬',
-        title: 'Transparent Pricing',
-        description: 'No hidden fees. See exactly what you\'ll pay before booking any session.',
+        title: t('about.values.transparent'),
+        description: t('about.values.transparentDesc'),
     },
     {
         icon: '⭐',
-        title: 'Verified Reviews',
-        description: 'Real reviews from real clients help you make informed decisions about your coach.',
+        title: t('about.values.reviews'),
+        description: t('about.values.reviewsDesc'),
     },
 ];
 
 // ============================================================================
-// Timeline Data
+// Timeline Data (using translation keys)
 // ============================================================================
 
-const TIMELINE = [
+const getTimeline = () => [
     {
         year: '2023',
-        title: 'The Vision',
-        description: 'CoachSearching was born from a simple idea: make quality coaching accessible to everyone.',
+        title: t('about.timeline.vision'),
+        description: t('about.timeline.visionDesc'),
     },
     {
         year: '2024 Q1',
-        title: 'Platform Launch',
-        description: 'We launched with 100 verified coaches across 10 countries.',
+        title: t('about.timeline.launch'),
+        description: t('about.timeline.launchDesc'),
     },
     {
         year: '2024 Q2',
-        title: 'AI Matching',
-        description: 'Introduced our AI-powered coach matching quiz for personalized recommendations.',
+        title: t('about.timeline.ai'),
+        description: t('about.timeline.aiDesc'),
     },
     {
         year: '2024 Q3',
-        title: 'Global Expansion',
-        description: 'Expanded to 25+ countries with multi-language support.',
+        title: t('about.timeline.expansion'),
+        description: t('about.timeline.expansionDesc'),
     },
     {
-        year: 'Today',
-        title: 'Growing Community',
-        description: '500+ coaches helping thousands of clients achieve their goals.',
+        year: t('about.timeline.today'),
+        title: t('about.timeline.community'),
+        description: t('about.timeline.communityDesc'),
+    },
+];
+
+// ============================================================================
+// Verification Steps (using translation keys)
+// ============================================================================
+
+const getVerificationSteps = () => [
+    {
+        number: 1,
+        title: t('about.verify.step1'),
+        description: t('about.verify.step1Desc'),
+    },
+    {
+        number: 2,
+        title: t('about.verify.step2'),
+        description: t('about.verify.step2Desc'),
+    },
+    {
+        number: 3,
+        title: t('about.verify.step3'),
+        description: t('about.verify.step3Desc'),
+    },
+    {
+        number: 4,
+        title: t('about.verify.step4'),
+        description: t('about.verify.step4Desc'),
     },
 ];
 
@@ -185,8 +212,8 @@ export function AboutPage() {
     // Set SEO meta tags
     useEffect(() => {
         setPageMeta({
-            title: 'About CoachSearching',
-            description: 'Learn about CoachSearching, the professional coaching platform connecting clients with verified coaches worldwide. Our mission, values, and the team behind the platform.',
+            title: t('about.pageTitle'),
+            description: t('about.pageDescription'),
             url: 'https://coachsearching.com/#about',
         });
 
@@ -195,20 +222,25 @@ export function AboutPage() {
 
         // Breadcrumb schema
         setStructuredData('breadcrumb-schema', generateBreadcrumbSchema([
-            { name: 'Home', url: 'https://coachsearching.com' },
-            { name: 'About', url: 'https://coachsearching.com/#about' },
+            { name: t('nav.home'), url: 'https://coachsearching.com' },
+            { name: t('about.title'), url: 'https://coachsearching.com/#about' },
         ]));
     }, []);
+
+    const teamMembers = getTeamMembers();
+    const stats = getStats();
+    const values = getValues();
+    const timeline = getTimeline();
+    const verificationSteps = getVerificationSteps();
 
     return html`
         <div class="about-page">
             <!-- Hero Section -->
             <section class="about-hero">
                 <div class="container">
-                    <h1>Connecting You With the Perfect Coach</h1>
+                    <h1>${t('about.heroTitle')}</h1>
                     <p class="hero-subtitle">
-                        CoachSearching is the trusted platform for finding verified professional coaches
-                        who can help you achieve your personal and professional goals.
+                        ${t('about.heroSubtitle')}
                     </p>
                 </div>
             </section>
@@ -218,23 +250,14 @@ export function AboutPage() {
                 <div class="container">
                     <div class="mission-content">
                         <div class="mission-text">
-                            <h2>Our Mission</h2>
-                            <p>
-                                We believe that everyone deserves access to quality coaching.
-                                Our mission is to democratize professional development by connecting
-                                individuals with verified, experienced coaches who can guide them
-                                toward their goals.
-                            </p>
-                            <p>
-                                Whether you're an executive seeking leadership guidance, a professional
-                                navigating a career change, or someone looking to improve their personal
-                                life, we're here to help you find the right coach for your journey.
-                            </p>
+                            <h2>${t('about.mission.title')}</h2>
+                            <p>${t('about.mission.text1')}</p>
+                            <p>${t('about.mission.text2')}</p>
                         </div>
                         <div class="mission-image">
                             <img
                                 src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=600"
-                                alt="Coaching session"
+                                alt=${t('about.mission.imageAlt')}
                                 loading="lazy"
                             />
                         </div>
@@ -245,9 +268,9 @@ export function AboutPage() {
             <!-- Stats Section -->
             <section class="about-stats">
                 <div class="container">
-                    <h2>CoachSearching by the Numbers</h2>
+                    <h2>${t('about.stats.title')}</h2>
                     <div class="stats-grid">
-                        ${STATS.map(stat => html`
+                        ${stats.map(stat => html`
                             <${StatCard} key=${stat.label} ...${stat} />
                         `)}
                     </div>
@@ -257,12 +280,12 @@ export function AboutPage() {
             <!-- Values Section -->
             <section class="about-values">
                 <div class="container">
-                    <h2>Our Values</h2>
+                    <h2>${t('about.values.title')}</h2>
                     <p class="section-subtitle">
-                        These core principles guide everything we do at CoachSearching.
+                        ${t('about.values.subtitle')}
                     </p>
                     <div class="values-grid">
-                        ${VALUES.map(value => html`
+                        ${values.map(value => html`
                             <${ValueCard} key=${value.title} ...${value} />
                         `)}
                     </div>
@@ -272,28 +295,15 @@ export function AboutPage() {
             <!-- How We Verify Coaches -->
             <section class="about-verification">
                 <div class="container">
-                    <h2>How We Verify Coaches</h2>
+                    <h2>${t('about.verify.title')}</h2>
                     <div class="verification-steps">
-                        <div class="verification-step">
-                            <div class="step-number">1</div>
-                            <h3>Application Review</h3>
-                            <p>Coaches submit detailed applications with their qualifications, experience, and coaching philosophy.</p>
-                        </div>
-                        <div class="verification-step">
-                            <div class="step-number">2</div>
-                            <h3>Credential Verification</h3>
-                            <p>We verify all certifications, degrees, and professional credentials claimed by each coach.</p>
-                        </div>
-                        <div class="verification-step">
-                            <div class="step-number">3</div>
-                            <h3>Background Check</h3>
-                            <p>All coaches undergo identity verification and professional background screening.</p>
-                        </div>
-                        <div class="verification-step">
-                            <div class="step-number">4</div>
-                            <h3>Ongoing Monitoring</h3>
-                            <p>We continuously monitor reviews and feedback to ensure quality standards are maintained.</p>
-                        </div>
+                        ${verificationSteps.map(step => html`
+                            <div class="verification-step" key=${step.number}>
+                                <div class="step-number">${step.number}</div>
+                                <h3>${step.title}</h3>
+                                <p>${step.description}</p>
+                            </div>
+                        `)}
                     </div>
                 </div>
             </section>
@@ -301,13 +311,13 @@ export function AboutPage() {
             <!-- Timeline Section -->
             <section class="about-timeline">
                 <div class="container">
-                    <h2>Our Journey</h2>
+                    <h2>${t('about.timeline.title')}</h2>
                     <div class="timeline">
-                        ${TIMELINE.map((item, index) => html`
+                        ${timeline.map((item, index) => html`
                             <${TimelineItem}
                                 key=${item.year}
                                 ...${item}
-                                isLast=${index === TIMELINE.length - 1}
+                                isLast=${index === timeline.length - 1}
                             />
                         `)}
                     </div>
@@ -317,12 +327,12 @@ export function AboutPage() {
             <!-- Team Section -->
             <section class="about-team">
                 <div class="container">
-                    <h2>Meet the Team</h2>
+                    <h2>${t('about.team.title')}</h2>
                     <p class="section-subtitle">
-                        The passionate people behind CoachSearching.
+                        ${t('about.team.subtitle')}
                     </p>
                     <div class="team-grid">
-                        ${TEAM_MEMBERS.map(member => html`
+                        ${teamMembers.map(member => html`
                             <${TeamMember} key=${member.name} ...${member} />
                         `)}
                     </div>
@@ -332,7 +342,7 @@ export function AboutPage() {
             <!-- Press & Recognition -->
             <section class="about-press">
                 <div class="container">
-                    <h2>As Featured In</h2>
+                    <h2>${t('about.press.title')}</h2>
                     <div class="press-logos">
                         <div class="press-logo">Forbes</div>
                         <div class="press-logo">TechCrunch</div>
@@ -345,11 +355,11 @@ export function AboutPage() {
             <!-- CTA Section -->
             <section class="about-cta">
                 <div class="container">
-                    <h2>Ready to Start Your Journey?</h2>
-                    <p>Join thousands of clients who have found their perfect coach through CoachSearching.</p>
+                    <h2>${t('about.cta.title')}</h2>
+                    <p>${t('about.cta.subtitle')}</p>
                     <div class="cta-buttons">
-                        <a href="#coaches" class="btn btn-primary btn-lg">Find a Coach</a>
-                        <a href="#become-coach" class="btn btn-secondary btn-lg">Become a Coach</a>
+                        <a href="#coaches" class="btn btn-primary btn-lg">${t('about.join.client')}</a>
+                        <a href="#become-coach" class="btn btn-secondary btn-lg">${t('about.join.coach')}</a>
                     </div>
                 </div>
             </section>
@@ -357,22 +367,22 @@ export function AboutPage() {
             <!-- Contact Info -->
             <section class="about-contact">
                 <div class="container">
-                    <h2>Get in Touch</h2>
+                    <h2>${t('about.contact.title')}</h2>
                     <div class="contact-grid">
                         <div class="contact-item">
-                            <h3>General Inquiries</h3>
+                            <h3>${t('about.contact.general')}</h3>
                             <p>info@coachsearching.com</p>
                         </div>
                         <div class="contact-item">
-                            <h3>Coach Support</h3>
+                            <h3>${t('about.contact.coaches')}</h3>
                             <p>coaches@coachsearching.com</p>
                         </div>
                         <div class="contact-item">
-                            <h3>Press</h3>
+                            <h3>${t('about.contact.press')}</h3>
                             <p>press@coachsearching.com</p>
                         </div>
                         <div class="contact-item">
-                            <h3>Partnerships</h3>
+                            <h3>${t('about.contact.partnerships')}</h3>
                             <p>partners@coachsearching.com</p>
                         </div>
                     </div>

@@ -17,123 +17,208 @@ const { useEffect, useState } = React;
 const html = htm.bind(React.createElement);
 
 // ============================================================================
-// Steps Data - For Clients
+// Steps Data - For Clients (using translation keys)
 // ============================================================================
 
-const CLIENT_STEPS = [
+const getClientSteps = () => [
     {
         number: 1,
-        title: 'Create Your Free Account',
-        description: 'Sign up in seconds with your email or social login. No credit card required to browse coaches.',
+        title: t('hiw.client.step1.title'),
+        description: t('hiw.client.step1.desc'),
         icon: '👤',
-        tips: ['Use a professional email for better communication', 'Complete your profile for personalized recommendations'],
+        tips: [
+            t('hiw.client.step1.tip1'),
+            t('hiw.client.step1.tip2'),
+        ],
     },
     {
         number: 2,
-        title: 'Find Your Perfect Coach',
-        description: 'Browse our verified coaches by specialty, location, language, and price. Use our AI-powered quiz for personalized matches.',
+        title: t('hiw.client.step2.title'),
+        description: t('hiw.client.step2.desc'),
         icon: '🔍',
-        tips: ['Take the matching quiz for best results', 'Read reviews from other clients', 'Check certifications and experience'],
+        tips: [
+            t('hiw.client.step2.tip1'),
+            t('hiw.client.step2.tip2'),
+            t('hiw.client.step2.tip3'),
+        ],
     },
     {
         number: 3,
-        title: 'Book a Session',
-        description: 'Choose a time that works for you, select online or in-person format, and book securely through our platform.',
+        title: t('hiw.client.step3.title'),
+        description: t('hiw.client.step3.desc'),
         icon: '📅',
-        tips: ['Many coaches offer free discovery calls', 'Book multiple sessions for package discounts', 'Check cancellation policies'],
+        tips: [
+            t('hiw.client.step3.tip1'),
+            t('hiw.client.step3.tip2'),
+            t('hiw.client.step3.tip3'),
+        ],
     },
     {
         number: 4,
-        title: 'Meet Your Coach',
-        description: 'Connect with your coach via video call, phone, or in-person. Share your goals and start your transformation.',
+        title: t('hiw.client.step4.title'),
+        description: t('hiw.client.step4.desc'),
         icon: '💬',
-        tips: ['Prepare topics to discuss beforehand', 'Find a quiet, private space for online sessions', 'Be open and honest with your coach'],
+        tips: [
+            t('hiw.client.step4.tip1'),
+            t('hiw.client.step4.tip2'),
+            t('hiw.client.step4.tip3'),
+        ],
     },
     {
         number: 5,
-        title: 'Track Your Progress',
-        description: 'Use session notes to track insights, set goals, and measure your progress over time.',
+        title: t('hiw.client.step5.title'),
+        description: t('hiw.client.step5.desc'),
         icon: '📈',
-        tips: ['Review notes before each session', 'Celebrate small wins', 'Adjust goals as you grow'],
+        tips: [
+            t('hiw.client.step5.tip1'),
+            t('hiw.client.step5.tip2'),
+            t('hiw.client.step5.tip3'),
+        ],
     },
     {
         number: 6,
-        title: 'Leave a Review',
-        description: 'Help others find great coaches by sharing your experience. Your feedback helps maintain quality.',
+        title: t('hiw.client.step6.title'),
+        description: t('hiw.client.step6.desc'),
         icon: '⭐',
-        tips: ['Be specific about what helped', 'Mention the coaching style', 'Your review helps the community'],
+        tips: [
+            t('hiw.client.step6.tip1'),
+            t('hiw.client.step6.tip2'),
+            t('hiw.client.step6.tip3'),
+        ],
     },
 ];
 
 // ============================================================================
-// Steps Data - For Coaches
+// Steps Data - For Coaches (using translation keys)
 // ============================================================================
 
-const COACH_STEPS = [
+const getCoachSteps = () => [
     {
         number: 1,
-        title: 'Apply to Join',
-        description: 'Submit your application with your qualifications, certifications, and coaching experience.',
+        title: t('hiw.coach.step1.title'),
+        description: t('hiw.coach.step1.desc'),
         icon: '📝',
-        requirements: ['Coaching certification (ICF, EMCC, or equivalent)', 'Professional liability insurance', 'At least 100 coaching hours'],
+        requirements: [
+            t('hiw.coach.step1.req1'),
+            t('hiw.coach.step1.req2'),
+            t('hiw.coach.step1.req3'),
+        ],
     },
     {
         number: 2,
-        title: 'Get Verified',
-        description: 'Our team reviews your credentials and verifies your certifications. Usually takes 2-3 business days.',
+        title: t('hiw.coach.step2.title'),
+        description: t('hiw.coach.step2.desc'),
         icon: '✅',
-        requirements: ['Identity verification', 'Credential validation', 'Background check'],
+        requirements: [
+            t('hiw.coach.step2.req1'),
+            t('hiw.coach.step2.req2'),
+            t('hiw.coach.step2.req3'),
+        ],
     },
     {
         number: 3,
-        title: 'Create Your Profile',
-        description: 'Build a compelling profile that showcases your expertise, approach, and what makes you unique.',
+        title: t('hiw.coach.step3.title'),
+        description: t('hiw.coach.step3.desc'),
         icon: '🎨',
-        tips: ['Add a professional photo', 'Write a compelling bio', 'List all your specialties', 'Add a YouTube intro video'],
+        tips: [
+            t('hiw.coach.step3.tip1'),
+            t('hiw.coach.step3.tip2'),
+            t('hiw.coach.step3.tip3'),
+            t('hiw.coach.step3.tip4'),
+        ],
     },
     {
         number: 4,
-        title: 'Set Your Availability',
-        description: 'Define your schedule, session types, rates, and cancellation policy.',
+        title: t('hiw.coach.step4.title'),
+        description: t('hiw.coach.step4.desc'),
         icon: '⏰',
-        tips: ['Offer flexible time slots', 'Consider different session lengths', 'Be competitive with pricing'],
+        tips: [
+            t('hiw.coach.step4.tip1'),
+            t('hiw.coach.step4.tip2'),
+            t('hiw.coach.step4.tip3'),
+        ],
     },
     {
         number: 5,
-        title: 'Connect With Clients',
-        description: 'Receive booking requests, conduct sessions, and build your client base on our platform.',
+        title: t('hiw.coach.step5.title'),
+        description: t('hiw.coach.step5.desc'),
         icon: '🤝',
-        tips: ['Respond quickly to inquiries', 'Provide excellent service', 'Request reviews after sessions'],
+        tips: [
+            t('hiw.coach.step5.tip1'),
+            t('hiw.coach.step5.tip2'),
+            t('hiw.coach.step5.tip3'),
+        ],
     },
     {
         number: 6,
-        title: 'Grow Your Practice',
-        description: 'Build your reputation, earn reviews, and expand your coaching business.',
+        title: t('hiw.coach.step6.title'),
+        description: t('hiw.coach.step6.desc'),
         icon: '🚀',
-        tips: ['Maintain high ratings', 'Offer package deals', 'Specialize in your niche'],
+        tips: [
+            t('hiw.coach.step6.tip1'),
+            t('hiw.coach.step6.tip2'),
+            t('hiw.coach.step6.tip3'),
+        ],
     },
 ];
 
 // ============================================================================
-// FAQ Data for How It Works
+// FAQ Data for How It Works (using translation keys)
 // ============================================================================
 
-const HOW_IT_WORKS_FAQ = [
+const getHowItWorksFAQ = () => [
     {
-        question: 'Do I need to pay to browse coaches?',
-        answer: 'No, browsing coaches and creating an account is completely free. You only pay when you book a session.',
+        question: t('hiw.faq.q1'),
+        answer: t('hiw.faq.a1'),
     },
     {
-        question: 'How long does it take to get matched with a coach?',
-        answer: 'Our AI quiz takes about 5 minutes and provides instant recommendations. You can book a session immediately after.',
+        question: t('hiw.faq.q2'),
+        answer: t('hiw.faq.a2'),
     },
     {
-        question: 'What if I\'m not satisfied with my coach?',
-        answer: 'We want you to find the perfect match. If you\'re not satisfied, contact support and we\'ll help you find a better fit.',
+        question: t('hiw.faq.q3'),
+        answer: t('hiw.faq.a3'),
     },
     {
-        question: 'Can I switch coaches?',
-        answer: 'Absolutely! You\'re free to try different coaches until you find the one that\'s right for you.',
+        question: t('hiw.faq.q4'),
+        answer: t('hiw.faq.a4'),
+    },
+];
+
+// ============================================================================
+// Comparison Table Data (using translation keys)
+// ============================================================================
+
+const getComparisonData = () => [
+    {
+        feature: t('hiw.compare.verifiedCoaches'),
+        us: t('hiw.compare.allVerified'),
+        them: t('hiw.compare.noVerification'),
+    },
+    {
+        feature: t('hiw.compare.reviews'),
+        us: t('hiw.compare.verifiedReviews'),
+        them: t('hiw.compare.unverifiedTestimonials'),
+    },
+    {
+        feature: t('hiw.compare.securePayments'),
+        us: t('hiw.compare.protectedTransactions'),
+        them: t('hiw.compare.directPayments'),
+    },
+    {
+        feature: t('hiw.compare.easyBooking'),
+        us: t('hiw.compare.onlineScheduling'),
+        them: t('hiw.compare.backAndForth'),
+    },
+    {
+        feature: t('hiw.compare.priceTransparency'),
+        us: t('hiw.compare.clearPricing'),
+        them: t('hiw.compare.hiddenCosts'),
+    },
+    {
+        feature: t('hiw.compare.support'),
+        us: t('hiw.compare.platformSupport'),
+        them: t('hiw.compare.noSupport'),
     },
 ];
 
@@ -155,19 +240,19 @@ function StepCard({ number, title, description, icon, tips, requirements, isActi
             </div>
             <h3 class="step-title">${title}</h3>
             <p class="step-description">${description}</p>
-            ${tips && tips.length > 0 && html`
+            ${tips && tips.length > 0 && tips[0] && html`
                 <div class="step-tips">
-                    <strong>Tips:</strong>
+                    <strong>${t('hiw.tips')}:</strong>
                     <ul>
-                        ${tips.map(tip => html`<li key=${tip}>${tip}</li>`)}
+                        ${tips.filter(tip => tip).map(tip => html`<li key=${tip}>${tip}</li>`)}
                     </ul>
                 </div>
             `}
-            ${requirements && requirements.length > 0 && html`
+            ${requirements && requirements.length > 0 && requirements[0] && html`
                 <div class="step-requirements">
-                    <strong>Requirements:</strong>
+                    <strong>${t('hiw.requirements')}:</strong>
                     <ul>
-                        ${requirements.map(req => html`<li key=${req}>${req}</li>`)}
+                        ${requirements.filter(req => req).map(req => html`<li key=${req}>${req}</li>`)}
                     </ul>
                 </div>
             `}
@@ -196,47 +281,25 @@ function ProcessTimeline({ steps, activeStep, onStepClick }) {
 }
 
 function ComparisonTable() {
+    const comparisonData = getComparisonData();
     return html`
         <div class="comparison-table-wrapper">
             <table class="comparison-table">
                 <thead>
                     <tr>
-                        <th>Feature</th>
+                        <th>${t('hiw.compare.feature')}</th>
                         <th>CoachSearching</th>
-                        <th>Traditional Search</th>
+                        <th>${t('hiw.compare.traditional')}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Verified Coaches</td>
-                        <td class="yes">✓ All coaches verified</td>
-                        <td class="no">✗ No verification</td>
-                    </tr>
-                    <tr>
-                        <td>Reviews</td>
-                        <td class="yes">✓ Verified client reviews</td>
-                        <td class="no">✗ Unverified testimonials</td>
-                    </tr>
-                    <tr>
-                        <td>Secure Payments</td>
-                        <td class="yes">✓ Protected transactions</td>
-                        <td class="no">✗ Direct payments</td>
-                    </tr>
-                    <tr>
-                        <td>Easy Booking</td>
-                        <td class="yes">✓ Online scheduling</td>
-                        <td class="no">✗ Back-and-forth emails</td>
-                    </tr>
-                    <tr>
-                        <td>Price Transparency</td>
-                        <td class="yes">✓ Clear upfront pricing</td>
-                        <td class="no">✗ Hidden costs</td>
-                    </tr>
-                    <tr>
-                        <td>Support</td>
-                        <td class="yes">✓ 24/7 platform support</td>
-                        <td class="no">✗ No support</td>
-                    </tr>
+                    ${comparisonData.map(row => html`
+                        <tr key=${row.feature}>
+                            <td>${row.feature}</td>
+                            <td class="yes">✓ ${row.us}</td>
+                            <td class="no">✗ ${row.them}</td>
+                        </tr>
+                    `)}
                 </tbody>
             </table>
         </div>
@@ -251,22 +314,23 @@ export function HowItWorksPage() {
     const [activeTab, setActiveTab] = useState('clients');
     const [activeStep, setActiveStep] = useState(0);
 
-    const steps = activeTab === 'clients' ? CLIENT_STEPS : COACH_STEPS;
+    const steps = activeTab === 'clients' ? getClientSteps() : getCoachSteps();
 
     // Set SEO meta tags
     useEffect(() => {
         setPageMeta({
-            title: 'How CoachSearching Works',
-            description: 'Learn how to find and book coaching sessions on CoachSearching. Simple steps to connect with verified professional coaches for your personal and career development.',
+            title: t('hiw.pageTitle'),
+            description: t('hiw.pageDescription'),
             url: 'https://coachsearching.com/#how-it-works',
         });
 
         // HowTo schema for clients
+        const clientSteps = getClientSteps();
         setStructuredData('howto-schema', generateHowToSchema({
-            name: 'How to Find and Book a Coach on CoachSearching',
-            description: 'A step-by-step guide to finding your perfect coach and booking your first session.',
+            name: t('hiw.schemaName'),
+            description: t('hiw.schemaDescription'),
             totalTime: 'PT10M',
-            steps: CLIENT_STEPS.map(step => ({
+            steps: clientSteps.map(step => ({
                 name: step.title,
                 text: step.description,
             })),
@@ -274,20 +338,21 @@ export function HowItWorksPage() {
 
         // Breadcrumb schema
         setStructuredData('breadcrumb-schema', generateBreadcrumbSchema([
-            { name: 'Home', url: 'https://coachsearching.com' },
-            { name: 'How It Works', url: 'https://coachsearching.com/#how-it-works' },
+            { name: t('nav.home'), url: 'https://coachsearching.com' },
+            { name: t('hiw.title'), url: 'https://coachsearching.com/#how-it-works' },
         ]));
     }, []);
+
+    const howItWorksFAQ = getHowItWorksFAQ();
 
     return html`
         <div class="how-it-works-page">
             <!-- Hero Section -->
             <section class="hiw-hero">
                 <div class="container">
-                    <h1>How CoachSearching Works</h1>
+                    <h1>${t('hiw.heroTitle')}</h1>
                     <p class="hero-subtitle">
-                        Finding your perfect coach and booking sessions is simple.
-                        Here's everything you need to know.
+                        ${t('hiw.heroSubtitle')}
                     </p>
                 </div>
             </section>
@@ -300,13 +365,13 @@ export function HowItWorksPage() {
                             class="tab-btn ${activeTab === 'clients' ? 'active' : ''}"
                             onClick=${() => { setActiveTab('clients'); setActiveStep(0); }}
                         >
-                            For Clients
+                            ${t('hiw.forClients')}
                         </button>
                         <button
                             class="tab-btn ${activeTab === 'coaches' ? 'active' : ''}"
                             onClick=${() => { setActiveTab('coaches'); setActiveStep(0); }}
                         >
-                            For Coaches
+                            ${t('hiw.forCoaches')}
                         </button>
                     </div>
                 </div>
@@ -326,7 +391,7 @@ export function HowItWorksPage() {
             <!-- Step Details -->
             <section class="hiw-steps">
                 <div class="container">
-                    <h2>${activeTab === 'clients' ? 'Your Journey to Growth' : 'Build Your Coaching Practice'}</h2>
+                    <h2>${activeTab === 'clients' ? t('hiw.journeyTitle') : t('hiw.buildPractice')}</h2>
                     <div class="steps-grid">
                         ${steps.map((step, index) => html`
                             <${StepCard}
@@ -343,11 +408,11 @@ export function HowItWorksPage() {
             <!-- Video Section -->
             <section class="hiw-video">
                 <div class="container">
-                    <h2>See It in Action</h2>
+                    <h2>${t('hiw.videoTitle')}</h2>
                     <div class="video-wrapper">
                         <div class="video-placeholder">
                             <div class="play-button">▶</div>
-                            <p>Watch: How to Find Your Perfect Coach (2 min)</p>
+                            <p>${t('hiw.videoCaption')}</p>
                         </div>
                     </div>
                 </div>
@@ -356,9 +421,9 @@ export function HowItWorksPage() {
             <!-- Comparison Section -->
             <section class="hiw-comparison">
                 <div class="container">
-                    <h2>Why Choose CoachSearching?</h2>
+                    <h2>${t('hiw.whyChoose')}</h2>
                     <p class="section-subtitle">
-                        See how we compare to traditional coach searching methods.
+                        ${t('hiw.compareSubtitle')}
                     </p>
                     <${ComparisonTable} />
                 </div>
@@ -367,25 +432,25 @@ export function HowItWorksPage() {
             <!-- Quick Start Guide -->
             <section class="hiw-quickstart">
                 <div class="container">
-                    <h2>Quick Start Guide</h2>
+                    <h2>${t('hiw.quickStartTitle')}</h2>
                     <div class="quickstart-cards">
                         <div class="quickstart-card">
                             <div class="qs-icon">⚡</div>
-                            <h3>In a Hurry?</h3>
-                            <p>Take our 5-minute quiz and get instant coach recommendations.</p>
-                            <a href="#quiz" class="btn btn-primary">Take the Quiz</a>
+                            <h3>${t('hiw.inHurry')}</h3>
+                            <p>${t('hiw.inHurryDesc')}</p>
+                            <a href="#quiz" class="btn btn-primary">${t('hiw.takeQuiz')}</a>
                         </div>
                         <div class="quickstart-card">
                             <div class="qs-icon">🔍</div>
-                            <h3>Know What You Want?</h3>
-                            <p>Browse coaches directly by specialty, location, or price.</p>
-                            <a href="#coaches" class="btn btn-secondary">Browse Coaches</a>
+                            <h3>${t('hiw.knowWhatYouWant')}</h3>
+                            <p>${t('hiw.knowWhatYouWantDesc')}</p>
+                            <a href="#coaches" class="btn btn-secondary">${t('hiw.browseCoaches')}</a>
                         </div>
                         <div class="quickstart-card">
                             <div class="qs-icon">❓</div>
-                            <h3>Have Questions?</h3>
-                            <p>Check our FAQ or contact support for help.</p>
-                            <a href="#faq" class="btn btn-secondary">View FAQ</a>
+                            <h3>${t('hiw.haveQuestions')}</h3>
+                            <p>${t('hiw.haveQuestionsDesc')}</p>
+                            <a href="#faq" class="btn btn-secondary">${t('hiw.viewFaq')}</a>
                         </div>
                     </div>
                 </div>
@@ -394,9 +459,9 @@ export function HowItWorksPage() {
             <!-- FAQ Section -->
             <section class="hiw-faq">
                 <div class="container">
-                    <h2>Common Questions</h2>
+                    <h2>${t('hiw.commonQuestions')}</h2>
                     <div class="faq-list">
-                        ${HOW_IT_WORKS_FAQ.map(faq => html`
+                        ${howItWorksFAQ.filter(faq => faq.question && faq.answer).map(faq => html`
                             <div class="faq-item" key=${faq.question}>
                                 <h3>${faq.question}</h3>
                                 <p>${faq.answer}</p>
@@ -404,7 +469,7 @@ export function HowItWorksPage() {
                         `)}
                     </div>
                     <div class="faq-more">
-                        <a href="#faq" class="btn btn-link">View All FAQs →</a>
+                        <a href="#faq" class="btn btn-link">${t('hiw.viewAllFaqs')} →</a>
                     </div>
                 </div>
             </section>
@@ -412,15 +477,15 @@ export function HowItWorksPage() {
             <!-- CTA Section -->
             <section class="hiw-cta">
                 <div class="container">
-                    <h2>Ready to Get Started?</h2>
-                    <p>Your transformation journey begins with a single step.</p>
+                    <h2>${t('hiw.readyToStart')}</h2>
+                    <p>${t('hiw.transformationBegins')}</p>
                     <div class="cta-buttons">
                         ${activeTab === 'clients' ? html`
-                            <a href="#coaches" class="btn btn-primary btn-lg">Find Your Coach</a>
-                            <a href="#quiz" class="btn btn-secondary btn-lg">Take the Quiz</a>
+                            <a href="#coaches" class="btn btn-primary btn-lg">${t('hiw.findYourCoach')}</a>
+                            <a href="#quiz" class="btn btn-secondary btn-lg">${t('hiw.takeQuiz')}</a>
                         ` : html`
-                            <a href="#become-coach" class="btn btn-primary btn-lg">Apply Now</a>
-                            <a href="#coach-resources" class="btn btn-secondary btn-lg">Learn More</a>
+                            <a href="#become-coach" class="btn btn-primary btn-lg">${t('hiw.applyNow')}</a>
+                            <a href="#coach-resources" class="btn btn-secondary btn-lg">${t('hiw.learnMore')}</a>
                         `}
                     </div>
                 </div>
