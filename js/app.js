@@ -421,9 +421,10 @@ const Navbar = ({ session }) => {
                 <nav class="nav-links" role="navigation">
                     ${session ? html`
                         <a href="#dashboard">${t('nav.dashboard')}</a>
-                        <a href="#signout" class="nav-auth-btn">Sign Out</a>
+                        <a href="#signout" class="nav-auth-btn">${t('nav.signOut')}</a>
                     ` : html`
-                        <a href="#login" class="nav-auth-btn">Sign In / Register</a>
+                        <a href="#login?mode=register" class="nav-auth-btn nav-register-btn">${t('nav.register')}</a>
+                        <a href="#login" class="nav-auth-btn nav-signin-btn">${t('nav.signIn')}</a>
                     `}
                     <${CurrencySelector} />
                     <${LanguageSelector} />
