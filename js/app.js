@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.0.3</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.0.4</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -6730,8 +6730,8 @@ const App = () => {
         // Coach profile pages - SEO-optimized full page
         Component = () => html`<${CoachProfilePage} coachId=${routeParam} session=${session} />`;
     } else {
-        // Static routes
-        switch (route) {
+        // Static routes (use routePath which has query params stripped)
+        switch (routePath) {
             case '#home': Component = () => html`<${Home} session=${session} />`; break;
             case '#coaches': Component = () => html`<${CoachList} session=${session} />`; break;
             case '#login': Component = Auth; break;
