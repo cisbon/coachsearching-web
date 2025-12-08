@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.5.3</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.0</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -1574,6 +1574,196 @@ const Hero = () => {
     `;
 };
 
+// Language to Flag Emoji Mapping
+const LANGUAGE_FLAGS = {
+    'English': '🇬🇧',
+    'German': '🇩🇪',
+    'Spanish': '🇪🇸',
+    'French': '🇫🇷',
+    'Italian': '🇮🇹',
+    'Dutch': '🇳🇱',
+    'Portuguese': '🇵🇹',
+    'Russian': '🇷🇺',
+    'Chinese': '🇨🇳',
+    'Japanese': '🇯🇵',
+    'Korean': '🇰🇷',
+    'Arabic': '🇸🇦',
+    'Hindi': '🇮🇳',
+    'Polish': '🇵🇱',
+    'Swedish': '🇸🇪',
+    'Norwegian': '🇳🇴',
+    'Danish': '🇩🇰',
+    'Finnish': '🇫🇮',
+    'Greek': '🇬🇷',
+    'Turkish': '🇹🇷',
+    'Czech': '🇨🇿',
+    'Romanian': '🇷🇴',
+    'Hungarian': '🇭🇺',
+    'Ukrainian': '🇺🇦'
+};
+
+// Language Flags Component
+const LanguageFlags = ({ languages }) => {
+    if (!languages || languages.length === 0) return null;
+
+    return html`
+        <div class="language-flags" title="${languages.join(', ')}">
+            ${languages.slice(0, 5).map(lang => html`
+                <span key=${lang} class="flag-icon" title=${lang}>
+                    ${LANGUAGE_FLAGS[lang] || '🌐'}
+                </span>
+            `)}
+            ${languages.length > 5 ? html`<span class="more-langs">+${languages.length - 5}</span>` : ''}
+        </div>
+    `;
+};
+
+// Video Popup Component
+const VideoPopup = ({ videoUrl, coachName, onClose }) => {
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, [onClose]);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('video-popup-overlay')) {
+            onClose();
+        }
+    };
+
+    return html`
+        <div class="video-popup-overlay" onClick=${handleBackdropClick}>
+            <div class="video-popup-container">
+                <div class="video-popup-header">
+                    <h3>Meet ${coachName}</h3>
+                    <button class="video-popup-close" onClick=${onClose}>✕</button>
+                </div>
+                <div class="video-popup-content">
+                    <video
+                        src=${videoUrl}
+                        controls
+                        autoplay
+                        class="video-player"
+                    >
+                        Your browser does not support video playback.
+                    </video>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// Reviews Popup Component
+const ReviewsPopup = ({ coach, onClose }) => {
+    const [reviews, setReviews] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        document.body.style.overflow = 'hidden';
+
+        // Load reviews
+        const loadReviews = async () => {
+            setLoading(true);
+            try {
+                if (window.supabaseClient) {
+                    const { data, error } = await window.supabaseClient
+                        .from('cs_reviews')
+                        .select('*')
+                        .eq('coach_id', coach.id)
+                        .order('created_at', { ascending: false });
+
+                    if (!error && data) {
+                        setReviews(data);
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading reviews:', err);
+            }
+            setLoading(false);
+        };
+        loadReviews();
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, [coach.id, onClose]);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('reviews-popup-overlay')) {
+            onClose();
+        }
+    };
+
+    const rating = coach.rating_average || coach.rating || 0;
+    const reviewsCount = coach.rating_count || coach.reviews_count || 0;
+
+    return html`
+        <div class="reviews-popup-overlay" onClick=${handleBackdropClick}>
+            <div class="reviews-popup-container">
+                <div class="reviews-popup-header">
+                    <div class="reviews-header-info">
+                        <h3>Reviews for ${coach.full_name}</h3>
+                        <div class="reviews-summary">
+                            <div class="reviews-avg-rating">
+                                <span class="big-rating">${rating.toFixed(1)}</span>
+                                <div class="rating-stars-large">
+                                    ${[1,2,3,4,5].map(star => html`
+                                        <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                    `)}
+                                </div>
+                                <span class="total-reviews">${reviewsCount} review${reviewsCount !== 1 ? 's' : ''}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="reviews-popup-close" onClick=${onClose}>✕</button>
+                </div>
+                <div class="reviews-popup-content">
+                    ${loading ? html`
+                        <div class="reviews-loading">Loading reviews...</div>
+                    ` : reviews.length === 0 ? html`
+                        <div class="no-reviews">
+                            <div class="no-reviews-icon">📝</div>
+                            <p>No reviews yet</p>
+                            <p class="no-reviews-subtext">Be the first to review this coach!</p>
+                        </div>
+                    ` : html`
+                        <div class="reviews-list">
+                            ${reviews.map(review => html`
+                                <div key=${review.id} class="review-item">
+                                    <div class="review-header">
+                                        <div class="reviewer-info">
+                                            <span class="reviewer-name">${review.reviewer_name || 'Anonymous'}</span>
+                                            <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                        <div class="review-rating">
+                                            ${[1,2,3,4,5].map(star => html`
+                                                <span key=${star} class="star-small ${star <= review.rating ? 'filled' : ''}">★</span>
+                                            `)}
+                                        </div>
+                                    </div>
+                                    <p class="review-text">${review.comment || review.text || ''}</p>
+                                </div>
+                            `)}
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 // Skeleton loader for coach cards (memoized for performance)
 const CoachCardSkeleton = React.memo(() => {
     return html`
@@ -1676,6 +1866,9 @@ const TrustBadges = ({ coach }) => {
 };
 
 const CoachCard = React.memo(({ coach, onViewDetails }) => {
+    const [showVideoPopup, setShowVideoPopup] = useState(false);
+    const [showReviewsPopup, setShowReviewsPopup] = useState(false);
+
     // Map database fields to component fields
     const rating = coach.rating_average || coach.rating || 0;
     const reviewsCount = coach.rating_count || coach.reviews_count || 0;
@@ -1683,69 +1876,106 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
     const languages = coach.languages || [];
     const specialties = coach.specialties || [];
     const bio = coach.bio || '';
-    const hasVideo = coach.intro_video_url || coach.video_url;
+    const videoUrl = coach.intro_video_url || coach.video_url;
+    const hasVideo = !!videoUrl;
     const offersFreeIntro = coach.offers_free_intro || coach.free_discovery_call;
 
-    return html`
-    <div class="coach-card ${hasVideo ? 'has-video' : ''}">
-            ${hasVideo && html`
-                <div class="video-indicator" title="Watch intro video">
-                    <span>▶</span>
-                </div>
-            `}
-            <img src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name)} alt=${coach.full_name} class="coach-img" loading="lazy" />
+    const handleImageClick = (e) => {
+        if (hasVideo) {
+            e.preventDefault();
+            e.stopPropagation();
+            setShowVideoPopup(true);
+        }
+    };
 
-            <!-- Trust Badges Overlay -->
-            <${TrustBadges} coach=${coach} />
+    const handleReviewsClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowReviewsPopup(true);
+    };
+
+    return html`
+        <div class="coach-card ${hasVideo ? 'has-video' : ''}">
+            <!-- Image Container with Video Play Overlay -->
+            <div class="coach-img-container ${hasVideo ? 'clickable' : ''}" onClick=${handleImageClick}>
+                <img
+                    src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name)}
+                    alt=${coach.full_name}
+                    class="coach-img"
+                    loading="lazy"
+                />
+                ${hasVideo && html`
+                    <div class="video-play-overlay">
+                        <div class="play-button">
+                            <span>▶</span>
+                        </div>
+                        <span class="video-label">Watch Intro</span>
+                    </div>
+                `}
+                <!-- Trust Badges Overlay -->
+                <${TrustBadges} coach=${coach} />
+            </div>
 
             <div class="coach-info">
-                <div class="coach-header">
-                    <div>
-                        <h3 class="coach-name">
-                            ${coach.full_name}
-                            ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
-                        </h3>
-                        <div class="coach-title">${coach.title}</div>
-                        <div class="coach-meta">
-                            <span>📍 ${location}</span>
-                            ${languages.length > 0 ? html`<span>💬 ${languages.slice(0, 2).join(', ')}${languages.length > 2 ? ' +' + (languages.length - 2) : ''}</span>` : ''}
-                        </div>
-                    </div>
-                    <div class="coach-score-rating">
-                        <${TrustScore} coach=${coach} />
-                        ${rating > 0 ? html`
-                            <div class="coach-rating">
-                                <div class="rating-stars">
-                                    ${[1,2,3,4,5].map(star => html`
-                                        <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                    `)}
-                                </div>
-                                <div class="rating-text">${rating.toFixed(1)} (${reviewsCount})</div>
-                            </div>
-                        ` : html`
-                            <div class="coach-rating new-coach">
-                                <span class="new-badge">NEW</span>
-                            </div>
-                        `}
-                    </div>
+                <!-- Name and Title Row -->
+                <div class="coach-name-row">
+                    <h3 class="coach-name">
+                        ${coach.full_name}
+                        ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
+                    </h3>
+                    <${TrustScore} coach=${coach} />
                 </div>
-                <div class="coach-details">
-                    <p>${bio.length > 150 ? bio.substring(0, 150) + '...' : bio}</p>
-                    ${specialties.length > 0 ? html`
-                        <div class="specialty-tags">
-                            ${specialties.slice(0, 3).map(s => html`
-                                <span key=${s} class="specialty-tag">${s}</span>
-                            `)}
-                            ${specialties.length > 3 ? html`<span class="specialty-tag more">+${specialties.length - 3}</span>` : ''}
-                        </div>
-                    ` : ''}
+                <div class="coach-title">${coach.title}</div>
+
+                <!-- Location and Languages Row -->
+                <div class="coach-meta-row">
+                    <span class="meta-location">📍 ${location}</span>
+                    <${LanguageFlags} languages=${languages} />
                 </div>
-            </div>
-            <div class="coach-price-section">
-                <div>
-                    ${offersFreeIntro && html`
-                        <div class="free-intro-badge">🎁 Free Discovery Call</div>
+
+                <!-- Reviews Section - More Prominent -->
+                <div class="coach-reviews-section" onClick=${handleReviewsClick}>
+                    ${rating > 0 ? html`
+                        <div class="reviews-display clickable">
+                            <div class="rating-stars-prominent">
+                                ${[1,2,3,4,5].map(star => html`
+                                    <span key=${star} class="star-prominent ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                `)}
+                            </div>
+                            <span class="rating-number">${rating.toFixed(1)}</span>
+                            <span class="reviews-count">(${reviewsCount} review${reviewsCount !== 1 ? 's' : ''})</span>
+                            <span class="view-reviews-link">View all →</span>
+                        </div>
+                    ` : html`
+                        <div class="new-coach-badge">
+                            <span class="new-badge">✨ NEW COACH</span>
+                            <span class="be-first">Be the first to review!</span>
+                        </div>
                     `}
+                </div>
+
+                <!-- Bio -->
+                <div class="coach-bio">
+                    <p>${bio.length > 120 ? bio.substring(0, 120) + '...' : bio}</p>
+                </div>
+
+                <!-- Specialties -->
+                ${specialties.length > 0 ? html`
+                    <div class="specialty-tags">
+                        ${specialties.slice(0, 4).map(s => html`
+                            <span key=${s} class="specialty-tag">${s}</span>
+                        `)}
+                        ${specialties.length > 4 ? html`<span class="specialty-tag more">+${specialties.length - 4}</span>` : ''}
+                    </div>
+                ` : ''}
+            </div>
+
+            <!-- Price Section -->
+            <div class="coach-price-section">
+                ${offersFreeIntro && html`
+                    <div class="free-intro-badge">🎁 Free Discovery Call</div>
+                `}
+                <div class="price-info">
                     <div class="price-label">${t('coach.hourly_rate')}</div>
                     <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
                 </div>
@@ -1754,6 +1984,21 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
                 </a>
             </div>
         </div>
+
+        ${showVideoPopup && html`
+            <${VideoPopup}
+                videoUrl=${videoUrl}
+                coachName=${coach.full_name}
+                onClose=${() => setShowVideoPopup(false)}
+            />
+        `}
+
+        ${showReviewsPopup && html`
+            <${ReviewsPopup}
+                coach=${coach}
+                onClose=${() => setShowReviewsPopup(false)}
+            />
+        `}
     `;
 });
 
@@ -2085,22 +2330,54 @@ const CoachList = ({ searchFilters, session }) => {
             result = result.filter(coach => (coach.years_experience || 0) >= minYears);
         }
 
-        // Sorting
+        // Helper to check if coach has video
+        const hasVideo = (coach) => !!(coach.intro_video_url || coach.video_url || coach.video_intro_url);
+
+        // Sorting - always prioritize coaches with videos first, then apply selected sort
         switch (filters.sortBy) {
             case 'rating':
-                result.sort((a, b) => (b.rating_average || b.rating || 0) - (a.rating_average || a.rating || 0));
+                result.sort((a, b) => {
+                    // Videos first
+                    const aVideo = hasVideo(a) ? 1 : 0;
+                    const bVideo = hasVideo(b) ? 1 : 0;
+                    if (bVideo !== aVideo) return bVideo - aVideo;
+                    // Then by rating
+                    return (b.rating_average || b.rating || 0) - (a.rating_average || a.rating || 0);
+                });
                 break;
             case 'price_low':
-                result.sort((a, b) => (a.hourly_rate || 0) - (b.hourly_rate || 0));
+                result.sort((a, b) => {
+                    const aVideo = hasVideo(a) ? 1 : 0;
+                    const bVideo = hasVideo(b) ? 1 : 0;
+                    if (bVideo !== aVideo) return bVideo - aVideo;
+                    return (a.hourly_rate || 0) - (b.hourly_rate || 0);
+                });
                 break;
             case 'price_high':
-                result.sort((a, b) => (b.hourly_rate || 0) - (a.hourly_rate || 0));
+                result.sort((a, b) => {
+                    const aVideo = hasVideo(a) ? 1 : 0;
+                    const bVideo = hasVideo(b) ? 1 : 0;
+                    if (bVideo !== aVideo) return bVideo - aVideo;
+                    return (b.hourly_rate || 0) - (a.hourly_rate || 0);
+                });
                 break;
             case 'reviews':
-                result.sort((a, b) => (b.rating_count || b.reviews_count || 0) - (a.rating_count || a.reviews_count || 0));
+                result.sort((a, b) => {
+                    const aVideo = hasVideo(a) ? 1 : 0;
+                    const bVideo = hasVideo(b) ? 1 : 0;
+                    if (bVideo !== aVideo) return bVideo - aVideo;
+                    return (b.rating_count || b.reviews_count || 0) - (a.rating_count || a.reviews_count || 0);
+                });
                 break;
             default:
-                // relevance - keep original order or sort by a combination
+                // relevance - prioritize coaches with videos, then by rating
+                result.sort((a, b) => {
+                    const aVideo = hasVideo(a) ? 1 : 0;
+                    const bVideo = hasVideo(b) ? 1 : 0;
+                    if (bVideo !== aVideo) return bVideo - aVideo;
+                    // Then by rating as secondary
+                    return (b.rating_average || b.rating || 0) - (a.rating_average || a.rating || 0);
+                });
                 break;
         }
 

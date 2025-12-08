@@ -3670,3 +3670,688 @@ footer, .site-footer {
     margin-top: 8px;
     border-top: 2px solid var(--primary-petrol);
 }
+
+/* ========================================
+   IMPROVED COACH CARD STYLES v1.6.0
+   ======================================== */
+
+/* Filter Button - Same height as navbar buttons */
+.coaches-header .filter-toggle-btn {
+    padding: 8px 16px;
+    height: 40px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.coaches-header .filter-toggle-btn:hover {
+    background: #f5f5f5;
+    border-color: var(--primary-petrol);
+}
+
+.coaches-header .filter-toggle-btn.active {
+    background: var(--primary-petrol);
+    color: white;
+    border-color: var(--primary-petrol);
+}
+
+.filter-count {
+    background: #ff6b6b;
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* Coach Card Container */
+.coach-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    gap: 24px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.coach-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.coach-card.has-video {
+    border-left: 4px solid var(--primary-petrol);
+}
+
+/* Image Container with Video Overlay */
+.coach-img-container {
+    position: relative;
+    flex-shrink: 0;
+    width: 180px;
+    height: 180px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.coach-img-container.clickable {
+    cursor: pointer;
+}
+
+.coach-img-container .coach-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.coach-img-container.clickable:hover .coach-img {
+    transform: scale(1.05);
+}
+
+/* Video Play Overlay */
+.video-play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.coach-img-container.clickable:hover .video-play-overlay {
+    opacity: 1;
+}
+
+.play-button {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+}
+
+.play-button span {
+    font-size: 24px;
+    color: var(--primary-petrol);
+    margin-left: 4px;
+}
+
+.coach-img-container.clickable:hover .play-button {
+    transform: scale(1.1);
+}
+
+.video-label {
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 8px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Coach Info Section */
+.coach-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.coach-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.coach-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--primary-petrol);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.verified-check {
+    background: #10b981;
+    color: white;
+    font-size: 0.7rem;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.coach-title {
+    font-size: 0.95rem;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+/* Meta Row - Location and Languages */
+.coach-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.meta-location {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Language Flags */
+.language-flags {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.flag-icon {
+    font-size: 1.2rem;
+    cursor: default;
+}
+
+.more-langs {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Reviews Section - Prominent */
+.coach-reviews-section {
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+.reviews-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #fff9e6 0%, #fff3cc 100%);
+    border-radius: 8px;
+    border: 1px solid #f0e6b3;
+    transition: all 0.2s;
+}
+
+.reviews-display.clickable:hover {
+    background: linear-gradient(135deg, #fff3cc 0%, #ffe699 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rating-stars-prominent {
+    display: flex;
+    gap: 2px;
+}
+
+.star-prominent {
+    font-size: 1.1rem;
+    color: #ddd;
+}
+
+.star-prominent.filled {
+    color: #f59e0b;
+}
+
+.rating-number {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #92400e;
+}
+
+.reviews-count {
+    font-size: 0.85rem;
+    color: #b45309;
+}
+
+.view-reviews-link {
+    font-size: 0.8rem;
+    color: var(--primary-petrol);
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.new-coach-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border-radius: 8px;
+    border: 1px solid #7dd3fc;
+}
+
+.new-coach-badge .new-badge {
+    font-weight: 600;
+    color: #0369a1;
+}
+
+.new-coach-badge .be-first {
+    font-size: 0.8rem;
+    color: #0284c7;
+}
+
+/* Coach Bio */
+.coach-bio {
+    margin: 4px 0;
+}
+
+.coach-bio p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+/* Specialty Tags */
+.specialty-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.specialty-tag {
+    background: #f0f9f8;
+    color: var(--primary-petrol);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid #d0e8e6;
+}
+
+.specialty-tag.more {
+    background: #e5e5e5;
+    color: #666;
+    border-color: #d0d0d0;
+}
+
+/* Price Section */
+.coach-price-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    min-width: 160px;
+    gap: 12px;
+}
+
+.free-intro-badge {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #065f46;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #6ee7b7;
+}
+
+.price-info {
+    text-align: right;
+}
+
+.price-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.price-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.btn-book {
+    background: var(--primary-petrol);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    text-align: center;
+    width: 100%;
+    display: block;
+}
+
+.btn-book:hover {
+    background: var(--petrol-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 98, 102, 0.3);
+}
+
+/* ========================================
+   VIDEO POPUP STYLES
+   ======================================== */
+
+.video-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+}
+
+.video-popup-container {
+    background: white;
+    border-radius: 12px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.video-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.video-popup-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--primary-petrol);
+}
+
+.video-popup-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.video-popup-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.video-popup-content {
+    padding: 0;
+    background: #000;
+}
+
+.video-player {
+    width: 100%;
+    max-height: 70vh;
+    display: block;
+}
+
+/* ========================================
+   REVIEWS POPUP STYLES
+   ======================================== */
+
+.reviews-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+}
+
+.reviews-popup-container {
+    background: white;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.reviews-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+    background: linear-gradient(135deg, #fff9e6 0%, #fff3cc 100%);
+}
+
+.reviews-header-info h3 {
+    margin: 0 0 12px 0;
+    font-size: 1.2rem;
+    color: var(--text-main);
+}
+
+.reviews-avg-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.big-rating {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #92400e;
+}
+
+.rating-stars-large .star {
+    font-size: 1.2rem;
+    color: #ddd;
+}
+
+.rating-stars-large .star.filled {
+    color: #f59e0b;
+}
+
+.total-reviews {
+    font-size: 0.9rem;
+    color: #b45309;
+}
+
+.reviews-popup-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.reviews-popup-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.reviews-popup-content {
+    padding: 20px 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.reviews-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.no-reviews {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.no-reviews-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+}
+
+.no-reviews p {
+    margin: 0;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.no-reviews-subtext {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 4px !important;
+}
+
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.review-item {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reviewer-name {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.review-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.review-rating {
+    display: flex;
+    gap: 2px;
+}
+
+.star-small {
+    font-size: 0.9rem;
+    color: #ddd;
+}
+
+.star-small.filled {
+    color: #f59e0b;
+}
+
+.review-text {
+    margin: 0;
+    color: var(--text-main);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+    .coach-card {
+        flex-direction: column;
+        padding: 16px;
+    }
+
+    .coach-img-container {
+        width: 100%;
+        height: 200px;
+    }
+
+    .coach-name-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .coach-meta-row {
+        flex-wrap: wrap;
+    }
+
+    .coach-price-section {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #eee;
+    }
+
+    .price-info {
+        text-align: left;
+    }
+
+    .btn-book {
+        width: auto;
+        padding: 10px 20px;
+    }
+
+    .reviews-display {
+        flex-wrap: wrap;
+    }
+
+    .view-reviews-link {
+        width: 100%;
+        margin-top: 4px;
+        margin-left: 0;
+    }
+
+    .video-popup-container {
+        max-width: 100%;
+        margin: 10px;
+    }
+
+    .reviews-popup-container {
+        max-width: 100%;
+        margin: 10px;
+    }
+}
