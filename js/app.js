@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.5.0</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.5.1</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -417,62 +417,98 @@ const LanguageSelector = () => {
 const Navbar = ({ session }) => {
     const [menuOpen, setMenuOpen] = useState(false);
 
-    // Close menu when clicking outside or on a link
-    const handleLinkClick = () => {
-        setMenuOpen(false);
-    };
+    const handleLinkClick = () => setMenuOpen(false);
 
     // Inject responsive navbar CSS
     useEffect(() => {
-        if (!document.getElementById('responsive-navbar-css')) {
-            const style = document.createElement('style');
-            style.id = 'responsive-navbar-css';
-            style.textContent = `
-                .nav-flex { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
-                .nav-links { display: flex; align-items: center; gap: 12px; }
-                .nav-browse-link { color: #1a5f5a; font-weight: 500; text-decoration: none; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; }
-                .nav-browse-link:hover { background: #f0f9f8; }
-                .hamburger-btn { display: none; background: none; border: none; cursor: pointer; padding: 8px; flex-direction: column; gap: 5px; }
-                .hamburger-btn span { display: block; width: 24px; height: 2px; background: #1a5f5a; transition: all 0.3s; }
-                .hamburger-btn.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
-                .hamburger-btn.open span:nth-child(2) { opacity: 0; }
-                .hamburger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
-                @media (max-width: 768px) {
-                    .hamburger-btn { display: flex; }
-                    .nav-links {
-                        position: fixed;
-                        top: 60px;
-                        left: 0;
-                        right: 0;
-                        background: white;
-                        flex-direction: column;
-                        padding: 20px;
-                        gap: 8px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                        transform: translateY(-100%);
-                        opacity: 0;
-                        visibility: hidden;
-                        transition: all 0.3s ease;
-                        z-index: 999;
-                    }
-                    .nav-links.open {
-                        transform: translateY(0);
-                        opacity: 1;
-                        visibility: visible;
-                    }
-                    .nav-links a, .nav-links .nav-auth-btn {
-                        width: 100%;
-                        text-align: center;
-                        padding: 12px 16px;
-                        border-radius: 8px;
-                    }
-                    .nav-browse-link { background: #f0f9f8; }
-                    .nav-auth-btn { margin: 4px 0 !important; }
-                    .currency-selector, .lang-selector { width: 100%; justify-content: center; }
+        const existingStyle = document.getElementById('responsive-navbar-css');
+        if (existingStyle) existingStyle.remove();
+
+        const style = document.createElement('style');
+        style.id = 'responsive-navbar-css';
+        style.textContent = `
+            /* Desktop navbar - 10px consistent spacing */
+            header[role="banner"] { background: white; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+            header[role="banner"] .nav-flex { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px; }
+            header[role="banner"] .nav-links { display: flex; align-items: center; gap: 10px; }
+            header[role="banner"] .nav-links > * { margin: 0; }
+            .nav-browse-link { color: #1a5f5a; font-weight: 500; text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; white-space: nowrap; }
+            .nav-browse-link:hover { background: #f0f9f8; }
+
+            /* Hamburger button - hidden on desktop */
+            .hamburger-btn {
+                display: none;
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 10px;
+                flex-direction: column;
+                justify-content: center;
+                gap: 5px;
+                z-index: 1001;
+            }
+            .hamburger-btn span {
+                display: block;
+                width: 24px;
+                height: 3px;
+                background: #1a5f5a;
+                border-radius: 2px;
+                transition: all 0.3s ease;
+            }
+            .hamburger-btn.open span:nth-child(1) { transform: rotate(45deg) translate(6px, 6px); }
+            .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+            .hamburger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
+
+            /* Mobile styles */
+            @media (max-width: 768px) {
+                .hamburger-btn { display: flex !important; }
+
+                header[role="banner"] .nav-links {
+                    position: fixed;
+                    top: 60px;
+                    left: 0;
+                    right: 0;
+                    background: white;
+                    flex-direction: column;
+                    padding: 16px 20px;
+                    gap: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    max-height: 0;
+                    overflow: hidden;
+                    opacity: 0;
+                    transition: all 0.3s ease;
+                    z-index: 999;
                 }
-            `;
-            document.head.appendChild(style);
-        }
+
+                header[role="banner"] .nav-links.open {
+                    max-height: 400px;
+                    opacity: 1;
+                    padding: 16px 20px;
+                }
+
+                header[role="banner"] .nav-links > a,
+                header[role="banner"] .nav-links > .nav-auth-btn {
+                    display: block;
+                    width: 100%;
+                    text-align: center;
+                    padding: 14px 16px;
+                    border-radius: 8px;
+                    box-sizing: border-box;
+                }
+
+                .nav-browse-link { background: #f0f9f8 !important; }
+                .nav-register-btn { background: #1a5f5a !important; color: white !important; }
+                .nav-signin-btn { background: #f5f5f5 !important; }
+
+                header[role="banner"] .nav-links .currency-selector,
+                header[role="banner"] .nav-links .lang-selector {
+                    width: 100%;
+                    justify-content: center;
+                    margin-top: 8px;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     }, []);
 
     return html`
