@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.0.4</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.0.5</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -443,12 +443,23 @@ const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [message, setMessage] = useState('');
 
-    // Check URL for mode=register parameter
+    // Check URL for mode=register parameter and listen for changes
     useEffect(() => {
-        const hash = window.location.hash;
-        if (hash.includes('mode=register')) {
-            setIsLogin(false);
-        }
+        const checkMode = () => {
+            const hash = window.location.hash;
+            if (hash.includes('mode=register')) {
+                setIsLogin(false);
+            } else if (hash.startsWith('#login')) {
+                setIsLogin(true);
+            }
+        };
+
+        // Check on mount
+        checkMode();
+
+        // Listen for hash changes while on auth page
+        window.addEventListener('hashchange', checkMode);
+        return () => window.removeEventListener('hashchange', checkMode);
     }, []);
 
     const handleAuth = async (e) => {
