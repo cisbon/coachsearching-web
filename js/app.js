@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.0</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.1</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -4880,7 +4880,8 @@ const DashboardProfile = ({ session, userType }) => {
         offers_virtual: true,
         offers_onsite: false,
         website_url: '',
-        linkedin_url: ''
+        linkedin_url: '',
+        intro_video_url: ''
     });
 
     const languageOptions = [
@@ -4929,7 +4930,8 @@ const DashboardProfile = ({ session, userType }) => {
                     offers_virtual: coach.offers_virtual !== false,
                     offers_onsite: coach.offers_onsite || false,
                     website_url: coach.website_url || '',
-                    linkedin_url: coach.linkedin_url || ''
+                    linkedin_url: coach.linkedin_url || '',
+                    intro_video_url: coach.intro_video_url || ''
                 });
             }
         } catch (err) {
@@ -5013,6 +5015,7 @@ const DashboardProfile = ({ session, userType }) => {
                 offers_onsite: formData.offers_onsite,
                 website_url: formData.website_url,
                 linkedin_url: formData.linkedin_url,
+                intro_video_url: formData.intro_video_url,
                 onboarding_completed: true,
                 updated_at: new Date().toISOString()
             };
@@ -5109,6 +5112,44 @@ const DashboardProfile = ({ session, userType }) => {
                 .btn-cancel { padding: 10px 20px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; }
                 .btn-save { padding: 10px 20px; border: none; border-radius: 8px; background: #1a5f5a; color: white; cursor: pointer; font-weight: 500; }
                 .btn-save:disabled { background: #ccc; cursor: not-allowed; }
+
+                /* Video Introduction Section */
+                .video-intro-section { position: relative; }
+                .video-intro-section.no-video { background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 2px dashed #f59e0b; }
+                .video-intro-section.has-video { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border: 2px solid #10b981; }
+
+                .video-importance-banner { display: flex; gap: 16px; padding: 16px; background: white; border-radius: 10px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+                .importance-icon { font-size: 32px; }
+                .importance-text strong { color: #b45309; font-size: 16px; display: block; margin-bottom: 6px; }
+                .importance-text p { color: #78716c; font-size: 14px; line-height: 1.5; margin: 0; }
+
+                .add-video-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px 24px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+                .add-video-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4); }
+                .add-video-btn span { font-size: 20px; }
+
+                .video-added-badge { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: white; border-radius: 8px; margin-bottom: 12px; }
+                .video-added-badge .badge-icon { width: 24px; height: 24px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+                .video-added-badge span:last-child { color: #065f46; font-weight: 500; }
+
+                .video-link { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: white; border-radius: 8px; color: #1a5f5a; text-decoration: none; transition: background 0.2s; }
+                .video-link:hover { background: #f0fdf4; }
+                .video-link .play-icon { width: 32px; height: 32px; background: #1a5f5a; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+                /* Video Modal */
+                .video-modal { max-width: 600px; }
+                .video-info-box { display: flex; gap: 14px; padding: 16px; background: linear-gradient(135deg, #fffbeb, #fef3c7); border-radius: 10px; margin-bottom: 20px; border: 1px solid #fcd34d; }
+                .video-info-box .info-icon { font-size: 28px; }
+                .video-info-box .info-content strong { color: #92400e; display: block; margin-bottom: 8px; }
+                .video-info-box .info-content ul { margin: 0; padding-left: 0; list-style: none; }
+                .video-info-box .info-content li { color: #78716c; font-size: 14px; margin-bottom: 6px; }
+                .video-info-box .info-content li strong { color: #1a5f5a; display: inline; }
+
+                .form-hint { color: #6b7280; font-size: 13px; margin-top: 6px; }
+
+                .video-tips { margin-top: 20px; padding: 16px; background: #f9fafb; border-radius: 8px; }
+                .video-tips strong { color: #374151; font-size: 14px; display: block; margin-bottom: 10px; }
+                .video-tips ul { margin: 0; padding-left: 20px; }
+                .video-tips li { color: #6b7280; font-size: 13px; margin-bottom: 6px; }
             `;
             document.head.appendChild(style);
         }
@@ -5225,6 +5266,39 @@ const DashboardProfile = ({ session, userType }) => {
                         : html`<p class="placeholder-text">Add your coaching specialties...</p>`
                     }
                 </div>
+            </div>
+
+            <!-- Video Introduction Section - PROMINENT -->
+            <div class="linkedin-section video-intro-section ${formData.intro_video_url ? 'has-video' : 'no-video'}">
+                <div class="section-header">
+                    <h2>🎬 Video Introduction</h2>
+                    <button class="edit-btn" onClick=${() => setEditSection('video')}>✏️</button>
+                </div>
+                ${formData.intro_video_url ? html`
+                    <div class="section-content video-preview">
+                        <div class="video-added-badge">
+                            <span class="badge-icon">✓</span>
+                            <span>Video Added - Great for building trust!</span>
+                        </div>
+                        <a href=${formData.intro_video_url} target="_blank" class="video-link">
+                            <span class="play-icon">▶</span>
+                            <span>View your intro video</span>
+                        </a>
+                    </div>
+                ` : html`
+                    <div class="section-content video-cta">
+                        <div class="video-importance-banner">
+                            <div class="importance-icon">⭐</div>
+                            <div class="importance-text">
+                                <strong>Boost your visibility by 3x!</strong>
+                                <p>Coaches with video introductions appear at the top of search results and get significantly more bookings. Let potential clients see and hear you before they book.</p>
+                            </div>
+                        </div>
+                        <button class="add-video-btn" onClick=${() => setEditSection('video')}>
+                            <span>🎥</span> Add Your Video Introduction
+                        </button>
+                    </div>
+                `}
             </div>
 
             <!-- Links Section -->
@@ -5388,6 +5462,53 @@ const DashboardProfile = ({ session, userType }) => {
                         <div class="modal-footer">
                             <button class="btn-cancel" onClick=${() => setEditSection(null)}>Cancel</button>
                             <button class="btn-save" onClick=${handleSave} disabled=${loading}>${loading ? 'Saving...' : 'Save'}</button>
+                        </div>
+                    </div>
+                </div>
+            `}
+
+            ${editSection === 'video' && html`
+                <div class="edit-modal-overlay" onClick=${() => setEditSection(null)}>
+                    <div class="edit-modal video-modal" onClick=${(e) => e.stopPropagation()}>
+                        <div class="modal-header">
+                            <h3>🎬 Video Introduction</h3>
+                            <button onClick=${() => setEditSection(null)}>×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="video-info-box">
+                                <div class="info-icon">💡</div>
+                                <div class="info-content">
+                                    <strong>Why add a video?</strong>
+                                    <ul>
+                                        <li>📈 Appear at the <strong>top of search results</strong></li>
+                                        <li>🤝 Build <strong>instant trust</strong> with potential clients</li>
+                                        <li>📅 Get <strong>more bookings</strong> - clients prefer coaches they can see</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Video URL</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                                    value=${formData.intro_video_url}
+                                    onChange=${(e) => setFormData({...formData, intro_video_url: e.target.value})}
+                                />
+                                <p class="form-hint">Paste a link to your YouTube, Vimeo, or other video hosting URL. We recommend a 1-3 minute introduction video.</p>
+                            </div>
+                            <div class="video-tips">
+                                <strong>Tips for a great intro video:</strong>
+                                <ul>
+                                    <li>Introduce yourself and your coaching style</li>
+                                    <li>Share your background and qualifications</li>
+                                    <li>Explain what clients can expect</li>
+                                    <li>Keep it authentic and personable</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onClick=${() => setEditSection(null)}>Cancel</button>
+                            <button class="btn-save" onClick=${handleSave} disabled=${loading}>${loading ? 'Saving...' : 'Save Video'}</button>
                         </div>
                     </div>
                 </div>
