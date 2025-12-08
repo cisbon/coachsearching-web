@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.9</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.7.2</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -417,7 +417,11 @@ const LanguageSelector = () => {
 const Navbar = ({ session }) => {
     const [menuOpen, setMenuOpen] = useState(false);
 
-    const handleLinkClick = () => setMenuOpen(false);
+    const handleLinkClick = (e, path) => {
+        e.preventDefault();
+        setMenuOpen(false);
+        window.navigateTo(path);
+    };
 
     // Inject responsive navbar CSS
     useEffect(() => {
@@ -528,13 +532,13 @@ const Navbar = ({ session }) => {
                 </button>
 
                 <nav class="nav-links ${menuOpen ? 'open' : ''}" role="navigation">
-                    <a href="/coaches" class="nav-browse-link" onClick=${handleLinkClick}>${t('nav.browseCoaches')}</a>
+                    <a href="/coaches" class="nav-browse-link" onClick=${(e) => handleLinkClick(e, '/coaches')}>${t('nav.browseCoaches')}</a>
                     ${session ? html`
-                        <a href="/dashboard" onClick=${handleLinkClick}>${t('nav.dashboard')}</a>
-                        <a href="/signout" class="nav-auth-btn" onClick=${handleLinkClick}>${t('nav.signOut')}</a>
+                        <a href="/dashboard" onClick=${(e) => handleLinkClick(e, '/dashboard')}>${t('nav.dashboard')}</a>
+                        <a href="/signout" class="nav-auth-btn" onClick=${(e) => handleLinkClick(e, '/signout')}>${t('nav.signOut')}</a>
                     ` : html`
-                        <a href="/login?mode=register" class="nav-auth-btn nav-register-btn" onClick=${handleLinkClick}>${t('nav.register')}</a>
-                        <a href="/login" class="nav-auth-btn nav-signin-btn" onClick=${handleLinkClick}>${t('nav.signIn')}</a>
+                        <a href="/login?mode=register" class="nav-auth-btn nav-register-btn" onClick=${(e) => handleLinkClick(e, '/login?mode=register')}>${t('nav.register')}</a>
+                        <a href="/login" class="nav-auth-btn nav-signin-btn" onClick=${(e) => handleLinkClick(e, '/login')}>${t('nav.signIn')}</a>
                     `}
                     <${CurrencySelector} />
                     <${LanguageSelector} />
@@ -555,10 +559,11 @@ const Auth = () => {
     // Check URL for mode=register parameter and listen for changes
     useEffect(() => {
         const checkMode = () => {
-            const hash = window.location.hash;
-            if (hash.includes('mode=register')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pathname = window.location.pathname;
+            if (urlParams.get('mode') === 'register' || pathname.includes('register')) {
                 setIsLogin(false);
-            } else if (hash.startsWith('#login')) {
+            } else {
                 setIsLogin(true);
             }
         };
@@ -566,9 +571,9 @@ const Auth = () => {
         // Check on mount
         checkMode();
 
-        // Listen for hash changes while on auth page
-        window.addEventListener('hashchange', checkMode);
-        return () => window.removeEventListener('hashchange', checkMode);
+        // Listen for URL changes
+        window.addEventListener('popstate', checkMode);
+        return () => window.removeEventListener('popstate', checkMode);
     }, []);
 
     const handleAuth = async (e) => {
@@ -1558,7 +1563,7 @@ const Hero = () => {
                         <span class="discovery-label">${t('discovery.takeQuiz')}</span>
                         <span class="discovery-desc">${t('discovery.takeQuizDesc')}</span>
                     </button>
-                    <button class="discovery-option browse-option" onClick=${() => window.location.href = 'https://cisbon.github.io/coachsearching-web/#coaches'}>
+                    <button class="discovery-option browse-option" onClick=${() => window.navigateTo('/coaches')}>
                         <span class="discovery-icon">🔍</span>
                         <span class="discovery-label">${t('discovery.browse')}</span>
                         <span class="discovery-desc">${t('discovery.browseDesc')}</span>
@@ -7981,6 +7986,32 @@ window.navigateTo = (path) => {
     window.history.pushState(null, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
 };
+
+// Global click handler for all internal links (SPA navigation)
+document.addEventListener('click', (e) => {
+    // Find the closest anchor element
+    const anchor = e.target.closest('a');
+    if (!anchor) return;
+
+    const href = anchor.getAttribute('href');
+    if (!href) return;
+
+    // Skip external links, hash-only links, and links with target="_blank"
+    if (href.startsWith('http') || href.startsWith('//') || href === '#' || anchor.target === '_blank') {
+        return;
+    }
+
+    // Skip mailto and tel links
+    if (href.startsWith('mailto:') || href.startsWith('tel:')) {
+        return;
+    }
+
+    // Handle internal links starting with /
+    if (href.startsWith('/')) {
+        e.preventDefault();
+        window.navigateTo(href);
+    }
+});
 
 const App = () => {
     // Check for GitHub Pages redirect first, then hash migration, then current route
