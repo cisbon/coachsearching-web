@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.2.0</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.3.0</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -4473,519 +4473,490 @@ const DashboardProBono = ({ session }) => {
 };
 
 const DashboardProfile = ({ session, userType }) => {
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [uploading, setUploading] = useState(false);
-    const [formData, setFormData] = useState({
-        full_name: session.user.user_metadata?.full_name || '',
-        avatar_url: '',
-        banner_url: '',
-        title: '',
-        bio: '',
-        location: '',
-        hourly_rate: '',
-        currency: 'EUR',
-        specialties: '',
-        languages: '',
-        session_types_online: true,
-        session_types_onsite: false,
-        auto_accept_bookings: false
-    });
+    const [coach, setCoach] = useState(null);
+    const [coachId, setCoachId] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [editModal, setEditModal] = useState(null);
+    const [credentials, setCredentials] = useState([]);
+    const [services, setServices] = useState([]);
+    const [message, setMessage] = useState({ type: '', text: '' });
 
-    // Load coach profile if coach
+    const languageOptions = [
+        { code: 'en', name: 'English', flag: '🇬🇧' },
+        { code: 'de', name: 'German', flag: '🇩🇪' },
+        { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+        { code: 'fr', name: 'French', flag: '🇫🇷' },
+        { code: 'it', name: 'Italian', flag: '🇮🇹' },
+        { code: 'nl', name: 'Dutch', flag: '🇳🇱' }
+    ];
+
+    const specialtySuggestions = [
+        'Executive Coaching', 'Life Coaching', 'Career Coaching', 'Business Coaching',
+        'Leadership Development', 'Health & Wellness', 'Mindfulness', 'Relationship Coaching'
+    ];
+
     useEffect(() => {
         if (userType === 'coach') {
             loadCoachProfile();
+        } else {
+            setLoading(false);
         }
-    }, [userType]);
+    }, [userType, session]);
 
     const loadCoachProfile = async () => {
-        console.log('📋 [PROFILE DEBUG] Loading coach profile...');
         try {
-            // Try API first
-            const response = await fetch(`${API_BASE}/coaches/${session.user.id}`);
-            console.log('📋 [PROFILE DEBUG] API response status:', response.status);
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📋 [PROFILE DEBUG] API data received:', data);
-
-                if (data.data) {
-                    const coach = data.data;
-                    setFormData({
-                        full_name: coach.full_name || '',
-                        avatar_url: coach.avatar_url || '',
-                        banner_url: coach.banner_url || '',
-                        title: coach.title || '',
-                        bio: coach.bio || '',
-                        location: coach.location || '',
-                        hourly_rate: coach.hourly_rate || '',
-                        currency: coach.currency || 'EUR',
-                        specialties: coach.specialties?.join(', ') || '',
-                        languages: coach.languages?.join(', ') || '',
-                        session_types_online: coach.session_types?.includes('online') || true,
-                        session_types_onsite: coach.session_types?.includes('onsite') || false,
-                        auto_accept_bookings: coach.auto_accept_bookings || false
-                    });
-                    console.log('✅ [PROFILE DEBUG] Profile loaded from API successfully');
-                    return;
-                }
-            } else {
-                console.warn('⚠️ [PROFILE DEBUG] API returned', response.status, '- trying Supabase');
-            }
-        } catch (error) {
-            console.warn('⚠️ [PROFILE DEBUG] API failed:', error.message);
-        }
-
-        // Fallback to Supabase
-        try {
-            console.log('📋 [PROFILE DEBUG] Querying Supabase for coach profile...');
-            const { data: coach, error } = await window.supabaseClient
+            const { data, error } = await window.supabaseClient
                 .from('cs_coaches')
                 .select('*')
                 .eq('user_id', session.user.id)
                 .single();
-
-            if (error) {
-                console.error('❌ [PROFILE DEBUG] Supabase error:', error);
-                // If no row found, that's okay - it means this is a new profile
-                if (error.code === 'PGRST116') {
-                    console.log('📋 [PROFILE DEBUG] No existing profile found - user can create one');
-                }
-            } else if (coach) {
-                console.log('✅ [PROFILE DEBUG] Profile loaded from Supabase:', coach);
-                setFormData({
-                    full_name: coach.full_name || '',
-                    avatar_url: coach.avatar_url || '',
-                    banner_url: coach.banner_url || '',
-                    title: coach.title || '',
-                    bio: coach.bio || '',
-                    location: coach.location || '',
-                    hourly_rate: coach.hourly_rate || '',
-                    currency: coach.currency || 'EUR',
-                    specialties: coach.specialties?.join(', ') || '',
-                    languages: coach.languages?.join(', ') || '',
-                    session_types_online: coach.session_types?.includes('online') || true,
-                    session_types_onsite: coach.session_types?.includes('onsite') || false,
-                    auto_accept_bookings: coach.auto_accept_bookings || false
-                });
+            if (error && error.code !== 'PGRST116') throw error;
+            if (data) {
+                setCoach(data);
+                setCoachId(data.id);
+                loadCredentials(data.id);
+                loadServices(data.id);
             }
-        } catch (error) {
-            console.error('❌ [PROFILE DEBUG] Failed to load from Supabase:', error);
-        }
-    };
-
-    const handleImageUpload = async (event, fieldName = 'avatar_url') => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            setMessage('Error: Please select an image file');
-            setTimeout(() => setMessage(''), 3000);
-            return;
-        }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            setMessage('Error: Image must be less than 5MB');
-            setTimeout(() => setMessage(''), 3000);
-            return;
-        }
-
-        setUploading(true);
-        setMessage('Uploading image...');
-
-        try {
-            // Create unique file name
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${session.user.id}-${fieldName}-${Date.now()}.${fileExt}`;
-            const filePath = `${fileName}`;
-
-            console.log('Uploading to Supabase Storage:', filePath);
-
-            // Upload to Supabase Storage
-            const { data, error } = await supabaseClient.storage
-                .from('profile-images')
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
-
-            if (error) {
-                console.error('Upload error:', error);
-
-                // Check if it's a bucket not found error
-                if (error.message && error.message.includes('Bucket not found')) {
-                    throw new Error('Storage bucket "profile-images" does not exist. Please create it in Supabase Dashboard → Storage → New Bucket. See SUPABASE_SETUP_GUIDE.md for instructions.');
-                }
-
-                throw error;
-            }
-
-            console.log('Upload successful:', data);
-
-            // Get public URL
-            const { data: { publicUrl } } = supabaseClient.storage
-                .from('profile-images')
-                .getPublicUrl(filePath);
-
-            console.log('Public URL:', publicUrl);
-
-            // Update form data
-            setFormData({ ...formData, [fieldName]: publicUrl });
-            setMessage('Image uploaded successfully!');
-            setTimeout(() => setMessage(''), 3000);
-
-        } catch (error) {
-            console.error('Failed to upload image:', error);
-            setMessage('Error: ' + (error.message || 'Failed to upload image'));
-            setTimeout(() => setMessage(''), 5000);
-        } finally {
-            setUploading(false);
-        }
-    };
-
-    const handleSave = async () => {
-        console.log('💾 [SAVE DEBUG] Starting profile save...');
-        setLoading(true);
-        setMessage('');
-
-        try {
-            const sessionTypesArray = [];
-            if (formData.session_types_online) sessionTypesArray.push('online');
-            if (formData.session_types_onsite) sessionTypesArray.push('onsite');
-
-            const profileData = {
-                user_id: session.user.id,
-                full_name: formData.full_name,
-                avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
-                onboarding_completed: true
-            };
-
-            // Add coach-specific fields if coach
-            if (userType === 'coach') {
-                Object.assign(profileData, {
-                    title: formData.title,
-                    bio: formData.bio,
-                    banner_url: formData.banner_url || '',
-                    location: formData.location,
-                    hourly_rate: parseFloat(formData.hourly_rate) || 0,
-                    currency: formData.currency,
-                    specialties: formData.specialties.split(',').map(s => s.trim()).filter(Boolean),
-                    languages: formData.languages.split(',').map(s => s.trim()).filter(Boolean),
-                    session_types: sessionTypesArray,
-                    auto_accept_bookings: formData.auto_accept_bookings
-                });
-            }
-
-            console.log('💾 [SAVE DEBUG] Profile data prepared:', profileData);
-
-            let savedSuccessfully = false;
-
-            // Try API first
-            try {
-                console.log('💾 [SAVE DEBUG] Trying to save via API...');
-                const response = await fetch(`${API_BASE}/coaches`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
-                    },
-                    body: JSON.stringify(profileData)
-                });
-
-                console.log('💾 [SAVE DEBUG] API response status:', response.status);
-
-                if (response.ok) {
-                    console.log('✅ [SAVE DEBUG] Saved successfully via API');
-                    setMessage('Profile updated successfully!');
-                    setTimeout(() => setMessage(''), 3000);
-                    savedSuccessfully = true;
-                } else {
-                    const error = await response.json();
-                    console.warn('⚠️ [SAVE DEBUG] API returned error:', error);
-                }
-            } catch (error) {
-                console.warn('⚠️ [SAVE DEBUG] API save failed:', error.message);
-            }
-
-            // Fallback to Supabase
-            if (!savedSuccessfully) {
-                console.log('💾 [SAVE DEBUG] Trying to save via Supabase...');
-                const { data, error } = await window.supabaseClient
-                    .from('cs_coaches')
-                    .upsert(profileData, {
-                        onConflict: 'user_id'
-                    })
-                    .select();
-
-                if (error) {
-                    console.error('❌ [SAVE DEBUG] Supabase save failed:', error);
-                    setMessage('Error: ' + error.message);
-                } else {
-                    console.log('✅ [SAVE DEBUG] Saved successfully via Supabase:', data);
-                    setMessage('Profile updated successfully!');
-                    setTimeout(() => setMessage(''), 3000);
-                }
-            }
-        } catch (error) {
-            console.error('❌ [SAVE DEBUG] Save error:', error);
-            setMessage('Error: ' + error.message);
+        } catch (err) {
+            console.error('Failed to load coach profile:', err);
         } finally {
             setLoading(false);
-            console.log('💾 [SAVE DEBUG] Save process complete');
         }
     };
 
-    return html`
-        <div>
-            <h3>${t('dashboard.profile')}</h3>
+    const loadCredentials = async (id) => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('cs_coach_credentials')
+                .select('*')
+                .eq('coach_id', id)
+                .order('issue_date', { ascending: false });
+            if (data) setCredentials(data);
+        } catch (err) { console.error('Failed to load credentials:', err); }
+    };
 
-            ${message && html`
-                <div class="message ${message.includes('Error') ? 'error' : 'success'}" style=${{
-                    padding: '12px',
-                    borderRadius: '4px',
-                    marginBottom: '20px',
-                    background: message.includes('Error') ? '#fee' : '#efe',
-                    color: message.includes('Error') ? '#c00' : '#060'
-                }}>
-                    ${message}
-                </div>
-            `}
+    const loadServices = async (id) => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('cs_coach_services')
+                .select('*')
+                .eq('coach_id', id)
+                .eq('is_active', true);
+            if (data) setServices(data);
+        } catch (err) { console.error('Failed to load services:', err); }
+    };
 
-            <div style=${{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', marginTop: '20px' }}>
+    const showMessage = (type, text) => {
+        setMessage({ type, text });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    };
 
-                <!-- Avatar Upload -->
-                <div>
-                    <label class="filter-label">Profile Picture</label>
-                    <div style=${{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        ${formData.avatar_url && html`
-                            <img src=${formData.avatar_url} alt="Avatar" loading="lazy" style=${{
-                                width: '80px',
-                                height: '80px',
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                                border: '2px solid var(--border-color)'
-                            }} />
-                        `}
-                        <div style=${{ flex: 1 }}>
-                            <div style=${{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                <label class="btn-secondary" style=${{ cursor: 'pointer', padding: '8px 16px', margin: 0 }}>
-                                    ${uploading ? 'Uploading...' : '📤 Upload Image'}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        style=${{ display: 'none' }}
-                                        onChange=${(e) => handleImageUpload(e, 'avatar_url')}
-                                        disabled=${uploading}
-                                    />
-                                </label>
-                            </div>
-                            <input
-                                type="url"
-                                class="filter-input"
-                                placeholder="Or enter image URL: https://example.com/avatar.jpg"
-                                value=${formData.avatar_url}
-                                onChange=${(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-                            />
-                            <div class="form-hint">Upload an image or enter a URL. Leave empty for auto-generated avatar. Max 5MB.</div>
-                        </div>
-                    </div>
-                </div>
+    const saveChanges = async (updates) => {
+        setSaving(true);
+        try {
+            const { error } = await window.supabaseClient
+                .from('cs_coaches')
+                .update({ ...updates, updated_at: new Date().toISOString() })
+                .eq('id', coachId);
+            if (error) throw error;
+            setCoach(prev => ({ ...prev, ...updates }));
+            setEditModal(null);
+            showMessage('success', 'Changes saved!');
+        } catch (err) {
+            showMessage('error', 'Failed to save changes');
+        } finally {
+            setSaving(false);
+        }
+    };
 
-                <!-- Banner Upload (Coach Only) -->
-                ${userType === 'coach' && html`
-                    <div>
-                        <label class="filter-label">Profile Banner</label>
-                        <div style=${{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            ${formData.banner_url && html`
-                                <img src=${formData.banner_url} alt="Banner" loading="lazy" style=${{
-                                    width: '100%',
-                                    height: '200px',
-                                    objectFit: 'cover',
-                                    borderRadius: '8px',
-                                    border: '2px solid var(--border-color)'
-                                }} />
-                            `}
-                            <div style=${{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                <label class="btn-secondary" style=${{ cursor: 'pointer', padding: '8px 16px', margin: 0 }}>
-                                    ${uploading ? 'Uploading...' : '📤 Upload Banner'}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        style=${{ display: 'none' }}
-                                        onChange=${(e) => handleImageUpload(e, 'banner_url')}
-                                        disabled=${uploading}
-                                    />
-                                </label>
-                                ${formData.banner_url && html`
-                                    <button
-                                        class="btn-secondary"
-                                        onClick=${() => setFormData({ ...formData, banner_url: '' })}
-                                        style=${{ padding: '8px 16px' }}
-                                    >
-                                        🗑️ Remove Banner
-                                    </button>
-                                `}
-                            </div>
-                            <input
-                                type="url"
-                                class="filter-input"
-                                placeholder="Or enter banner image URL"
-                                value=${formData.banner_url}
-                                onChange=${(e) => setFormData({ ...formData, banner_url: e.target.value })}
-                            />
-                            <div class="form-hint">Recommended size: 1200x300px. Max 5MB.</div>
-                        </div>
-                    </div>
-                `}
+    const handleImageUpload = async (file, type) => {
+        setSaving(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${coachId}/${type}.${fileExt}`;
+            await window.supabaseClient.storage.from('avatars').upload(fileName, file, { upsert: true });
+            const { data: { publicUrl } } = window.supabaseClient.storage.from('avatars').getPublicUrl(fileName);
+            const field = type === 'avatar' ? 'avatar_url' : 'banner_url';
+            await saveChanges({ [field]: publicUrl + '?t=' + Date.now() });
+        } catch (err) {
+            showMessage('error', 'Failed to upload image');
+        } finally {
+            setSaving(false);
+        }
+    };
 
-                <!-- Basic Info -->
-                <div>
-                    <label class="filter-label">Full Name *</label>
-                    <input
-                        type="text"
-                        class="filter-input"
-                        value=${formData.full_name}
-                        onChange=${(e) => setFormData({ ...formData, full_name: e.target.value })}
-                        required
-                    />
-                </div>
+    const saveCredential = async (data) => {
+        setSaving(true);
+        try {
+            if (data.id) {
+                await window.supabaseClient.from('cs_coach_credentials').update(data).eq('id', data.id);
+            } else {
+                await window.supabaseClient.from('cs_coach_credentials').insert({ ...data, coach_id: coachId });
+            }
+            await loadCredentials(coachId);
+            setEditModal(null);
+            showMessage('success', 'Credential saved!');
+        } catch (err) { showMessage('error', 'Failed to save'); }
+        finally { setSaving(false); }
+    };
 
-                <div>
-                    <label class="filter-label">Email</label>
-                    <input
-                        type="email"
-                        class="filter-input"
-                        value=${session.user.email}
-                        disabled
-                        style=${{ background: '#f5f5f5', cursor: 'not-allowed' }}
-                    />
-                </div>
+    const deleteCredential = async (id) => {
+        if (!confirm('Delete this credential?')) return;
+        await window.supabaseClient.from('cs_coach_credentials').delete().eq('id', id);
+        await loadCredentials(coachId);
+    };
 
-                <!-- Coach-specific fields -->
-                ${userType === 'coach' && html`
-                    <div>
-                        <label class="filter-label">Professional Title *</label>
-                        <input
-                            type="text"
-                            class="filter-input"
-                            placeholder="e.g., Executive Leadership Coach"
-                            value=${formData.title}
-                            onChange=${(e) => setFormData({ ...formData, title: e.target.value })}
-                            required
-                        />
-                    </div>
+    const saveService = async (data) => {
+        setSaving(true);
+        try {
+            if (data.id) {
+                await window.supabaseClient.from('cs_coach_services').update(data).eq('id', data.id);
+            } else {
+                await window.supabaseClient.from('cs_coach_services').insert({ ...data, coach_id: coachId, is_active: true });
+            }
+            await loadServices(coachId);
+            setEditModal(null);
+            showMessage('success', 'Service saved!');
+        } catch (err) { showMessage('error', 'Failed to save'); }
+        finally { setSaving(false); }
+    };
 
-                    <div>
-                        <label class="filter-label">Bio</label>
-                        <textarea
-                            class="filter-input"
-                            placeholder="Tell clients about your expertise and coaching approach..."
-                            value=${formData.bio}
-                            onChange=${(e) => setFormData({ ...formData, bio: e.target.value })}
-                            style=${{ minHeight: '120px', resize: 'vertical' }}
-                        />
-                    </div>
+    const deleteService = async (id) => {
+        if (!confirm('Delete this service?')) return;
+        await window.supabaseClient.from('cs_coach_services').update({ is_active: false }).eq('id', id);
+        await loadServices(coachId);
+    };
 
-                    <div class="form-row">
-                        <div style=${{ flex: 1 }}>
-                            <label class="filter-label">Location</label>
-                            <input
-                                type="text"
-                                class="filter-input"
-                                placeholder="City, Country"
-                                value=${formData.location}
-                                onChange=${(e) => setFormData({ ...formData, location: e.target.value })}
-                            />
-                        </div>
-                        <div style=${{ width: '200px' }}>
-                            <label class="filter-label">Hourly Rate (€)</label>
-                            <input
-                                type="number"
-                                class="filter-input"
-                                placeholder="100"
-                                value=${formData.hourly_rate}
-                                onChange=${(e) => setFormData({ ...formData, hourly_rate: e.target.value })}
-                            />
-                        </div>
-                    </div>
+    const formatPrice = (price, currency = 'EUR') => {
+        const symbols = { EUR: '€', USD: '$', GBP: '£', CHF: 'CHF ' };
+        return (symbols[currency] || '€') + (price || 0);
+    };
 
-                    <div>
-                        <label class="filter-label">Specialties</label>
-                        <input
-                            type="text"
-                            class="filter-input"
-                            placeholder="Leadership, Career Transition, Executive Coaching"
-                            value=${formData.specialties}
-                            onChange=${(e) => setFormData({ ...formData, specialties: e.target.value })}
-                        />
-                        <div class="form-hint">Separate with commas</div>
-                    </div>
+    if (loading) {
+        return html`<div style=${{ padding: '40px', textAlign: 'center' }}>Loading profile...</div>`;
+    }
 
-                    <div>
-                        <label class="filter-label">Languages</label>
-                        <input
-                            type="text"
-                            class="filter-input"
-                            placeholder="en, de, es"
-                            value=${formData.languages}
-                            onChange=${(e) => setFormData({ ...formData, languages: e.target.value })}
-                        />
-                        <div class="form-hint">Use language codes: en, de, es, fr, it</div>
-                    </div>
+    // Client profile - simple view
+    if (userType !== 'coach') {
+        return html`
+            <div class="profile-simple">
+                <h3>Your Profile</h3>
+                <p><strong>Email:</strong> ${session.user.email}</p>
+                <p><strong>Account Type:</strong> ${userType}</p>
+            </div>
+        `;
+    }
 
-                    <div>
-                        <label class="filter-label">Session Types</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked=${formData.session_types_online}
-                                    onChange=${(e) => setFormData({ ...formData, session_types_online: e.target.checked })}
-                                />
-                                <span>💻 Online Sessions</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked=${formData.session_types_onsite}
-                                    onChange=${(e) => setFormData({ ...formData, session_types_onsite: e.target.checked })}
-                                />
-                                <span>📍 On-site Sessions</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="filter-label">Booking Settings</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked=${formData.auto_accept_bookings}
-                                    onChange=${(e) => setFormData({ ...formData, auto_accept_bookings: e.target.checked })}
-                                />
-                                <span>✓ Auto-accept booking requests</span>
-                            </label>
-                        </div>
-                        <div class="form-hint">
-                            When enabled, booking requests will be automatically confirmed.
-                            When disabled, you'll need to manually accept each booking and provide meeting details.
-                        </div>
-                    </div>
-                `}
-
-                <button
-                    class="btn-primary"
-                    onClick=${handleSave}
-                    disabled=${loading}
-                    style=${{ marginTop: '10px' }}
-                >
-                    ${loading ? 'Saving...' : 'Save Changes'}
+    // Coach not set up yet
+    if (!coach) {
+        return html`
+            <div style=${{ padding: '40px', textAlign: 'center' }}>
+                <h3>Complete Your Coach Profile</h3>
+                <p>You haven't set up your coach profile yet.</p>
+                <button class="btn-primary" onClick=${() => window.location.hash = '#onboarding'}>
+                    Set Up Profile
                 </button>
             </div>
+        `;
+    }
+
+    const location = coach.location_city
+        ? coach.location_city + (coach.location_country ? ', ' + coach.location_country : '')
+        : coach.location_country || 'Remote';
+
+    const EditBtn = ({ onClick }) => html`
+        <button class="profile-edit-btn" onClick=${onClick}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+        </button>
+    `;
+
+    return html`
+        <div class="profile-editor-wysiwyg">
+            ${message.text && html`<div class="profile-toast ${message.type}">${message.text}</div>`}
+
+            <div class="preview-banner">
+                <span>✨ This is how your profile appears to clients</span>
+                <a href="#coach/${coachId}" target="_blank" class="preview-link">View Public Profile →</a>
+            </div>
+
+            <div class="coach-profile-page edit-mode">
+                <!-- Hero Section -->
+                <section class="coach-hero-section">
+                    <div class="hero-banner-editable" style="background-image: url('${coach.banner_url || ''}')">
+                        <label class="banner-edit-overlay">
+                            <input type="file" accept="image/*" hidden
+                                   onChange=${(e) => e.target.files[0] && handleImageUpload(e.target.files[0], 'banner')} />
+                            <span class="edit-icon">📷 ${coach.banner_url ? 'Change' : 'Add'} Cover Photo</span>
+                        </label>
+                    </div>
+
+                    <div class="container">
+                        <div class="coach-hero-content">
+                            <div class="coach-avatar-wrapper">
+                                <img src=${coach.avatar_url || 'https://via.placeholder.com/150?text=Photo'}
+                                     alt=${coach.full_name} class="coach-avatar-large" />
+                                <label class="avatar-edit-overlay">
+                                    <input type="file" accept="image/*" hidden
+                                           onChange=${(e) => e.target.files[0] && handleImageUpload(e.target.files[0], 'avatar')} />
+                                    <span>📷</span>
+                                </label>
+                            </div>
+
+                            <div class="coach-main-info">
+                                <div class="editable-section">
+                                    <h1 class="coach-name">${coach.full_name || 'Your Name'}</h1>
+                                    <p class="coach-title">${coach.title || 'Your Professional Title'}</p>
+                                    <${EditBtn} onClick=${() => setEditModal({ section: 'intro', data: { full_name: coach.full_name, title: coach.title }})} />
+                                </div>
+
+                                <div class="coach-meta-row editable-section">
+                                    <span class="coach-meta-item"><span class="meta-icon">📍</span> ${location}</span>
+                                    ${(coach.languages || []).length > 0 && html`
+                                        <span class="coach-meta-item"><span class="meta-icon">💬</span> ${(coach.languages || []).map(c => languageOptions.find(l => l.code === c)?.name || c).slice(0, 3).join(', ')}</span>
+                                    `}
+                                    ${coach.years_experience > 0 && html`
+                                        <span class="coach-meta-item"><span class="meta-icon">🏆</span> ${coach.years_experience}+ years</span>
+                                    `}
+                                    <${EditBtn} onClick=${() => setEditModal({ section: 'details', data: { location_city: coach.location_city, location_country: coach.location_country, years_experience: coach.years_experience, languages: coach.languages || [] }})} />
+                                </div>
+
+                                <div class="coach-pricing-display editable-section">
+                                    <div class="price-tag">
+                                        <span class="price-value">${formatPrice(coach.hourly_rate, coach.currency)}</span>
+                                        <span class="price-unit">/ hour</span>
+                                    </div>
+                                    <div class="session-formats-inline">
+                                        ${coach.offers_virtual !== false && html`<span class="format-tag">💻 Video</span>`}
+                                        ${coach.offers_onsite && html`<span class="format-tag">🤝 In-Person</span>`}
+                                    </div>
+                                    <${EditBtn} onClick=${() => setEditModal({ section: 'pricing', data: { hourly_rate: coach.hourly_rate, currency: coach.currency || 'EUR', offers_virtual: coach.offers_virtual !== false, offers_onsite: coach.offers_onsite || false }})} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Content Section -->
+                <section class="coach-content-section">
+                    <div class="container">
+                        <div class="coach-content-grid">
+                            <div class="coach-main-column">
+                                <!-- About -->
+                                <article class="coach-section editable-section">
+                                    <h2 class="section-title">About</h2>
+                                    <div class="coach-bio">
+                                        ${coach.bio ? (coach.bio || '').split('\n').map((p, i) => p.trim() ? html`<p key=${i}>${p}</p>` : null)
+                                            : html`<p class="placeholder-text">Tell clients about yourself...</p>`}
+                                    </div>
+                                    <${EditBtn} onClick=${() => setEditModal({ section: 'about', data: { bio: coach.bio || '' }})} />
+                                </article>
+
+                                <!-- Specialties -->
+                                <article class="coach-section editable-section">
+                                    <h2 class="section-title">Specialties</h2>
+                                    <div class="specialties-grid">
+                                        ${(coach.specialties || []).length > 0
+                                            ? (coach.specialties || []).map((s, i) => html`<span key=${i} class="specialty-card">${s}</span>`)
+                                            : html`<p class="placeholder-text">Add your specialties</p>`}
+                                    </div>
+                                    <${EditBtn} onClick=${() => setEditModal({ section: 'specialties', data: { specialties: coach.specialties || [] }})} />
+                                </article>
+
+                                <!-- Credentials -->
+                                <article class="coach-section editable-section">
+                                    <div class="section-header-with-add">
+                                        <h2 class="section-title">Credentials</h2>
+                                        <button class="profile-add-btn" onClick=${() => setEditModal({ section: 'credential-new', data: { credential_type: 'certification', title: '', issuing_organization: '', issue_date: '' }})}>+ Add</button>
+                                    </div>
+                                    ${credentials.length > 0 ? html`
+                                        <div class="credentials-list">
+                                            ${credentials.map(c => html`
+                                                <div class="credential-item" key=${c.id}>
+                                                    <div class="credential-icon">${c.credential_type === 'certification' ? '🏅' : c.credential_type === 'degree' ? '🎓' : '📜'}</div>
+                                                    <div class="credential-details">
+                                                        <strong>${c.title}</strong>
+                                                        <span>${c.issuing_organization}</span>
+                                                    </div>
+                                                    <div class="credential-actions">
+                                                        <button class="btn-icon-sm" onClick=${() => setEditModal({ section: 'credential-edit', data: c })}>✏️</button>
+                                                        <button class="btn-icon-sm danger" onClick=${() => deleteCredential(c.id)}>🗑️</button>
+                                                    </div>
+                                                </div>
+                                            `)}
+                                        </div>
+                                    ` : html`<p class="placeholder-text">Add your certifications</p>`}
+                                </article>
+
+                                <!-- Services -->
+                                <article class="coach-section editable-section">
+                                    <div class="section-header-with-add">
+                                        <h2 class="section-title">Services</h2>
+                                        <button class="profile-add-btn" onClick=${() => setEditModal({ section: 'service-new', data: { service_type: 'single_session', name: '', description: '', duration_minutes: 60, price: '', currency: 'EUR' }})}>+ Add</button>
+                                    </div>
+                                    ${services.length > 0 ? html`
+                                        <div class="services-grid">
+                                            ${services.map(s => html`
+                                                <div class="service-card-display" key=${s.id}>
+                                                    <div class="service-type-label ${s.service_type}">${s.service_type === 'discovery_call' ? 'Discovery' : s.service_type === 'package' ? 'Package' : 'Session'}</div>
+                                                    <h4>${s.name}</h4>
+                                                    <p>${s.description || ''}</p>
+                                                    <div class="service-meta">
+                                                        <span>${s.duration_minutes} min</span>
+                                                        <span class="service-price">${s.price === 0 ? 'Free' : formatPrice(s.price, s.currency)}</span>
+                                                    </div>
+                                                    <div class="service-edit-actions">
+                                                        <button class="btn-icon-sm" onClick=${() => setEditModal({ section: 'service-edit', data: s })}>✏️</button>
+                                                        <button class="btn-icon-sm danger" onClick=${() => deleteService(s.id)}>🗑️</button>
+                                                    </div>
+                                                </div>
+                                            `)}
+                                        </div>
+                                    ` : html`<p class="placeholder-text">Add your services</p>`}
+                                </article>
+
+                                <!-- Links -->
+                                <article class="coach-section editable-section">
+                                    <h2 class="section-title">Links</h2>
+                                    <div class="links-row">
+                                        ${coach.website_url && html`<a href=${coach.website_url} target="_blank" class="link-badge">🌐 Website</a>`}
+                                        ${coach.linkedin_url && html`<a href=${coach.linkedin_url} target="_blank" class="link-badge">💼 LinkedIn</a>`}
+                                        ${!coach.website_url && !coach.linkedin_url && html`<p class="placeholder-text">Add your links</p>`}
+                                    </div>
+                                    <${EditBtn} onClick=${() => setEditModal({ section: 'links', data: { website_url: coach.website_url || '', linkedin_url: coach.linkedin_url || '' }})} />
+                                </article>
+                            </div>
+
+                            <aside class="coach-sidebar">
+                                <div class="sidebar-card">
+                                    <div class="quick-book-preview">
+                                        <img src=${coach.avatar_url || 'https://via.placeholder.com/60'} class="sidebar-avatar" />
+                                        <div>
+                                            <strong>${coach.full_name || 'Your Name'}</strong>
+                                            <div class="sidebar-price">${formatPrice(coach.hourly_rate, coach.currency)}/hr</div>
+                                        </div>
+                                    </div>
+                                    <button class="btn-book-preview" disabled>Book a Session</button>
+                                    <p class="sidebar-note">Booking widget preview</p>
+                                </div>
+                            </aside>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Edit Modal -->
+            ${editModal && html`
+                <div class="edit-modal-overlay" onClick=${() => setEditModal(null)}>
+                    <div class="edit-modal" onClick=${(e) => e.stopPropagation()}>
+                        <div class="modal-header">
+                            <h3>${editModal.section === 'intro' ? 'Edit Name & Title' :
+                                  editModal.section === 'details' ? 'Edit Details' :
+                                  editModal.section === 'about' ? 'Edit About' :
+                                  editModal.section === 'specialties' ? 'Edit Specialties' :
+                                  editModal.section === 'pricing' ? 'Edit Pricing' :
+                                  editModal.section === 'links' ? 'Edit Links' :
+                                  editModal.section.includes('credential') ? 'Credential' :
+                                  editModal.section.includes('service') ? 'Service' : 'Edit'}</h3>
+                            <button class="modal-close" onClick=${() => setEditModal(null)}>×</button>
+                        </div>
+                        <div class="modal-body">
+                            ${editModal.section === 'intro' && html`
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" value=${editModal.data.full_name || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, full_name: e.target.value}})} />
+                                </div>
+                                <div class="form-group">
+                                    <label>Professional Title</label>
+                                    <input type="text" placeholder="e.g., Executive Coach" value=${editModal.data.title || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, title: e.target.value}})} />
+                                </div>
+                            `}
+                            ${editModal.section === 'details' && html`
+                                <div class="form-row">
+                                    <div class="form-group"><label>City</label><input type="text" value=${editModal.data.location_city || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, location_city: e.target.value}})} /></div>
+                                    <div class="form-group"><label>Country</label><input type="text" value=${editModal.data.location_country || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, location_country: e.target.value}})} /></div>
+                                </div>
+                                <div class="form-group"><label>Years of Experience</label><input type="number" min="0" value=${editModal.data.years_experience || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, years_experience: parseInt(e.target.value) || 0}})} /></div>
+                                <div class="form-group">
+                                    <label>Languages</label>
+                                    <div class="language-checkboxes">
+                                        ${languageOptions.map(lang => html`
+                                            <label key=${lang.code} class="checkbox-label">
+                                                <input type="checkbox" checked=${(editModal.data.languages || []).includes(lang.code)}
+                                                       onChange=${(e) => { const langs = editModal.data.languages || []; setEditModal({...editModal, data: {...editModal.data, languages: e.target.checked ? [...langs, lang.code] : langs.filter(l => l !== lang.code)}}); }} />
+                                                ${lang.flag} ${lang.name}
+                                            </label>
+                                        `)}
+                                    </div>
+                                </div>
+                            `}
+                            ${editModal.section === 'about' && html`
+                                <div class="form-group">
+                                    <label>About You</label>
+                                    <textarea rows="8" value=${editModal.data.bio || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, bio: e.target.value}})}></textarea>
+                                </div>
+                            `}
+                            ${editModal.section === 'specialties' && html`
+                                <div class="form-group">
+                                    <label>Your Specialties</label>
+                                    <div class="tags-input-area">
+                                        ${(editModal.data.specialties || []).map((s, i) => html`
+                                            <span key=${i} class="tag-chip">${s}<button onClick=${() => setEditModal({...editModal, data: {...editModal.data, specialties: editModal.data.specialties.filter((_, idx) => idx !== i)}})}>×</button></span>
+                                        `)}
+                                    </div>
+                                    <input type="text" placeholder="Type and press Enter" onKeyDown=${(e) => { if (e.key === 'Enter' && e.target.value.trim()) { e.preventDefault(); const v = e.target.value.trim(); if (!(editModal.data.specialties || []).includes(v)) setEditModal({...editModal, data: {...editModal.data, specialties: [...(editModal.data.specialties || []), v]}}); e.target.value = ''; }}} />
+                                    <div class="suggestions">
+                                        ${specialtySuggestions.filter(s => !(editModal.data.specialties || []).includes(s)).slice(0, 6).map(s => html`<button key=${s} class="suggestion-chip" onClick=${() => setEditModal({...editModal, data: {...editModal.data, specialties: [...(editModal.data.specialties || []), s]}})}>+ ${s}</button>`)}
+                                    </div>
+                                </div>
+                            `}
+                            ${editModal.section === 'pricing' && html`
+                                <div class="form-group">
+                                    <label>Session Formats</label>
+                                    <div class="format-toggles">
+                                        <label class="toggle-option ${editModal.data.offers_virtual ? 'active' : ''}"><input type="checkbox" checked=${editModal.data.offers_virtual} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, offers_virtual: e.target.checked}})} /> 💻 Video</label>
+                                        <label class="toggle-option ${editModal.data.offers_onsite ? 'active' : ''}"><input type="checkbox" checked=${editModal.data.offers_onsite} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, offers_onsite: e.target.checked}})} /> 🤝 In-Person</label>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>Currency</label><select value=${editModal.data.currency} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, currency: e.target.value}})}><option value="EUR">EUR €</option><option value="USD">USD $</option><option value="GBP">GBP £</option></select></div>
+                                    <div class="form-group"><label>Hourly Rate</label><input type="number" min="0" value=${editModal.data.hourly_rate || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, hourly_rate: parseInt(e.target.value) || 0}})} /></div>
+                                </div>
+                            `}
+                            ${editModal.section === 'links' && html`
+                                <div class="form-group"><label>Website</label><input type="url" placeholder="https://..." value=${editModal.data.website_url || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, website_url: e.target.value}})} /></div>
+                                <div class="form-group"><label>LinkedIn</label><input type="url" placeholder="https://linkedin.com/in/..." value=${editModal.data.linkedin_url || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, linkedin_url: e.target.value}})} /></div>
+                            `}
+                            ${editModal.section.includes('credential') && html`
+                                <div class="form-group"><label>Type</label><select value=${editModal.data.credential_type} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, credential_type: e.target.value}})}><option value="certification">Certification</option><option value="degree">Degree</option><option value="award">Award</option></select></div>
+                                <div class="form-group"><label>Title</label><input type="text" value=${editModal.data.title || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, title: e.target.value}})} /></div>
+                                <div class="form-group"><label>Issuing Organization</label><input type="text" value=${editModal.data.issuing_organization || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, issuing_organization: e.target.value}})} /></div>
+                                <div class="form-group"><label>Issue Date</label><input type="date" value=${editModal.data.issue_date || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, issue_date: e.target.value}})} /></div>
+                            `}
+                            ${editModal.section.includes('service') && html`
+                                <div class="form-group"><label>Type</label><select value=${editModal.data.service_type} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, service_type: e.target.value}})}><option value="discovery_call">Discovery Call</option><option value="single_session">Single Session</option><option value="package">Package</option></select></div>
+                                <div class="form-group"><label>Name</label><input type="text" value=${editModal.data.name || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, name: e.target.value}})} /></div>
+                                <div class="form-group"><label>Description</label><textarea rows="2" value=${editModal.data.description || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, description: e.target.value}})}></textarea></div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>Duration</label><select value=${editModal.data.duration_minutes} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, duration_minutes: parseInt(e.target.value)}})}><option value="30">30 min</option><option value="60">60 min</option><option value="90">90 min</option></select></div>
+                                    <div class="form-group"><label>Price</label><input type="number" min="0" value=${editModal.data.price || ''} onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, price: parseInt(e.target.value) || 0}})} /></div>
+                                </div>
+                            `}
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onClick=${() => setEditModal(null)}>Cancel</button>
+                            <button class="btn-save" onClick=${() => {
+                                if (editModal.section.includes('credential')) saveCredential(editModal.data);
+                                else if (editModal.section.includes('service')) saveService(editModal.data);
+                                else saveChanges(editModal.data);
+                            }} disabled=${saving}>${saving ? 'Saving...' : 'Save'}</button>
+                        </div>
+                    </div>
+                </div>
+            `}
         </div>
     `;
 };
