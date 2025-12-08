@@ -856,3 +856,521 @@
         font-size: 1.5rem;
     }
 }
+
+/* ==========================================================================
+   Featured Testimonial
+   ========================================================================== */
+
+.featured-testimonial {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 20px 24px;
+    border-left: 4px solid var(--primary-petrol, #006266);
+    margin: 16px 0;
+}
+
+.testimonial-quote {
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--text-main, #333);
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.quote-mark {
+    font-size: 2rem;
+    color: var(--primary-petrol, #006266);
+    opacity: 0.5;
+    font-family: Georgia, serif;
+    line-height: 0;
+    vertical-align: -0.4em;
+    margin-right: 4px;
+}
+
+.testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--text-muted, #666);
+}
+
+.testimonial-author .stars {
+    color: #f5a623;
+}
+
+/* ==========================================================================
+   Availability Indicator
+   ========================================================================== */
+
+.availability-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #e8f5e9;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #2e7d32;
+}
+
+.availability-indicator.available .availability-dot {
+    width: 10px;
+    height: 10px;
+    background: #4caf50;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.availability-indicator .response-time {
+    color: #558b2f;
+    font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   Pricing Options
+   ========================================================================== */
+
+.pricing-options {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.pricing-options .price-display {
+    flex: 1;
+    text-align: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.pricing-options .price-display:hover {
+    border-color: var(--primary-petrol, #006266);
+}
+
+.pricing-options .package-price {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.pricing-options .price-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted, #666);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pricing-options .price-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main, #1a1a1a);
+}
+
+.price-savings {
+    display: block;
+    font-size: 0.75rem;
+    color: #2e7d32;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* ==========================================================================
+   CTA Buttons - Improved Hierarchy
+   ========================================================================== */
+
+.btn-discovery-primary {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+    color: white;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+}
+
+.btn-discovery-primary:hover {
+    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+}
+
+.btn-discovery-primary .btn-subtitle {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.btn-book-secondary {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: 2px solid var(--primary-petrol, #006266);
+    border-radius: 10px;
+    cursor: pointer;
+    background: white;
+    color: var(--primary-petrol, #006266);
+    transition: all 0.2s;
+    margin-bottom: 8px;
+}
+
+.btn-book-secondary:hover {
+    background: var(--primary-petrol, #006266);
+    color: white;
+}
+
+.btn-contact-link {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.9rem;
+    background: none;
+    border: none;
+    color: var(--text-muted, #666);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.btn-contact-link:hover {
+    color: var(--primary-petrol, #006266);
+}
+
+/* ==========================================================================
+   Review Breakdown Chart
+   ========================================================================== */
+
+.review-breakdown {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.breakdown-summary {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+}
+
+.breakdown-score {
+    text-align: center;
+    min-width: 100px;
+}
+
+.breakdown-score .big-rating {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-main, #1a1a1a);
+    line-height: 1;
+}
+
+.breakdown-stars {
+    margin: 8px 0;
+}
+
+.breakdown-stars .star {
+    font-size: 1.25rem;
+    color: #ddd;
+}
+
+.breakdown-stars .star.filled {
+    color: #f5a623;
+}
+
+.breakdown-total {
+    font-size: 0.875rem;
+    color: var(--text-muted, #666);
+}
+
+.breakdown-bars {
+    flex: 1;
+}
+
+.breakdown-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.breakdown-row .bar-label {
+    width: 30px;
+    font-size: 0.8rem;
+    color: var(--text-muted, #666);
+}
+
+.breakdown-row .bar-track {
+    flex: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.breakdown-row .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f5a623 0%, #ffc107 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.breakdown-row .bar-count {
+    width: 24px;
+    font-size: 0.8rem;
+    color: var(--text-muted, #666);
+    text-align: right;
+}
+
+@media (max-width: 576px) {
+    .breakdown-summary {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .breakdown-score {
+        margin-bottom: 16px;
+    }
+
+    .breakdown-bars {
+        width: 100%;
+    }
+}
+
+/* ==========================================================================
+   My Approach / What to Expect Sections
+   ========================================================================== */
+
+.coach-approach-section .approach-content {
+    color: var(--text-main, #333);
+    line-height: 1.7;
+}
+
+.coaching-style {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color, #e7e7e7);
+}
+
+.coaching-style h4 {
+    font-size: 0.875rem;
+    color: var(--text-muted, #666);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.style-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.style-tag {
+    display: inline-block;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, var(--primary-petrol, #006266) 0%, #008080 100%);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.what-to-expect-section .expect-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.expect-item {
+    text-align: center;
+    padding: 24px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.expect-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.expect-item .expect-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 16px;
+}
+
+.expect-item h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin-bottom: 8px;
+}
+
+.expect-item p {
+    font-size: 0.875rem;
+    color: var(--text-muted, #666);
+    line-height: 1.5;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .what-to-expect-section .expect-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+/* ==========================================================================
+   Similar Coaches Section
+   ========================================================================== */
+
+.similar-coaches-section {
+    background: #f8f9fa;
+    padding: 60px 0;
+}
+
+.similar-coaches-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-top: 32px;
+}
+
+.similar-coach-card {
+    display: block;
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.similar-coach-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.similar-coach-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 16px;
+    border: 3px solid var(--primary-petrol, #006266);
+}
+
+.similar-coach-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.similar-coach-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 4px;
+}
+
+.similar-coach-title {
+    font-size: 0.8rem;
+    color: var(--text-muted, #666);
+    margin: 0 0 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.similar-coach-rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.875rem;
+    margin-bottom: 8px;
+}
+
+.similar-coach-rating .stars {
+    color: #f5a623;
+}
+
+.similar-coach-rating .review-count {
+    color: var(--text-muted, #666);
+}
+
+.similar-coach-price {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-petrol, #006266);
+}
+
+@media (max-width: 992px) {
+    .similar-coaches-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .similar-coaches-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .similar-coach-card {
+        display: flex;
+        text-align: left;
+        padding: 16px;
+    }
+
+    .similar-coach-avatar {
+        width: 60px;
+        height: 60px;
+        margin: 0 16px 0 0;
+        flex-shrink: 0;
+    }
+
+    .similar-coach-info {
+        flex: 1;
+    }
+
+    .similar-coach-rating {
+        justify-content: flex-start;
+    }
+}
+
+/* ==========================================================================
+   WhatsApp Share Button
+   ========================================================================== */
+
+.share-btn.share-whatsapp {
+    background: #25d366;
+    color: white;
+}
+
+.share-btn.share-whatsapp:hover {
+    background: #128c7e;
+}
+
+.share-btn.share-whatsapp svg {
+    display: block;
+}

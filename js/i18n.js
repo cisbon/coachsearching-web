@@ -948,6 +948,26 @@ const translations = {
         "coach.yearsExp": "years",
         "coach.new": "New Coach",
 
+        // Coach Profile Enhancements
+        "coach.verifiedClient": "Verified Client",
+        "coach.availableNow": "Available for new clients",
+        "coach.respondsWithin": "Responds within",
+        "coach.singleSession": "Single Session",
+        "coach.packageDeal": "4-Session Package",
+        "coach.savePercent": "Save",
+        "coach.reviewsTotal": "reviews",
+        "coach.myApproach": "My Coaching Approach",
+        "coach.coachingStyle": "Coaching Style",
+        "coach.whatToExpect": "What to Expect",
+        "coach.expectStep1Title": "Free Discovery Call",
+        "coach.expectStep1Desc": "Start with a free call to discuss your goals and see if we're a good fit.",
+        "coach.expectStep2Title": "Personalized Plan",
+        "coach.expectStep2Desc": "Together we'll create a tailored coaching plan based on your unique needs.",
+        "coach.expectStep3Title": "Ongoing Support",
+        "coach.expectStep3Desc": "Regular sessions with accountability and support between meetings.",
+        "coach.shareText": "Check out this coach",
+        "discovery.freeNoObligation": "Free, no obligation",
+
         // Discovery Call
         "discovery.bookFreeCall": "Discovery Call",
         "discovery.bookDiscoveryCall": "Discovery Call",
@@ -2196,6 +2216,26 @@ const translations = {
         "coach.loadMoreReviews": "Mehr Bewertungen laden",
         "coach.yearsExp": "Jahre",
         "coach.new": "Neuer Coach",
+
+        // Coach Profile Enhancements
+        "coach.verifiedClient": "Verifizierter Kunde",
+        "coach.availableNow": "Verfügbar für neue Klienten",
+        "coach.respondsWithin": "Antwortet innerhalb von",
+        "coach.singleSession": "Einzelsitzung",
+        "coach.packageDeal": "4er-Paket",
+        "coach.savePercent": "Spare",
+        "coach.reviewsTotal": "Bewertungen",
+        "coach.myApproach": "Mein Coaching-Ansatz",
+        "coach.coachingStyle": "Coaching-Stil",
+        "coach.whatToExpect": "Was Sie erwartet",
+        "coach.expectStep1Title": "Kostenloses Kennenlerngespräch",
+        "coach.expectStep1Desc": "Beginnen Sie mit einem kostenlosen Gespräch, um Ihre Ziele zu besprechen und zu sehen, ob wir zueinander passen.",
+        "coach.expectStep2Title": "Individueller Plan",
+        "coach.expectStep2Desc": "Gemeinsam erstellen wir einen maßgeschneiderten Coaching-Plan basierend auf Ihren individuellen Bedürfnissen.",
+        "coach.expectStep3Title": "Kontinuierliche Begleitung",
+        "coach.expectStep3Desc": "Regelmäßige Sitzungen mit Verantwortlichkeit und Unterstützung zwischen den Treffen.",
+        "coach.shareText": "Schau dir diesen Coach an",
+        "discovery.freeNoObligation": "Kostenlos und unverbindlich",
 
         // Discovery Call Booking
         "discovery.bookFreeCall": "Kennenlerngespräch",

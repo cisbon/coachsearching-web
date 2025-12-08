@@ -245,6 +245,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [articles, setArticles] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [credentials, setCredentials] = useState([]);
+    const [similarCoaches, setSimilarCoaches] = useState([]);
     const [showBooking, setShowBooking] = useState(false);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [selectedArticle, setSelectedArticle] = useState(null);
@@ -307,6 +308,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     loadArticles(data.id),
                     loadReviews(data.id),
                     loadCredentials(data.id),
+                    loadSimilarCoaches(data),
                 ]);
             }
         } catch (err) {
@@ -358,6 +360,61 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         } catch (err) {
             console.error('Failed to load credentials:', err);
         }
+    };
+
+    const loadSimilarCoaches = async (coachData) => {
+        try {
+            // Find coaches with similar specialties, excluding current coach
+            const specialties = coachData.specialties || [];
+            let query = window.supabaseClient
+                .from('cs_coaches')
+                .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location')
+                .neq('id', coachData.id)
+                .eq('is_active', true)
+                .limit(4);
+
+            // If coach has specialties, try to find similar ones
+            if (specialties.length > 0) {
+                query = query.overlaps('specialties', specialties);
+            }
+
+            const { data, error } = await query.order('rating_average', { ascending: false });
+
+            if (error) {
+                // Fallback: just get top rated coaches if overlaps query fails
+                const fallback = await window.supabaseClient
+                    .from('cs_coaches')
+                    .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location')
+                    .neq('id', coachData.id)
+                    .eq('is_active', true)
+                    .order('rating_average', { ascending: false })
+                    .limit(4);
+                setSimilarCoaches(fallback.data || []);
+            } else {
+                setSimilarCoaches(data || []);
+            }
+        } catch (err) {
+            console.error('Failed to load similar coaches:', err);
+        }
+    };
+
+    // Calculate review breakdown for chart
+    const getReviewBreakdown = () => {
+        const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        reviews.forEach(review => {
+            const rating = Math.round(review.rating || 0);
+            if (rating >= 1 && rating <= 5) {
+                breakdown[rating]++;
+            }
+        });
+        return breakdown;
+    };
+
+    // Get featured testimonial (highest rated review with text)
+    const getFeaturedTestimonial = () => {
+        const reviewsWithText = reviews.filter(r => r.content && r.content.length > 50);
+        if (reviewsWithText.length === 0) return null;
+        return reviewsWithText.sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
     };
 
     const setSEOData = () => {
@@ -554,21 +611,67 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
                             <${CoachStatsBanner} coach=${coach} />
 
+                            <!-- Featured Testimonial -->
+                            ${(() => {
+                                const featured = getFeaturedTestimonial();
+                                return featured ? html`
+                                    <div class="featured-testimonial">
+                                        <div class="testimonial-quote">
+                                            <span class="quote-mark">"</span>
+                                            ${featured.content.length > 150
+                                                ? featured.content.substring(0, 150) + '...'
+                                                : featured.content}
+                                        </div>
+                                        <div class="testimonial-author">
+                                            <span class="stars">${'★'.repeat(Math.round(featured.rating || 5))}</span>
+                                            <span class="author-name">— ${featured.reviewer_name || t('coach.verifiedClient') || 'Verified Client'}</span>
+                                        </div>
+                                    </div>
+                                ` : null;
+                            })()}
+
+                            <!-- Availability Indicator -->
+                            ${coach.is_available !== false && html`
+                                <div class="availability-indicator available">
+                                    <span class="availability-dot"></span>
+                                    <span>${t('coach.availableNow') || 'Available for new clients'}</span>
+                                    ${coach.response_time_hours && html`
+                                        <span class="response-time">· ${t('coach.respondsWithin') || 'Responds within'} ${coach.response_time_hours}h</span>
+                                    `}
+                                </div>
+                            `}
+
                             <!-- Pricing & CTA -->
                             <div class="coach-cta-section">
-                                <div class="price-display">
-                                    <span class="price-label">${t('coach.startingFrom') || 'Starting from'}</span>
-                                    <span class="price-value" itemprop="priceRange">${formatPrice(coach.hourly_rate)}</span>
-                                    <span class="price-unit">/${t('coach.perSession') || 'session'}</span>
+                                <!-- Package Pricing -->
+                                <div class="pricing-options">
+                                    <div class="price-display">
+                                        <span class="price-label">${t('coach.singleSession') || 'Single Session'}</span>
+                                        <span class="price-value" itemprop="priceRange">${formatPrice(coach.hourly_rate)}</span>
+                                    </div>
+                                    ${coach.package_price && html`
+                                        <div class="price-display package-price">
+                                            <span class="price-label">${t('coach.packageDeal') || '4-Session Package'}</span>
+                                            <span class="price-value">${formatPrice(coach.package_price)}</span>
+                                            <span class="price-savings">${t('coach.savePercent') || 'Save'} ${Math.round((1 - coach.package_price / (coach.hourly_rate * 4)) * 100)}%</span>
+                                        </div>
+                                    `}
                                 </div>
-                                <button class="btn-discovery-prominent" onClick=${() => setShowDiscoveryModal(true)}>
+
+                                <!-- Primary CTA: Discovery Call -->
+                                <button class="btn-discovery-primary" onClick=${() => setShowDiscoveryModal(true)}>
                                     📞 ${t('discovery.bookFreeCall')}
+                                    <span class="btn-subtitle">${t('discovery.freeNoObligation') || 'Free, no obligation'}</span>
                                 </button>
-                                <button class="btn-book-prominent" onClick=${handleBookClick}>
+
+                                <!-- Secondary CTA: Book Session -->
+                                <button class="btn-book-secondary" onClick=${handleBookClick}>
                                     ${t('coach.bookSession') || 'Book a Session'}
                                 </button>
-                                <button class="btn-contact-coach" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
-                                    ${t('coach.sendMessage') || 'Send Message'}
+
+                                <!-- Tertiary: Send Message -->
+                                <button class="btn-contact-link" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
+                                    💬 ${t('coach.sendMessage') || 'Send a Message'}
                                 </button>
                             </div>
 
@@ -596,6 +699,50 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     ${(coach.bio || '').split('\n').map((para, i) =>
                                         para.trim() ? html`<p key=${i}>${para}</p>` : null
                                     )}
+                                </div>
+                            </article>
+
+                            <!-- My Approach -->
+                            ${coach.coaching_approach && html`
+                                <article class="coach-section coach-approach-section">
+                                    <h2 class="section-title">${t('coach.myApproach') || 'My Coaching Approach'}</h2>
+                                    <div class="approach-content">
+                                        ${(coach.coaching_approach || '').split('\n').map((para, i) =>
+                                            para.trim() ? html`<p key=${i}>${para}</p>` : null
+                                        )}
+                                    </div>
+                                    ${coach.coaching_style && html`
+                                        <div class="coaching-style">
+                                            <h4>${t('coach.coachingStyle') || 'Coaching Style'}</h4>
+                                            <div class="style-tags">
+                                                ${(Array.isArray(coach.coaching_style) ? coach.coaching_style : [coach.coaching_style]).map((style, i) => html`
+                                                    <span key=${i} class="style-tag">${style}</span>
+                                                `)}
+                                            </div>
+                                        </div>
+                                    `}
+                                </article>
+                            `}
+
+                            <!-- What to Expect -->
+                            <article class="coach-section what-to-expect-section">
+                                <h2 class="section-title">${t('coach.whatToExpect') || 'What to Expect'}</h2>
+                                <div class="expect-grid">
+                                    <div class="expect-item">
+                                        <span class="expect-icon">📞</span>
+                                        <h4>${t('coach.expectStep1Title') || 'Free Discovery Call'}</h4>
+                                        <p>${t('coach.expectStep1Desc') || 'Start with a free call to discuss your goals and see if we\'re a good fit.'}</p>
+                                    </div>
+                                    <div class="expect-item">
+                                        <span class="expect-icon">🎯</span>
+                                        <h4>${t('coach.expectStep2Title') || 'Personalized Plan'}</h4>
+                                        <p>${t('coach.expectStep2Desc') || 'Together we\'ll create a tailored coaching plan based on your unique needs.'}</p>
+                                    </div>
+                                    <div class="expect-item">
+                                        <span class="expect-icon">🚀</span>
+                                        <h4>${t('coach.expectStep3Title') || 'Ongoing Support'}</h4>
+                                        <p>${t('coach.expectStep3Desc') || 'Regular sessions with accountability and support between meetings.'}</p>
+                                    </div>
                                 </div>
                             </article>
 
@@ -710,6 +857,40 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                             ⭐ ${rating.toFixed(1)} (${reviewsCount} ${t('coach.reviews') || 'reviews'})
                                         </span>
                                     </h2>
+
+                                    <!-- Review Breakdown Chart -->
+                                    ${reviews.length >= 3 && html`
+                                        <div class="review-breakdown">
+                                            <div class="breakdown-summary">
+                                                <div class="breakdown-score">
+                                                    <span class="big-rating">${rating.toFixed(1)}</span>
+                                                    <div class="breakdown-stars">
+                                                        ${[1,2,3,4,5].map(star => html`
+                                                            <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                                        `)}
+                                                    </div>
+                                                    <span class="breakdown-total">${reviewsCount} ${t('coach.reviewsTotal') || 'reviews'}</span>
+                                                </div>
+                                                <div class="breakdown-bars">
+                                                    ${[5,4,3,2,1].map(stars => {
+                                                        const breakdown = getReviewBreakdown();
+                                                        const count = breakdown[stars];
+                                                        const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                                                        return html`
+                                                            <div key=${stars} class="breakdown-row">
+                                                                <span class="bar-label">${stars}★</span>
+                                                                <div class="bar-track">
+                                                                    <div class="bar-fill" style=${{ width: `${percentage}%` }}></div>
+                                                                </div>
+                                                                <span class="bar-count">${count}</span>
+                                                            </div>
+                                                        `;
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `}
+
                                     <div class="reviews-list">
                                         ${reviews.map(review => html`
                                             <${ReviewCard} key=${review.id} review=${review} />
@@ -796,6 +977,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 <h3>${t('coach.share') || 'Share Profile'}</h3>
                                 <div class="share-buttons">
                                     <button
+                                        class="share-btn share-whatsapp"
+                                        onClick=${() => window.open(`https://wa.me/?text=${encodeURIComponent(`${t('coach.shareText') || 'Check out this coach'}: ${coach.full_name} - ${window.location.href}`)}`, '_blank')}
+                                        aria-label="Share on WhatsApp"
+                                    >
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                        </svg>
+                                    </button>
+                                    <button
                                         class="share-btn share-linkedin"
                                         onClick=${() => window.open(`https://linkedin.com/shareArticle?url=${encodeURIComponent(window.location.href)}`, '_blank')}
                                         aria-label="Share on LinkedIn"
@@ -804,7 +994,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     </button>
                                     <button
                                         class="share-btn share-twitter"
-                                        onClick=${() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${coach.full_name} on CoachSearching!`)}`, '_blank')}
+                                        onClick=${() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`${t('coach.shareText') || 'Check out this coach'}: ${coach.full_name}`)}`, '_blank')}
                                         aria-label="Share on Twitter"
                                     >
                                         𝕏
@@ -827,14 +1017,45 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             </section>
 
             <!-- Similar Coaches Section -->
-            <section class="similar-coaches-section">
-                <div class="container">
-                    <h2 class="section-title">${t('coach.similarCoaches') || 'Similar Coaches You Might Like'}</h2>
-                    <div class="similar-coaches-placeholder">
-                        <p>${t('coach.loadingSimilar') || 'Loading similar coaches...'}</p>
+            ${similarCoaches.length > 0 && html`
+                <section class="similar-coaches-section">
+                    <div class="container">
+                        <h2 class="section-title">${t('coach.similarCoaches') || 'Similar Coaches You Might Like'}</h2>
+                        <div class="similar-coaches-grid">
+                            ${similarCoaches.map(similarCoach => html`
+                                <a
+                                    key=${similarCoach.id}
+                                    href="/coach/${similarCoach.slug || similarCoach.id}"
+                                    class="similar-coach-card"
+                                    onClick=${(e) => { e.preventDefault(); window.navigateTo(`/coach/${similarCoach.slug || similarCoach.id}`); }}
+                                >
+                                    <div class="similar-coach-avatar">
+                                        <img
+                                            src=${similarCoach.avatar_url || 'https://via.placeholder.com/80'}
+                                            alt=${similarCoach.full_name}
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                    <div class="similar-coach-info">
+                                        <h4 class="similar-coach-name">${similarCoach.full_name}</h4>
+                                        <p class="similar-coach-title">${similarCoach.title}</p>
+                                        ${similarCoach.rating_average > 0 && html`
+                                            <div class="similar-coach-rating">
+                                                <span class="stars">★</span>
+                                                <span>${similarCoach.rating_average.toFixed(1)}</span>
+                                                <span class="review-count">(${similarCoach.rating_count || 0})</span>
+                                            </div>
+                                        `}
+                                        <div class="similar-coach-price">
+                                            ${formatPrice(similarCoach.hourly_rate)}/${t('coach.hour') || 'hr'}
+                                        </div>
+                                    </div>
+                                </a>
+                            `)}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            `}
 
             <!-- Discovery Call Modal -->
             ${showDiscoveryModal && html`
