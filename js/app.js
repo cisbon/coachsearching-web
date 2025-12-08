@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.8</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.9</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -1808,9 +1808,10 @@ const ReviewsPopup = ({ coach, onClose }) => {
         try {
             if (window.supabaseClient) {
                 const reviewText = newReview.comment.trim();
+                const reviewerName = newReview.name.trim() || null; // null if empty, so DB can use default
 
                 console.log('📝 Attempting to insert review for coach:', coach.id);
-                console.log('📝 Rating:', newReview.rating, 'Text:', reviewText);
+                console.log('📝 Rating:', newReview.rating, 'Text:', reviewText, 'Name:', reviewerName);
 
                 let data = null;
                 let lastError = null;
@@ -1822,7 +1823,8 @@ const ReviewsPopup = ({ coach, onClose }) => {
                     .insert([{
                         coach_id: coach.id,
                         rating: newReview.rating,
-                        text: reviewText
+                        text: reviewText,
+                        reviewer_name: reviewerName
                     }])
                     .select();
 
@@ -1840,7 +1842,8 @@ const ReviewsPopup = ({ coach, onClose }) => {
                         .insert([{
                             coach_id: coach.id,
                             rating: newReview.rating,
-                            comment: reviewText
+                            comment: reviewText,
+                            reviewer_name: reviewerName
                         }])
                         .select();
 
@@ -1858,7 +1861,8 @@ const ReviewsPopup = ({ coach, onClose }) => {
                             .insert([{
                                 coach_id: coach.id,
                                 rating: newReview.rating,
-                                content: reviewText
+                                content: reviewText,
+                                reviewer_name: reviewerName
                             }])
                             .select();
 
@@ -1876,7 +1880,8 @@ const ReviewsPopup = ({ coach, onClose }) => {
                                 .insert([{
                                     coach_id: coach.id,
                                     rating: newReview.rating,
-                                    review_text: reviewText
+                                    review_text: reviewText,
+                                    reviewer_name: reviewerName
                                 }])
                                 .select();
 
