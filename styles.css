@@ -3806,6 +3806,70 @@ footer, .site-footer {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
+/* Rating Section - Under Profile Picture */
+.coach-rating-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+    cursor: pointer;
+}
+
+.rating-compact {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border-radius: 20px;
+    transition: background 0.2s;
+}
+
+.rating-compact:hover {
+    background: #e9ecef;
+}
+
+.rating-stars-compact {
+    display: flex;
+    gap: 2px;
+}
+
+.star-compact {
+    font-size: 0.9rem;
+    color: #d1d5db;
+}
+
+.star-compact.filled {
+    color: #f59e0b;
+}
+
+.rating-value {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--primary-petrol);
+}
+
+.rating-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.new-coach-compact {
+    padding: 6px 12px;
+    background: var(--primary-petrol);
+    border-radius: 20px;
+    transition: background 0.2s;
+}
+
+.new-coach-compact:hover {
+    background: #005555;
+}
+
+.new-badge-compact {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+}
+
 /* Coach Info Section */
 .coach-info {
     flex: 1;
@@ -3813,13 +3877,7 @@ footer, .site-footer {
     flex-direction: column;
     gap: 8px;
     min-width: 0;
-}
-
-.coach-name-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    text-align: left;
 }
 
 .coach-name {
@@ -3830,6 +3888,7 @@ footer, .site-footer {
     display: flex;
     align-items: center;
     gap: 6px;
+    text-align: left;
 }
 
 .verified-check {
@@ -3848,6 +3907,7 @@ footer, .site-footer {
     font-size: 0.95rem;
     color: var(--text-main);
     font-weight: 500;
+    text-align: left;
 }
 
 /* Meta Row - Location and Languages */
@@ -3961,6 +4021,7 @@ footer, .site-footer {
 /* Coach Bio */
 .coach-bio {
     margin: 4px 0;
+    text-align: left;
 }
 
 .coach-bio p {
@@ -3968,6 +4029,7 @@ footer, .site-footer {
     font-size: 0.9rem;
     color: var(--text-main);
     line-height: 1.5;
+    text-align: left;
 }
 
 /* Specialty Tags */

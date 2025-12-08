@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.6</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.7</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -1941,8 +1941,11 @@ const ReviewsPopup = ({ coach, onClose }) => {
         setSubmitting(false);
     };
 
-    const rating = coach.rating_average || coach.rating || 0;
-    const reviewsCount = reviews.length || coach.rating_count || coach.reviews_count || 0;
+    // Calculate rating from loaded reviews (not from stale coach object)
+    const reviewsCount = reviews.length;
+    const rating = reviewsCount > 0
+        ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewsCount
+        : 0;
 
     return html`
         <div class="reviews-popup-overlay" onClick=${handleBackdropClick}>
@@ -2236,42 +2239,37 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
                 <${TrustBadges} coach=${coach} />
             </div>
 
+            <!-- Rating Section - Under Profile Picture -->
+            <div class="coach-rating-section" onClick=${handleReviewsClick}>
+                ${reviewsCount > 0 ? html`
+                    <div class="rating-compact clickable">
+                        <div class="rating-stars-compact">
+                            ${[1,2,3,4,5].map(star => html`
+                                <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                            `)}
+                        </div>
+                        <span class="rating-value">${rating.toFixed(1)}</span>
+                        <span class="rating-count">(${reviewsCount})</span>
+                    </div>
+                ` : html`
+                    <div class="new-coach-compact clickable">
+                        <span class="new-badge-compact">✨ NEW</span>
+                    </div>
+                `}
+            </div>
+
             <div class="coach-info">
-                <!-- Name and Title Row -->
-                <div class="coach-name-row">
-                    <h3 class="coach-name">
-                        ${coach.full_name}
-                        ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
-                    </h3>
-                    <${TrustScore} coach=${coach} />
-                </div>
+                <!-- Name and Title -->
+                <h3 class="coach-name">
+                    ${coach.full_name}
+                    ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
+                </h3>
                 <div class="coach-title">${coach.title}</div>
 
                 <!-- Location and Languages Row -->
                 <div class="coach-meta-row">
                     <span class="meta-location">📍 ${location}</span>
                     <${LanguageFlags} languages=${languages} />
-                </div>
-
-                <!-- Reviews Section - More Prominent -->
-                <div class="coach-reviews-section" onClick=${handleReviewsClick}>
-                    ${rating > 0 ? html`
-                        <div class="reviews-display clickable">
-                            <div class="rating-stars-prominent">
-                                ${[1,2,3,4,5].map(star => html`
-                                    <span key=${star} class="star-prominent ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                `)}
-                            </div>
-                            <span class="rating-number">${rating.toFixed(1)}</span>
-                            <span class="reviews-count">(${reviewsCount} review${reviewsCount !== 1 ? 's' : ''})</span>
-                            <span class="view-reviews-link">View all →</span>
-                        </div>
-                    ` : html`
-                        <div class="new-coach-badge">
-                            <span class="new-badge">✨ NEW COACH</span>
-                            <span class="be-first">Be the first to review!</span>
-                        </div>
-                    `}
                 </div>
 
                 <!-- Bio -->
