@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.7.3</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.7.4</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -2097,12 +2097,12 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
     };
 
     const timePreferenceOptions = [
-        { value: 'flexible', label: 'Flexible - Any time works' },
-        { value: 'weekday_morning', label: 'Weekday Morning (9am-12pm)' },
-        { value: 'weekday_afternoon', label: 'Weekday Afternoon (12pm-5pm)' },
-        { value: 'weekday_evening', label: 'Weekday Evening (5pm-8pm)' },
-        { value: 'weekend_morning', label: 'Weekend Morning (9am-12pm)' },
-        { value: 'weekend_afternoon', label: 'Weekend Afternoon (12pm-5pm)' }
+        { value: 'flexible', label: t('discovery.timeFlexible') },
+        { value: 'weekday_morning', label: t('discovery.timeWeekdayMorning') },
+        { value: 'weekday_afternoon', label: t('discovery.timeWeekdayAfternoon') },
+        { value: 'weekday_evening', label: t('discovery.timeWeekdayEvening') },
+        { value: 'weekend_morning', label: t('discovery.timeWeekendMorning') },
+        { value: 'weekend_afternoon', label: t('discovery.timeWeekendAfternoon') }
     ];
 
     const handleSubmit = async (e) => {
@@ -2110,11 +2110,11 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
 
         // Validation
         if (!formData.name.trim()) {
-            setError('Please enter your name');
+            setError(t('discovery.errorName'));
             return;
         }
         if (!formData.phone.trim()) {
-            setError('Please enter your phone number');
+            setError(t('discovery.errorPhone'));
             return;
         }
 
@@ -2142,57 +2142,57 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
             if (result.success) {
                 setSuccess(true);
             } else {
-                setError(result.error?.message || 'Failed to submit request. Please try again.');
+                setError(result.error?.message || t('discovery.errorGeneric'));
             }
         } catch (err) {
             console.error('Discovery call request error:', err);
-            setError('Network error. Please check your connection and try again.');
+            setError(t('discovery.errorNetwork'));
         }
 
         setSubmitting(false);
     };
 
     if (success) {
+        const coachName = coach.full_name || coach.display_name;
         return html`
             <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
                 <div class="discovery-modal-container">
                     <div class="discovery-modal-header">
-                        <h3>Request Sent!</h3>
+                        <h3>${t('discovery.successTitle')}</h3>
                         <button class="discovery-modal-close" onClick=${onClose}>✕</button>
                     </div>
                     <div class="discovery-modal-content success-content">
                         <div class="success-icon">✓</div>
-                        <h4>Thank you for your interest!</h4>
-                        <p>Your discovery call request has been sent to <strong>${coach.full_name || coach.display_name}</strong>.</p>
-                        <p>They will contact you soon at the phone number you provided.</p>
-                        <button class="btn-primary" onClick=${onClose}>Close</button>
+                        <p>${t('discovery.successMessage').replace('{coachName}', coachName)}</p>
+                        <p>${t('discovery.successFollowUp')}</p>
+                        <button class="btn-primary" onClick=${onClose}>${t('discovery.close')}</button>
                     </div>
                 </div>
             </div>
         `;
     }
 
+    const coachName = coach.full_name || coach.display_name;
     return html`
         <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
             <div class="discovery-modal-container">
                 <div class="discovery-modal-header">
-                    <h3>Book a Free Discovery Call</h3>
+                    <h3>${t('discovery.modalTitle')}</h3>
                     <button class="discovery-modal-close" onClick=${onClose}>✕</button>
                 </div>
                 <div class="discovery-modal-content">
                     <p class="discovery-intro">
-                        Get to know <strong>${coach.full_name || coach.display_name}</strong> with a free discovery call.
-                        Share your contact info and preferred time, and they'll reach out to schedule.
+                        ${t('discovery.modalIntro').replace('{coachName}', coachName)}
                     </p>
 
                     ${error && html`<div class="discovery-error">${error}</div>`}
 
                     <form onSubmit=${handleSubmit}>
                         <div class="form-group">
-                            <label>Your Name *</label>
+                            <label>${t('discovery.yourName')} *</label>
                             <input
                                 type="text"
-                                placeholder="Enter your full name"
+                                placeholder=${t('discovery.yourNamePlaceholder')}
                                 value=${formData.name}
                                 onChange=${(e) => setFormData({...formData, name: e.target.value})}
                                 required
@@ -2200,10 +2200,10 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
                         </div>
 
                         <div class="form-group">
-                            <label>Phone Number *</label>
+                            <label>${t('discovery.phoneNumber')} *</label>
                             <input
                                 type="tel"
-                                placeholder="Your phone number"
+                                placeholder=${t('discovery.phonePlaceholder')}
                                 value=${formData.phone}
                                 onChange=${(e) => setFormData({...formData, phone: e.target.value})}
                                 required
@@ -2211,17 +2211,17 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
                         </div>
 
                         <div class="form-group">
-                            <label>Email (optional)</label>
+                            <label>${t('discovery.email')}</label>
                             <input
                                 type="email"
-                                placeholder="Your email address"
+                                placeholder=${t('discovery.emailPlaceholder')}
                                 value=${formData.email}
                                 onChange=${(e) => setFormData({...formData, email: e.target.value})}
                             />
                         </div>
 
                         <div class="form-group">
-                            <label>Preferred Time</label>
+                            <label>${t('discovery.preferredTime')}</label>
                             <select
                                 value=${formData.timePreference}
                                 onChange=${(e) => setFormData({...formData, timePreference: e.target.value})}
@@ -2233,9 +2233,9 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
                         </div>
 
                         <div class="form-group">
-                            <label>Message (optional)</label>
+                            <label>${t('discovery.message')}</label>
                             <textarea
-                                placeholder="Tell ${coach.full_name || 'the coach'} a bit about what you're looking for..."
+                                placeholder=${t('discovery.messagePlaceholder')}
                                 rows="3"
                                 value=${formData.message}
                                 onChange=${(e) => setFormData({...formData, message: e.target.value})}
@@ -2243,9 +2243,9 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
                         </div>
 
                         <div class="discovery-form-actions">
-                            <button type="button" class="btn-cancel" onClick=${onClose}>Cancel</button>
+                            <button type="button" class="btn-cancel" onClick=${onClose}>${t('discovery.cancel')}</button>
                             <button type="submit" class="btn-primary" disabled=${submitting}>
-                                ${submitting ? 'Sending...' : 'Request Discovery Call'}
+                                ${submitting ? t('discovery.submitting') : t('discovery.submit')}
                             </button>
                         </div>
                     </form>
@@ -2495,13 +2495,13 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
 
             <!-- Price Section -->
             <div class="coach-price-section">
-                <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
-                    📞 Book Free Discovery Call
-                </button>
                 <div class="price-info">
                     <div class="price-label">${t('coach.hourly_rate')}</div>
                     <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
                 </div>
+                <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
+                    📞 ${t('discovery.bookFreeCall')}
+                </button>
                 <a href="/coach/${coach.slug || coach.id}" class="btn-book">
                     ${t('coach.view_profile')} →
                 </a>
@@ -4721,23 +4721,23 @@ const DiscoveryRequestsDashboard = ({ session }) => {
 
     const formatTimePreference = (pref) => {
         const labels = {
-            'flexible': 'Flexible - Any time',
-            'weekday_morning': 'Weekday Morning',
-            'weekday_afternoon': 'Weekday Afternoon',
-            'weekday_evening': 'Weekday Evening',
-            'weekend_morning': 'Weekend Morning',
-            'weekend_afternoon': 'Weekend Afternoon'
+            'flexible': t('discovery.timeFlexible'),
+            'weekday_morning': t('discovery.timeWeekdayMorning'),
+            'weekday_afternoon': t('discovery.timeWeekdayAfternoon'),
+            'weekday_evening': t('discovery.timeWeekdayEvening'),
+            'weekend_morning': t('discovery.timeWeekendMorning'),
+            'weekend_afternoon': t('discovery.timeWeekendAfternoon')
         };
         return labels[pref] || pref;
     };
 
     const getStatusBadge = (status) => {
         const badges = {
-            'pending': { class: 'badge-warning', label: 'Pending' },
-            'contacted': { class: 'badge-info', label: 'Contacted' },
-            'scheduled': { class: 'badge-petrol', label: 'Scheduled' },
-            'completed': { class: 'badge-success', label: 'Completed' },
-            'cancelled': { class: 'badge-danger', label: 'Cancelled' }
+            'pending': { class: 'badge-warning', label: t('discovery.dashboard.pending') },
+            'contacted': { class: 'badge-info', label: t('discovery.dashboard.contacted') },
+            'scheduled': { class: 'badge-petrol', label: t('discovery.dashboard.scheduled') },
+            'completed': { class: 'badge-success', label: t('discovery.dashboard.completed') },
+            'cancelled': { class: 'badge-danger', label: t('discovery.dashboard.cancelled') }
         };
         return badges[status] || { class: 'badge-secondary', label: status };
     };
@@ -4758,32 +4758,32 @@ const DiscoveryRequestsDashboard = ({ session }) => {
     return html`
         <div class="dashboard-section discovery-requests-section">
             <div class="section-header">
-                <h3>📞 Discovery Call Requests</h3>
-                <p class="section-description">Manage incoming discovery call requests from potential clients.</p>
+                <h3>📞 ${t('discovery.dashboard.title')}</h3>
+                <p class="section-description">${t('discovery.dashboard.description')}</p>
             </div>
 
             ${error && html`<div class="alert alert-error">${error}</div>`}
 
             <div class="filter-tabs" style=${{ marginBottom: '20px' }}>
                 <button class="filter-btn ${filter === 'all' ? 'active' : ''}" onClick=${() => setFilter('all')}>
-                    All (${requests.length})
+                    ${t('discovery.dashboard.all')} (${requests.length})
                 </button>
                 <button class="filter-btn ${filter === 'pending' ? 'active' : ''}" onClick=${() => setFilter('pending')}>
-                    Pending (${requests.filter(r => r.status === 'pending').length})
+                    ${t('discovery.dashboard.pending')} (${requests.filter(r => r.status === 'pending').length})
                 </button>
                 <button class="filter-btn ${filter === 'contacted' ? 'active' : ''}" onClick=${() => setFilter('contacted')}>
-                    Contacted (${requests.filter(r => r.status === 'contacted').length})
+                    ${t('discovery.dashboard.contacted')} (${requests.filter(r => r.status === 'contacted').length})
                 </button>
                 <button class="filter-btn ${filter === 'completed' ? 'active' : ''}" onClick=${() => setFilter('completed')}>
-                    Completed (${requests.filter(r => r.status === 'completed').length})
+                    ${t('discovery.dashboard.completed')} (${requests.filter(r => r.status === 'completed').length})
                 </button>
             </div>
 
             ${filteredRequests.length === 0 ? html`
                 <div class="empty-state">
                     <div class="empty-icon">📞</div>
-                    <h4>${filter === 'all' ? 'No discovery requests yet' : `No ${filter} requests`}</h4>
-                    <p>When potential clients request a discovery call, they'll appear here.</p>
+                    <h4>${t('discovery.dashboard.noRequests')}</h4>
+                    <p>${t('discovery.dashboard.noRequestsDesc')}</p>
                 </div>
             ` : html`
                 <div class="discovery-requests-list">
@@ -4812,11 +4812,11 @@ const DiscoveryRequestsDashboard = ({ session }) => {
                                     `}
                                     <div class="detail-row">
                                         <span class="detail-icon">🕐</span>
-                                        <span>Preferred: ${formatTimePreference(request.time_preference)}</span>
+                                        <span>${t('discovery.dashboard.preferredTime')}: ${formatTimePreference(request.time_preference)}</span>
                                     </div>
                                     ${request.client_message && html`
                                         <div class="client-message">
-                                            <strong>Message:</strong>
+                                            <strong>${t('discovery.dashboard.message')}:</strong>
                                             <p>${request.client_message}</p>
                                         </div>
                                     `}
@@ -4825,22 +4825,22 @@ const DiscoveryRequestsDashboard = ({ session }) => {
                                 <div class="request-actions">
                                     ${request.status === 'pending' && html`
                                         <button class="btn-sm btn-petrol" onClick=${() => updateRequestStatus(request.id, 'contacted')}>
-                                            ✓ Mark as Contacted
+                                            ✓ ${t('discovery.dashboard.markContacted')}
                                         </button>
                                     `}
                                     ${request.status === 'contacted' && html`
                                         <button class="btn-sm btn-petrol" onClick=${() => updateRequestStatus(request.id, 'scheduled')}>
-                                            📅 Mark as Scheduled
+                                            📅 ${t('discovery.dashboard.markScheduled')}
                                         </button>
                                     `}
                                     ${request.status === 'scheduled' && html`
                                         <button class="btn-sm btn-success" onClick=${() => updateRequestStatus(request.id, 'completed')}>
-                                            ✓ Mark as Completed
+                                            ✓ ${t('discovery.dashboard.markCompleted')}
                                         </button>
                                     `}
                                     ${['pending', 'contacted', 'scheduled'].includes(request.status) && html`
                                         <button class="btn-sm btn-outline" onClick=${() => updateRequestStatus(request.id, 'cancelled')}>
-                                            Cancel
+                                            ${t('discovery.dashboard.cancelRequest')}
                                         </button>
                                     `}
                                 </div>

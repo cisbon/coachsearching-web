@@ -65,23 +65,23 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
     };
 
     const timePreferenceOptions = [
-        { value: 'flexible', label: 'Flexible - Any time works' },
-        { value: 'weekday_morning', label: 'Weekday Morning (9am-12pm)' },
-        { value: 'weekday_afternoon', label: 'Weekday Afternoon (12pm-5pm)' },
-        { value: 'weekday_evening', label: 'Weekday Evening (5pm-8pm)' },
-        { value: 'weekend_morning', label: 'Weekend Morning (9am-12pm)' },
-        { value: 'weekend_afternoon', label: 'Weekend Afternoon (12pm-5pm)' }
+        { value: 'flexible', label: t('discovery.timeFlexible') },
+        { value: 'weekday_morning', label: t('discovery.timeWeekdayMorning') },
+        { value: 'weekday_afternoon', label: t('discovery.timeWeekdayAfternoon') },
+        { value: 'weekday_evening', label: t('discovery.timeWeekdayEvening') },
+        { value: 'weekend_morning', label: t('discovery.timeWeekendMorning') },
+        { value: 'weekend_afternoon', label: t('discovery.timeWeekendAfternoon') }
     ];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!formData.name.trim()) {
-            setError('Please enter your name');
+            setError(t('discovery.errorName'));
             return;
         }
         if (!formData.phone.trim()) {
-            setError('Please enter your phone number');
+            setError(t('discovery.errorPhone'));
             return;
         }
 
@@ -109,57 +109,57 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
             if (result.success) {
                 setSuccess(true);
             } else {
-                setError(result.error?.message || 'Failed to submit request. Please try again.');
+                setError(result.error?.message || t('discovery.errorGeneric'));
             }
         } catch (err) {
             console.error('Discovery call request error:', err);
-            setError('Network error. Please check your connection and try again.');
+            setError(t('discovery.errorNetwork'));
         }
 
         setSubmitting(false);
     };
 
     if (success) {
+        const coachName = coach.full_name || coach.display_name;
         return html`
             <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
                 <div class="discovery-modal-container">
                     <div class="discovery-modal-header">
-                        <h3>Request Sent!</h3>
+                        <h3>${t('discovery.successTitle')}</h3>
                         <button class="discovery-modal-close" onClick=${onClose}>✕</button>
                     </div>
                     <div class="discovery-modal-content success-content">
                         <div class="success-icon">✓</div>
-                        <h4>Thank you for your interest!</h4>
-                        <p>Your discovery call request has been sent to <strong>${coach.full_name || coach.display_name}</strong>.</p>
-                        <p>They will contact you soon at the phone number you provided.</p>
-                        <button class="btn-primary" onClick=${onClose}>Close</button>
+                        <p>${t('discovery.successMessage').replace('{coachName}', coachName)}</p>
+                        <p>${t('discovery.successFollowUp')}</p>
+                        <button class="btn-primary" onClick=${onClose}>${t('discovery.close')}</button>
                     </div>
                 </div>
             </div>
         `;
     }
 
+    const coachName = coach.full_name || coach.display_name;
     return html`
         <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
             <div class="discovery-modal-container">
                 <div class="discovery-modal-header">
-                    <h3>Book a Free Discovery Call</h3>
+                    <h3>${t('discovery.modalTitle')}</h3>
                     <button class="discovery-modal-close" onClick=${onClose}>✕</button>
                 </div>
                 <div class="discovery-modal-content">
                     <p class="discovery-intro">
-                        Get to know <strong>${coach.full_name || coach.display_name}</strong> with a free discovery call.
-                        Share your contact info and preferred time, and they'll reach out to schedule.
+                        ${t('discovery.modalIntro').replace('{coachName}', coachName)}
                     </p>
 
                     ${error && html`<div class="discovery-error">${error}</div>`}
 
                     <form onSubmit=${handleSubmit}>
                         <div class="form-group">
-                            <label>Your Name *</label>
+                            <label>${t('discovery.yourName')} *</label>
                             <input
                                 type="text"
-                                placeholder="Enter your full name"
+                                placeholder=${t('discovery.yourNamePlaceholder')}
                                 value=${formData.name}
                                 onChange=${(e) => setFormData({...formData, name: e.target.value})}
                                 required
@@ -167,10 +167,10 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
                         </div>
 
                         <div class="form-group">
-                            <label>Phone Number *</label>
+                            <label>${t('discovery.phoneNumber')} *</label>
                             <input
                                 type="tel"
-                                placeholder="Your phone number"
+                                placeholder=${t('discovery.phonePlaceholder')}
                                 value=${formData.phone}
                                 onChange=${(e) => setFormData({...formData, phone: e.target.value})}
                                 required
@@ -178,17 +178,17 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
                         </div>
 
                         <div class="form-group">
-                            <label>Email (optional)</label>
+                            <label>${t('discovery.email')}</label>
                             <input
                                 type="email"
-                                placeholder="Your email address"
+                                placeholder=${t('discovery.emailPlaceholder')}
                                 value=${formData.email}
                                 onChange=${(e) => setFormData({...formData, email: e.target.value})}
                             />
                         </div>
 
                         <div class="form-group">
-                            <label>Preferred Time</label>
+                            <label>${t('discovery.preferredTime')}</label>
                             <select
                                 value=${formData.timePreference}
                                 onChange=${(e) => setFormData({...formData, timePreference: e.target.value})}
@@ -200,9 +200,9 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
                         </div>
 
                         <div class="form-group">
-                            <label>Message (optional)</label>
+                            <label>${t('discovery.message')}</label>
                             <textarea
-                                placeholder="Tell ${coach.full_name || 'the coach'} a bit about what you're looking for..."
+                                placeholder=${t('discovery.messagePlaceholder')}
                                 rows="3"
                                 value=${formData.message}
                                 onChange=${(e) => setFormData({...formData, message: e.target.value})}
@@ -210,9 +210,9 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
                         </div>
 
                         <div class="discovery-form-actions">
-                            <button type="button" class="btn-cancel" onClick=${onClose}>Cancel</button>
+                            <button type="button" class="btn-cancel" onClick=${onClose}>${t('discovery.cancel')}</button>
                             <button type="submit" class="btn-primary" disabled=${submitting}>
-                                ${submitting ? 'Sending...' : 'Request Discovery Call'}
+                                ${submitting ? t('discovery.submitting') : t('discovery.submit')}
                             </button>
                         </div>
                     </form>
@@ -562,7 +562,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     <span class="price-unit">/${t('coach.perSession') || 'session'}</span>
                                 </div>
                                 <button class="btn-discovery-prominent" onClick=${() => setShowDiscoveryModal(true)}>
-                                    📞 ${t('coach.bookDiscoveryCall') || 'Book Free Discovery Call'}
+                                    📞 ${t('discovery.bookFreeCall')}
                                 </button>
                                 <button class="btn-book-prominent" onClick=${handleBookClick}>
                                     ${t('coach.bookSession') || 'Book a Session'}
@@ -740,13 +740,13 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     </div>
                                 `}
                                 <button class="btn-discovery-widget" onClick=${() => setShowDiscoveryModal(true)}>
-                                    📞 Book Free Discovery Call
+                                    📞 ${t('discovery.bookFreeCall')}
                                 </button>
                                 <button class="btn-book-widget" onClick=${handleBookClick}>
                                     ${t('coach.selectTime') || 'Select Date & Time'}
                                 </button>
                                 <p class="booking-note">
-                                    ${t('coach.freeDiscoveryAvailable') || 'Free discovery call available!'}
+                                    ${t('discovery.freeDiscoveryAvailable')}
                                 </p>
                             </div>
 
