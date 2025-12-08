@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.5.1</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.5.2</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -427,13 +427,17 @@ const Navbar = ({ session }) => {
         const style = document.createElement('style');
         style.id = 'responsive-navbar-css';
         style.textContent = `
-            /* Desktop navbar - 10px consistent spacing */
-            header[role="banner"] { background: white; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+            /* Desktop navbar - 10px consistent spacing, petrol background */
+            header[role="banner"] { background: #1a5f5a; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
             header[role="banner"] .nav-flex { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px; }
             header[role="banner"] .nav-links { display: flex; align-items: center; gap: 10px; }
             header[role="banner"] .nav-links > * { margin: 0; }
-            .nav-browse-link { color: #1a5f5a; font-weight: 500; text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; white-space: nowrap; }
-            .nav-browse-link:hover { background: #f0f9f8; }
+            header[role="banner"] .logo { color: white !important; }
+            header[role="banner"] .logo span { color: #a7d5d2 !important; }
+            header[role="banner"] .nav-links a { color: white !important; text-decoration: none; }
+            header[role="banner"] .nav-auth-btn { border-color: rgba(255,255,255,0.5) !important; }
+            .nav-browse-link { color: white !important; font-weight: 500; text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; white-space: nowrap; }
+            .nav-browse-link:hover { background: rgba(255,255,255,0.15); }
 
             /* Hamburger button - hidden on desktop */
             .hamburger-btn {
@@ -451,7 +455,7 @@ const Navbar = ({ session }) => {
                 display: block;
                 width: 24px;
                 height: 3px;
-                background: #1a5f5a;
+                background: white;
                 border-radius: 2px;
                 transition: all 0.3s ease;
             }
@@ -494,11 +498,12 @@ const Navbar = ({ session }) => {
                     padding: 14px 16px;
                     border-radius: 8px;
                     box-sizing: border-box;
+                    color: #1a5f5a !important;
                 }
 
-                .nav-browse-link { background: #f0f9f8 !important; }
+                .nav-browse-link { background: #f0f9f8 !important; color: #1a5f5a !important; }
                 .nav-register-btn { background: #1a5f5a !important; color: white !important; }
-                .nav-signin-btn { background: #f5f5f5 !important; }
+                .nav-signin-btn { background: #f5f5f5 !important; color: #1a5f5a !important; }
 
                 header[role="banner"] .nav-links .currency-selector,
                 header[role="banner"] .nav-links .lang-selector {
