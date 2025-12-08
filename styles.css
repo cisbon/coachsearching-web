@@ -3937,24 +3937,25 @@ footer, .site-footer {
     margin-left: auto;
 }
 
+/* NEW COACH Badge - Dark background with white text for readability */
 .new-coach-badge {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    background: linear-gradient(135deg, #006266 0%, #004d50 100%);
     border-radius: 8px;
-    border: 1px solid #7dd3fc;
+    border: 1px solid #003d40;
 }
 
 .new-coach-badge .new-badge {
     font-weight: 600;
-    color: #0369a1;
+    color: white;
 }
 
 .new-coach-badge .be-first {
     font-size: 0.8rem;
-    color: #0284c7;
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* Coach Bio */
@@ -4353,5 +4354,246 @@ footer, .site-footer {
     .reviews-popup-container {
         max-width: 100%;
         margin: 10px;
+    }
+}
+
+/* ========================================
+   ADDITIONAL FIXES v1.6.2
+   ======================================== */
+
+/* Sort Button - Same height as filter button */
+.sort-select-mobile {
+    height: 40px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: white;
+    font-size: 0.9rem;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.sort-select-mobile:hover {
+    border-color: var(--primary-petrol);
+}
+
+.sort-select-mobile:focus {
+    outline: none;
+    border-color: var(--primary-petrol);
+    box-shadow: 0 0 0 2px rgba(0, 98, 102, 0.1);
+}
+
+/* Video Popup - iframe support for YouTube/Vimeo */
+.video-iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+}
+
+.video-error {
+    padding: 40px;
+    text-align: center;
+    background: #f9fafb;
+}
+
+.video-error p {
+    color: #6b7280;
+    margin-bottom: 16px;
+}
+
+.video-external-link {
+    color: var(--primary-petrol);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.video-external-link:hover {
+    text-decoration: underline;
+}
+
+/* Review Form Styles */
+.add-review-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: var(--primary-petrol);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background 0.2s;
+}
+
+.add-review-btn:hover {
+    background: var(--petrol-dark);
+}
+
+.add-review-form {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.add-review-form h4 {
+    margin: 0 0 16px 0;
+    color: var(--text-main);
+}
+
+.rating-select {
+    margin-bottom: 16px;
+}
+
+.rating-select label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.star-select {
+    display: flex;
+    gap: 4px;
+}
+
+.star-selectable {
+    font-size: 1.8rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.15s, transform 0.15s;
+}
+
+.star-selectable:hover {
+    transform: scale(1.1);
+}
+
+.star-selectable.selected {
+    color: #f59e0b;
+}
+
+.add-review-form .form-group {
+    margin-bottom: 16px;
+}
+
+.add-review-form .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.add-review-form .form-group input,
+.add-review-form .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.add-review-form .form-group input:focus,
+.add-review-form .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-petrol);
+}
+
+.review-form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.review-form-actions .btn-cancel {
+    padding: 10px 20px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.review-form-actions .btn-submit {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-petrol);
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.review-form-actions .btn-submit:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.review-message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.review-message.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.review-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Language Flags - Better Safari/cross-browser support */
+.language-flags {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flag-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Fallback for browsers that don't render emoji flags well */
+@supports not (font-family: "Apple Color Emoji") {
+    .flag-icon {
+        font-family: "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif;
+    }
+}
+
+.more-langs {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* Mobile responsive for video */
+@media (max-width: 768px) {
+    .video-iframe {
+        height: 300px;
+    }
+
+    .star-selectable {
+        font-size: 2rem;
     }
 }

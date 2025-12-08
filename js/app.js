@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.1</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.2</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -1618,7 +1618,7 @@ const LanguageFlags = ({ languages }) => {
     `;
 };
 
-// Video Popup Component
+// Video Popup Component - Supports YouTube, Vimeo, and direct video URLs
 const VideoPopup = ({ videoUrl, coachName, onClose }) => {
     useEffect(() => {
         const handleEscape = (e) => {
@@ -1638,6 +1638,35 @@ const VideoPopup = ({ videoUrl, coachName, onClose }) => {
         }
     };
 
+    // Convert video URL to embeddable format
+    const getEmbedUrl = (url) => {
+        if (!url) return null;
+
+        // YouTube formats: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+        const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        if (youtubeMatch) {
+            return `https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=1&rel=0`;
+        }
+
+        // Vimeo formats: vimeo.com/ID, player.vimeo.com/video/ID
+        const vimeoMatch = url.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/);
+        if (vimeoMatch) {
+            return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+        }
+
+        // Direct video URL (mp4, webm, etc.)
+        if (url.match(/\.(mp4|webm|ogg)(\?|$)/i)) {
+            return url;
+        }
+
+        // Return original URL as fallback
+        return url;
+    };
+
+    const embedUrl = getEmbedUrl(videoUrl);
+    const isDirectVideo = videoUrl && videoUrl.match(/\.(mp4|webm|ogg)(\?|$)/i);
+    const isYouTubeOrVimeo = embedUrl && (embedUrl.includes('youtube.com/embed') || embedUrl.includes('player.vimeo.com'));
+
     return html`
         <div class="video-popup-overlay" onClick=${handleBackdropClick}>
             <div class="video-popup-container">
@@ -1646,24 +1675,63 @@ const VideoPopup = ({ videoUrl, coachName, onClose }) => {
                     <button class="video-popup-close" onClick=${onClose}>✕</button>
                 </div>
                 <div class="video-popup-content">
-                    <video
-                        src=${videoUrl}
-                        controls
-                        autoplay
-                        class="video-player"
-                    >
-                        Your browser does not support video playback.
-                    </video>
+                    ${isYouTubeOrVimeo ? html`
+                        <iframe
+                            src=${embedUrl}
+                            class="video-iframe"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                        ></iframe>
+                    ` : isDirectVideo ? html`
+                        <video
+                            src=${videoUrl}
+                            controls
+                            autoplay
+                            class="video-player"
+                        >
+                            Your browser does not support video playback.
+                        </video>
+                    ` : html`
+                        <div class="video-error">
+                            <p>Unable to play this video format.</p>
+                            <a href=${videoUrl} target="_blank" class="video-external-link">Open video in new tab →</a>
+                        </div>
+                    `}
                 </div>
             </div>
         </div>
     `;
 };
 
-// Reviews Popup Component
+// Reviews Popup Component - With ability to add reviews (for testing)
 const ReviewsPopup = ({ coach, onClose }) => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showAddReview, setShowAddReview] = useState(false);
+    const [newReview, setNewReview] = useState({ rating: 5, name: '', comment: '' });
+    const [submitting, setSubmitting] = useState(false);
+    const [message, setMessage] = useState('');
+
+    const loadReviews = async () => {
+        setLoading(true);
+        try {
+            if (window.supabaseClient) {
+                const { data, error } = await window.supabaseClient
+                    .from('cs_reviews')
+                    .select('*')
+                    .eq('coach_id', coach.id)
+                    .order('created_at', { ascending: false });
+
+                if (!error && data) {
+                    setReviews(data);
+                }
+            }
+        } catch (err) {
+            console.error('Error loading reviews:', err);
+        }
+        setLoading(false);
+    };
 
     useEffect(() => {
         const handleEscape = (e) => {
@@ -1672,26 +1740,6 @@ const ReviewsPopup = ({ coach, onClose }) => {
         document.addEventListener('keydown', handleEscape);
         document.body.style.overflow = 'hidden';
 
-        // Load reviews
-        const loadReviews = async () => {
-            setLoading(true);
-            try {
-                if (window.supabaseClient) {
-                    const { data, error } = await window.supabaseClient
-                        .from('cs_reviews')
-                        .select('*')
-                        .eq('coach_id', coach.id)
-                        .order('created_at', { ascending: false });
-
-                    if (!error && data) {
-                        setReviews(data);
-                    }
-                }
-            } catch (err) {
-                console.error('Error loading reviews:', err);
-            }
-            setLoading(false);
-        };
         loadReviews();
 
         return () => {
@@ -1706,8 +1754,58 @@ const ReviewsPopup = ({ coach, onClose }) => {
         }
     };
 
+    const handleSubmitReview = async () => {
+        if (!newReview.comment.trim()) {
+            setMessage('Please write a comment');
+            return;
+        }
+
+        setSubmitting(true);
+        setMessage('');
+
+        try {
+            if (window.supabaseClient) {
+                const reviewData = {
+                    coach_id: coach.id,
+                    rating: newReview.rating,
+                    reviewer_name: newReview.name.trim() || 'Anonymous',
+                    comment: newReview.comment.trim(),
+                    created_at: new Date().toISOString()
+                };
+
+                const { error } = await window.supabaseClient
+                    .from('cs_reviews')
+                    .insert([reviewData]);
+
+                if (error) throw error;
+
+                // Update coach's rating average
+                const newCount = reviews.length + 1;
+                const totalRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0) + newReview.rating;
+                const newAverage = totalRating / newCount;
+
+                await window.supabaseClient
+                    .from('cs_coaches')
+                    .update({
+                        rating_average: newAverage,
+                        rating_count: newCount
+                    })
+                    .eq('id', coach.id);
+
+                setMessage('Review submitted successfully!');
+                setNewReview({ rating: 5, name: '', comment: '' });
+                setShowAddReview(false);
+                await loadReviews();
+            }
+        } catch (err) {
+            console.error('Error submitting review:', err);
+            setMessage('Error: ' + (err.message || 'Failed to submit review'));
+        }
+        setSubmitting(false);
+    };
+
     const rating = coach.rating_average || coach.rating || 0;
-    const reviewsCount = coach.rating_count || coach.reviews_count || 0;
+    const reviewsCount = reviews.length || coach.rating_count || coach.reviews_count || 0;
 
     return html`
         <div class="reviews-popup-overlay" onClick=${handleBackdropClick}>
@@ -1717,7 +1815,7 @@ const ReviewsPopup = ({ coach, onClose }) => {
                         <h3>Reviews for ${coach.full_name}</h3>
                         <div class="reviews-summary">
                             <div class="reviews-avg-rating">
-                                <span class="big-rating">${rating.toFixed(1)}</span>
+                                <span class="big-rating">${reviewsCount > 0 ? rating.toFixed(1) : '—'}</span>
                                 <div class="rating-stars-large">
                                     ${[1,2,3,4,5].map(star => html`
                                         <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
@@ -1730,6 +1828,58 @@ const ReviewsPopup = ({ coach, onClose }) => {
                     <button class="reviews-popup-close" onClick=${onClose}>✕</button>
                 </div>
                 <div class="reviews-popup-content">
+                    ${message && html`
+                        <div class="review-message ${message.includes('Error') ? 'error' : 'success'}">${message}</div>
+                    `}
+
+                    ${!showAddReview && html`
+                        <button class="add-review-btn" onClick=${() => setShowAddReview(true)}>
+                            ✏️ Write a Review
+                        </button>
+                    `}
+
+                    ${showAddReview && html`
+                        <div class="add-review-form">
+                            <h4>Write Your Review</h4>
+                            <div class="rating-select">
+                                <label>Your Rating:</label>
+                                <div class="star-select">
+                                    ${[1,2,3,4,5].map(star => html`
+                                        <span
+                                            key=${star}
+                                            class="star-selectable ${star <= newReview.rating ? 'selected' : ''}"
+                                            onClick=${() => setNewReview({...newReview, rating: star})}
+                                        >★</span>
+                                    `)}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Your Name (optional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Anonymous"
+                                    value=${newReview.name}
+                                    onChange=${(e) => setNewReview({...newReview, name: e.target.value})}
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label>Your Review *</label>
+                                <textarea
+                                    placeholder="Share your experience with this coach..."
+                                    rows="4"
+                                    value=${newReview.comment}
+                                    onChange=${(e) => setNewReview({...newReview, comment: e.target.value})}
+                                ></textarea>
+                            </div>
+                            <div class="review-form-actions">
+                                <button class="btn-cancel" onClick=${() => setShowAddReview(false)}>Cancel</button>
+                                <button class="btn-submit" onClick=${handleSubmitReview} disabled=${submitting}>
+                                    ${submitting ? 'Submitting...' : 'Submit Review'}
+                                </button>
+                            </div>
+                        </div>
+                    `}
+
                     ${loading ? html`
                         <div class="reviews-loading">Loading reviews...</div>
                     ` : reviews.length === 0 ? html`
