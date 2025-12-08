@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.5</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.6</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -2155,10 +2155,43 @@ const TrustBadges = ({ coach }) => {
 const CoachCard = React.memo(({ coach, onViewDetails }) => {
     const [showVideoPopup, setShowVideoPopup] = useState(false);
     const [showReviewsPopup, setShowReviewsPopup] = useState(false);
+    const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
 
-    // Map database fields to component fields
-    const rating = coach.rating_average || coach.rating || 0;
-    const reviewsCount = coach.rating_count || coach.reviews_count || 0;
+    // Fetch live reviews data from database
+    useEffect(() => {
+        const fetchReviewsData = async () => {
+            if (window.supabaseClient && coach.id) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('cs_reviews')
+                        .select('rating')
+                        .eq('coach_id', coach.id);
+
+                    if (!error && data) {
+                        const count = data.length;
+                        const avgRating = count > 0
+                            ? data.reduce((sum, r) => sum + (r.rating || 0), 0) / count
+                            : 0;
+                        setLiveReviewsData({ rating: avgRating, count, loaded: true });
+                    } else {
+                        setLiveReviewsData({ rating: 0, count: 0, loaded: true });
+                    }
+                } catch (err) {
+                    console.error('Error fetching reviews:', err);
+                    setLiveReviewsData({ rating: 0, count: 0, loaded: true });
+                }
+            }
+        };
+        fetchReviewsData();
+    }, [coach.id, showReviewsPopup]); // Re-fetch when reviews popup closes
+
+    // Use live data if loaded, otherwise fall back to coach object data
+    const rating = liveReviewsData.loaded
+        ? liveReviewsData.rating
+        : (coach.rating_average || coach.rating || 0);
+    const reviewsCount = liveReviewsData.loaded
+        ? liveReviewsData.count
+        : (coach.rating_count || coach.reviews_count || 0);
     const location = coach.location || 'Remote';
     const languages = coach.languages || [];
     const specialties = coach.specialties || [];
