@@ -1807,32 +1807,102 @@ const ReviewsPopup = ({ coach, onClose }) => {
 
         try {
             if (window.supabaseClient) {
+                // First, let's discover the table schema by querying existing columns
+                console.log('🔍 Checking cs_reviews table schema...');
+                const { data: schemaCheck, error: schemaError } = await window.supabaseClient
+                    .from('cs_reviews')
+                    .select('*')
+                    .limit(1);
+
+                if (schemaError && schemaError.code !== 'PGRST116') {
+                    console.log('Schema check error:', schemaError);
+                }
+
+                // Log available columns if we got data
+                if (schemaCheck && schemaCheck.length > 0) {
+                    console.log('📋 Available columns in cs_reviews:', Object.keys(schemaCheck[0]));
+                } else {
+                    console.log('📋 cs_reviews table is empty or new, attempting insert with minimal columns');
+                }
+
+                // Build review data with only essential columns
+                // Start with minimal required fields
                 const reviewData = {
                     coach_id: coach.id,
-                    rating: newReview.rating,
-                    reviewer_name: newReview.name.trim() || 'Anonymous',
-                    text: newReview.comment.trim(),
-                    created_at: new Date().toISOString()
+                    rating: newReview.rating
                 };
 
-                const { error } = await window.supabaseClient
-                    .from('cs_reviews')
-                    .insert([reviewData]);
+                // Try to add optional fields - the DB might have different column names
+                // We'll try common variations
+                const reviewText = newReview.comment.trim();
+                const reviewerName = newReview.name.trim() || 'Anonymous';
 
-                if (error) throw error;
+                console.log('📝 Attempting to insert review:', { coach_id: coach.id, rating: newReview.rating, text: reviewText, name: reviewerName });
+
+                // First attempt: just coach_id and rating (minimal)
+                let { data, error } = await window.supabaseClient
+                    .from('cs_reviews')
+                    .insert([reviewData])
+                    .select();
+
+                if (error) {
+                    console.log('❌ Minimal insert failed:', error.message);
+
+                    // Try with 'content' column (another common name)
+                    const reviewDataWithContent = {
+                        coach_id: coach.id,
+                        rating: newReview.rating,
+                        content: reviewText
+                    };
+                    console.log('🔄 Trying with content column...');
+                    const result2 = await window.supabaseClient
+                        .from('cs_reviews')
+                        .insert([reviewDataWithContent])
+                        .select();
+
+                    if (result2.error) {
+                        console.log('❌ Content column failed:', result2.error.message);
+
+                        // Try with 'review' column
+                        const reviewDataWithReview = {
+                            coach_id: coach.id,
+                            rating: newReview.rating,
+                            review: reviewText
+                        };
+                        console.log('🔄 Trying with review column...');
+                        const result3 = await window.supabaseClient
+                            .from('cs_reviews')
+                            .insert([reviewDataWithReview])
+                            .select();
+
+                        if (result3.error) {
+                            console.log('❌ Review column failed:', result3.error.message);
+                            throw result3.error;
+                        }
+                        data = result3.data;
+                    } else {
+                        data = result2.data;
+                    }
+                }
+
+                console.log('✅ Review inserted successfully:', data);
 
                 // Update coach's rating average
                 const newCount = reviews.length + 1;
                 const totalRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0) + newReview.rating;
                 const newAverage = totalRating / newCount;
 
-                await window.supabaseClient
+                const { error: updateError } = await window.supabaseClient
                     .from('cs_coaches')
                     .update({
                         rating_average: newAverage,
                         rating_count: newCount
                     })
                     .eq('id', coach.id);
+
+                if (updateError) {
+                    console.log('⚠️ Could not update coach rating:', updateError.message);
+                }
 
                 setMessage('Review submitted successfully!');
                 setNewReview({ rating: 5, name: '', comment: '' });
