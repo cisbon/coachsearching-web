@@ -52,7 +52,7 @@ $$ LANGUAGE plpgsql;
 -- Generate slugs for all existing coaches that don't have one
 UPDATE cs_coaches
 SET slug = generate_coach_slug(
-    COALESCE(full_name, display_name, 'coach'),
+    COALESCE(full_name, 'coach'),
     title
 )
 WHERE slug IS NULL;
@@ -67,7 +67,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.slug IS NULL OR NEW.slug = '' THEN
         NEW.slug := generate_coach_slug(
-            COALESCE(NEW.full_name, NEW.display_name, 'coach'),
+            COALESCE(NEW.full_name, 'coach'),
             NEW.title
         );
     END IF;
