@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.3.2</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.4.0</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -4476,23 +4476,36 @@ const DashboardProfile = ({ session, userType }) => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [uploading, setUploading] = useState(false);
+    const [editSection, setEditSection] = useState(null);
+    const [coachId, setCoachId] = useState(null);
     const [formData, setFormData] = useState({
         full_name: session.user.user_metadata?.full_name || '',
         avatar_url: '',
         banner_url: '',
         title: '',
         bio: '',
-        location: '',
+        location_city: '',
+        location_country: '',
         hourly_rate: '',
         currency: 'EUR',
-        specialties: '',
-        languages: '',
-        session_types_online: true,
-        session_types_onsite: false,
-        auto_accept_bookings: false
+        specialties: [],
+        languages: [],
+        years_experience: 0,
+        offers_virtual: true,
+        offers_onsite: false,
+        website_url: '',
+        linkedin_url: ''
     });
 
-    // Load coach profile if coach
+    const languageOptions = [
+        { code: 'en', name: 'English', flag: '🇬🇧' },
+        { code: 'de', name: 'German', flag: '🇩🇪' },
+        { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+        { code: 'fr', name: 'French', flag: '🇫🇷' },
+        { code: 'it', name: 'Italian', flag: '🇮🇹' },
+        { code: 'nl', name: 'Dutch', flag: '🇳🇱' }
+    ];
+
     useEffect(() => {
         if (userType === 'coach') {
             loadCoachProfile();
@@ -4500,93 +4513,54 @@ const DashboardProfile = ({ session, userType }) => {
     }, [userType]);
 
     const loadCoachProfile = async () => {
-        console.log('📋 [PROFILE DEBUG] Loading coach profile...');
         try {
-            // Try API first
-            const response = await fetch(`${API_BASE}/coaches/${session.user.id}`);
-            console.log('📋 [PROFILE DEBUG] API response status:', response.status);
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📋 [PROFILE DEBUG] API data received:', data);
-
-                if (data.data) {
-                    const coach = data.data;
-                    setFormData({
-                        full_name: coach.full_name || '',
-                        avatar_url: coach.avatar_url || '',
-                        banner_url: coach.banner_url || '',
-                        title: coach.title || '',
-                        bio: coach.bio || '',
-                        location: coach.location || '',
-                        hourly_rate: coach.hourly_rate || '',
-                        currency: coach.currency || 'EUR',
-                        specialties: coach.specialties?.join(', ') || '',
-                        languages: coach.languages?.join(', ') || '',
-                        session_types_online: coach.session_types?.includes('online') || true,
-                        session_types_onsite: coach.session_types?.includes('onsite') || false,
-                        auto_accept_bookings: coach.auto_accept_bookings || false
-                    });
-                    console.log('✅ [PROFILE DEBUG] Profile loaded from API successfully');
-                    return;
-                }
-            } else {
-                console.warn('⚠️ [PROFILE DEBUG] API returned', response.status, '- trying Supabase');
-            }
-        } catch (error) {
-            console.warn('⚠️ [PROFILE DEBUG] API failed:', error.message);
-        }
-
-        // Fallback to Supabase
-        try {
-            console.log('📋 [PROFILE DEBUG] Querying Supabase for coach profile...');
             const { data: coach, error } = await window.supabaseClient
                 .from('cs_coaches')
                 .select('*')
                 .eq('user_id', session.user.id)
                 .single();
 
-            if (error) {
-                console.error('❌ [PROFILE DEBUG] Supabase error:', error);
-                // If no row found, that's okay - it means this is a new profile
-                if (error.code === 'PGRST116') {
-                    console.log('📋 [PROFILE DEBUG] No existing profile found - user can create one');
-                }
-            } else if (coach) {
-                console.log('✅ [PROFILE DEBUG] Profile loaded from Supabase:', coach);
+            if (error && error.code !== 'PGRST116') {
+                console.error('Failed to load profile:', error);
+                return;
+            }
+
+            if (coach) {
+                setCoachId(coach.id);
                 setFormData({
                     full_name: coach.full_name || '',
                     avatar_url: coach.avatar_url || '',
                     banner_url: coach.banner_url || '',
                     title: coach.title || '',
                     bio: coach.bio || '',
-                    location: coach.location || '',
+                    location_city: coach.location_city || '',
+                    location_country: coach.location_country || '',
                     hourly_rate: coach.hourly_rate || '',
                     currency: coach.currency || 'EUR',
-                    specialties: coach.specialties?.join(', ') || '',
-                    languages: coach.languages?.join(', ') || '',
-                    session_types_online: coach.session_types?.includes('online') || true,
-                    session_types_onsite: coach.session_types?.includes('onsite') || false,
-                    auto_accept_bookings: coach.auto_accept_bookings || false
+                    specialties: Array.isArray(coach.specialties) ? coach.specialties : [],
+                    languages: Array.isArray(coach.languages) ? coach.languages : [],
+                    years_experience: coach.years_experience || 0,
+                    offers_virtual: coach.offers_virtual !== false,
+                    offers_onsite: coach.offers_onsite || false,
+                    website_url: coach.website_url || '',
+                    linkedin_url: coach.linkedin_url || ''
                 });
             }
-        } catch (error) {
-            console.error('❌ [PROFILE DEBUG] Failed to load from Supabase:', error);
+        } catch (err) {
+            console.error('Failed to load profile:', err);
         }
     };
 
-    const handleImageUpload = async (event, fieldName = 'avatar_url') => {
+    const handleImageUpload = async (event, fieldName) => {
         const file = event.target.files[0];
         if (!file) return;
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             setMessage('Error: Please select an image file');
             setTimeout(() => setMessage(''), 3000);
             return;
         }
 
-        // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             setMessage('Error: Image must be less than 5MB');
             setTimeout(() => setMessage(''), 3000);
@@ -4594,403 +4568,752 @@ const DashboardProfile = ({ session, userType }) => {
         }
 
         setUploading(true);
-        setMessage('Uploading image...');
-
         try {
-            // Create unique file name
             const fileExt = file.name.split('.').pop();
             const fileName = `${session.user.id}-${fieldName}-${Date.now()}.${fileExt}`;
-            const filePath = `${fileName}`;
 
-            console.log('Uploading to Supabase Storage:', filePath);
-
-            // Upload to Supabase Storage
-            const { data, error } = await supabaseClient.storage
+            const { error: uploadError } = await window.supabaseClient.storage
                 .from('profile-images')
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+                .upload(fileName, file, { upsert: true });
 
-            if (error) {
-                console.error('Upload error:', error);
+            if (uploadError) throw uploadError;
 
-                // Check if it's a bucket not found error
-                if (error.message && error.message.includes('Bucket not found')) {
-                    throw new Error('Storage bucket "profile-images" does not exist. Please create it in Supabase Dashboard → Storage → New Bucket. See SUPABASE_SETUP_GUIDE.md for instructions.');
-                }
-
-                throw error;
-            }
-
-            console.log('Upload successful:', data);
-
-            // Get public URL
-            const { data: { publicUrl } } = supabaseClient.storage
+            const { data: { publicUrl } } = window.supabaseClient.storage
                 .from('profile-images')
-                .getPublicUrl(filePath);
+                .getPublicUrl(fileName);
 
-            console.log('Public URL:', publicUrl);
-
-            // Update form data
-            setFormData({ ...formData, [fieldName]: publicUrl });
-            setMessage('Image uploaded successfully!');
+            setFormData(prev => ({ ...prev, [fieldName]: publicUrl }));
+            await saveField(fieldName, publicUrl);
+            setMessage('Image uploaded!');
+            setTimeout(() => setMessage(''), 2000);
+        } catch (err) {
+            setMessage('Error: ' + (err.message || 'Upload failed'));
             setTimeout(() => setMessage(''), 3000);
-
-        } catch (error) {
-            console.error('Failed to upload image:', error);
-            setMessage('Error: ' + (error.message || 'Failed to upload image'));
-            setTimeout(() => setMessage(''), 5000);
         } finally {
             setUploading(false);
         }
     };
 
-    const handleSave = async () => {
-        console.log('💾 [SAVE DEBUG] Starting profile save...');
-        setLoading(true);
-        setMessage('');
-
+    const saveField = async (field, value) => {
+        if (!coachId) return;
         try {
-            const sessionTypesArray = [];
-            if (formData.session_types_online) sessionTypesArray.push('online');
-            if (formData.session_types_onsite) sessionTypesArray.push('onsite');
+            await window.supabaseClient
+                .from('cs_coaches')
+                .update({ [field]: value, updated_at: new Date().toISOString() })
+                .eq('id', coachId);
+        } catch (err) {
+            console.error('Save failed:', err);
+        }
+    };
 
+    const handleSave = async () => {
+        setLoading(true);
+        try {
             const profileData = {
                 user_id: session.user.id,
                 full_name: formData.full_name,
                 avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
-                onboarding_completed: true
+                banner_url: formData.banner_url,
+                title: formData.title,
+                bio: formData.bio,
+                location_city: formData.location_city,
+                location_country: formData.location_country,
+                hourly_rate: parseFloat(formData.hourly_rate) || 0,
+                currency: formData.currency,
+                specialties: formData.specialties,
+                languages: formData.languages,
+                years_experience: parseInt(formData.years_experience) || 0,
+                offers_virtual: formData.offers_virtual,
+                offers_onsite: formData.offers_onsite,
+                website_url: formData.website_url,
+                linkedin_url: formData.linkedin_url,
+                onboarding_completed: true,
+                updated_at: new Date().toISOString()
             };
 
-            // Add coach-specific fields if coach
-            if (userType === 'coach') {
-                Object.assign(profileData, {
-                    title: formData.title,
-                    bio: formData.bio,
-                    banner_url: formData.banner_url || '',
-                    location: formData.location,
-                    hourly_rate: parseFloat(formData.hourly_rate) || 0,
-                    currency: formData.currency,
-                    specialties: formData.specialties.split(',').map(s => s.trim()).filter(Boolean),
-                    languages: formData.languages.split(',').map(s => s.trim()).filter(Boolean),
-                    session_types: sessionTypesArray,
-                    auto_accept_bookings: formData.auto_accept_bookings
-                });
-            }
+            const { error } = await window.supabaseClient
+                .from('cs_coaches')
+                .upsert(profileData, { onConflict: 'user_id' });
 
-            console.log('💾 [SAVE DEBUG] Profile data prepared:', profileData);
+            if (error) throw error;
 
-            let savedSuccessfully = false;
-
-            // Try API first
-            try {
-                console.log('💾 [SAVE DEBUG] Trying to save via API...');
-                const response = await fetch(`${API_BASE}/coaches`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
-                    },
-                    body: JSON.stringify(profileData)
-                });
-
-                console.log('💾 [SAVE DEBUG] API response status:', response.status);
-
-                if (response.ok) {
-                    console.log('✅ [SAVE DEBUG] Saved successfully via API');
-                    setMessage('Profile updated successfully!');
-                    setTimeout(() => setMessage(''), 3000);
-                    savedSuccessfully = true;
-                } else {
-                    const error = await response.json();
-                    console.warn('⚠️ [SAVE DEBUG] API returned error:', error);
-                }
-            } catch (error) {
-                console.warn('⚠️ [SAVE DEBUG] API save failed:', error.message);
-            }
-
-            // Fallback to Supabase
-            if (!savedSuccessfully) {
-                console.log('💾 [SAVE DEBUG] Trying to save via Supabase...');
-                const { data, error } = await window.supabaseClient
-                    .from('cs_coaches')
-                    .upsert(profileData, {
-                        onConflict: 'user_id'
-                    })
-                    .select();
-
-                if (error) {
-                    console.error('❌ [SAVE DEBUG] Supabase save failed:', error);
-                    setMessage('Error: ' + error.message);
-                } else {
-                    console.log('✅ [SAVE DEBUG] Saved successfully via Supabase:', data);
-                    setMessage('Profile updated successfully!');
-                    setTimeout(() => setMessage(''), 3000);
-                }
-            }
-        } catch (error) {
-            console.error('❌ [SAVE DEBUG] Save error:', error);
-            setMessage('Error: ' + error.message);
+            setMessage('Profile saved!');
+            setEditSection(null);
+            setTimeout(() => setMessage(''), 2000);
+        } catch (err) {
+            setMessage('Error: ' + (err.message || 'Save failed'));
         } finally {
             setLoading(false);
-            console.log('💾 [SAVE DEBUG] Save process complete');
         }
     };
 
-    return html`
-        <div>
-            <h3>${t('dashboard.profile')}</h3>
+    const formatPrice = (price) => {
+        const symbols = { EUR: '€', USD: '$', GBP: '£', CHF: 'CHF ' };
+        return (symbols[formData.currency] || '€') + (price || 0);
+    };
 
+    const getLanguageName = (code) => {
+        const lang = languageOptions.find(l => l.code === code);
+        return lang ? lang.name : String(code);
+    };
+
+    const locationText = formData.location_city
+        ? formData.location_city + (formData.location_country ? ', ' + formData.location_country : '')
+        : formData.location_country || 'Location not set';
+
+    // Simple client profile
+    if (userType !== 'coach') {
+        return html`
+            <div class="profile-simple">
+                <h3>Your Profile</h3>
+                <p><strong>Email:</strong> ${session.user.email}</p>
+                <p><strong>Account Type:</strong> Client</p>
+            </div>
+        `;
+    }
+
+    return html`
+        <div class="linkedin-profile-editor">
             ${message && html`
-                <div class="message ${message.includes('Error') ? 'error' : 'success'}" style=${{
-                    padding: '12px',
-                    borderRadius: '4px',
-                    marginBottom: '20px',
-                    background: message.includes('Error') ? '#fee' : '#efe',
-                    color: message.includes('Error') ? '#c00' : '#060'
-                }}>
+                <div class="profile-message ${message.includes('Error') ? 'error' : 'success'}">
                     ${message}
                 </div>
             `}
 
-            <div style=${{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', marginTop: '20px' }}>
-
-                <!-- Avatar Upload -->
-                <div>
-                    <label class="filter-label">Profile Picture</label>
-                    <div style=${{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        ${formData.avatar_url && html`
-                            <img src=${formData.avatar_url} alt="Avatar" loading="lazy" style=${{
-                                width: '80px',
-                                height: '80px',
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                                border: '2px solid var(--border-color)'
-                            }} />
-                        `}
-                        <div style=${{ flex: 1 }}>
-                            <div style=${{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                <label class="btn-secondary" style=${{ cursor: 'pointer', padding: '8px 16px', margin: 0 }}>
-                                    ${uploading ? 'Uploading...' : '📤 Upload Image'}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        style=${{ display: 'none' }}
-                                        onChange=${(e) => handleImageUpload(e, 'avatar_url')}
-                                        disabled=${uploading}
-                                    />
-                                </label>
-                            </div>
-                            <input
-                                type="url"
-                                class="filter-input"
-                                placeholder="Or enter image URL: https://example.com/avatar.jpg"
-                                value=${formData.avatar_url}
-                                onChange=${(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-                            />
-                            <div class="form-hint">Upload an image or enter a URL. Leave empty for auto-generated avatar. Max 5MB.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Banner Upload (Coach Only) -->
-                ${userType === 'coach' && html`
-                    <div>
-                        <label class="filter-label">Profile Banner</label>
-                        <div style=${{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            ${formData.banner_url && html`
-                                <img src=${formData.banner_url} alt="Banner" loading="lazy" style=${{
-                                    width: '100%',
-                                    height: '200px',
-                                    objectFit: 'cover',
-                                    borderRadius: '8px',
-                                    border: '2px solid var(--border-color)'
-                                }} />
-                            `}
-                            <div style=${{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                <label class="btn-secondary" style=${{ cursor: 'pointer', padding: '8px 16px', margin: 0 }}>
-                                    ${uploading ? 'Uploading...' : '📤 Upload Banner'}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        style=${{ display: 'none' }}
-                                        onChange=${(e) => handleImageUpload(e, 'banner_url')}
-                                        disabled=${uploading}
-                                    />
-                                </label>
-                                ${formData.banner_url && html`
-                                    <button
-                                        class="btn-secondary"
-                                        onClick=${() => setFormData({ ...formData, banner_url: '' })}
-                                        style=${{ padding: '8px 16px' }}
-                                    >
-                                        🗑️ Remove Banner
-                                    </button>
-                                `}
-                            </div>
-                            <input
-                                type="url"
-                                class="filter-input"
-                                placeholder="Or enter banner image URL"
-                                value=${formData.banner_url}
-                                onChange=${(e) => setFormData({ ...formData, banner_url: e.target.value })}
-                            />
-                            <div class="form-hint">Recommended size: 1200x300px. Max 5MB.</div>
-                        </div>
-                    </div>
-                `}
-
-                <!-- Basic Info -->
-                <div>
-                    <label class="filter-label">Full Name *</label>
-                    <input
-                        type="text"
-                        class="filter-input"
-                        value=${formData.full_name}
-                        onChange=${(e) => setFormData({ ...formData, full_name: e.target.value })}
-                        required
-                    />
-                </div>
-
-                <div>
-                    <label class="filter-label">Email</label>
-                    <input
-                        type="email"
-                        class="filter-input"
-                        value=${session.user.email}
-                        disabled
-                        style=${{ background: '#f5f5f5', cursor: 'not-allowed' }}
-                    />
-                </div>
-
-                <!-- Coach-specific fields -->
-                ${userType === 'coach' && html`
-                    <div>
-                        <label class="filter-label">Professional Title *</label>
-                        <input
-                            type="text"
-                            class="filter-input"
-                            placeholder="e.g., Executive Leadership Coach"
-                            value=${formData.title}
-                            onChange=${(e) => setFormData({ ...formData, title: e.target.value })}
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label class="filter-label">Bio</label>
-                        <textarea
-                            class="filter-input"
-                            placeholder="Tell clients about your expertise and coaching approach..."
-                            value=${formData.bio}
-                            onChange=${(e) => setFormData({ ...formData, bio: e.target.value })}
-                            style=${{ minHeight: '120px', resize: 'vertical' }}
-                        />
-                    </div>
-
-                    <div class="form-row">
-                        <div style=${{ flex: 1 }}>
-                            <label class="filter-label">Location</label>
-                            <input
-                                type="text"
-                                class="filter-input"
-                                placeholder="City, Country"
-                                value=${formData.location}
-                                onChange=${(e) => setFormData({ ...formData, location: e.target.value })}
-                            />
-                        </div>
-                        <div style=${{ width: '200px' }}>
-                            <label class="filter-label">Hourly Rate (€)</label>
-                            <input
-                                type="number"
-                                class="filter-input"
-                                placeholder="100"
-                                value=${formData.hourly_rate}
-                                onChange=${(e) => setFormData({ ...formData, hourly_rate: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="filter-label">Specialties</label>
-                        <input
-                            type="text"
-                            class="filter-input"
-                            placeholder="Leadership, Career Transition, Executive Coaching"
-                            value=${formData.specialties}
-                            onChange=${(e) => setFormData({ ...formData, specialties: e.target.value })}
-                        />
-                        <div class="form-hint">Separate with commas</div>
-                    </div>
-
-                    <div>
-                        <label class="filter-label">Languages</label>
-                        <input
-                            type="text"
-                            class="filter-input"
-                            placeholder="en, de, es"
-                            value=${formData.languages}
-                            onChange=${(e) => setFormData({ ...formData, languages: e.target.value })}
-                        />
-                        <div class="form-hint">Use language codes: en, de, es, fr, it</div>
-                    </div>
-
-                    <div>
-                        <label class="filter-label">Session Types</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked=${formData.session_types_online}
-                                    onChange=${(e) => setFormData({ ...formData, session_types_online: e.target.checked })}
-                                />
-                                <span>💻 Online Sessions</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked=${formData.session_types_onsite}
-                                    onChange=${(e) => setFormData({ ...formData, session_types_onsite: e.target.checked })}
-                                />
-                                <span>📍 On-site Sessions</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="filter-label">Booking Settings</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked=${formData.auto_accept_bookings}
-                                    onChange=${(e) => setFormData({ ...formData, auto_accept_bookings: e.target.checked })}
-                                />
-                                <span>✓ Auto-accept booking requests</span>
-                            </label>
-                        </div>
-                        <div class="form-hint">
-                            When enabled, booking requests will be automatically confirmed.
-                            When disabled, you'll need to manually accept each booking and provide meeting details.
-                        </div>
-                    </div>
-                `}
-
-                <button
-                    class="btn-primary"
-                    onClick=${handleSave}
-                    disabled=${loading}
-                    style=${{ marginTop: '10px' }}
-                >
-                    ${loading ? 'Saving...' : 'Save Changes'}
-                </button>
+            <div class="profile-preview-banner">
+                ✨ This is how your profile appears to clients. Click any section to edit.
             </div>
+
+            <!-- Profile Card -->
+            <div class="linkedin-profile-card">
+                <!-- Banner -->
+                <div class="profile-banner" style="background-image: url('${formData.banner_url || ''}'); background-color: ${formData.banner_url ? 'transparent' : '#1a5f5a'};">
+                    <label class="banner-upload-btn">
+                        <input type="file" accept="image/*" hidden onChange=${(e) => handleImageUpload(e, 'banner_url')} />
+                        📷 ${formData.banner_url ? 'Change' : 'Add'} Cover
+                    </label>
+                </div>
+
+                <!-- Avatar -->
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar-wrapper">
+                        <img
+                            src=${formData.avatar_url || 'https://via.placeholder.com/150?text=' + (formData.full_name ? formData.full_name.charAt(0) : '?')}
+                            alt="Profile"
+                            class="profile-avatar"
+                        />
+                        <label class="avatar-upload-btn">
+                            <input type="file" accept="image/*" hidden onChange=${(e) => handleImageUpload(e, 'avatar_url')} />
+                            📷
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Main Info -->
+                <div class="profile-main-info">
+                    <div class="profile-header-row">
+                        <div>
+                            <h1 class="profile-name">${formData.full_name || 'Your Name'}</h1>
+                            <p class="profile-title">${formData.title || 'Professional Title'}</p>
+                        </div>
+                        <button class="edit-btn" onClick=${() => setEditSection('intro')}>✏️ Edit</button>
+                    </div>
+
+                    <div class="profile-meta">
+                        <span>📍 ${locationText}</span>
+                        ${formData.languages.length > 0 && html`
+                            <span>💬 ${formData.languages.slice(0, 3).map(c => getLanguageName(c)).join(', ')}</span>
+                        `}
+                        ${formData.years_experience > 0 && html`
+                            <span>🏆 ${String(formData.years_experience)}+ years</span>
+                        `}
+                    </div>
+
+                    <div class="profile-pricing">
+                        <span class="price-badge">${formatPrice(formData.hourly_rate)} / hour</span>
+                        ${formData.offers_virtual && html`<span class="format-badge">💻 Online</span>`}
+                        ${formData.offers_onsite && html`<span class="format-badge">🤝 In-Person</span>`}
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Section -->
+            <div class="linkedin-section">
+                <div class="section-header">
+                    <h2>About</h2>
+                    <button class="edit-btn" onClick=${() => setEditSection('about')}>✏️</button>
+                </div>
+                <div class="section-content">
+                    ${formData.bio
+                        ? html`<p class="bio-text">${formData.bio}</p>`
+                        : html`<p class="placeholder-text">Tell clients about yourself and your coaching approach...</p>`
+                    }
+                </div>
+            </div>
+
+            <!-- Specialties Section -->
+            <div class="linkedin-section">
+                <div class="section-header">
+                    <h2>Specialties</h2>
+                    <button class="edit-btn" onClick=${() => setEditSection('specialties')}>✏️</button>
+                </div>
+                <div class="section-content">
+                    ${formData.specialties.length > 0
+                        ? html`<div class="tags-display">${formData.specialties.map((s, i) => html`<span key=${i} class="specialty-tag">${String(s)}</span>`)}</div>`
+                        : html`<p class="placeholder-text">Add your coaching specialties...</p>`
+                    }
+                </div>
+            </div>
+
+            <!-- Links Section -->
+            <div class="linkedin-section">
+                <div class="section-header">
+                    <h2>Links</h2>
+                    <button class="edit-btn" onClick=${() => setEditSection('links')}>✏️</button>
+                </div>
+                <div class="section-content links-row">
+                    ${formData.website_url && html`<a href=${formData.website_url} target="_blank" class="link-btn">🌐 Website</a>`}
+                    ${formData.linkedin_url && html`<a href=${formData.linkedin_url} target="_blank" class="link-btn">💼 LinkedIn</a>`}
+                    ${!formData.website_url && !formData.linkedin_url && html`<p class="placeholder-text">Add your website or LinkedIn profile...</p>`}
+                </div>
+            </div>
+
+            <!-- Edit Modals -->
+            ${editSection === 'intro' && html`
+                <div class="edit-modal-overlay" onClick=${() => setEditSection(null)}>
+                    <div class="edit-modal" onClick=${(e) => e.stopPropagation()}>
+                        <div class="modal-header">
+                            <h3>Edit Introduction</h3>
+                            <button onClick=${() => setEditSection(null)}>×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" value=${formData.full_name} onChange=${(e) => setFormData({...formData, full_name: e.target.value})} />
+                            </div>
+                            <div class="form-group">
+                                <label>Professional Title</label>
+                                <input type="text" placeholder="e.g., Executive Coach" value=${formData.title} onChange=${(e) => setFormData({...formData, title: e.target.value})} />
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <input type="text" value=${formData.location_city} onChange=${(e) => setFormData({...formData, location_city: e.target.value})} />
+                                </div>
+                                <div class="form-group">
+                                    <label>Country</label>
+                                    <input type="text" value=${formData.location_country} onChange=${(e) => setFormData({...formData, location_country: e.target.value})} />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Years of Experience</label>
+                                <input type="number" min="0" value=${formData.years_experience} onChange=${(e) => setFormData({...formData, years_experience: parseInt(e.target.value) || 0})} />
+                            </div>
+                            <div class="form-group">
+                                <label>Languages</label>
+                                <div class="checkbox-grid">
+                                    ${languageOptions.map(lang => html`
+                                        <label key=${lang.code} class="checkbox-item">
+                                            <input type="checkbox"
+                                                checked=${formData.languages.includes(lang.code)}
+                                                onChange=${(e) => {
+                                                    const langs = formData.languages;
+                                                    if (e.target.checked) {
+                                                        setFormData({...formData, languages: [...langs, lang.code]});
+                                                    } else {
+                                                        setFormData({...formData, languages: langs.filter(l => l !== lang.code)});
+                                                    }
+                                                }}
+                                            />
+                                            ${lang.flag} ${lang.name}
+                                        </label>
+                                    `)}
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Currency</label>
+                                    <select value=${formData.currency} onChange=${(e) => setFormData({...formData, currency: e.target.value})}>
+                                        <option value="EUR">EUR €</option>
+                                        <option value="USD">USD $</option>
+                                        <option value="GBP">GBP £</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Hourly Rate</label>
+                                    <input type="number" min="0" value=${formData.hourly_rate} onChange=${(e) => setFormData({...formData, hourly_rate: e.target.value})} />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Session Formats</label>
+                                <div class="checkbox-row">
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" checked=${formData.offers_virtual} onChange=${(e) => setFormData({...formData, offers_virtual: e.target.checked})} />
+                                        💻 Video/Online
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" checked=${formData.offers_onsite} onChange=${(e) => setFormData({...formData, offers_onsite: e.target.checked})} />
+                                        🤝 In-Person
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onClick=${() => setEditSection(null)}>Cancel</button>
+                            <button class="btn-save" onClick=${handleSave} disabled=${loading}>${loading ? 'Saving...' : 'Save'}</button>
+                        </div>
+                    </div>
+                </div>
+            `}
+
+            ${editSection === 'about' && html`
+                <div class="edit-modal-overlay" onClick=${() => setEditSection(null)}>
+                    <div class="edit-modal" onClick=${(e) => e.stopPropagation()}>
+                        <div class="modal-header">
+                            <h3>Edit About</h3>
+                            <button onClick=${() => setEditSection(null)}>×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>About You</label>
+                                <textarea rows="8" placeholder="Share your coaching philosophy, experience, and what makes you unique..." value=${formData.bio} onChange=${(e) => setFormData({...formData, bio: e.target.value})}></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onClick=${() => setEditSection(null)}>Cancel</button>
+                            <button class="btn-save" onClick=${handleSave} disabled=${loading}>${loading ? 'Saving...' : 'Save'}</button>
+                        </div>
+                    </div>
+                </div>
+            `}
+
+            ${editSection === 'specialties' && html`
+                <div class="edit-modal-overlay" onClick=${() => setEditSection(null)}>
+                    <div class="edit-modal" onClick=${(e) => e.stopPropagation()}>
+                        <div class="modal-header">
+                            <h3>Edit Specialties</h3>
+                            <button onClick=${() => setEditSection(null)}>×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Your Specialties</label>
+                                <div class="current-tags">
+                                    ${formData.specialties.map((s, i) => html`
+                                        <span key=${i} class="tag-chip">
+                                            ${String(s)}
+                                            <button onClick=${() => setFormData({...formData, specialties: formData.specialties.filter((_, idx) => idx !== i)})}>×</button>
+                                        </span>
+                                    `)}
+                                </div>
+                                <input type="text" placeholder="Type and press Enter to add" onKeyDown=${(e) => {
+                                    if (e.key === 'Enter' && e.target.value.trim()) {
+                                        e.preventDefault();
+                                        const val = e.target.value.trim();
+                                        if (!formData.specialties.includes(val)) {
+                                            setFormData({...formData, specialties: [...formData.specialties, val]});
+                                        }
+                                        e.target.value = '';
+                                    }
+                                }} />
+                                <div class="suggestions">
+                                    ${['Executive Coaching', 'Life Coaching', 'Career Coaching', 'Leadership', 'Business Coaching', 'Health & Wellness']
+                                        .filter(s => !formData.specialties.includes(s))
+                                        .slice(0, 4)
+                                        .map(s => html`<button key=${s} class="suggestion-btn" onClick=${() => setFormData({...formData, specialties: [...formData.specialties, s]})}>+ ${s}</button>`)}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onClick=${() => setEditSection(null)}>Cancel</button>
+                            <button class="btn-save" onClick=${handleSave} disabled=${loading}>${loading ? 'Saving...' : 'Save'}</button>
+                        </div>
+                    </div>
+                </div>
+            `}
+
+            ${editSection === 'links' && html`
+                <div class="edit-modal-overlay" onClick=${() => setEditSection(null)}>
+                    <div class="edit-modal" onClick=${(e) => e.stopPropagation()}>
+                        <div class="modal-header">
+                            <h3>Edit Links</h3>
+                            <button onClick=${() => setEditSection(null)}>×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Website</label>
+                                <input type="url" placeholder="https://yourwebsite.com" value=${formData.website_url} onChange=${(e) => setFormData({...formData, website_url: e.target.value})} />
+                            </div>
+                            <div class="form-group">
+                                <label>LinkedIn</label>
+                                <input type="url" placeholder="https://linkedin.com/in/yourprofile" value=${formData.linkedin_url} onChange=${(e) => setFormData({...formData, linkedin_url: e.target.value})} />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onClick=${() => setEditSection(null)}>Cancel</button>
+                            <button class="btn-save" onClick=${handleSave} disabled=${loading}>${loading ? 'Saving...' : 'Save'}</button>
+                        </div>
+                    </div>
+                </div>
+            `}
         </div>
+
+        <style>
+            .linkedin-profile-editor {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+            .profile-message {
+                padding: 12px 16px;
+                border-radius: 8px;
+                margin-bottom: 16px;
+                font-weight: 500;
+            }
+            .profile-message.success { background: #d4edda; color: #155724; }
+            .profile-message.error { background: #f8d7da; color: #721c24; }
+
+            .profile-preview-banner {
+                background: linear-gradient(135deg, #1a5f5a, #2d8a82);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                font-size: 14px;
+            }
+
+            .linkedin-profile-card {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                overflow: hidden;
+                margin-bottom: 20px;
+            }
+
+            .profile-banner {
+                height: 180px;
+                background-size: cover;
+                background-position: center;
+                position: relative;
+            }
+            .banner-upload-btn {
+                position: absolute;
+                bottom: 12px;
+                right: 12px;
+                background: rgba(0,0,0,0.6);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                cursor: pointer;
+                font-size: 13px;
+                transition: background 0.2s;
+            }
+            .banner-upload-btn:hover { background: rgba(0,0,0,0.8); }
+
+            .profile-avatar-section {
+                margin-top: -60px;
+                padding: 0 24px;
+            }
+            .profile-avatar-wrapper {
+                position: relative;
+                width: 120px;
+                height: 120px;
+            }
+            .profile-avatar {
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                border: 4px solid white;
+                object-fit: cover;
+                background: #f0f0f0;
+            }
+            .avatar-upload-btn {
+                position: absolute;
+                bottom: 4px;
+                right: 4px;
+                width: 32px;
+                height: 32px;
+                background: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+
+            .profile-main-info {
+                padding: 16px 24px 24px;
+            }
+            .profile-header-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 12px;
+            }
+            .profile-name {
+                font-size: 24px;
+                font-weight: 700;
+                color: #1a1a1a;
+                margin: 0 0 4px 0;
+            }
+            .profile-title {
+                font-size: 16px;
+                color: #666;
+                margin: 0;
+            }
+
+            .profile-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+                color: #666;
+                font-size: 14px;
+                margin-bottom: 16px;
+            }
+
+            .profile-pricing {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                align-items: center;
+            }
+            .price-badge {
+                background: #1a5f5a;
+                color: white;
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-weight: 600;
+            }
+            .format-badge {
+                background: #f0f0f0;
+                padding: 6px 12px;
+                border-radius: 16px;
+                font-size: 13px;
+            }
+
+            .linkedin-section {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                padding: 20px 24px;
+                margin-bottom: 16px;
+            }
+            .section-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 16px;
+            }
+            .section-header h2 {
+                font-size: 18px;
+                font-weight: 600;
+                margin: 0;
+            }
+            .edit-btn {
+                background: none;
+                border: 1px solid #ddd;
+                border-radius: 20px;
+                padding: 6px 14px;
+                cursor: pointer;
+                font-size: 13px;
+                transition: all 0.2s;
+            }
+            .edit-btn:hover {
+                background: #f5f5f5;
+                border-color: #1a5f5a;
+            }
+
+            .bio-text {
+                color: #333;
+                line-height: 1.6;
+                white-space: pre-wrap;
+            }
+            .placeholder-text {
+                color: #999;
+                font-style: italic;
+            }
+
+            .tags-display {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .specialty-tag {
+                background: #e8f5f3;
+                color: #1a5f5a;
+                padding: 6px 14px;
+                border-radius: 16px;
+                font-size: 14px;
+            }
+
+            .links-row {
+                display: flex;
+                gap: 12px;
+            }
+            .link-btn {
+                padding: 8px 16px;
+                border-radius: 8px;
+                background: #f5f5f5;
+                color: #333;
+                text-decoration: none;
+                font-size: 14px;
+                transition: background 0.2s;
+            }
+            .link-btn:hover { background: #e8e8e8; }
+
+            /* Modal Styles */
+            .edit-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            }
+            .edit-modal {
+                background: white;
+                border-radius: 12px;
+                width: 90%;
+                max-width: 500px;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 16px 20px;
+                border-bottom: 1px solid #eee;
+            }
+            .modal-header h3 { margin: 0; font-size: 18px; }
+            .modal-header button {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #666;
+            }
+            .modal-body {
+                padding: 20px;
+            }
+            .modal-footer {
+                padding: 16px 20px;
+                border-top: 1px solid #eee;
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+
+            .form-group {
+                margin-bottom: 16px;
+            }
+            .form-group label {
+                display: block;
+                margin-bottom: 6px;
+                font-weight: 500;
+                color: #333;
+            }
+            .form-group input, .form-group textarea, .form-group select {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                font-size: 14px;
+            }
+            .form-group input:focus, .form-group textarea:focus {
+                outline: none;
+                border-color: #1a5f5a;
+            }
+            .form-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+
+            .checkbox-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .checkbox-row {
+                display: flex;
+                gap: 20px;
+            }
+            .checkbox-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+            }
+
+            .current-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+            .tag-chip {
+                background: #e8f5f3;
+                color: #1a5f5a;
+                padding: 4px 10px;
+                border-radius: 14px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .tag-chip button {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                color: #1a5f5a;
+            }
+
+            .suggestions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 12px;
+            }
+            .suggestion-btn {
+                background: #f5f5f5;
+                border: 1px dashed #ccc;
+                border-radius: 14px;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-size: 13px;
+            }
+            .suggestion-btn:hover {
+                background: #e8f5f3;
+                border-color: #1a5f5a;
+            }
+
+            .btn-cancel {
+                padding: 10px 20px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: white;
+                cursor: pointer;
+            }
+            .btn-save {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 8px;
+                background: #1a5f5a;
+                color: white;
+                cursor: pointer;
+                font-weight: 500;
+            }
+            .btn-save:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+            }
+        </style>
     `;
 };
-
-// Coaching Categories Section for Home Page
 const CoachingCategoriesSection = () => {
     const categories = [
         { slug: 'executive-coaching', titleKey: 'category.executive.title', icon: '👔', descKey: 'category.executive.desc' },
