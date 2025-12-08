@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.3.0</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.3.1</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -4715,8 +4715,8 @@ const DashboardProfile = ({ session, userType }) => {
 
                                 <div class="coach-meta-row editable-section">
                                     <span class="coach-meta-item"><span class="meta-icon">📍</span> ${location}</span>
-                                    ${(coach.languages || []).length > 0 && html`
-                                        <span class="coach-meta-item"><span class="meta-icon">💬</span> ${(coach.languages || []).map(c => languageOptions.find(l => l.code === c)?.name || c).slice(0, 3).join(', ')}</span>
+                                    ${Array.isArray(coach.languages) && coach.languages.length > 0 && html`
+                                        <span class="coach-meta-item"><span class="meta-icon">💬</span> ${coach.languages.map(c => languageOptions.find(l => l.code === c)?.name || String(c)).slice(0, 3).join(', ')}</span>
                                     `}
                                     ${coach.years_experience > 0 && html`
                                         <span class="coach-meta-item"><span class="meta-icon">🏆</span> ${coach.years_experience}+ years</span>
@@ -4749,7 +4749,8 @@ const DashboardProfile = ({ session, userType }) => {
                                 <article class="coach-section editable-section">
                                     <h2 class="section-title">About</h2>
                                     <div class="coach-bio">
-                                        ${coach.bio ? (coach.bio || '').split('\n').map((p, i) => p.trim() ? html`<p key=${i}>${p}</p>` : null)
+                                        ${coach.bio && typeof coach.bio === 'string'
+                                            ? String(coach.bio).split('\n').filter(p => p.trim()).map((p, i) => html`<p key=${i}>${p}</p>`)
                                             : html`<p class="placeholder-text">Tell clients about yourself...</p>`}
                                     </div>
                                     <${EditBtn} onClick=${() => setEditModal({ section: 'about', data: { bio: coach.bio || '' }})} />
@@ -4759,8 +4760,8 @@ const DashboardProfile = ({ session, userType }) => {
                                 <article class="coach-section editable-section">
                                     <h2 class="section-title">Specialties</h2>
                                     <div class="specialties-grid">
-                                        ${(coach.specialties || []).length > 0
-                                            ? (coach.specialties || []).map((s, i) => html`<span key=${i} class="specialty-card">${s}</span>`)
+                                        ${Array.isArray(coach.specialties) && coach.specialties.length > 0
+                                            ? coach.specialties.map((s, i) => html`<span key=${i} class="specialty-card">${typeof s === 'string' ? s : String(s)}</span>`)
                                             : html`<p class="placeholder-text">Add your specialties</p>`}
                                     </div>
                                     <${EditBtn} onClick=${() => setEditModal({ section: 'specialties', data: { specialties: coach.specialties || [] }})} />
@@ -4778,8 +4779,8 @@ const DashboardProfile = ({ session, userType }) => {
                                                 <div class="credential-item" key=${c.id}>
                                                     <div class="credential-icon">${c.credential_type === 'certification' ? '🏅' : c.credential_type === 'degree' ? '🎓' : '📜'}</div>
                                                     <div class="credential-details">
-                                                        <strong>${c.title}</strong>
-                                                        <span>${c.issuing_organization}</span>
+                                                        <strong>${c.title || ''}</strong>
+                                                        <span>${c.issuing_organization || ''}</span>
                                                     </div>
                                                     <div class="credential-actions">
                                                         <button class="btn-icon-sm" onClick=${() => setEditModal({ section: 'credential-edit', data: c })}>✏️</button>
@@ -4801,11 +4802,11 @@ const DashboardProfile = ({ session, userType }) => {
                                         <div class="services-grid">
                                             ${services.map(s => html`
                                                 <div class="service-card-display" key=${s.id}>
-                                                    <div class="service-type-label ${s.service_type}">${s.service_type === 'discovery_call' ? 'Discovery' : s.service_type === 'package' ? 'Package' : 'Session'}</div>
-                                                    <h4>${s.name}</h4>
+                                                    <div class="service-type-label ${s.service_type || ''}">${s.service_type === 'discovery_call' ? 'Discovery' : s.service_type === 'package' ? 'Package' : 'Session'}</div>
+                                                    <h4>${s.name || ''}</h4>
                                                     <p>${s.description || ''}</p>
                                                     <div class="service-meta">
-                                                        <span>${s.duration_minutes} min</span>
+                                                        <span>${s.duration_minutes || 0} min</span>
                                                         <span class="service-price">${s.price === 0 ? 'Free' : formatPrice(s.price, s.currency)}</span>
                                                     </div>
                                                     <div class="service-edit-actions">
