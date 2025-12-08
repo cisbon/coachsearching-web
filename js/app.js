@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.7.2</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.7.3</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -2495,11 +2495,9 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
 
             <!-- Price Section -->
             <div class="coach-price-section">
-                ${offersFreeIntro && html`
-                    <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
-                        📞 Book Free Discovery Call
-                    </button>
-                `}
+                <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
+                    📞 Book Free Discovery Call
+                </button>
                 <div class="price-info">
                     <div class="price-label">${t('coach.hourly_rate')}</div>
                     <div class="price-value">${formatPrice(coach.hourly_rate)}</div>

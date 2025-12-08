@@ -561,11 +561,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     <span class="price-value" itemprop="priceRange">${formatPrice(coach.hourly_rate)}</span>
                                     <span class="price-unit">/${t('coach.perSession') || 'session'}</span>
                                 </div>
-                                ${(coach.offers_free_intro || coach.free_discovery_call) && html`
-                                    <button class="btn-discovery-prominent" onClick=${() => setShowDiscoveryModal(true)}>
-                                        📞 ${t('coach.bookDiscoveryCall') || 'Book Free Discovery Call'}
-                                    </button>
-                                `}
+                                <button class="btn-discovery-prominent" onClick=${() => setShowDiscoveryModal(true)}>
+                                    📞 ${t('coach.bookDiscoveryCall') || 'Book Free Discovery Call'}
+                                </button>
                                 <button class="btn-book-prominent" onClick=${handleBookClick}>
                                     ${t('coach.bookSession') || 'Book a Session'}
                                 </button>
@@ -741,18 +739,14 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         <span class="rating-text">${rating.toFixed(1)} (${reviewsCount})</span>
                                     </div>
                                 `}
-                                ${(coach.offers_free_intro || coach.free_discovery_call) && html`
-                                    <button class="btn-discovery-widget" onClick=${() => setShowDiscoveryModal(true)}>
-                                        📞 Book Free Discovery Call
-                                    </button>
-                                `}
+                                <button class="btn-discovery-widget" onClick=${() => setShowDiscoveryModal(true)}>
+                                    📞 Book Free Discovery Call
+                                </button>
                                 <button class="btn-book-widget" onClick=${handleBookClick}>
                                     ${t('coach.selectTime') || 'Select Date & Time'}
                                 </button>
                                 <p class="booking-note">
-                                    ${(coach.offers_free_intro || coach.free_discovery_call)
-                                        ? (t('coach.freeDiscoveryAvailable') || 'Free discovery call available!')
-                                        : (t('coach.freeConsultation') || 'Free 15-min consultation available')}
+                                    ${t('coach.freeDiscoveryAvailable') || 'Free discovery call available!'}
                                 </p>
                             </div>
 
