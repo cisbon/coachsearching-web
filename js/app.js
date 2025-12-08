@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.4.0</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.4.1</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -4661,6 +4661,82 @@ const DashboardProfile = ({ session, userType }) => {
         ? formData.location_city + (formData.location_country ? ', ' + formData.location_country : '')
         : formData.location_country || 'Location not set';
 
+    // Inject CSS once
+    useEffect(() => {
+        if (!document.getElementById('linkedin-profile-css')) {
+            const style = document.createElement('style');
+            style.id = 'linkedin-profile-css';
+            style.textContent = `
+                .linkedin-profile-editor { max-width: 900px; margin: 0 auto; }
+                .profile-message { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-weight: 500; }
+                .profile-message.success { background: #d4edda; color: #155724; }
+                .profile-message.error { background: #f8d7da; color: #721c24; }
+                .profile-preview-banner { background: linear-gradient(135deg, #1a5f5a, #2d8a82); color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+                .linkedin-profile-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 20px; }
+                .banner-upload-btn { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; }
+                .banner-upload-btn:hover { background: rgba(0,0,0,0.8); }
+                .profile-avatar-section { margin-top: -60px; padding: 0 24px; }
+                .profile-avatar-wrapper { position: relative; width: 120px; height: 120px; }
+                .profile-avatar { width: 120px; height: 120px; border-radius: 50%; border: 4px solid white; object-fit: cover; background: #f0f0f0; }
+                .avatar-upload-btn { position: absolute; bottom: 4px; right: 4px; width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+                .profile-main-info { padding: 16px 24px 24px; }
+                .profile-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+                .profile-name { font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 4px 0; }
+                .profile-title { font-size: 16px; color: #666; margin: 0; }
+                .profile-meta { display: flex; flex-wrap: wrap; gap: 16px; color: #666; font-size: 14px; margin-bottom: 16px; }
+                .profile-pricing { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+                .price-badge { background: #1a5f5a; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 600; }
+                .format-badge { background: #f0f0f0; padding: 6px 12px; border-radius: 16px; font-size: 13px; }
+                .linkedin-section { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px 24px; margin-bottom: 16px; }
+                .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+                .section-header h2 { font-size: 18px; font-weight: 600; margin: 0; }
+                .edit-btn { background: none; border: 1px solid #ddd; border-radius: 20px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+                .edit-btn:hover { background: #f5f5f5; border-color: #1a5f5a; }
+                .bio-text { color: #333; line-height: 1.6; white-space: pre-wrap; }
+                .placeholder-text { color: #999; font-style: italic; }
+                .tags-display { display: flex; flex-wrap: wrap; gap: 8px; }
+                .specialty-tag { background: #e8f5f3; color: #1a5f5a; padding: 6px 14px; border-radius: 16px; font-size: 14px; }
+                .links-row { display: flex; gap: 12px; }
+                .link-btn { padding: 8px 16px; border-radius: 8px; background: #f5f5f5; color: #333; text-decoration: none; font-size: 14px; }
+                .link-btn:hover { background: #e8e8e8; }
+                .edit-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+                .edit-modal { background: white; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+                .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #eee; }
+                .modal-header h3 { margin: 0; font-size: 18px; }
+                .modal-header button { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
+                .modal-body { padding: 20px; }
+                .modal-footer { padding: 16px 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px; }
+                .form-group { margin-bottom: 16px; }
+                .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #333; }
+                .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+                .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #1a5f5a; }
+                .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+                .checkbox-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+                .checkbox-row { display: flex; gap: 20px; }
+                .checkbox-item { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+                .current-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+                .tag-chip { background: #e8f5f3; color: #1a5f5a; padding: 4px 10px; border-radius: 14px; display: flex; align-items: center; gap: 6px; }
+                .tag-chip button { background: none; border: none; cursor: pointer; font-size: 16px; color: #1a5f5a; padding: 0; }
+                .suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+                .suggestion-btn { background: #f5f5f5; border: 1px dashed #ccc; border-radius: 14px; padding: 4px 12px; cursor: pointer; font-size: 13px; }
+                .suggestion-btn:hover { background: #e8f5f3; border-color: #1a5f5a; }
+                .btn-cancel { padding: 10px 20px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; }
+                .btn-save { padding: 10px 20px; border: none; border-radius: 8px; background: #1a5f5a; color: white; cursor: pointer; font-weight: 500; }
+                .btn-save:disabled { background: #ccc; cursor: not-allowed; }
+            `;
+            document.head.appendChild(style);
+        }
+    }, []);
+
+    // Debug logging
+    console.log('🎨 [PROFILE DEBUG] Rendering with formData:', {
+        full_name: formData.full_name,
+        specialties_type: typeof formData.specialties,
+        specialties_isArray: Array.isArray(formData.specialties),
+        languages_type: typeof formData.languages,
+        languages_isArray: Array.isArray(formData.languages)
+    });
+
     // Simple client profile
     if (userType !== 'coach') {
         return html`
@@ -4687,7 +4763,7 @@ const DashboardProfile = ({ session, userType }) => {
             <!-- Profile Card -->
             <div class="linkedin-profile-card">
                 <!-- Banner -->
-                <div class="profile-banner" style="background-image: url('${formData.banner_url || ''}'); background-color: ${formData.banner_url ? 'transparent' : '#1a5f5a'};">
+                <div class="profile-banner" style=${{ backgroundImage: formData.banner_url ? `url('${formData.banner_url}')` : 'none', backgroundColor: formData.banner_url ? 'transparent' : '#1a5f5a', height: '180px', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
                     <label class="banner-upload-btn">
                         <input type="file" accept="image/*" hidden onChange=${(e) => handleImageUpload(e, 'banner_url')} />
                         📷 ${formData.banner_url ? 'Change' : 'Add'} Cover
@@ -4956,364 +5032,9 @@ const DashboardProfile = ({ session, userType }) => {
                 </div>
             `}
         </div>
-
-        <style>
-            .linkedin-profile-editor {
-                max-width: 900px;
-                margin: 0 auto;
-            }
-            .profile-message {
-                padding: 12px 16px;
-                border-radius: 8px;
-                margin-bottom: 16px;
-                font-weight: 500;
-            }
-            .profile-message.success { background: #d4edda; color: #155724; }
-            .profile-message.error { background: #f8d7da; color: #721c24; }
-
-            .profile-preview-banner {
-                background: linear-gradient(135deg, #1a5f5a, #2d8a82);
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                margin-bottom: 20px;
-                font-size: 14px;
-            }
-
-            .linkedin-profile-card {
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                overflow: hidden;
-                margin-bottom: 20px;
-            }
-
-            .profile-banner {
-                height: 180px;
-                background-size: cover;
-                background-position: center;
-                position: relative;
-            }
-            .banner-upload-btn {
-                position: absolute;
-                bottom: 12px;
-                right: 12px;
-                background: rgba(0,0,0,0.6);
-                color: white;
-                padding: 8px 16px;
-                border-radius: 20px;
-                cursor: pointer;
-                font-size: 13px;
-                transition: background 0.2s;
-            }
-            .banner-upload-btn:hover { background: rgba(0,0,0,0.8); }
-
-            .profile-avatar-section {
-                margin-top: -60px;
-                padding: 0 24px;
-            }
-            .profile-avatar-wrapper {
-                position: relative;
-                width: 120px;
-                height: 120px;
-            }
-            .profile-avatar {
-                width: 120px;
-                height: 120px;
-                border-radius: 50%;
-                border: 4px solid white;
-                object-fit: cover;
-                background: #f0f0f0;
-            }
-            .avatar-upload-btn {
-                position: absolute;
-                bottom: 4px;
-                right: 4px;
-                width: 32px;
-                height: 32px;
-                background: white;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            }
-
-            .profile-main-info {
-                padding: 16px 24px 24px;
-            }
-            .profile-header-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 12px;
-            }
-            .profile-name {
-                font-size: 24px;
-                font-weight: 700;
-                color: #1a1a1a;
-                margin: 0 0 4px 0;
-            }
-            .profile-title {
-                font-size: 16px;
-                color: #666;
-                margin: 0;
-            }
-
-            .profile-meta {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 16px;
-                color: #666;
-                font-size: 14px;
-                margin-bottom: 16px;
-            }
-
-            .profile-pricing {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-                align-items: center;
-            }
-            .price-badge {
-                background: #1a5f5a;
-                color: white;
-                padding: 6px 14px;
-                border-radius: 20px;
-                font-weight: 600;
-            }
-            .format-badge {
-                background: #f0f0f0;
-                padding: 6px 12px;
-                border-radius: 16px;
-                font-size: 13px;
-            }
-
-            .linkedin-section {
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                padding: 20px 24px;
-                margin-bottom: 16px;
-            }
-            .section-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 16px;
-            }
-            .section-header h2 {
-                font-size: 18px;
-                font-weight: 600;
-                margin: 0;
-            }
-            .edit-btn {
-                background: none;
-                border: 1px solid #ddd;
-                border-radius: 20px;
-                padding: 6px 14px;
-                cursor: pointer;
-                font-size: 13px;
-                transition: all 0.2s;
-            }
-            .edit-btn:hover {
-                background: #f5f5f5;
-                border-color: #1a5f5a;
-            }
-
-            .bio-text {
-                color: #333;
-                line-height: 1.6;
-                white-space: pre-wrap;
-            }
-            .placeholder-text {
-                color: #999;
-                font-style: italic;
-            }
-
-            .tags-display {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            .specialty-tag {
-                background: #e8f5f3;
-                color: #1a5f5a;
-                padding: 6px 14px;
-                border-radius: 16px;
-                font-size: 14px;
-            }
-
-            .links-row {
-                display: flex;
-                gap: 12px;
-            }
-            .link-btn {
-                padding: 8px 16px;
-                border-radius: 8px;
-                background: #f5f5f5;
-                color: #333;
-                text-decoration: none;
-                font-size: 14px;
-                transition: background 0.2s;
-            }
-            .link-btn:hover { background: #e8e8e8; }
-
-            /* Modal Styles */
-            .edit-modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1000;
-            }
-            .edit-modal {
-                background: white;
-                border-radius: 12px;
-                width: 90%;
-                max-width: 500px;
-                max-height: 80vh;
-                overflow-y: auto;
-            }
-            .modal-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 16px 20px;
-                border-bottom: 1px solid #eee;
-            }
-            .modal-header h3 { margin: 0; font-size: 18px; }
-            .modal-header button {
-                background: none;
-                border: none;
-                font-size: 24px;
-                cursor: pointer;
-                color: #666;
-            }
-            .modal-body {
-                padding: 20px;
-            }
-            .modal-footer {
-                padding: 16px 20px;
-                border-top: 1px solid #eee;
-                display: flex;
-                justify-content: flex-end;
-                gap: 12px;
-            }
-
-            .form-group {
-                margin-bottom: 16px;
-            }
-            .form-group label {
-                display: block;
-                margin-bottom: 6px;
-                font-weight: 500;
-                color: #333;
-            }
-            .form-group input, .form-group textarea, .form-group select {
-                width: 100%;
-                padding: 10px 12px;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                font-size: 14px;
-            }
-            .form-group input:focus, .form-group textarea:focus {
-                outline: none;
-                border-color: #1a5f5a;
-            }
-            .form-row {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            }
-
-            .checkbox-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-            }
-            .checkbox-row {
-                display: flex;
-                gap: 20px;
-            }
-            .checkbox-item {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                cursor: pointer;
-            }
-
-            .current-tags {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                margin-bottom: 12px;
-            }
-            .tag-chip {
-                background: #e8f5f3;
-                color: #1a5f5a;
-                padding: 4px 10px;
-                border-radius: 14px;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-            .tag-chip button {
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-size: 16px;
-                color: #1a5f5a;
-            }
-
-            .suggestions {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                margin-top: 12px;
-            }
-            .suggestion-btn {
-                background: #f5f5f5;
-                border: 1px dashed #ccc;
-                border-radius: 14px;
-                padding: 4px 12px;
-                cursor: pointer;
-                font-size: 13px;
-            }
-            .suggestion-btn:hover {
-                background: #e8f5f3;
-                border-color: #1a5f5a;
-            }
-
-            .btn-cancel {
-                padding: 10px 20px;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                background: white;
-                cursor: pointer;
-            }
-            .btn-save {
-                padding: 10px 20px;
-                border: none;
-                border-radius: 8px;
-                background: #1a5f5a;
-                color: white;
-                cursor: pointer;
-                font-weight: 500;
-            }
-            .btn-save:disabled {
-                background: #ccc;
-                cursor: not-allowed;
-            }
-        </style>
     `;
 };
+
 const CoachingCategoriesSection = () => {
     const categories = [
         { slug: 'executive-coaching', titleKey: 'category.executive.title', icon: '👔', descKey: 'category.executive.desc' },
