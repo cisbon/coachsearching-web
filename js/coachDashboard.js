@@ -852,29 +852,19 @@ function BookingSettings({ coachId }) {
     `;
 }
 
+
 // ============================================
-// CoachProfileEditor Component (LinkedIn-style)
+// CoachProfileEditor Component (WYSIWYG - matches public profile)
 // ============================================
 
 function CoachProfileEditor({ coachId, coach: initialCoach }) {
     const [coach, setCoach] = useState(initialCoach || {});
     const [loading, setLoading] = useState(!initialCoach);
     const [saving, setSaving] = useState(false);
-    const [editingSection, setEditingSection] = useState(null);
+    const [editModal, setEditModal] = useState(null); // { section: string, data: object }
     const [credentials, setCredentials] = useState([]);
     const [services, setServices] = useState([]);
     const [message, setMessage] = useState({ type: '', text: '' });
-
-    // Temp state for editing
-    const [editData, setEditData] = useState({});
-
-    // Available specialties for suggestions
-    const specialtySuggestions = [
-        'Executive Coaching', 'Life Coaching', 'Career Coaching', 'Business Coaching',
-        'Leadership Development', 'Health & Wellness', 'Mindfulness', 'Relationship Coaching',
-        'Performance Coaching', 'Transition Coaching', 'Communication Skills', 'Stress Management',
-        'Work-Life Balance', 'Team Coaching', 'Confidence Building', 'Goal Setting'
-    ];
 
     const languageOptions = [
         { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -884,12 +874,15 @@ function CoachProfileEditor({ coachId, coach: initialCoach }) {
         { code: 'it', name: 'Italian', flag: '🇮🇹' },
         { code: 'nl', name: 'Dutch', flag: '🇳🇱' },
         { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
-        { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
-        { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
-        { code: 'ar', name: 'Arabic', flag: '🇸🇦' }
+        { code: 'zh', name: 'Chinese', flag: '🇨🇳' }
     ];
 
-    // Load coach data
+    const specialtySuggestions = [
+        'Executive Coaching', 'Life Coaching', 'Career Coaching', 'Business Coaching',
+        'Leadership Development', 'Health & Wellness', 'Mindfulness', 'Relationship Coaching',
+        'Performance Coaching', 'Transition Coaching', 'Communication Skills', 'Stress Management'
+    ];
+
     useEffect(() => {
         if (initialCoach) {
             setCoach(initialCoach);
@@ -912,7 +905,6 @@ function CoachProfileEditor({ coachId, coach: initialCoach }) {
             setCoach(data);
         } catch (err) {
             console.error('Failed to load coach:', err);
-            setMessage({ type: 'error', text: 'Failed to load profile data' });
         } finally {
             setLoading(false);
         }
@@ -920,12 +912,12 @@ function CoachProfileEditor({ coachId, coach: initialCoach }) {
 
     const loadCredentials = async () => {
         try {
-            const { data, error } = await window.supabaseClient
+            const { data } = await window.supabaseClient
                 .from('cs_coach_credentials')
                 .select('*')
                 .eq('coach_id', coachId)
                 .order('issue_date', { ascending: false });
-            if (!error && data) setCredentials(data);
+            if (data) setCredentials(data);
         } catch (err) {
             console.error('Failed to load credentials:', err);
         }
@@ -933,31 +925,28 @@ function CoachProfileEditor({ coachId, coach: initialCoach }) {
 
     const loadServices = async () => {
         try {
-            const { data, error } = await window.supabaseClient
+            const { data } = await window.supabaseClient
                 .from('cs_coach_services')
                 .select('*')
                 .eq('coach_id', coachId)
                 .eq('is_active', true)
                 .order('sort_order', { ascending: true });
-            if (!error && data) setServices(data);
+            if (data) setServices(data);
         } catch (err) {
             console.error('Failed to load services:', err);
         }
     };
 
-    const startEditing = (section, data = {}) => {
-        setEditingSection(section);
-        setEditData({ ...data });
+    const openEditModal = (section, data = {}) => {
+        setEditModal({ section, data: { ...data } });
     };
 
-    const cancelEditing = () => {
-        setEditingSection(null);
-        setEditData({});
+    const closeModal = () => {
+        setEditModal(null);
     };
 
-    const saveSection = async (section, updates) => {
+    const saveChanges = async (updates) => {
         setSaving(true);
-        setMessage({ type: '', text: '' });
         try {
             const { error } = await window.supabaseClient
                 .from('cs_coaches')
@@ -965,113 +954,54 @@ function CoachProfileEditor({ coachId, coach: initialCoach }) {
                 .eq('id', coachId);
             if (error) throw error;
             setCoach(prev => ({ ...prev, ...updates }));
-            setEditingSection(null);
-            setMessage({ type: 'success', text: 'Profile updated successfully!' });
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            closeModal();
+            showMessage('success', 'Changes saved!');
         } catch (err) {
-            console.error('Failed to save:', err);
-            setMessage({ type: 'error', text: 'Failed to save changes' });
+            showMessage('error', 'Failed to save changes');
         } finally {
             setSaving(false);
         }
     };
 
-    // Calculate profile completion
-    const calculateCompletion = () => {
-        const fields = [
-            { name: 'avatar', check: coach.avatar_url },
-            { name: 'title', check: coach.title },
-            { name: 'bio', check: coach.bio && coach.bio.length > 50 },
-            { name: 'specialties', check: coach.specialties && coach.specialties.length > 0 },
-            { name: 'experience', check: coach.years_experience > 0 },
-            { name: 'languages', check: coach.languages && coach.languages.length > 0 },
-            { name: 'hourlyRate', check: coach.hourly_rate > 0 },
-            { name: 'location', check: coach.location_city },
-            { name: 'credentials', check: credentials.length > 0 },
-            { name: 'services', check: services.length > 0 }
-        ];
-        const completed = fields.filter(f => f.check).length;
-        return Math.round((completed / fields.length) * 100);
+    const showMessage = (type, text) => {
+        setMessage({ type, text });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     };
 
-    const handleAvatarUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
+    const handleImageUpload = async (file, type) => {
         setSaving(true);
         try {
             const fileExt = file.name.split('.').pop();
-            const fileName = `${coachId}/avatar.${fileExt}`;
-
+            const fileName = `${coachId}/${type}.${fileExt}`;
             const { error: uploadError } = await window.supabaseClient.storage
                 .from('avatars')
                 .upload(fileName, file, { upsert: true });
-
             if (uploadError) throw uploadError;
-
             const { data: { publicUrl } } = window.supabaseClient.storage
                 .from('avatars')
                 .getPublicUrl(fileName);
-
-            await saveSection('avatar', { avatar_url: publicUrl });
+            const field = type === 'avatar' ? 'avatar_url' : 'banner_url';
+            await saveChanges({ [field]: publicUrl + '?t=' + Date.now() });
         } catch (err) {
-            console.error('Upload failed:', err);
-            setMessage({ type: 'error', text: 'Failed to upload image' });
+            showMessage('error', 'Failed to upload image');
         } finally {
             setSaving(false);
         }
     };
 
-    const handleBannerUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
+    const saveCredential = async (data) => {
         setSaving(true);
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${coachId}/banner.${fileExt}`;
-
-            const { error: uploadError } = await window.supabaseClient.storage
-                .from('avatars')
-                .upload(fileName, file, { upsert: true });
-
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = window.supabaseClient.storage
-                .from('avatars')
-                .getPublicUrl(fileName);
-
-            await saveSection('banner', { banner_url: publicUrl });
-        } catch (err) {
-            console.error('Upload failed:', err);
-            setMessage({ type: 'error', text: 'Failed to upload banner' });
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    // Credential management
-    const saveCredential = async (credentialData) => {
-        setSaving(true);
-        try {
-            if (credentialData.id) {
-                const { error } = await window.supabaseClient
-                    .from('cs_coach_credentials')
-                    .update(credentialData)
-                    .eq('id', credentialData.id);
-                if (error) throw error;
+            if (data.id) {
+                await window.supabaseClient.from('cs_coach_credentials').update(data).eq('id', data.id);
             } else {
-                const { error } = await window.supabaseClient
-                    .from('cs_coach_credentials')
-                    .insert({ ...credentialData, coach_id: coachId });
-                if (error) throw error;
+                await window.supabaseClient.from('cs_coach_credentials').insert({ ...data, coach_id: coachId });
             }
             await loadCredentials();
-            setEditingSection(null);
-            setMessage({ type: 'success', text: 'Credential saved!' });
+            closeModal();
+            showMessage('success', 'Credential saved!');
         } catch (err) {
-            console.error('Failed to save credential:', err);
-            setMessage({ type: 'error', text: 'Failed to save credential' });
+            showMessage('error', 'Failed to save credential');
         } finally {
             setSaving(false);
         }
@@ -1079,41 +1009,24 @@ function CoachProfileEditor({ coachId, coach: initialCoach }) {
 
     const deleteCredential = async (id) => {
         if (!confirm('Delete this credential?')) return;
-        try {
-            const { error } = await window.supabaseClient
-                .from('cs_coach_credentials')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
-            await loadCredentials();
-            setMessage({ type: 'success', text: 'Credential removed' });
-        } catch (err) {
-            setMessage({ type: 'error', text: 'Failed to delete' });
-        }
+        await window.supabaseClient.from('cs_coach_credentials').delete().eq('id', id);
+        await loadCredentials();
+        showMessage('success', 'Credential deleted');
     };
 
-    // Service management
-    const saveService = async (serviceData) => {
+    const saveService = async (data) => {
         setSaving(true);
         try {
-            if (serviceData.id) {
-                const { error } = await window.supabaseClient
-                    .from('cs_coach_services')
-                    .update(serviceData)
-                    .eq('id', serviceData.id);
-                if (error) throw error;
+            if (data.id) {
+                await window.supabaseClient.from('cs_coach_services').update(data).eq('id', data.id);
             } else {
-                const { error } = await window.supabaseClient
-                    .from('cs_coach_services')
-                    .insert({ ...serviceData, coach_id: coachId, is_active: true });
-                if (error) throw error;
+                await window.supabaseClient.from('cs_coach_services').insert({ ...data, coach_id: coachId, is_active: true });
             }
             await loadServices();
-            setEditingSection(null);
-            setMessage({ type: 'success', text: 'Service saved!' });
+            closeModal();
+            showMessage('success', 'Service saved!');
         } catch (err) {
-            console.error('Failed to save service:', err);
-            setMessage({ type: 'error', text: 'Failed to save service' });
+            showMessage('error', 'Failed to save service');
         } finally {
             setSaving(false);
         }
@@ -1121,632 +1034,542 @@ function CoachProfileEditor({ coachId, coach: initialCoach }) {
 
     const deleteService = async (id) => {
         if (!confirm('Delete this service?')) return;
-        try {
-            const { error } = await window.supabaseClient
-                .from('cs_coach_services')
-                .update({ is_active: false })
-                .eq('id', id);
-            if (error) throw error;
-            await loadServices();
-            setMessage({ type: 'success', text: 'Service removed' });
-        } catch (err) {
-            setMessage({ type: 'error', text: 'Failed to delete' });
-        }
+        await window.supabaseClient.from('cs_coach_services').update({ is_active: false }).eq('id', id);
+        await loadServices();
+        showMessage('success', 'Service deleted');
+    };
+
+    const formatPrice = (price, currency = 'EUR') => {
+        const symbols = { EUR: '€', USD: '$', GBP: '£', CHF: 'CHF ' };
+        return (symbols[currency] || '€') + (price || 0);
+    };
+
+    const getLanguageName = (code) => {
+        const lang = languageOptions.find(l => l.code === code);
+        return lang ? `${lang.flag} ${lang.name}` : code;
     };
 
     if (loading) {
-        return html`<div class="profile-editor-loading">Loading profile...</div>`;
+        return html`<div class="profile-loading">Loading profile...</div>`;
     }
 
-    const completion = calculateCompletion();
+    const location = coach.location_city
+        ? `${coach.location_city}${coach.location_country ? ', ' + coach.location_country : ''}`
+        : coach.location_country || 'Remote';
+
+    // Edit Button Component
+    const EditButton = ({ onClick, label = 'Edit' }) => html`
+        <button class="profile-edit-btn" onClick=${onClick} title=${label}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+        </button>
+    `;
+
+    const AddButton = ({ onClick, label = 'Add' }) => html`
+        <button class="profile-add-btn" onClick=${onClick}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            ${label}
+        </button>
+    `;
 
     return html`
-        <div class="profile-editor linkedin-style">
+        <div class="profile-editor-wysiwyg">
             ${message.text && html`
-                <div class="profile-message ${message.type}">${message.text}</div>
+                <div class="profile-toast ${message.type}">${message.text}</div>
             `}
 
-            <!-- Profile Completion Bar -->
-            <div class="profile-completion-card">
-                <div class="completion-header">
-                    <span class="completion-title">Profile Strength</span>
-                    <span class="completion-percent">${completion}%</span>
-                </div>
-                <div class="completion-bar">
-                    <div class="completion-fill" style="width: ${completion}%"></div>
-                </div>
-                <p class="completion-hint">
-                    ${completion < 50 ? 'Add more details to attract clients' :
-                      completion < 80 ? 'Good progress! A few more sections to complete' :
-                      completion < 100 ? 'Almost there! Complete your profile' :
-                      'Excellent! Your profile is complete'}
-                </p>
+            <!-- Preview Banner -->
+            <div class="preview-banner">
+                <span>✨ This is how your profile appears to clients</span>
+                <a href="#coach/${coachId}" target="_blank" class="preview-link">View Public Profile →</a>
             </div>
 
-            <!-- Header/Banner Section -->
-            <div class="profile-header-section">
-                <div class="banner-container" style="background-image: url('${coach.banner_url || ''}')">
-                    <label class="banner-upload-btn">
-                        <input type="file" accept="image/*" onChange=${handleBannerUpload} hidden />
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                            <circle cx="12" cy="13" r="4"/>
-                        </svg>
-                        ${saving ? 'Uploading...' : 'Edit Banner'}
-                    </label>
-                </div>
+            <!-- Coach Profile Page Clone -->
+            <div class="coach-profile-page edit-mode">
 
-                <div class="profile-header-content">
-                    <div class="avatar-container">
-                        <img src=${coach.avatar_url || 'https://via.placeholder.com/150?text=Photo'}
-                             alt=${coach.full_name} class="profile-avatar" />
-                        <label class="avatar-upload-btn">
-                            <input type="file" accept="image/*" onChange=${handleAvatarUpload} hidden />
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                <circle cx="12" cy="13" r="4"/>
-                            </svg>
+                <!-- Hero Section -->
+                <section class="coach-hero-section">
+                    <div class="hero-banner-editable" style="background-image: url('${coach.banner_url || ''}')">
+                        <label class="banner-edit-overlay">
+                            <input type="file" accept="image/*" hidden
+                                   onChange=${(e) => e.target.files[0] && handleImageUpload(e.target.files[0], 'banner')} />
+                            <span class="edit-icon">📷 ${coach.banner_url ? 'Change' : 'Add'} Cover Photo</span>
                         </label>
                     </div>
 
-                    <div class="profile-header-info">
-                        ${editingSection === 'header' ? html`
-                            <div class="edit-form">
-                                <input type="text" class="edit-input large" placeholder="Full Name"
-                                       value=${editData.full_name || coach.full_name || ''}
-                                       onChange=${e => setEditData({...editData, full_name: e.target.value})} />
-                                <input type="text" class="edit-input" placeholder="Professional Title (e.g., Executive Coach)"
-                                       value=${editData.title || coach.title || ''}
-                                       onChange=${e => setEditData({...editData, title: e.target.value})} />
-                                <div class="edit-row">
-                                    <input type="text" class="edit-input" placeholder="City"
-                                           value=${editData.location_city || coach.location_city || ''}
-                                           onChange=${e => setEditData({...editData, location_city: e.target.value})} />
-                                    <input type="text" class="edit-input" placeholder="Country"
-                                           value=${editData.location_country || coach.location_country || ''}
-                                           onChange=${e => setEditData({...editData, location_country: e.target.value})} />
-                                </div>
-                                <div class="edit-row">
-                                    <input type="number" class="edit-input" placeholder="Years of Experience" min="0"
-                                           value=${editData.years_experience || coach.years_experience || ''}
-                                           onChange=${e => setEditData({...editData, years_experience: parseInt(e.target.value)})} />
-                                </div>
-                                <div class="edit-actions">
-                                    <button class="btn-save" onClick=${() => saveSection('header', editData)} disabled=${saving}>
-                                        ${saving ? 'Saving...' : 'Save'}
-                                    </button>
-                                    <button class="btn-cancel" onClick=${cancelEditing}>Cancel</button>
-                                </div>
+                    <div class="container">
+                        <div class="coach-hero-content">
+                            <!-- Avatar -->
+                            <div class="coach-avatar-wrapper">
+                                <img src=${coach.avatar_url || 'https://via.placeholder.com/150?text=Photo'}
+                                     alt=${coach.full_name} class="coach-avatar-large" />
+                                <label class="avatar-edit-overlay">
+                                    <input type="file" accept="image/*" hidden
+                                           onChange=${(e) => e.target.files[0] && handleImageUpload(e.target.files[0], 'avatar')} />
+                                    <span>📷</span>
+                                </label>
                             </div>
-                        ` : html`
-                            <div class="header-display">
-                                <h1 class="profile-name">${coach.full_name || 'Your Name'}</h1>
-                                <p class="profile-title">${coach.title || 'Add your professional title'}</p>
-                                <p class="profile-location">
-                                    ${coach.location_city || coach.location_country
-                                        ? `${coach.location_city || ''}${coach.location_city && coach.location_country ? ', ' : ''}${coach.location_country || ''}`
-                                        : 'Add your location'}
-                                </p>
-                                ${coach.years_experience ? html`
-                                    <p class="profile-experience">${coach.years_experience}+ years of experience</p>
-                                ` : ''}
-                                <button class="edit-btn" onClick=${() => startEditing('header', coach)}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        `}
-                    </div>
-                </div>
-            </div>
 
-            <!-- About Section -->
-            <div class="profile-section">
-                <div class="section-header">
-                    <h2>About</h2>
-                    ${editingSection !== 'about' && html`
-                        <button class="edit-btn" onClick=${() => startEditing('about', { bio: coach.bio })}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                        </button>
-                    `}
-                </div>
-                ${editingSection === 'about' ? html`
-                    <div class="edit-form">
-                        <textarea class="edit-textarea" rows="6" placeholder="Tell potential clients about yourself, your coaching philosophy, and what makes you unique..."
-                                  value=${editData.bio || ''}
-                                  onChange=${e => setEditData({...editData, bio: e.target.value})}></textarea>
-                        <div class="char-count">${(editData.bio || '').length}/2000 characters</div>
-                        <div class="edit-actions">
-                            <button class="btn-save" onClick=${() => saveSection('about', { bio: editData.bio })} disabled=${saving}>
-                                ${saving ? 'Saving...' : 'Save'}
-                            </button>
-                            <button class="btn-cancel" onClick=${cancelEditing}>Cancel</button>
-                        </div>
-                    </div>
-                ` : html`
-                    <p class="section-content ${!coach.bio ? 'placeholder' : ''}">
-                        ${coach.bio || 'Add a summary about yourself and your coaching approach. This helps potential clients understand who you are and how you can help them.'}
-                    </p>
-                `}
-            </div>
+                            <!-- Main Info -->
+                            <div class="coach-main-info">
+                                <div class="editable-section">
+                                    <h1 class="coach-name">${coach.full_name || 'Your Name'}</h1>
+                                    <p class="coach-title">${coach.title || 'Your Professional Title'}</p>
+                                    <${EditButton} onClick=${() => openEditModal('intro', {
+                                        full_name: coach.full_name,
+                                        title: coach.title
+                                    })} />
+                                </div>
 
-            <!-- Specialties Section -->
-            <div class="profile-section">
-                <div class="section-header">
-                    <h2>Specialties</h2>
-                    ${editingSection !== 'specialties' && html`
-                        <button class="edit-btn" onClick=${() => startEditing('specialties', { specialties: coach.specialties || [] })}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                        </button>
-                    `}
-                </div>
-                ${editingSection === 'specialties' ? html`
-                    <div class="edit-form">
-                        <div class="tags-editor">
-                            <div class="selected-tags">
-                                ${(editData.specialties || []).map((spec, i) => html`
-                                    <span class="tag selected" key=${i}>
-                                        ${spec}
-                                        <button class="tag-remove" onClick=${() => {
-                                            const newSpecs = editData.specialties.filter((_, idx) => idx !== i);
-                                            setEditData({...editData, specialties: newSpecs});
-                                        }}>×</button>
+                                <div class="coach-meta-row editable-section">
+                                    <span class="coach-meta-item">
+                                        <span class="meta-icon">📍</span>
+                                        <span>${location}</span>
                                     </span>
-                                `)}
-                            </div>
-                            <input type="text" class="tag-input" placeholder="Type and press Enter to add..."
-                                   onKeyDown=${(e) => {
-                                       if (e.key === 'Enter' && e.target.value.trim()) {
-                                           e.preventDefault();
-                                           const newSpec = e.target.value.trim();
-                                           if (!editData.specialties?.includes(newSpec)) {
-                                               setEditData({
-                                                   ...editData,
-                                                   specialties: [...(editData.specialties || []), newSpec]
-                                               });
-                                           }
-                                           e.target.value = '';
-                                       }
-                                   }} />
-                            <div class="tag-suggestions">
-                                ${specialtySuggestions
-                                    .filter(s => !(editData.specialties || []).includes(s))
-                                    .slice(0, 8)
-                                    .map(s => html`
-                                        <button class="tag suggestion" key=${s}
-                                                onClick=${() => setEditData({
-                                                    ...editData,
-                                                    specialties: [...(editData.specialties || []), s]
-                                                })}>+ ${s}</button>
-                                    `)}
+                                    ${(coach.languages || []).length > 0 && html`
+                                        <span class="coach-meta-item">
+                                            <span class="meta-icon">💬</span>
+                                            <span>${(coach.languages || []).slice(0, 3).map(c => languageOptions.find(l => l.code === c)?.name || c).join(', ')}</span>
+                                        </span>
+                                    `}
+                                    ${coach.years_experience > 0 && html`
+                                        <span class="coach-meta-item">
+                                            <span class="meta-icon">🏆</span>
+                                            <span>${coach.years_experience}+ years</span>
+                                        </span>
+                                    `}
+                                    <${EditButton} onClick=${() => openEditModal('details', {
+                                        location_city: coach.location_city,
+                                        location_country: coach.location_country,
+                                        years_experience: coach.years_experience,
+                                        languages: coach.languages || []
+                                    })} />
+                                </div>
+
+                                <!-- Pricing -->
+                                <div class="coach-pricing-display editable-section">
+                                    <div class="price-tag">
+                                        <span class="price-value">${formatPrice(coach.hourly_rate, coach.currency)}</span>
+                                        <span class="price-unit">/ hour</span>
+                                    </div>
+                                    <div class="session-formats-inline">
+                                        ${coach.offers_virtual !== false && html`<span class="format-tag">💻 Video</span>`}
+                                        ${coach.offers_onsite && html`<span class="format-tag">🤝 In-Person</span>`}
+                                    </div>
+                                    <${EditButton} onClick=${() => openEditModal('pricing', {
+                                        hourly_rate: coach.hourly_rate,
+                                        currency: coach.currency || 'EUR',
+                                        offers_virtual: coach.offers_virtual !== false,
+                                        offers_onsite: coach.offers_onsite || false
+                                    })} />
+                                </div>
                             </div>
                         </div>
-                        <div class="edit-actions">
-                            <button class="btn-save" onClick=${() => saveSection('specialties', { specialties: editData.specialties })} disabled=${saving}>
-                                ${saving ? 'Saving...' : 'Save'}
-                            </button>
-                            <button class="btn-cancel" onClick=${cancelEditing}>Cancel</button>
+                    </div>
+                </section>
+
+                <!-- Main Content -->
+                <section class="coach-content-section">
+                    <div class="container">
+                        <div class="coach-content-grid">
+                            <!-- Main Column -->
+                            <div class="coach-main-column">
+
+                                <!-- About Section -->
+                                <article class="coach-section editable-section">
+                                    <h2 class="section-title">About</h2>
+                                    <div class="coach-bio">
+                                        ${coach.bio
+                                            ? (coach.bio || '').split('\n').map((para, i) =>
+                                                para.trim() ? html`<p key=${i}>${para}</p>` : null)
+                                            : html`<p class="placeholder-text">Tell potential clients about yourself, your coaching philosophy, and what makes you unique...</p>`
+                                        }
+                                    </div>
+                                    <${EditButton} onClick=${() => openEditModal('about', { bio: coach.bio || '' })} />
+                                </article>
+
+                                <!-- Specialties Section -->
+                                <article class="coach-section editable-section">
+                                    <h2 class="section-title">Specialties</h2>
+                                    <div class="specialties-grid">
+                                        ${(coach.specialties || []).length > 0
+                                            ? (coach.specialties || []).map((spec, i) => html`
+                                                <span key=${i} class="specialty-card">${spec}</span>
+                                            `)
+                                            : html`<p class="placeholder-text">Add your coaching specialties to help clients find you</p>`
+                                        }
+                                    </div>
+                                    <${EditButton} onClick=${() => openEditModal('specialties', { specialties: coach.specialties || [] })} />
+                                </article>
+
+                                <!-- Credentials Section -->
+                                <article class="coach-section editable-section">
+                                    <div class="section-header-with-add">
+                                        <h2 class="section-title">Credentials & Certifications</h2>
+                                        <${AddButton} onClick=${() => openEditModal('credential-new', {
+                                            credential_type: 'certification',
+                                            title: '',
+                                            issuing_organization: '',
+                                            issue_date: ''
+                                        })} label="Add" />
+                                    </div>
+                                    ${credentials.length > 0 ? html`
+                                        <div class="credentials-list">
+                                            ${credentials.map(cred => html`
+                                                <div class="credential-item" key=${cred.id}>
+                                                    <div class="credential-icon">
+                                                        ${cred.credential_type === 'certification' ? '🏅' :
+                                                          cred.credential_type === 'degree' ? '🎓' :
+                                                          cred.credential_type === 'award' ? '🏆' : '📜'}
+                                                    </div>
+                                                    <div class="credential-details">
+                                                        <strong>${cred.title}</strong>
+                                                        <span>${cred.issuing_organization}</span>
+                                                        ${cred.issue_date && html`<small>Issued ${new Date(cred.issue_date).getFullYear()}</small>`}
+                                                    </div>
+                                                    <div class="credential-actions">
+                                                        <button class="btn-icon-sm" onClick=${() => openEditModal('credential-edit', cred)}>✏️</button>
+                                                        <button class="btn-icon-sm danger" onClick=${() => deleteCredential(cred.id)}>🗑️</button>
+                                                    </div>
+                                                </div>
+                                            `)}
+                                        </div>
+                                    ` : html`<p class="placeholder-text">Add your certifications to build trust with clients</p>`}
+                                </article>
+
+                                <!-- Services Section -->
+                                <article class="coach-section editable-section">
+                                    <div class="section-header-with-add">
+                                        <h2 class="section-title">Services & Packages</h2>
+                                        <${AddButton} onClick=${() => openEditModal('service-new', {
+                                            service_type: 'single_session',
+                                            name: '',
+                                            description: '',
+                                            duration_minutes: 60,
+                                            price: '',
+                                            currency: coach.currency || 'EUR'
+                                        })} label="Add" />
+                                    </div>
+                                    ${services.length > 0 ? html`
+                                        <div class="services-grid">
+                                            ${services.map(service => html`
+                                                <div class="service-card-display" key=${service.id}>
+                                                    <div class="service-type-label ${service.service_type}">
+                                                        ${service.service_type === 'discovery_call' ? 'Discovery' :
+                                                          service.service_type === 'package' ? 'Package' : 'Session'}
+                                                    </div>
+                                                    <h4>${service.name}</h4>
+                                                    <p>${service.description || ''}</p>
+                                                    <div class="service-meta">
+                                                        <span>${service.duration_minutes} min</span>
+                                                        <span class="service-price">${service.price === 0 ? 'Free' : formatPrice(service.price, service.currency)}</span>
+                                                    </div>
+                                                    <div class="service-edit-actions">
+                                                        <button class="btn-icon-sm" onClick=${() => openEditModal('service-edit', service)}>✏️</button>
+                                                        <button class="btn-icon-sm danger" onClick=${() => deleteService(service.id)}>🗑️</button>
+                                                    </div>
+                                                </div>
+                                            `)}
+                                        </div>
+                                    ` : html`<p class="placeholder-text">Add services and packages to let clients book with you</p>`}
+                                </article>
+
+                                <!-- Links Section -->
+                                <article class="coach-section editable-section">
+                                    <h2 class="section-title">Links</h2>
+                                    <div class="links-row">
+                                        ${coach.website_url && html`
+                                            <a href=${coach.website_url} target="_blank" class="link-badge">🌐 Website</a>
+                                        `}
+                                        ${coach.linkedin_url && html`
+                                            <a href=${coach.linkedin_url} target="_blank" class="link-badge">💼 LinkedIn</a>
+                                        `}
+                                        ${!coach.website_url && !coach.linkedin_url && html`
+                                            <p class="placeholder-text">Add your website and LinkedIn profile</p>
+                                        `}
+                                    </div>
+                                    <${EditButton} onClick=${() => openEditModal('links', {
+                                        website_url: coach.website_url || '',
+                                        linkedin_url: coach.linkedin_url || ''
+                                    })} />
+                                </article>
+                            </div>
+
+                            <!-- Sidebar Preview -->
+                            <aside class="coach-sidebar">
+                                <div class="sidebar-card">
+                                    <div class="quick-book-preview">
+                                        <img src=${coach.avatar_url || 'https://via.placeholder.com/60'} class="sidebar-avatar" />
+                                        <div>
+                                            <strong>${coach.full_name || 'Your Name'}</strong>
+                                            <div class="sidebar-price">${formatPrice(coach.hourly_rate, coach.currency)}/hr</div>
+                                        </div>
+                                    </div>
+                                    <button class="btn-book-preview" disabled>Book a Session</button>
+                                    <p class="sidebar-note">This is how the booking widget appears to clients</p>
+                                </div>
+                            </aside>
                         </div>
                     </div>
-                ` : html`
-                    <div class="tags-display">
-                        ${coach.specialties && coach.specialties.length > 0
-                            ? coach.specialties.map(s => html`<span class="tag" key=${s}>${s}</span>`)
-                            : html`<p class="placeholder">Add your coaching specialties to help clients find you</p>`
-                        }
-                    </div>
-                `}
+                </section>
             </div>
 
-            <!-- Languages Section -->
-            <div class="profile-section">
-                <div class="section-header">
-                    <h2>Languages</h2>
-                    ${editingSection !== 'languages' && html`
-                        <button class="edit-btn" onClick=${() => startEditing('languages', { languages: coach.languages || [] })}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                        </button>
-                    `}
-                </div>
-                ${editingSection === 'languages' ? html`
-                    <div class="edit-form">
-                        <div class="language-grid">
-                            ${languageOptions.map(lang => html`
-                                <label class="language-option ${(editData.languages || []).includes(lang.code) ? 'selected' : ''}" key=${lang.code}>
-                                    <input type="checkbox"
-                                           checked=${(editData.languages || []).includes(lang.code)}
-                                           onChange=${(e) => {
-                                               const langs = editData.languages || [];
-                                               if (e.target.checked) {
-                                                   setEditData({...editData, languages: [...langs, lang.code]});
-                                               } else {
-                                                   setEditData({...editData, languages: langs.filter(l => l !== lang.code)});
+            <!-- Edit Modal -->
+            ${editModal && html`
+                <div class="edit-modal-overlay" onClick=${closeModal}>
+                    <div class="edit-modal" onClick=${(e) => e.stopPropagation()}>
+                        <div class="modal-header">
+                            <h3>${editModal.section === 'intro' ? 'Edit Name & Title' :
+                                  editModal.section === 'details' ? 'Edit Details' :
+                                  editModal.section === 'about' ? 'Edit About' :
+                                  editModal.section === 'specialties' ? 'Edit Specialties' :
+                                  editModal.section === 'pricing' ? 'Edit Pricing & Formats' :
+                                  editModal.section === 'links' ? 'Edit Links' :
+                                  editModal.section.includes('credential') ? 'Credential' :
+                                  editModal.section.includes('service') ? 'Service' : 'Edit'}</h3>
+                            <button class="modal-close" onClick=${closeModal}>×</button>
+                        </div>
+                        <div class="modal-body">
+                            ${editModal.section === 'intro' && html`
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" value=${editModal.data.full_name || ''}
+                                           onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, full_name: e.target.value}})} />
+                                </div>
+                                <div class="form-group">
+                                    <label>Professional Title</label>
+                                    <input type="text" placeholder="e.g., Executive Coach, Life Coach"
+                                           value=${editModal.data.title || ''}
+                                           onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, title: e.target.value}})} />
+                                </div>
+                            `}
+
+                            ${editModal.section === 'details' && html`
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>City</label>
+                                        <input type="text" value=${editModal.data.location_city || ''}
+                                               onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, location_city: e.target.value}})} />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Country</label>
+                                        <input type="text" value=${editModal.data.location_country || ''}
+                                               onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, location_country: e.target.value}})} />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Years of Experience</label>
+                                    <input type="number" min="0" value=${editModal.data.years_experience || ''}
+                                           onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, years_experience: parseInt(e.target.value) || 0}})} />
+                                </div>
+                                <div class="form-group">
+                                    <label>Languages</label>
+                                    <div class="language-checkboxes">
+                                        ${languageOptions.map(lang => html`
+                                            <label key=${lang.code} class="checkbox-label">
+                                                <input type="checkbox"
+                                                       checked=${(editModal.data.languages || []).includes(lang.code)}
+                                                       onChange=${(e) => {
+                                                           const langs = editModal.data.languages || [];
+                                                           const newLangs = e.target.checked
+                                                               ? [...langs, lang.code]
+                                                               : langs.filter(l => l !== lang.code);
+                                                           setEditModal({...editModal, data: {...editModal.data, languages: newLangs}});
+                                                       }} />
+                                                ${lang.flag} ${lang.name}
+                                            </label>
+                                        `)}
+                                    </div>
+                                </div>
+                            `}
+
+                            ${editModal.section === 'about' && html`
+                                <div class="form-group">
+                                    <label>About You</label>
+                                    <textarea rows="8" placeholder="Tell clients about yourself..."
+                                              value=${editModal.data.bio || ''}
+                                              onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, bio: e.target.value}})}></textarea>
+                                    <small>${(editModal.data.bio || '').length}/2000 characters</small>
+                                </div>
+                            `}
+
+                            ${editModal.section === 'specialties' && html`
+                                <div class="form-group">
+                                    <label>Your Specialties</label>
+                                    <div class="tags-input-area">
+                                        ${(editModal.data.specialties || []).map((spec, i) => html`
+                                            <span key=${i} class="tag-chip">
+                                                ${spec}
+                                                <button onClick=${() => {
+                                                    const newSpecs = editModal.data.specialties.filter((_, idx) => idx !== i);
+                                                    setEditModal({...editModal, data: {...editModal.data, specialties: newSpecs}});
+                                                }}>×</button>
+                                            </span>
+                                        `)}
+                                    </div>
+                                    <input type="text" placeholder="Type and press Enter to add"
+                                           onKeyDown=${(e) => {
+                                               if (e.key === 'Enter' && e.target.value.trim()) {
+                                                   e.preventDefault();
+                                                   const newSpec = e.target.value.trim();
+                                                   if (!(editModal.data.specialties || []).includes(newSpec)) {
+                                                       setEditModal({...editModal, data: {...editModal.data, specialties: [...(editModal.data.specialties || []), newSpec]}});
+                                                   }
+                                                   e.target.value = '';
                                                }
                                            }} />
-                                    <span class="lang-flag">${lang.flag}</span>
-                                    <span class="lang-name">${lang.name}</span>
-                                </label>
-                            `)}
-                        </div>
-                        <div class="edit-actions">
-                            <button class="btn-save" onClick=${() => saveSection('languages', { languages: editData.languages })} disabled=${saving}>
-                                ${saving ? 'Saving...' : 'Save'}
-                            </button>
-                            <button class="btn-cancel" onClick=${cancelEditing}>Cancel</button>
-                        </div>
-                    </div>
-                ` : html`
-                    <div class="languages-display">
-                        ${coach.languages && coach.languages.length > 0
-                            ? coach.languages.map(code => {
-                                const lang = languageOptions.find(l => l.code === code);
-                                return lang ? html`<span class="language-badge" key=${code}>${lang.flag} ${lang.name}</span>` : '';
-                            })
-                            : html`<p class="placeholder">Add languages you offer coaching in</p>`
-                        }
-                    </div>
-                `}
-            </div>
-
-            <!-- Session Formats & Pricing Section -->
-            <div class="profile-section">
-                <div class="section-header">
-                    <h2>Session Formats & Pricing</h2>
-                    ${editingSection !== 'formats' && html`
-                        <button class="edit-btn" onClick=${() => startEditing('formats', {
-                            offers_virtual: coach.offers_virtual !== false,
-                            offers_onsite: coach.offers_onsite || false,
-                            hourly_rate: coach.hourly_rate || '',
-                            currency: coach.currency || 'EUR'
-                        })}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                        </button>
-                    `}
-                </div>
-                ${editingSection === 'formats' ? html`
-                    <div class="edit-form">
-                        <div class="format-options">
-                            <label class="format-option ${editData.offers_virtual ? 'selected' : ''}">
-                                <input type="checkbox" checked=${editData.offers_virtual}
-                                       onChange=${e => setEditData({...editData, offers_virtual: e.target.checked})} />
-                                <span class="format-icon">💻</span>
-                                <span class="format-label">Video Call</span>
-                            </label>
-                            <label class="format-option ${editData.offers_onsite ? 'selected' : ''}">
-                                <input type="checkbox" checked=${editData.offers_onsite}
-                                       onChange=${e => setEditData({...editData, offers_onsite: e.target.checked})} />
-                                <span class="format-icon">🤝</span>
-                                <span class="format-label">In-Person</span>
-                            </label>
-                        </div>
-                        <div class="pricing-editor">
-                            <label>Hourly Rate</label>
-                            <div class="price-input-group">
-                                <select value=${editData.currency} onChange=${e => setEditData({...editData, currency: e.target.value})}>
-                                    <option value="EUR">EUR €</option>
-                                    <option value="USD">USD $</option>
-                                    <option value="GBP">GBP £</option>
-                                    <option value="CHF">CHF</option>
-                                </select>
-                                <input type="number" min="0" step="5" placeholder="150"
-                                       value=${editData.hourly_rate}
-                                       onChange=${e => setEditData({...editData, hourly_rate: parseInt(e.target.value)})} />
-                            </div>
-                        </div>
-                        <div class="edit-actions">
-                            <button class="btn-save" onClick=${() => saveSection('formats', editData)} disabled=${saving}>
-                                ${saving ? 'Saving...' : 'Save'}
-                            </button>
-                            <button class="btn-cancel" onClick=${cancelEditing}>Cancel</button>
-                        </div>
-                    </div>
-                ` : html`
-                    <div class="formats-display">
-                        <div class="format-badges">
-                            ${coach.offers_virtual !== false && html`<span class="format-badge">💻 Video Call</span>`}
-                            ${coach.offers_onsite && html`<span class="format-badge">🤝 In-Person</span>`}
-                        </div>
-                        ${coach.hourly_rate ? html`
-                            <div class="rate-display">
-                                <span class="rate-amount">${coach.currency === 'USD' ? '$' : coach.currency === 'GBP' ? '£' : coach.currency === 'CHF' ? 'CHF ' : '€'}${coach.hourly_rate}</span>
-                                <span class="rate-period">/ hour</span>
-                            </div>
-                        ` : html`<p class="placeholder">Set your hourly rate</p>`}
-                    </div>
-                `}
-            </div>
-
-            <!-- Credentials Section -->
-            <div class="profile-section">
-                <div class="section-header">
-                    <h2>Credentials & Certifications</h2>
-                    <button class="add-btn" onClick=${() => startEditing('credential-new', {
-                        credential_type: 'certification',
-                        title: '',
-                        issuing_organization: '',
-                        issue_date: ''
-                    })}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        Add
-                    </button>
-                </div>
-                ${editingSection?.startsWith('credential') ? html`
-                    <div class="edit-form credential-form">
-                        <div class="form-group">
-                            <label>Type</label>
-                            <select value=${editData.credential_type} onChange=${e => setEditData({...editData, credential_type: e.target.value})}>
-                                <option value="certification">Certification</option>
-                                <option value="degree">Degree</option>
-                                <option value="accreditation">Accreditation</option>
-                                <option value="training">Training</option>
-                                <option value="award">Award</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Title</label>
-                            <input type="text" placeholder="e.g., ICF Professional Certified Coach (PCC)"
-                                   value=${editData.title}
-                                   onChange=${e => setEditData({...editData, title: e.target.value})} />
-                        </div>
-                        <div class="form-group">
-                            <label>Issuing Organization</label>
-                            <input type="text" placeholder="e.g., International Coaching Federation"
-                                   value=${editData.issuing_organization}
-                                   onChange=${e => setEditData({...editData, issuing_organization: e.target.value})} />
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Issue Date</label>
-                                <input type="date" value=${editData.issue_date}
-                                       onChange=${e => setEditData({...editData, issue_date: e.target.value})} />
-                            </div>
-                            <div class="form-group">
-                                <label>Expiry Date (optional)</label>
-                                <input type="date" value=${editData.expiry_date || ''}
-                                       onChange=${e => setEditData({...editData, expiry_date: e.target.value})} />
-                            </div>
-                        </div>
-                        <div class="edit-actions">
-                            <button class="btn-save" onClick=${() => saveCredential(editData)} disabled=${saving || !editData.title}>
-                                ${saving ? 'Saving...' : 'Save Credential'}
-                            </button>
-                            <button class="btn-cancel" onClick=${cancelEditing}>Cancel</button>
-                        </div>
-                    </div>
-                ` : html`
-                    <div class="credentials-list">
-                        ${credentials.length > 0 ? credentials.map(cred => html`
-                            <div class="credential-card" key=${cred.id}>
-                                <div class="credential-icon">
-                                    ${cred.credential_type === 'certification' ? '🏅' :
-                                      cred.credential_type === 'degree' ? '🎓' :
-                                      cred.credential_type === 'accreditation' ? '✓' :
-                                      cred.credential_type === 'award' ? '🏆' : '📜'}
+                                    <div class="suggestions">
+                                        ${specialtySuggestions.filter(s => !(editModal.data.specialties || []).includes(s)).slice(0, 6).map(s => html`
+                                            <button key=${s} class="suggestion-chip" onClick=${() => {
+                                                setEditModal({...editModal, data: {...editModal.data, specialties: [...(editModal.data.specialties || []), s]}});
+                                            }}>+ ${s}</button>
+                                        `)}
+                                    </div>
                                 </div>
-                                <div class="credential-info">
-                                    <h4>${cred.title}</h4>
-                                    <p>${cred.issuing_organization}</p>
-                                    ${cred.issue_date && html`<span class="credential-date">Issued ${new Date(cred.issue_date).getFullYear()}</span>`}
-                                </div>
-                                <div class="credential-actions">
-                                    <button class="btn-icon" onClick=${() => startEditing('credential-edit', cred)}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                        </svg>
-                                    </button>
-                                    <button class="btn-icon danger" onClick=${() => deleteCredential(cred.id)}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        `) : html`<p class="placeholder">Add your certifications, degrees, and credentials to build trust with clients</p>`}
-                    </div>
-                `}
-            </div>
+                            `}
 
-            <!-- Services Section -->
-            <div class="profile-section">
-                <div class="section-header">
-                    <h2>Services & Packages</h2>
-                    <button class="add-btn" onClick=${() => startEditing('service-new', {
-                        service_type: 'single_session',
-                        name: '',
-                        description: '',
-                        duration_minutes: 60,
-                        session_count: 1,
-                        price: '',
-                        currency: coach.currency || 'EUR'
-                    })}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        Add
-                    </button>
-                </div>
-                ${editingSection?.startsWith('service') ? html`
-                    <div class="edit-form service-form">
-                        <div class="form-group">
-                            <label>Service Type</label>
-                            <select value=${editData.service_type} onChange=${e => setEditData({...editData, service_type: e.target.value})}>
-                                <option value="discovery_call">Discovery Call (Free/Intro)</option>
-                                <option value="single_session">Single Session</option>
-                                <option value="package">Package (Multiple Sessions)</option>
-                                <option value="subscription">Monthly Subscription</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Name</label>
-                            <input type="text" placeholder="e.g., Leadership Coaching Session"
-                                   value=${editData.name}
-                                   onChange=${e => setEditData({...editData, name: e.target.value})} />
-                        </div>
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea rows="3" placeholder="Describe what's included..."
-                                      value=${editData.description || ''}
-                                      onChange=${e => setEditData({...editData, description: e.target.value})}></textarea>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Duration (minutes)</label>
-                                <select value=${editData.duration_minutes} onChange=${e => setEditData({...editData, duration_minutes: parseInt(e.target.value)})}>
-                                    <option value="30">30 min</option>
-                                    <option value="45">45 min</option>
-                                    <option value="60">60 min</option>
-                                    <option value="90">90 min</option>
-                                    <option value="120">120 min</option>
-                                </select>
-                            </div>
-                            ${editData.service_type === 'package' && html`
+                            ${editModal.section === 'pricing' && html`
                                 <div class="form-group">
-                                    <label>Number of Sessions</label>
-                                    <input type="number" min="2" max="20"
-                                           value=${editData.session_count}
-                                           onChange=${e => setEditData({...editData, session_count: parseInt(e.target.value)})} />
+                                    <label>Session Formats</label>
+                                    <div class="format-toggles">
+                                        <label class="toggle-option ${editModal.data.offers_virtual ? 'active' : ''}">
+                                            <input type="checkbox" checked=${editModal.data.offers_virtual}
+                                                   onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, offers_virtual: e.target.checked}})} />
+                                            💻 Video Call
+                                        </label>
+                                        <label class="toggle-option ${editModal.data.offers_onsite ? 'active' : ''}">
+                                            <input type="checkbox" checked=${editModal.data.offers_onsite}
+                                                   onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, offers_onsite: e.target.checked}})} />
+                                            🤝 In-Person
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Currency</label>
+                                        <select value=${editModal.data.currency}
+                                                onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, currency: e.target.value}})}>
+                                            <option value="EUR">EUR (€)</option>
+                                            <option value="USD">USD ($)</option>
+                                            <option value="GBP">GBP (£)</option>
+                                            <option value="CHF">CHF</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Hourly Rate</label>
+                                        <input type="number" min="0" step="5" value=${editModal.data.hourly_rate || ''}
+                                               onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, hourly_rate: parseInt(e.target.value) || 0}})} />
+                                    </div>
+                                </div>
+                            `}
+
+                            ${editModal.section === 'links' && html`
+                                <div class="form-group">
+                                    <label>Website URL</label>
+                                    <input type="url" placeholder="https://yourwebsite.com"
+                                           value=${editModal.data.website_url || ''}
+                                           onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, website_url: e.target.value}})} />
+                                </div>
+                                <div class="form-group">
+                                    <label>LinkedIn URL</label>
+                                    <input type="url" placeholder="https://linkedin.com/in/yourprofile"
+                                           value=${editModal.data.linkedin_url || ''}
+                                           onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, linkedin_url: e.target.value}})} />
+                                </div>
+                            `}
+
+                            ${editModal.section.includes('credential') && html`
+                                <div class="form-group">
+                                    <label>Type</label>
+                                    <select value=${editModal.data.credential_type}
+                                            onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, credential_type: e.target.value}})}>
+                                        <option value="certification">Certification</option>
+                                        <option value="degree">Degree</option>
+                                        <option value="accreditation">Accreditation</option>
+                                        <option value="award">Award</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Title</label>
+                                    <input type="text" placeholder="e.g., ICF Professional Certified Coach"
+                                           value=${editModal.data.title || ''}
+                                           onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, title: e.target.value}})} />
+                                </div>
+                                <div class="form-group">
+                                    <label>Issuing Organization</label>
+                                    <input type="text" placeholder="e.g., International Coaching Federation"
+                                           value=${editModal.data.issuing_organization || ''}
+                                           onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, issuing_organization: e.target.value}})} />
+                                </div>
+                                <div class="form-group">
+                                    <label>Issue Date</label>
+                                    <input type="date" value=${editModal.data.issue_date || ''}
+                                           onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, issue_date: e.target.value}})} />
+                                </div>
+                            `}
+
+                            ${editModal.section.includes('service') && html`
+                                <div class="form-group">
+                                    <label>Service Type</label>
+                                    <select value=${editModal.data.service_type}
+                                            onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, service_type: e.target.value}})}>
+                                        <option value="discovery_call">Discovery Call (Free/Intro)</option>
+                                        <option value="single_session">Single Session</option>
+                                        <option value="package">Package</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Name</label>
+                                    <input type="text" placeholder="e.g., Leadership Coaching Session"
+                                           value=${editModal.data.name || ''}
+                                           onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, name: e.target.value}})} />
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea rows="3" value=${editModal.data.description || ''}
+                                              onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, description: e.target.value}})}></textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Duration</label>
+                                        <select value=${editModal.data.duration_minutes}
+                                                onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, duration_minutes: parseInt(e.target.value)}})}>
+                                            <option value="30">30 min</option>
+                                            <option value="45">45 min</option>
+                                            <option value="60">60 min</option>
+                                            <option value="90">90 min</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Price</label>
+                                        <input type="number" min="0" placeholder="0 for free"
+                                               value=${editModal.data.price || ''}
+                                               onChange=${(e) => setEditModal({...editModal, data: {...editModal.data, price: parseInt(e.target.value) || 0}})} />
+                                    </div>
                                 </div>
                             `}
                         </div>
-                        <div class="form-group">
-                            <label>Price</label>
-                            <div class="price-input-group">
-                                <select value=${editData.currency} onChange=${e => setEditData({...editData, currency: e.target.value})}>
-                                    <option value="EUR">EUR €</option>
-                                    <option value="USD">USD $</option>
-                                    <option value="GBP">GBP £</option>
-                                    <option value="CHF">CHF</option>
-                                </select>
-                                <input type="number" min="0" step="5"
-                                       placeholder=${editData.service_type === 'discovery_call' ? '0 (Free)' : '150'}
-                                       value=${editData.price}
-                                       onChange=${e => setEditData({...editData, price: parseInt(e.target.value)})} />
-                            </div>
-                        </div>
-                        <div class="edit-actions">
-                            <button class="btn-save" onClick=${() => saveService(editData)} disabled=${saving || !editData.name}>
-                                ${saving ? 'Saving...' : 'Save Service'}
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onClick=${closeModal}>Cancel</button>
+                            <button class="btn-save" onClick=${() => {
+                                if (editModal.section.includes('credential')) {
+                                    saveCredential(editModal.data);
+                                } else if (editModal.section.includes('service')) {
+                                    saveService(editModal.data);
+                                } else {
+                                    saveChanges(editModal.data);
+                                }
+                            }} disabled=${saving}>
+                                ${saving ? 'Saving...' : 'Save Changes'}
                             </button>
-                            <button class="btn-cancel" onClick=${cancelEditing}>Cancel</button>
                         </div>
                     </div>
-                ` : html`
-                    <div class="services-list">
-                        ${services.length > 0 ? services.map(service => html`
-                            <div class="service-card" key=${service.id}>
-                                <div class="service-type-badge ${service.service_type}">
-                                    ${service.service_type === 'discovery_call' ? 'Discovery' :
-                                      service.service_type === 'package' ? 'Package' :
-                                      service.service_type === 'subscription' ? 'Monthly' : 'Session'}
-                                </div>
-                                <div class="service-info">
-                                    <h4>${service.name}</h4>
-                                    <p>${service.description || ''}</p>
-                                    <span class="service-duration">${service.duration_minutes} min${service.session_count > 1 ? ` × ${service.session_count} sessions` : ''}</span>
-                                </div>
-                                <div class="service-price">
-                                    ${service.price === 0 ? 'Free' : html`
-                                        <span class="price-amount">${service.currency === 'USD' ? '$' : service.currency === 'GBP' ? '£' : '€'}${service.price}</span>
-                                    `}
-                                </div>
-                                <div class="service-actions">
-                                    <button class="btn-icon" onClick=${() => startEditing('service-edit', service)}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                        </svg>
-                                    </button>
-                                    <button class="btn-icon danger" onClick=${() => deleteService(service.id)}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        `) : html`<p class="placeholder">Add services and packages to let clients book with you</p>`}
-                    </div>
-                `}
-            </div>
-
-            <!-- Links Section -->
-            <div class="profile-section">
-                <div class="section-header">
-                    <h2>Links</h2>
-                    ${editingSection !== 'links' && html`
-                        <button class="edit-btn" onClick=${() => startEditing('links', {
-                            website_url: coach.website_url || '',
-                            linkedin_url: coach.linkedin_url || ''
-                        })}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                        </button>
-                    `}
                 </div>
-                ${editingSection === 'links' ? html`
-                    <div class="edit-form">
-                        <div class="form-group">
-                            <label>Website</label>
-                            <input type="url" placeholder="https://yourwebsite.com"
-                                   value=${editData.website_url}
-                                   onChange=${e => setEditData({...editData, website_url: e.target.value})} />
-                        </div>
-                        <div class="form-group">
-                            <label>LinkedIn Profile</label>
-                            <input type="url" placeholder="https://linkedin.com/in/yourprofile"
-                                   value=${editData.linkedin_url}
-                                   onChange=${e => setEditData({...editData, linkedin_url: e.target.value})} />
-                        </div>
-                        <div class="edit-actions">
-                            <button class="btn-save" onClick=${() => saveSection('links', editData)} disabled=${saving}>
-                                ${saving ? 'Saving...' : 'Save'}
-                            </button>
-                            <button class="btn-cancel" onClick=${cancelEditing}>Cancel</button>
-                        </div>
-                    </div>
-                ` : html`
-                    <div class="links-display">
-                        ${coach.website_url && html`
-                            <a href=${coach.website_url} target="_blank" class="link-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                                </svg>
-                                Website
-                            </a>
-                        `}
-                        ${coach.linkedin_url && html`
-                            <a href=${coach.linkedin_url} target="_blank" class="link-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                                </svg>
-                                LinkedIn
-                            </a>
-                        `}
-                        ${!coach.website_url && !coach.linkedin_url && html`
-                            <p class="placeholder">Add your website and social links</p>
-                        `}
-                    </div>
-                `}
-            </div>
+            `}
         </div>
     `;
 }
