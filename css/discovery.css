@@ -1283,3 +1283,532 @@
         justify-content: space-between;
     }
 }
+
+/* =============================================
+   DISCOVERY CALL MODAL
+============================================= */
+.discovery-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.discovery-modal-container {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.discovery-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.discovery-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+}
+
+.discovery-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.discovery-modal-close:hover {
+    color: #333;
+}
+
+.discovery-modal-content {
+    padding: 24px;
+}
+
+.discovery-intro {
+    margin: 0 0 20px 0;
+    color: var(--text-muted, #666);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.discovery-intro strong {
+    color: var(--text-main, #1a1a1a);
+}
+
+.discovery-error {
+    background: #fef2f2;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    border: 1px solid #fecaca;
+}
+
+.discovery-modal-content .form-group {
+    margin-bottom: 16px;
+}
+
+.discovery-modal-content .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text-main, #1a1a1a);
+}
+
+.discovery-modal-content .form-group input,
+.discovery-modal-content .form-group select,
+.discovery-modal-content .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.discovery-modal-content .form-group input:focus,
+.discovery-modal-content .form-group select:focus,
+.discovery-modal-content .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-petrol, #006266);
+    box-shadow: 0 0 0 3px rgba(0, 98, 102, 0.1);
+}
+
+.discovery-modal-content .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.discovery-form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.discovery-form-actions .btn-cancel {
+    flex: 1;
+    padding: 14px 20px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.discovery-form-actions .btn-cancel:hover {
+    background: #ebebeb;
+}
+
+.discovery-form-actions .btn-primary {
+    flex: 2;
+    padding: 14px 20px;
+    background: var(--primary-petrol, #006266);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.discovery-form-actions .btn-primary:hover:not(:disabled) {
+    background: var(--petrol-dark, #004A4D);
+}
+
+.discovery-form-actions .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Success State */
+.discovery-modal-content.success-content {
+    text-align: center;
+    padding: 40px 24px;
+}
+
+.discovery-modal-content .success-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 32px;
+    color: white;
+}
+
+.discovery-modal-content.success-content h4 {
+    margin: 0 0 12px 0;
+    font-size: 22px;
+    color: var(--text-main, #1a1a1a);
+}
+
+.discovery-modal-content.success-content p {
+    margin: 0 0 12px 0;
+    color: var(--text-muted, #666);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.discovery-modal-content.success-content .btn-primary {
+    margin-top: 20px;
+    padding: 14px 32px;
+    background: var(--primary-petrol, #006266);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Discovery Call Button on Coach Card */
+.btn-discovery {
+    width: 100%;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-discovery:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .discovery-modal-container {
+        max-height: 100vh;
+        border-radius: 16px 16px 0 0;
+        margin-top: auto;
+    }
+
+    .discovery-form-actions {
+        flex-direction: column;
+    }
+
+    .discovery-form-actions .btn-cancel,
+    .discovery-form-actions .btn-primary {
+        flex: none;
+        width: 100%;
+    }
+}
+
+/* =============================================
+   DISCOVERY REQUESTS DASHBOARD
+============================================= */
+.discovery-requests-section .section-header {
+    margin-bottom: 24px;
+}
+
+.discovery-requests-section .section-header h3 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 8px 0;
+}
+
+.section-description {
+    color: var(--text-muted, #666);
+    font-size: 15px;
+    margin: 0;
+}
+
+.discovery-requests-section .filter-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.discovery-requests-section .filter-btn {
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.discovery-requests-section .filter-btn:hover {
+    background: #ebebeb;
+}
+
+.discovery-requests-section .filter-btn.active {
+    background: var(--primary-petrol, #006266);
+    color: white;
+    border-color: var(--primary-petrol, #006266);
+}
+
+.discovery-requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.discovery-request-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    transition: box-shadow 0.2s ease;
+}
+
+.discovery-request-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.discovery-request-card .request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.discovery-request-card .client-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.discovery-request-card .client-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+}
+
+.discovery-request-card .request-date {
+    font-size: 13px;
+    color: var(--text-muted, #666);
+}
+
+.discovery-request-card .request-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.discovery-request-card .detail-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.discovery-request-card .detail-icon {
+    font-size: 16px;
+}
+
+.discovery-request-card .phone-link,
+.discovery-request-card .email-link {
+    color: var(--primary-petrol, #006266);
+    text-decoration: none;
+}
+
+.discovery-request-card .phone-link:hover,
+.discovery-request-card .email-link:hover {
+    text-decoration: underline;
+}
+
+.discovery-request-card .client-message {
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.discovery-request-card .client-message strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: var(--text-muted, #666);
+}
+
+.discovery-request-card .client-message p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-main, #1a1a1a);
+}
+
+.discovery-request-card .request-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Buttons for request actions */
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-sm.btn-petrol {
+    background: var(--primary-petrol, #006266);
+    color: white;
+    border: none;
+}
+
+.btn-sm.btn-petrol:hover {
+    background: var(--petrol-dark, #004A4D);
+}
+
+.btn-sm.btn-success {
+    background: #22c55e;
+    color: white;
+    border: none;
+}
+
+.btn-sm.btn-success:hover {
+    background: #16a34a;
+}
+
+.btn-sm.btn-outline {
+    background: transparent;
+    color: var(--text-muted, #666);
+    border: 1px solid #e0e0e0;
+}
+
+.btn-sm.btn-outline:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+}
+
+/* Badge styles for request status */
+.badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-petrol {
+    background: var(--primary-petrol, #006266);
+    color: white;
+}
+
+.badge-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Empty state styling */
+.discovery-requests-section .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    background: #f9f9f9;
+    border-radius: 12px;
+}
+
+.discovery-requests-section .empty-state .empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.discovery-requests-section .empty-state h4 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    color: var(--text-main, #1a1a1a);
+}
+
+.discovery-requests-section .empty-state p {
+    margin: 0;
+    color: var(--text-muted, #666);
+}
+
+/* Alert styles */
+.alert-error {
+    background: #fef2f2;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #fecaca;
+}
+
+/* Mobile responsive for dashboard */
+@media (max-width: 600px) {
+    .discovery-request-card .request-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .discovery-request-card .request-actions {
+        flex-direction: column;
+    }
+
+    .discovery-request-card .request-actions .btn-sm {
+        width: 100%;
+        text-align: center;
+    }
+}

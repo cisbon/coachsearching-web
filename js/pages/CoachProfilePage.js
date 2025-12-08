@@ -31,10 +31,214 @@ const { useState, useEffect, useCallback, memo } = React;
 const html = htm.bind(React.createElement);
 
 /**
+ * Discovery Call Modal Component - Simple booking for discovery calls
+ */
+const DiscoveryCallModal = ({ coach, onClose }) => {
+    const [formData, setFormData] = useState({
+        name: '',
+        phone: '',
+        email: '',
+        message: '',
+        timePreference: 'flexible'
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, [onClose]);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('discovery-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const timePreferenceOptions = [
+        { value: 'flexible', label: 'Flexible - Any time works' },
+        { value: 'weekday_morning', label: 'Weekday Morning (9am-12pm)' },
+        { value: 'weekday_afternoon', label: 'Weekday Afternoon (12pm-5pm)' },
+        { value: 'weekday_evening', label: 'Weekday Evening (5pm-8pm)' },
+        { value: 'weekend_morning', label: 'Weekend Morning (9am-12pm)' },
+        { value: 'weekend_afternoon', label: 'Weekend Afternoon (12pm-5pm)' }
+    ];
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!formData.name.trim()) {
+            setError('Please enter your name');
+            return;
+        }
+        if (!formData.phone.trim()) {
+            setError('Please enter your phone number');
+            return;
+        }
+
+        setSubmitting(true);
+        setError('');
+
+        try {
+            const response = await fetch('/api/discovery-requests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    coach_id: coach.id,
+                    client_name: formData.name.trim(),
+                    client_phone: formData.phone.trim(),
+                    client_email: formData.email.trim() || null,
+                    client_message: formData.message.trim() || null,
+                    time_preference: formData.timePreference
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setSuccess(true);
+            } else {
+                setError(result.error?.message || 'Failed to submit request. Please try again.');
+            }
+        } catch (err) {
+            console.error('Discovery call request error:', err);
+            setError('Network error. Please check your connection and try again.');
+        }
+
+        setSubmitting(false);
+    };
+
+    if (success) {
+        return html`
+            <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
+                <div class="discovery-modal-container">
+                    <div class="discovery-modal-header">
+                        <h3>Request Sent!</h3>
+                        <button class="discovery-modal-close" onClick=${onClose}>✕</button>
+                    </div>
+                    <div class="discovery-modal-content success-content">
+                        <div class="success-icon">✓</div>
+                        <h4>Thank you for your interest!</h4>
+                        <p>Your discovery call request has been sent to <strong>${coach.full_name || coach.display_name}</strong>.</p>
+                        <p>They will contact you soon at the phone number you provided.</p>
+                        <button class="btn-primary" onClick=${onClose}>Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return html`
+        <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="discovery-modal-container">
+                <div class="discovery-modal-header">
+                    <h3>Book a Free Discovery Call</h3>
+                    <button class="discovery-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <div class="discovery-modal-content">
+                    <p class="discovery-intro">
+                        Get to know <strong>${coach.full_name || coach.display_name}</strong> with a free discovery call.
+                        Share your contact info and preferred time, and they'll reach out to schedule.
+                    </p>
+
+                    ${error && html`<div class="discovery-error">${error}</div>`}
+
+                    <form onSubmit=${handleSubmit}>
+                        <div class="form-group">
+                            <label>Your Name *</label>
+                            <input
+                                type="text"
+                                placeholder="Enter your full name"
+                                value=${formData.name}
+                                onChange=${(e) => setFormData({...formData, name: e.target.value})}
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Phone Number *</label>
+                            <input
+                                type="tel"
+                                placeholder="Your phone number"
+                                value=${formData.phone}
+                                onChange=${(e) => setFormData({...formData, phone: e.target.value})}
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email (optional)</label>
+                            <input
+                                type="email"
+                                placeholder="Your email address"
+                                value=${formData.email}
+                                onChange=${(e) => setFormData({...formData, email: e.target.value})}
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Preferred Time</label>
+                            <select
+                                value=${formData.timePreference}
+                                onChange=${(e) => setFormData({...formData, timePreference: e.target.value})}
+                            >
+                                ${timePreferenceOptions.map(opt => html`
+                                    <option key=${opt.value} value=${opt.value}>${opt.label}</option>
+                                `)}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Message (optional)</label>
+                            <textarea
+                                placeholder="Tell ${coach.full_name || 'the coach'} a bit about what you're looking for..."
+                                rows="3"
+                                value=${formData.message}
+                                onChange=${(e) => setFormData({...formData, message: e.target.value})}
+                            ></textarea>
+                        </div>
+
+                        <div class="discovery-form-actions">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>Cancel</button>
+                            <button type="submit" class="btn-primary" disabled=${submitting}>
+                                ${submitting ? 'Sending...' : 'Request Discovery Call'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+/**
+ * Helper to detect if a string is a UUID
+ */
+const isUUID = (str) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+};
+
+/**
  * Main Coach Profile Page Component
  * Renders a full page for a coach profile with SEO optimizations
+ * Supports both UUID and slug-based lookups for SEO-friendly URLs
  */
-function CoachProfilePageComponent({ coachId, session }) {
+function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
+    // Support both old coachId prop and new coachIdOrSlug prop
+    const identifier = coachIdOrSlug || coachId;
+
     const [coach, setCoach] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -42,19 +246,26 @@ function CoachProfilePageComponent({ coachId, session }) {
     const [reviews, setReviews] = useState([]);
     const [credentials, setCredentials] = useState([]);
     const [showBooking, setShowBooking] = useState(false);
+    const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [selectedArticle, setSelectedArticle] = useState(null);
 
     // Load coach data
     useEffect(() => {
-        if (coachId) {
+        if (identifier) {
             loadCoach();
         }
-    }, [coachId]);
+    }, [identifier]);
 
     // Set SEO metadata when coach loads
     useEffect(() => {
         if (coach) {
             setSEOData();
+
+            // Update URL to use slug if we came in via UUID
+            if (coach.slug && isUUID(identifier) && window.history.replaceState) {
+                const newUrl = `/coach/${coach.slug}`;
+                window.history.replaceState(null, '', newUrl);
+            }
         }
         return () => cleanupSEO();
     }, [coach]);
@@ -64,12 +275,27 @@ function CoachProfilePageComponent({ coachId, session }) {
         setError(null);
         try {
             if (window.supabaseClient) {
-                // Load coach profile
-                const { data, error: fetchError } = await window.supabaseClient
-                    .from('cs_coaches')
-                    .select('*')
-                    .eq('id', coachId)
-                    .single();
+                let data, fetchError;
+
+                // Try to load by UUID first if it looks like a UUID, otherwise by slug
+                if (isUUID(identifier)) {
+                    const result = await window.supabaseClient
+                        .from('cs_coaches')
+                        .select('*')
+                        .eq('id', identifier)
+                        .single();
+                    data = result.data;
+                    fetchError = result.error;
+                } else {
+                    // Load by slug
+                    const result = await window.supabaseClient
+                        .from('cs_coaches')
+                        .select('*')
+                        .eq('slug', identifier)
+                        .single();
+                    data = result.data;
+                    fetchError = result.error;
+                }
 
                 if (fetchError) throw fetchError;
                 if (!data) throw new Error('Coach not found');
@@ -335,10 +561,15 @@ function CoachProfilePageComponent({ coachId, session }) {
                                     <span class="price-value" itemprop="priceRange">${formatPrice(coach.hourly_rate)}</span>
                                     <span class="price-unit">/${t('coach.perSession') || 'session'}</span>
                                 </div>
+                                ${(coach.offers_free_intro || coach.free_discovery_call) && html`
+                                    <button class="btn-discovery-prominent" onClick=${() => setShowDiscoveryModal(true)}>
+                                        📞 ${t('coach.bookDiscoveryCall') || 'Book Free Discovery Call'}
+                                    </button>
+                                `}
                                 <button class="btn-book-prominent" onClick=${handleBookClick}>
                                     ${t('coach.bookSession') || 'Book a Session'}
                                 </button>
-                                <button class="btn-contact-coach" onClick=${() => window.location.hash = `#contact/${coach.id}`}>
+                                <button class="btn-contact-coach" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
                                     ${t('coach.sendMessage') || 'Send Message'}
                                 </button>
                             </div>
@@ -510,11 +741,18 @@ function CoachProfilePageComponent({ coachId, session }) {
                                         <span class="rating-text">${rating.toFixed(1)} (${reviewsCount})</span>
                                     </div>
                                 `}
+                                ${(coach.offers_free_intro || coach.free_discovery_call) && html`
+                                    <button class="btn-discovery-widget" onClick=${() => setShowDiscoveryModal(true)}>
+                                        📞 Book Free Discovery Call
+                                    </button>
+                                `}
                                 <button class="btn-book-widget" onClick=${handleBookClick}>
                                     ${t('coach.selectTime') || 'Select Date & Time'}
                                 </button>
                                 <p class="booking-note">
-                                    ${t('coach.freeConsultation') || 'Free 15-min consultation available'}
+                                    ${(coach.offers_free_intro || coach.free_discovery_call)
+                                        ? (t('coach.freeDiscoveryAvailable') || 'Free discovery call available!')
+                                        : (t('coach.freeConsultation') || 'Free 15-min consultation available')}
                                 </p>
                             </div>
 
@@ -603,6 +841,11 @@ function CoachProfilePageComponent({ coachId, session }) {
                     </div>
                 </div>
             </section>
+
+            <!-- Discovery Call Modal -->
+            ${showDiscoveryModal && html`
+                <${DiscoveryCallModal} coach=${coach} onClose=${() => setShowDiscoveryModal(false)} />
+            `}
 
             <!-- Article Modal -->
             ${selectedArticle && html`

@@ -257,11 +257,11 @@ const Footer = ({ onOpenLegal }) => {
                     <div class="footer-column">
                         <h4>${t('footer.coachingTypes') || 'Coaching Types'}</h4>
                         <ul>
-                            <li><a href="#coaching/executive-coaching">${t('category.executive.title')}</a></li>
-                            <li><a href="#coaching/life-coaching">${t('category.life.title')}</a></li>
-                            <li><a href="#coaching/career-coaching">${t('category.career.title')}</a></li>
-                            <li><a href="#coaching/business-coaching">${t('category.business.title')}</a></li>
-                            <li><a href="#categories">${t('category.browseAll')}</a></li>
+                            <li><a href="/coaching/executive-coaching">${t('category.executive.title')}</a></li>
+                            <li><a href="/coaching/life-coaching">${t('category.life.title')}</a></li>
+                            <li><a href="/coaching/career-coaching">${t('category.career.title')}</a></li>
+                            <li><a href="/coaching/business-coaching">${t('category.business.title')}</a></li>
+                            <li><a href="/categories">${t('category.browseAll')}</a></li>
                         </ul>
                     </div>
 
@@ -269,10 +269,10 @@ const Footer = ({ onOpenLegal }) => {
                     <div class="footer-column">
                         <h4>${t('footer.moreCoaching') || 'More Coaching'}</h4>
                         <ul>
-                            <li><a href="#coaching/leadership">${t('category.leadership.title')}</a></li>
-                            <li><a href="#coaching/health-wellness">${t('category.health.title')}</a></li>
-                            <li><a href="#coaching/mindfulness">${t('category.mindfulness.title')}</a></li>
-                            <li><a href="#coaching/relationship-coaching">${t('category.relationship.title')}</a></li>
+                            <li><a href="/coaching/leadership">${t('category.leadership.title')}</a></li>
+                            <li><a href="/coaching/health-wellness">${t('category.health.title')}</a></li>
+                            <li><a href="/coaching/mindfulness">${t('category.mindfulness.title')}</a></li>
+                            <li><a href="/coaching/relationship-coaching">${t('category.relationship.title')}</a></li>
                         </ul>
                     </div>
 
@@ -280,11 +280,11 @@ const Footer = ({ onOpenLegal }) => {
                     <div class="footer-column">
                         <h4>${t('footer.company') || 'Company'}</h4>
                         <ul>
-                            <li><a href="#about">${t('footer.aboutUs') || 'About Us'}</a></li>
-                            <li><a href="#how-it-works">${t('footer.howItWorks') || 'How It Works'}</a></li>
-                            <li><a href="#faq">${t('footer.faq') || 'FAQ'}</a></li>
-                            <li><a href="#coaches">${t('nav.coaches') || 'Find a Coach'}</a></li>
-                            <li><a href="#quiz">${t('category.takeQuiz') || 'Take the Quiz'}</a></li>
+                            <li><a href="/about">${t('footer.aboutUs') || 'About Us'}</a></li>
+                            <li><a href="/how-it-works">${t('footer.howItWorks') || 'How It Works'}</a></li>
+                            <li><a href="/faq">${t('footer.faq') || 'FAQ'}</a></li>
+                            <li><a href="/coaches">${t('nav.coaches') || 'Find a Coach'}</a></li>
+                            <li><a href="/quiz">${t('category.takeQuiz') || 'Take the Quiz'}</a></li>
                         </ul>
                     </div>
 
@@ -519,7 +519,7 @@ const Navbar = ({ session }) => {
     return html`
         <header role="banner">
             <div class="container nav-flex">
-                <a href="#" class="logo" onClick=${() => { window.location.hash = '#home'; handleLinkClick(); }}>coach<span>searching</span>.com</a>
+                <a href="/" class="logo" onClick=${(e) => { e.preventDefault(); window.navigateTo('/home'); handleLinkClick(); }}>coach<span>searching</span>.com</a>
 
                 <button class="hamburger-btn ${menuOpen ? 'open' : ''}" onClick=${() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
                     <span></span>
@@ -528,13 +528,13 @@ const Navbar = ({ session }) => {
                 </button>
 
                 <nav class="nav-links ${menuOpen ? 'open' : ''}" role="navigation">
-                    <a href="#coaches" class="nav-browse-link" onClick=${handleLinkClick}>${t('nav.browseCoaches')}</a>
+                    <a href="/coaches" class="nav-browse-link" onClick=${handleLinkClick}>${t('nav.browseCoaches')}</a>
                     ${session ? html`
-                        <a href="#dashboard" onClick=${handleLinkClick}>${t('nav.dashboard')}</a>
-                        <a href="#signout" class="nav-auth-btn" onClick=${handleLinkClick}>${t('nav.signOut')}</a>
+                        <a href="/dashboard" onClick=${handleLinkClick}>${t('nav.dashboard')}</a>
+                        <a href="/signout" class="nav-auth-btn" onClick=${handleLinkClick}>${t('nav.signOut')}</a>
                     ` : html`
-                        <a href="#login?mode=register" class="nav-auth-btn nav-register-btn" onClick=${handleLinkClick}>${t('nav.register')}</a>
-                        <a href="#login" class="nav-auth-btn nav-signin-btn" onClick=${handleLinkClick}>${t('nav.signIn')}</a>
+                        <a href="/login?mode=register" class="nav-auth-btn nav-register-btn" onClick=${handleLinkClick}>${t('nav.register')}</a>
+                        <a href="/login" class="nav-auth-btn nav-signin-btn" onClick=${handleLinkClick}>${t('nav.signIn')}</a>
                     `}
                     <${CurrencySelector} />
                     <${LanguageSelector} />
@@ -662,13 +662,13 @@ const Auth = () => {
                     setMessage('Registration successful! Complete your coach profile...');
                     console.log('Coach registration, redirecting to onboarding...');
                     setTimeout(() => {
-                        window.location.hash = '#onboarding';
+                        window.navigateTo('/onboarding');
                     }, 500);
                 } else {
                     setMessage('Registration successful! You can browse coaches. Please verify your email to book sessions.');
                     console.log('Client registration, redirecting to coaches...');
                     setTimeout(() => {
-                        window.location.hash = '#coaches';
+                        window.navigateTo('/coaches');
                     }, 500);
                 }
             } else {
@@ -676,7 +676,7 @@ const Auth = () => {
                 setMessage('Login successful! Loading dashboard...');
                 setTimeout(() => {
                     console.log('Delayed redirect to dashboard after login');
-                    window.location.hash = '#dashboard';
+                    window.navigateTo('/dashboard');
                 }, 500);
             }
         } catch (error) {
@@ -1044,7 +1044,7 @@ const CoachOnboarding = ({ session }) => {
 
             setMessage(successMsg);
             setTimeout(() => {
-                window.location.hash = '#dashboard';
+                window.navigateTo('/dashboard');
             }, 1500);
         } catch (error) {
             console.error('❌ Onboarding error:', error);
@@ -1224,7 +1224,7 @@ const CoachOnboarding = ({ session }) => {
                         <div style=${{ marginTop: '32px', display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
                             <button
                                 type="button"
-                                onClick=${() => window.location.hash = '#coaches'}
+                                onClick=${() => window.navigateTo('/coaches')}
                                 style=${{
                                     padding: '14px 24px',
                                     background: 'transparent',
@@ -1512,7 +1512,7 @@ const SignOut = () => {
             
             console.log('LOGOUT: Sign out API call successful');
             console.log('LOGOUT: Redirecting to home...');
-            window.location.hash = '#home';
+            window.navigateTo('/home');
             
             console.log('LOGOUT: Reloading page to clear session...');
             setTimeout(() => {
@@ -1532,7 +1532,7 @@ const SignOut = () => {
                 <h2>Sign Out</h2>
                 <p>Are you sure you want to sign out? You'll need to log in again to access your dashboard.</p>
                 <div class="signout-actions">
-                    <button class="btn-secondary" onClick=${() => window.location.hash = '#dashboard'} disabled=${confirming}>
+                    <button class="btn-secondary" onClick=${() => window.navigateTo('/dashboard')} disabled=${confirming}>
                         Cancel
                     </button>
                     <button class="btn-primary" onClick=${handleSignOut} disabled=${confirming}>
@@ -1553,7 +1553,7 @@ const Hero = () => {
 
                 <!-- Discovery Options -->
                 <div class="discovery-options">
-                    <button class="discovery-option quiz-option" onClick=${() => window.location.hash = '#quiz'}>
+                    <button class="discovery-option quiz-option" onClick=${() => window.navigateTo('/quiz')}>
                         <span class="discovery-icon">🎯</span>
                         <span class="discovery-label">${t('discovery.takeQuiz')}</span>
                         <span class="discovery-desc">${t('discovery.takeQuizDesc')}</span>
@@ -1563,7 +1563,7 @@ const Hero = () => {
                         <span class="discovery-label">${t('discovery.browse')}</span>
                         <span class="discovery-desc">${t('discovery.browseDesc')}</span>
                     </button>
-                    <button class="discovery-option ai-option" onClick=${() => window.location.hash = '#ai-match'}>
+                    <button class="discovery-option ai-option" onClick=${() => window.navigateTo('/ai-match')}>
                         <span class="discovery-icon">✨</span>
                         <span class="discovery-label">${t('discovery.aiMatch')}</span>
                         <span class="discovery-desc">${t('discovery.aiMatchDesc')}</span>
@@ -2059,6 +2059,197 @@ const ReviewsPopup = ({ coach, onClose }) => {
     `;
 };
 
+// Discovery Call Modal Component - Simple booking for discovery calls
+const DiscoveryCallModal = ({ coach, onClose }) => {
+    const [formData, setFormData] = useState({
+        name: '',
+        phone: '',
+        email: '',
+        message: '',
+        timePreference: 'flexible'
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, [onClose]);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('discovery-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const timePreferenceOptions = [
+        { value: 'flexible', label: 'Flexible - Any time works' },
+        { value: 'weekday_morning', label: 'Weekday Morning (9am-12pm)' },
+        { value: 'weekday_afternoon', label: 'Weekday Afternoon (12pm-5pm)' },
+        { value: 'weekday_evening', label: 'Weekday Evening (5pm-8pm)' },
+        { value: 'weekend_morning', label: 'Weekend Morning (9am-12pm)' },
+        { value: 'weekend_afternoon', label: 'Weekend Afternoon (12pm-5pm)' }
+    ];
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        // Validation
+        if (!formData.name.trim()) {
+            setError('Please enter your name');
+            return;
+        }
+        if (!formData.phone.trim()) {
+            setError('Please enter your phone number');
+            return;
+        }
+
+        setSubmitting(true);
+        setError('');
+
+        try {
+            const response = await fetch('/api/discovery-requests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    coach_id: coach.id,
+                    client_name: formData.name.trim(),
+                    client_phone: formData.phone.trim(),
+                    client_email: formData.email.trim() || null,
+                    client_message: formData.message.trim() || null,
+                    time_preference: formData.timePreference
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setSuccess(true);
+            } else {
+                setError(result.error?.message || 'Failed to submit request. Please try again.');
+            }
+        } catch (err) {
+            console.error('Discovery call request error:', err);
+            setError('Network error. Please check your connection and try again.');
+        }
+
+        setSubmitting(false);
+    };
+
+    if (success) {
+        return html`
+            <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
+                <div class="discovery-modal-container">
+                    <div class="discovery-modal-header">
+                        <h3>Request Sent!</h3>
+                        <button class="discovery-modal-close" onClick=${onClose}>✕</button>
+                    </div>
+                    <div class="discovery-modal-content success-content">
+                        <div class="success-icon">✓</div>
+                        <h4>Thank you for your interest!</h4>
+                        <p>Your discovery call request has been sent to <strong>${coach.full_name || coach.display_name}</strong>.</p>
+                        <p>They will contact you soon at the phone number you provided.</p>
+                        <button class="btn-primary" onClick=${onClose}>Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return html`
+        <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="discovery-modal-container">
+                <div class="discovery-modal-header">
+                    <h3>Book a Free Discovery Call</h3>
+                    <button class="discovery-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <div class="discovery-modal-content">
+                    <p class="discovery-intro">
+                        Get to know <strong>${coach.full_name || coach.display_name}</strong> with a free discovery call.
+                        Share your contact info and preferred time, and they'll reach out to schedule.
+                    </p>
+
+                    ${error && html`<div class="discovery-error">${error}</div>`}
+
+                    <form onSubmit=${handleSubmit}>
+                        <div class="form-group">
+                            <label>Your Name *</label>
+                            <input
+                                type="text"
+                                placeholder="Enter your full name"
+                                value=${formData.name}
+                                onChange=${(e) => setFormData({...formData, name: e.target.value})}
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Phone Number *</label>
+                            <input
+                                type="tel"
+                                placeholder="Your phone number"
+                                value=${formData.phone}
+                                onChange=${(e) => setFormData({...formData, phone: e.target.value})}
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email (optional)</label>
+                            <input
+                                type="email"
+                                placeholder="Your email address"
+                                value=${formData.email}
+                                onChange=${(e) => setFormData({...formData, email: e.target.value})}
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Preferred Time</label>
+                            <select
+                                value=${formData.timePreference}
+                                onChange=${(e) => setFormData({...formData, timePreference: e.target.value})}
+                            >
+                                ${timePreferenceOptions.map(opt => html`
+                                    <option key=${opt.value} value=${opt.value}>${opt.label}</option>
+                                `)}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Message (optional)</label>
+                            <textarea
+                                placeholder="Tell ${coach.full_name || 'the coach'} a bit about what you're looking for..."
+                                rows="3"
+                                value=${formData.message}
+                                onChange=${(e) => setFormData({...formData, message: e.target.value})}
+                            ></textarea>
+                        </div>
+
+                        <div class="discovery-form-actions">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>Cancel</button>
+                            <button type="submit" class="btn-primary" disabled=${submitting}>
+                                ${submitting ? 'Sending...' : 'Request Discovery Call'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 // Skeleton loader for coach cards (memoized for performance)
 const CoachCardSkeleton = React.memo(() => {
     return html`
@@ -2163,6 +2354,7 @@ const TrustBadges = ({ coach }) => {
 const CoachCard = React.memo(({ coach, onViewDetails }) => {
     const [showVideoPopup, setShowVideoPopup] = useState(false);
     const [showReviewsPopup, setShowReviewsPopup] = useState(false);
+    const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
 
     // Fetch live reviews data from database
@@ -2299,13 +2491,15 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
             <!-- Price Section -->
             <div class="coach-price-section">
                 ${offersFreeIntro && html`
-                    <div class="free-intro-badge">🎁 Free Discovery Call</div>
+                    <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
+                        📞 Book Free Discovery Call
+                    </button>
                 `}
                 <div class="price-info">
                     <div class="price-label">${t('coach.hourly_rate')}</div>
                     <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
                 </div>
-                <a href="#coach/${coach.id}" class="btn-book">
+                <a href="/coach/${coach.slug || coach.id}" class="btn-book">
                     ${t('coach.view_profile')} →
                 </a>
             </div>
@@ -2323,6 +2517,13 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
             <${ReviewsPopup}
                 coach=${coach}
                 onClose=${() => setShowReviewsPopup(false)}
+            />
+        `}
+
+        ${showDiscoveryModal && html`
+            <${DiscoveryCallModal}
+                coach=${coach}
+                onClose=${() => setShowDiscoveryModal(false)}
             />
         `}
     `;
@@ -3291,7 +3492,7 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
     const handleBookClick = () => {
         if (!session) {
             alert('Please sign in to book a session');
-            window.location.hash = '#login';
+            window.navigateTo('/login');
             return;
         }
         setShowBooking(true);
@@ -3452,6 +3653,9 @@ const Dashboard = ({ session }) => {
                     ${t('dashboard.bookings')}
                 </button>
                 ${userType === 'coach' && html`
+                    <button class="tab-btn ${activeTab === 'discovery_requests' ? 'active' : ''}" onClick=${() => setActiveTab('discovery_requests')}>
+                        📞 Discovery Requests
+                    </button>
                     <button class="tab-btn ${activeTab === 'availability' ? 'active' : ''}" onClick=${() => setActiveTab('availability')}>
                         Availability
                     </button>
@@ -3475,6 +3679,7 @@ const Dashboard = ({ session }) => {
 
             ${activeTab === 'overview' && html`<${DashboardOverview} userType=${userType} session=${session} />`}
             ${activeTab === 'bookings' && html`<${DashboardBookings} session=${session} userType=${userType} />`}
+            ${activeTab === 'discovery_requests' && userType === 'coach' && html`<${DiscoveryRequestsDashboard} session=${session} />`}
             ${activeTab === 'availability' && userType === 'coach' && html`<${DashboardAvailability} session=${session} />`}
             ${activeTab === 'session_notes' && userType === 'coach' && html`<${SessionNotesDashboard} session=${session} />`}
             ${activeTab === 'articles' && userType === 'coach' && html`<${DashboardArticles} session=${session} />`}
@@ -3741,7 +3946,7 @@ const DashboardOverview = ({ userType, session }) => {
                             <div class="quick-action-desc">Update your info</div>
                         </button>
                     ` : html`
-                        <button class="quick-action-card" onClick=${() => window.location.hash = '#coaches'}>
+                        <button class="quick-action-card" onClick=${() => window.navigateTo('/coaches')}>
                             <div class="quick-action-icon">🔍</div>
                             <div class="quick-action-title">Find a Coach</div>
                             <div class="quick-action-desc">Browse coaches</div>
@@ -3851,7 +4056,7 @@ const DashboardOverview = ({ userType, session }) => {
                 <div class="welcome-card">
                     <h3>👋 Welcome to CoachSearching!</h3>
                     <p>You haven't booked any sessions yet. Start your coaching journey today!</p>
-                    <button class="btn-primary" onClick=${() => window.location.hash = '#coaches'}>
+                    <button class="btn-primary" onClick=${() => window.navigateTo('/coaches')}>
                         Browse Coaches
                     </button>
                 </div>
@@ -4249,7 +4454,7 @@ const DashboardBookings = ({ session, userType }) => {
                             : 'Browse coaches and book your first session!'}
                     </div>
                     ${userType === 'client' && html`
-                        <button class="btn-primary" style=${{ marginTop: '16px' }} onClick=${() => window.location.hash = '#coaches'}>
+                        <button class="btn-primary" style=${{ marginTop: '16px' }} onClick=${() => window.navigateTo('/coaches')}>
                             Browse Coaches
                         </button>
                     `}
@@ -4434,6 +4639,212 @@ const DashboardBookings = ({ session, userType }) => {
                     onClose=${() => setAcceptingBooking(null)}
                     onAccept=${handleAcceptBooking}
                 />
+            `}
+        </div>
+    `;
+};
+
+// Discovery Requests Dashboard Component
+const DiscoveryRequestsDashboard = ({ session }) => {
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [filter, setFilter] = useState('all'); // all, pending, contacted, completed
+
+    useEffect(() => {
+        loadRequests();
+    }, [session]);
+
+    const loadRequests = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            // Get coach ID first
+            const { data: coachData } = await window.supabaseClient
+                .from('cs_coaches')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .single();
+
+            if (!coachData) {
+                setError('Coach profile not found');
+                setLoading(false);
+                return;
+            }
+
+            // Fetch discovery requests via API
+            const response = await fetch(`/api/discovery-requests?coach_id=${coachData.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                setRequests(result.data || []);
+            } else {
+                setError(result.error?.message || 'Failed to load requests');
+            }
+        } catch (err) {
+            console.error('Error loading discovery requests:', err);
+            setError('Failed to load discovery requests');
+        }
+        setLoading(false);
+    };
+
+    const updateRequestStatus = async (requestId, newStatus, notes = null) => {
+        try {
+            const response = await fetch(`/api/discovery-requests/${requestId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ status: newStatus, coach_notes: notes })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // Refresh list
+                loadRequests();
+            } else {
+                setError(result.error?.message || 'Failed to update request');
+            }
+        } catch (err) {
+            console.error('Error updating request:', err);
+            setError('Failed to update request');
+        }
+    };
+
+    const formatTimePreference = (pref) => {
+        const labels = {
+            'flexible': 'Flexible - Any time',
+            'weekday_morning': 'Weekday Morning',
+            'weekday_afternoon': 'Weekday Afternoon',
+            'weekday_evening': 'Weekday Evening',
+            'weekend_morning': 'Weekend Morning',
+            'weekend_afternoon': 'Weekend Afternoon'
+        };
+        return labels[pref] || pref;
+    };
+
+    const getStatusBadge = (status) => {
+        const badges = {
+            'pending': { class: 'badge-warning', label: 'Pending' },
+            'contacted': { class: 'badge-info', label: 'Contacted' },
+            'scheduled': { class: 'badge-petrol', label: 'Scheduled' },
+            'completed': { class: 'badge-success', label: 'Completed' },
+            'cancelled': { class: 'badge-danger', label: 'Cancelled' }
+        };
+        return badges[status] || { class: 'badge-secondary', label: status };
+    };
+
+    const filteredRequests = filter === 'all'
+        ? requests
+        : requests.filter(r => r.status === filter);
+
+    if (loading) {
+        return html`
+            <div class="dashboard-section">
+                <div class="loading-spinner"></div>
+                <p style=${{ textAlign: 'center', marginTop: '16px' }}>Loading discovery requests...</p>
+            </div>
+        `;
+    }
+
+    return html`
+        <div class="dashboard-section discovery-requests-section">
+            <div class="section-header">
+                <h3>📞 Discovery Call Requests</h3>
+                <p class="section-description">Manage incoming discovery call requests from potential clients.</p>
+            </div>
+
+            ${error && html`<div class="alert alert-error">${error}</div>`}
+
+            <div class="filter-tabs" style=${{ marginBottom: '20px' }}>
+                <button class="filter-btn ${filter === 'all' ? 'active' : ''}" onClick=${() => setFilter('all')}>
+                    All (${requests.length})
+                </button>
+                <button class="filter-btn ${filter === 'pending' ? 'active' : ''}" onClick=${() => setFilter('pending')}>
+                    Pending (${requests.filter(r => r.status === 'pending').length})
+                </button>
+                <button class="filter-btn ${filter === 'contacted' ? 'active' : ''}" onClick=${() => setFilter('contacted')}>
+                    Contacted (${requests.filter(r => r.status === 'contacted').length})
+                </button>
+                <button class="filter-btn ${filter === 'completed' ? 'active' : ''}" onClick=${() => setFilter('completed')}>
+                    Completed (${requests.filter(r => r.status === 'completed').length})
+                </button>
+            </div>
+
+            ${filteredRequests.length === 0 ? html`
+                <div class="empty-state">
+                    <div class="empty-icon">📞</div>
+                    <h4>${filter === 'all' ? 'No discovery requests yet' : `No ${filter} requests`}</h4>
+                    <p>When potential clients request a discovery call, they'll appear here.</p>
+                </div>
+            ` : html`
+                <div class="discovery-requests-list">
+                    ${filteredRequests.map(request => {
+                        const badge = getStatusBadge(request.status);
+                        return html`
+                            <div key=${request.id} class="discovery-request-card">
+                                <div class="request-header">
+                                    <div class="client-info">
+                                        <span class="client-name">${request.client_name}</span>
+                                        <span class="badge ${badge.class}">${badge.label}</span>
+                                    </div>
+                                    <span class="request-date">${new Date(request.created_at).toLocaleDateString()}</span>
+                                </div>
+
+                                <div class="request-details">
+                                    <div class="detail-row">
+                                        <span class="detail-icon">📱</span>
+                                        <a href="tel:${request.client_phone}" class="phone-link">${request.client_phone}</a>
+                                    </div>
+                                    ${request.client_email && html`
+                                        <div class="detail-row">
+                                            <span class="detail-icon">📧</span>
+                                            <a href="mailto:${request.client_email}" class="email-link">${request.client_email}</a>
+                                        </div>
+                                    `}
+                                    <div class="detail-row">
+                                        <span class="detail-icon">🕐</span>
+                                        <span>Preferred: ${formatTimePreference(request.time_preference)}</span>
+                                    </div>
+                                    ${request.client_message && html`
+                                        <div class="client-message">
+                                            <strong>Message:</strong>
+                                            <p>${request.client_message}</p>
+                                        </div>
+                                    `}
+                                </div>
+
+                                <div class="request-actions">
+                                    ${request.status === 'pending' && html`
+                                        <button class="btn-sm btn-petrol" onClick=${() => updateRequestStatus(request.id, 'contacted')}>
+                                            ✓ Mark as Contacted
+                                        </button>
+                                    `}
+                                    ${request.status === 'contacted' && html`
+                                        <button class="btn-sm btn-petrol" onClick=${() => updateRequestStatus(request.id, 'scheduled')}>
+                                            📅 Mark as Scheduled
+                                        </button>
+                                    `}
+                                    ${request.status === 'scheduled' && html`
+                                        <button class="btn-sm btn-success" onClick=${() => updateRequestStatus(request.id, 'completed')}>
+                                            ✓ Mark as Completed
+                                        </button>
+                                    `}
+                                    ${['pending', 'contacted', 'scheduled'].includes(request.status) && html`
+                                        <button class="btn-sm btn-outline" onClick=${() => updateRequestStatus(request.id, 'cancelled')}>
+                                            Cancel
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                        `;
+                    })}
+                </div>
             `}
         </div>
     `;
@@ -5889,7 +6300,7 @@ const CoachingCategoriesSection = () => {
                 </div>
                 <div class="categories-grid-home">
                     ${categories.map(cat => html`
-                        <a href="#coaching/${cat.slug}" class="category-card-home" key=${cat.slug}>
+                        <a href="/coaching/${cat.slug}" class="category-card-home" key=${cat.slug}>
                             <div class="category-icon-home">${cat.icon}</div>
                             <h3>${t(cat.titleKey)}</h3>
                             <p>${t(cat.descKey)}</p>
@@ -5897,8 +6308,8 @@ const CoachingCategoriesSection = () => {
                     `)}
                 </div>
                 <div class="categories-cta-home">
-                    <a href="#categories" class="btn-secondary">${t('category.browseAll') || 'View All Categories'}</a>
-                    <a href="#quiz" class="btn-primary">${t('category.findMatch') || 'Find Your Match'}</a>
+                    <a href="/categories" class="btn-secondary">${t('category.browseAll') || 'View All Categories'}</a>
+                    <a href="/quiz" class="btn-primary">${t('category.findMatch') || 'Find Your Match'}</a>
                 </div>
             </div>
         </section>
@@ -5931,7 +6342,7 @@ const HowItWorksSection = () => {
                     `)}
                 </div>
                 <div class="hiw-cta-home">
-                    <a href="#how-it-works" class="btn-link">${t('home.howItWorks.learnMore') || 'Learn more about how it works →'}</a>
+                    <a href="/how-it-works" class="btn-link">${t('home.howItWorks.learnMore') || 'Learn more about how it works →'}</a>
                 </div>
             </div>
         </section>
@@ -6659,7 +7070,7 @@ const NotificationBell = ({ session }) => {
 
                     ${notifications.length > 0 && html`
                         <div style=${{ padding: '8px 16px', borderTop: '1px solid var(--border-color)', textAlign: 'center' }}>
-                            <a href="#notifications" style=${{ fontSize: '13px', color: 'var(--primary-petrol)' }}>
+                            <a href="/notifications" style=${{ fontSize: '13px', color: 'var(--primary-petrol)' }}>
                                 View All Notifications
                             </a>
                         </div>
@@ -6680,7 +7091,7 @@ const FavoriteButton = ({ coachId, session, isFavorited, onToggle }) => {
     const handleToggle = async () => {
         if (!session) {
             alert('Please sign in to save favorites');
-            window.location.hash = '#login';
+            window.navigateTo('/login');
             return;
         }
 
@@ -6823,7 +7234,7 @@ const AccountDeletion = ({ session }) => {
 
             if (response.ok) {
                 alert('Account deletion scheduled. You will be logged out.');
-                window.location.hash = '#signout';
+                window.navigateTo('/signout');
             }
         } catch (error) {
             alert('Failed to delete account');
@@ -7119,7 +7530,7 @@ class ErrorBoundary extends React.Component {
 
     handleReset() {
         this.setState({ hasError: false, error: null, errorInfo: null });
-        window.location.hash = '#home';
+        window.navigateTo('/home');
         window.location.reload();
     }
 
@@ -7356,7 +7767,7 @@ const MatchingQuiz = ({ session }) => {
                                         <span>💰 ${formatPrice(coach.hourly_rate)}/hr</span>
                                     </div>
                                 </div>
-                                <button class="btn-primary" onClick=${() => window.location.hash = '#coaches'}>
+                                <button class="btn-primary" onClick=${() => window.navigateTo('/coaches')}>
                                     ${t('quiz.viewProfile')}
                                 </button>
                             </div>
@@ -7367,7 +7778,7 @@ const MatchingQuiz = ({ session }) => {
                         <button class="btn-secondary" onClick=${startOver}>
                             ← ${t('quiz.results.retake')}
                         </button>
-                        <button class="btn-primary" onClick=${() => window.location.hash = '#coaches'}>
+                        <button class="btn-primary" onClick=${() => window.navigateTo('/coaches')}>
                             ${t('quiz.results.browseAll')} →
                         </button>
                     </div>
@@ -7412,7 +7823,7 @@ const MatchingQuiz = ({ session }) => {
                             ← ${t('quiz.back')}
                         </button>
                     `}
-                    <button class="btn-ghost" onClick=${() => window.location.hash = '#home'}>
+                    <button class="btn-ghost" onClick=${() => window.navigateTo('/home')}>
                         ${t('quiz.intro.skip')}
                     </button>
                 </div>
@@ -7506,7 +7917,7 @@ const AIMatchPage = ({ session }) => {
                                         <p class="rec-reason">${coach.aiReason}</p>
                                         <div class="rec-meta">
                                             <span>${formatPrice(coach.hourly_rate)}/hr</span>
-                                            <button class="btn-primary btn-sm" onClick=${() => window.location.hash = '#coaches'}>
+                                            <button class="btn-primary btn-sm" onClick=${() => window.navigateTo('/coaches')}>
                                                 ${t('aiMatch.viewProfile')}
                                             </button>
                                         </div>
@@ -7519,15 +7930,62 @@ const AIMatchPage = ({ session }) => {
 
                 <div class="ai-alternative">
                     <p>${t('aiMatch.alternative')}</p>
-                    <a href="#quiz" class="btn-secondary">${t('aiMatch.alternativeBtn')} →</a>
+                    <a href="/quiz" class="btn-secondary">${t('aiMatch.alternativeBtn')} →</a>
                 </div>
             </div>
         </div>
     `;
 };
 
+// Helper function to get current route from pathname
+const getCurrentRoute = () => {
+    const pathname = window.location.pathname;
+    // Handle root path
+    if (pathname === '/' || pathname === '') return '/home';
+    return pathname;
+};
+
+// Helper function to handle GitHub Pages redirect (from 404.html)
+const handleGitHubPagesRedirect = () => {
+    const redirectPath = sessionStorage.getItem('gh-pages-redirect');
+    if (redirectPath) {
+        sessionStorage.removeItem('gh-pages-redirect');
+        console.log('GitHub Pages redirect detected:', redirectPath);
+        // Use replaceState so back button works correctly
+        window.history.replaceState(null, '', redirectPath);
+        return redirectPath;
+    }
+    return null;
+};
+
+// Helper function to convert old hash routes to new clean routes
+const migrateHashRoute = () => {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#')) {
+        // Convert #coach/id to /coach/id, #coaches to /coaches, etc.
+        const cleanPath = hash.replace('#', '/');
+        console.log('Migrating hash route:', hash, '→', cleanPath);
+        window.history.replaceState(null, '', cleanPath);
+        return cleanPath;
+    }
+    return null;
+};
+
+// Global navigate function for programmatic navigation
+window.navigateTo = (path) => {
+    // Ensure path starts with /
+    if (!path.startsWith('/')) {
+        path = '/' + path;
+    }
+    console.log('Navigating to:', path);
+    window.history.pushState(null, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+};
+
 const App = () => {
-    const [route, setRoute] = useState(window.location.hash || '#home');
+    // Check for GitHub Pages redirect first, then hash migration, then current route
+    const initialRoute = handleGitHubPagesRedirect() || migrateHashRoute() || getCurrentRoute();
+    const [route, setRoute] = useState(initialRoute);
     const [session, setSession] = useState(null);
     const [legalModal, setLegalModal] = useState({ isOpen: false, type: null });
     const [configLoaded, setConfigLoaded] = useState(false);
@@ -7568,10 +8026,19 @@ const App = () => {
                 console.error('Failed to load config:', err);
             });
 
-        const handleHashChange = () => {
-            const newRoute = window.location.hash || '#home';
+        // Handle browser back/forward buttons
+        const handlePopState = () => {
+            const newRoute = getCurrentRoute();
             console.log('Route changed to:', newRoute);
             setRoute(newRoute);
+        };
+
+        // Handle hash changes for backward compatibility
+        const handleHashChange = () => {
+            const migratedRoute = migrateHashRoute();
+            if (migratedRoute) {
+                setRoute(migratedRoute);
+            }
         };
 
         const handleLangChange = () => {
@@ -7579,10 +8046,12 @@ const App = () => {
             setLanguageVersion(v => v + 1);
         };
 
+        window.addEventListener('popstate', handlePopState);
         window.addEventListener('hashchange', handleHashChange);
         window.addEventListener('langChange', handleLangChange);
 
         return () => {
+            window.removeEventListener('popstate', handlePopState);
             window.removeEventListener('hashchange', handleHashChange);
             window.removeEventListener('langChange', handleLangChange);
         };
@@ -7604,35 +8073,40 @@ const App = () => {
 
     let Component;
 
-    // Parse route for dynamic routing
+    // Parse route for dynamic routing (clean URLs without #)
     const routePath = route.split('?')[0]; // Remove query params
-    const routeParts = routePath.replace('#', '').split('/');
-    const baseRoute = routeParts[0];
+    // Remove leading slash and split
+    const cleanPath = routePath.replace(/^\//, '');
+    const routeParts = cleanPath.split('/');
+    const baseRoute = routeParts[0] || 'home';
     const routeParam = routeParts[1] || null;
 
     // Handle dynamic routes first
-    if (routePath.startsWith('#coaching/') && routeParam) {
-        // Category pages like #coaching/executive-coaching
+    if (baseRoute === 'coaching' && routeParam) {
+        // Category pages like /coaching/executive-coaching
         Component = () => html`<${CategoryPage} categorySlug=${routeParam} />`;
-    } else if (routePath.startsWith('#coach/') && routeParam) {
-        // Coach profile pages - SEO-optimized full page
-        Component = () => html`<${CoachProfilePage} coachId=${routeParam} session=${session} />`;
+    } else if (baseRoute === 'coach' && routeParam) {
+        // Coach profile pages - supports both UUID and slug
+        // Example: /coach/john-smith-life-coach or /coach/277530d3-627d-4057-b115-985719a1f59c
+        Component = () => html`<${CoachProfilePage} coachIdOrSlug=${routeParam} session=${session} />`;
     } else {
-        // Static routes (use routePath which has query params stripped)
-        switch (routePath) {
-            case '#home': Component = () => html`<${Home} session=${session} />`; break;
-            case '#coaches': Component = () => html`<${CoachList} session=${session} />`; break;
-            case '#login': Component = Auth; break;
-            case '#onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
-            case '#dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
-            case '#quiz': Component = () => html`<${MatchingQuiz} session=${session} />`; break;
-            case '#ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;
-            case '#signout': Component = SignOut; break;
-            // New content pages
-            case '#faq': Component = () => html`<${FAQPage} />`; break;
-            case '#about': Component = () => html`<${AboutPage} />`; break;
-            case '#how-it-works': Component = () => html`<${HowItWorksPage} />`; break;
-            case '#categories': Component = () => html`<${CategoriesIndexPage} />`; break;
+        // Static routes
+        switch (baseRoute) {
+            case 'home':
+            case '':
+                Component = () => html`<${Home} session=${session} />`; break;
+            case 'coaches': Component = () => html`<${CoachList} session=${session} />`; break;
+            case 'login': Component = Auth; break;
+            case 'onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
+            case 'dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
+            case 'quiz': Component = () => html`<${MatchingQuiz} session=${session} />`; break;
+            case 'ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;
+            case 'signout': Component = SignOut; break;
+            // Content pages
+            case 'faq': Component = () => html`<${FAQPage} />`; break;
+            case 'about': Component = () => html`<${AboutPage} />`; break;
+            case 'how-it-works': Component = () => html`<${HowItWorksPage} />`; break;
+            case 'categories': Component = () => html`<${CategoriesIndexPage} />`; break;
             default: Component = () => html`<${Home} session=${session} />`;
         }
     }

@@ -84,6 +84,11 @@ try {
             handleBookings($method, $id, $action, $input);
             break;
 
+        case 'discovery-requests':
+            require_once __DIR__ . '/endpoints/discovery-requests.php';
+            handleDiscoveryRequests($method, $id, $input);
+            break;
+
         case 'availability':
             require_once __DIR__ . '/endpoints/availability.php';
             handleAvailability($method, $id, $action, $input);
