@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.7</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.8</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -2219,43 +2219,46 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
 
     return html`
         <div class="coach-card ${hasVideo ? 'has-video' : ''}">
-            <!-- Image Container with Video Play Overlay -->
-            <div class="coach-img-container ${hasVideo ? 'clickable' : ''}" onClick=${handleImageClick}>
-                <img
-                    src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name)}
-                    alt=${coach.full_name}
-                    class="coach-img"
-                    loading="lazy"
-                />
-                ${hasVideo && html`
-                    <div class="video-play-overlay">
-                        <div class="play-button">
-                            <span>▶</span>
+            <!-- Left Column: Image + Rating -->
+            <div class="coach-image-column">
+                <!-- Image Container with Video Play Overlay -->
+                <div class="coach-img-container ${hasVideo ? 'clickable' : ''}" onClick=${handleImageClick}>
+                    <img
+                        src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name)}
+                        alt=${coach.full_name}
+                        class="coach-img"
+                        loading="lazy"
+                    />
+                    ${hasVideo && html`
+                        <div class="video-play-overlay">
+                            <div class="play-button">
+                                <span>▶</span>
+                            </div>
+                            <span class="video-label">Watch Intro</span>
                         </div>
-                        <span class="video-label">Watch Intro</span>
-                    </div>
-                `}
-                <!-- Trust Badges Overlay -->
-                <${TrustBadges} coach=${coach} />
-            </div>
+                    `}
+                    <!-- Trust Badges Overlay -->
+                    <${TrustBadges} coach=${coach} />
+                </div>
 
-            <!-- Rating Section - Under Profile Picture -->
-            <div class="coach-rating-section" onClick=${handleReviewsClick}>
-                ${reviewsCount > 0 ? html`
-                    <div class="rating-compact clickable">
-                        <div class="rating-stars-compact">
-                            ${[1,2,3,4,5].map(star => html`
-                                <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                            `)}
+                <!-- Rating Section - Under Profile Picture -->
+                <div class="coach-rating-section" onClick=${handleReviewsClick}>
+                    ${reviewsCount > 0 ? html`
+                        <div class="rating-compact clickable">
+                            <div class="rating-stars-compact">
+                                ${[1,2,3,4,5].map(star => html`
+                                    <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                `)}
+                            </div>
+                            <span class="rating-value">${rating.toFixed(1)}</span>
+                            <span class="rating-count">(${reviewsCount})</span>
                         </div>
-                        <span class="rating-value">${rating.toFixed(1)}</span>
-                        <span class="rating-count">(${reviewsCount})</span>
-                    </div>
-                ` : html`
-                    <div class="new-coach-compact clickable">
-                        <span class="new-badge-compact">✨ NEW</span>
-                    </div>
-                `}
+                    ` : html`
+                        <div class="new-coach-compact clickable">
+                            <span class="new-badge-compact">✨ NEW</span>
+                        </div>
+                    `}
+                </div>
             </div>
 
             <div class="coach-info">

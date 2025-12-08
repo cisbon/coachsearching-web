@@ -3806,12 +3806,21 @@ footer, .site-footer {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
+/* Image Column - Contains image and rating stacked vertically */
+.coach-image-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+
 /* Rating Section - Under Profile Picture */
 .coach-rating-section {
     display: flex;
     justify-content: center;
-    margin-top: 8px;
+    margin-top: 10px;
     cursor: pointer;
+    width: 100%;
 }
 
 .rating-compact {
