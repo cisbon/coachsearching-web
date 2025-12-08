@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.4.1</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.5.0</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -415,17 +415,85 @@ const LanguageSelector = () => {
 };
 
 const Navbar = ({ session }) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    // Close menu when clicking outside or on a link
+    const handleLinkClick = () => {
+        setMenuOpen(false);
+    };
+
+    // Inject responsive navbar CSS
+    useEffect(() => {
+        if (!document.getElementById('responsive-navbar-css')) {
+            const style = document.createElement('style');
+            style.id = 'responsive-navbar-css';
+            style.textContent = `
+                .nav-flex { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+                .nav-links { display: flex; align-items: center; gap: 12px; }
+                .nav-browse-link { color: #1a5f5a; font-weight: 500; text-decoration: none; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; }
+                .nav-browse-link:hover { background: #f0f9f8; }
+                .hamburger-btn { display: none; background: none; border: none; cursor: pointer; padding: 8px; flex-direction: column; gap: 5px; }
+                .hamburger-btn span { display: block; width: 24px; height: 2px; background: #1a5f5a; transition: all 0.3s; }
+                .hamburger-btn.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+                .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+                .hamburger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+                @media (max-width: 768px) {
+                    .hamburger-btn { display: flex; }
+                    .nav-links {
+                        position: fixed;
+                        top: 60px;
+                        left: 0;
+                        right: 0;
+                        background: white;
+                        flex-direction: column;
+                        padding: 20px;
+                        gap: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                        transform: translateY(-100%);
+                        opacity: 0;
+                        visibility: hidden;
+                        transition: all 0.3s ease;
+                        z-index: 999;
+                    }
+                    .nav-links.open {
+                        transform: translateY(0);
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                    .nav-links a, .nav-links .nav-auth-btn {
+                        width: 100%;
+                        text-align: center;
+                        padding: 12px 16px;
+                        border-radius: 8px;
+                    }
+                    .nav-browse-link { background: #f0f9f8; }
+                    .nav-auth-btn { margin: 4px 0 !important; }
+                    .currency-selector, .lang-selector { width: 100%; justify-content: center; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }, []);
+
     return html`
         <header role="banner">
             <div class="container nav-flex">
-                <a href="#" class="logo" onClick=${() => window.location.hash = '#home'}>coach<span>searching</span>.com</a>
-                <nav class="nav-links" role="navigation">
+                <a href="#" class="logo" onClick=${() => { window.location.hash = '#home'; handleLinkClick(); }}>coach<span>searching</span>.com</a>
+
+                <button class="hamburger-btn ${menuOpen ? 'open' : ''}" onClick=${() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <nav class="nav-links ${menuOpen ? 'open' : ''}" role="navigation">
+                    <a href="#coaches" class="nav-browse-link" onClick=${handleLinkClick}>${t('nav.browseCoaches')}</a>
                     ${session ? html`
-                        <a href="#dashboard">${t('nav.dashboard')}</a>
-                        <a href="#signout" class="nav-auth-btn">${t('nav.signOut')}</a>
+                        <a href="#dashboard" onClick=${handleLinkClick}>${t('nav.dashboard')}</a>
+                        <a href="#signout" class="nav-auth-btn" onClick=${handleLinkClick}>${t('nav.signOut')}</a>
                     ` : html`
-                        <a href="#login?mode=register" class="nav-auth-btn nav-register-btn">${t('nav.register')}</a>
-                        <a href="#login" class="nav-auth-btn nav-signin-btn">${t('nav.signIn')}</a>
+                        <a href="#login?mode=register" class="nav-auth-btn nav-register-btn" onClick=${handleLinkClick}>${t('nav.register')}</a>
+                        <a href="#login" class="nav-auth-btn nav-signin-btn" onClick=${handleLinkClick}>${t('nav.signIn')}</a>
                     `}
                     <${CurrencySelector} />
                     <${LanguageSelector} />
