@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.2</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.3</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -1574,8 +1574,9 @@ const Hero = () => {
     `;
 };
 
-// Language to Flag Emoji Mapping
+// Language to Flag Emoji Mapping - Supports both full names and codes
 const LANGUAGE_FLAGS = {
+    // Full names
     'English': '🇬🇧',
     'German': '🇩🇪',
     'Spanish': '🇪🇸',
@@ -1599,21 +1600,62 @@ const LANGUAGE_FLAGS = {
     'Czech': '🇨🇿',
     'Romanian': '🇷🇴',
     'Hungarian': '🇭🇺',
-    'Ukrainian': '🇺🇦'
+    'Ukrainian': '🇺🇦',
+    // Language codes (ISO 639-1)
+    'en': '🇬🇧',
+    'de': '🇩🇪',
+    'es': '🇪🇸',
+    'fr': '🇫🇷',
+    'it': '🇮🇹',
+    'nl': '🇳🇱',
+    'pt': '🇵🇹',
+    'ru': '🇷🇺',
+    'zh': '🇨🇳',
+    'ja': '🇯🇵',
+    'ko': '🇰🇷',
+    'ar': '🇸🇦',
+    'hi': '🇮🇳',
+    'pl': '🇵🇱',
+    'sv': '🇸🇪',
+    'no': '🇳🇴',
+    'da': '🇩🇰',
+    'fi': '🇫🇮',
+    'el': '🇬🇷',
+    'tr': '🇹🇷',
+    'cs': '🇨🇿',
+    'ro': '🇷🇴',
+    'hu': '🇭🇺',
+    'uk': '🇺🇦'
+};
+
+// Language code to name mapping for tooltips
+const LANGUAGE_NAMES = {
+    'en': 'English', 'de': 'German', 'es': 'Spanish', 'fr': 'French',
+    'it': 'Italian', 'nl': 'Dutch', 'pt': 'Portuguese', 'ru': 'Russian',
+    'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean', 'ar': 'Arabic',
+    'hi': 'Hindi', 'pl': 'Polish', 'sv': 'Swedish', 'no': 'Norwegian',
+    'da': 'Danish', 'fi': 'Finnish', 'el': 'Greek', 'tr': 'Turkish',
+    'cs': 'Czech', 'ro': 'Romanian', 'hu': 'Hungarian', 'uk': 'Ukrainian'
 };
 
 // Language Flags Component
 const LanguageFlags = ({ languages }) => {
     if (!languages || languages.length === 0) return null;
 
+    // Handle if languages is a string instead of array
+    const langArray = Array.isArray(languages) ? languages : [languages];
+    if (langArray.length === 0) return null;
+
+    const getTooltip = (lang) => LANGUAGE_NAMES[lang] || lang;
+
     return html`
-        <div class="language-flags" title="${languages.join(', ')}">
-            ${languages.slice(0, 5).map(lang => html`
-                <span key=${lang} class="flag-icon" title=${lang}>
+        <div class="language-flags" title="${langArray.map(getTooltip).join(', ')}">
+            ${langArray.slice(0, 5).map(lang => html`
+                <span key=${lang} class="flag-icon" title=${getTooltip(lang)}>
                     ${LANGUAGE_FLAGS[lang] || '🌐'}
                 </span>
             `)}
-            ${languages.length > 5 ? html`<span class="more-langs">+${languages.length - 5}</span>` : ''}
+            ${langArray.length > 5 ? html`<span class="more-langs">+${langArray.length - 5}</span>` : ''}
         </div>
     `;
 };
@@ -1756,7 +1798,7 @@ const ReviewsPopup = ({ coach, onClose }) => {
 
     const handleSubmitReview = async () => {
         if (!newReview.comment.trim()) {
-            setMessage('Please write a comment');
+            setMessage('Please write a review');
             return;
         }
 
@@ -1769,7 +1811,7 @@ const ReviewsPopup = ({ coach, onClose }) => {
                     coach_id: coach.id,
                     rating: newReview.rating,
                     reviewer_name: newReview.name.trim() || 'Anonymous',
-                    comment: newReview.comment.trim(),
+                    text: newReview.comment.trim(),
                     created_at: new Date().toISOString()
                 };
 

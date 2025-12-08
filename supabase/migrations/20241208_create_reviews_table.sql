@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS cs_reviews (
     user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     reviewer_name TEXT DEFAULT 'Anonymous',
     rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT,
+    text TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -27,21 +27,25 @@ CREATE INDEX IF NOT EXISTS idx_cs_reviews_rating ON cs_reviews(rating);
 ALTER TABLE cs_reviews ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Anyone can read reviews (public)
+DROP POLICY IF EXISTS "Reviews are viewable by everyone" ON cs_reviews;
 CREATE POLICY "Reviews are viewable by everyone"
 ON cs_reviews FOR SELECT
 USING (true);
 
 -- Policy: Anyone can insert reviews (for testing - can be restricted later)
+DROP POLICY IF EXISTS "Anyone can create reviews for testing" ON cs_reviews;
 CREATE POLICY "Anyone can create reviews for testing"
 ON cs_reviews FOR INSERT
 WITH CHECK (true);
 
 -- Policy: Users can update their own reviews
+DROP POLICY IF EXISTS "Users can update their own reviews" ON cs_reviews;
 CREATE POLICY "Users can update their own reviews"
 ON cs_reviews FOR UPDATE
 USING (auth.uid() = user_id);
 
 -- Policy: Users can delete their own reviews
+DROP POLICY IF EXISTS "Users can delete their own reviews" ON cs_reviews;
 CREATE POLICY "Users can delete their own reviews"
 ON cs_reviews FOR DELETE
 USING (auth.uid() = user_id);
@@ -59,7 +63,7 @@ COMMENT ON COLUMN cs_reviews.coach_id IS 'Reference to the coach being reviewed'
 COMMENT ON COLUMN cs_reviews.user_id IS 'Reference to the user who wrote the review (optional)';
 COMMENT ON COLUMN cs_reviews.reviewer_name IS 'Display name of the reviewer';
 COMMENT ON COLUMN cs_reviews.rating IS 'Rating from 1 to 5 stars';
-COMMENT ON COLUMN cs_reviews.comment IS 'Review text/comment';
+COMMENT ON COLUMN cs_reviews.text IS 'Review text/comment';
 
 -- ============================================
 -- Function to automatically update coach rating when reviews change
