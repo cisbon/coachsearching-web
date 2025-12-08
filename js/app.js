@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.3</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.6.5</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -1807,81 +1807,106 @@ const ReviewsPopup = ({ coach, onClose }) => {
 
         try {
             if (window.supabaseClient) {
-                // First, let's discover the table schema by querying existing columns
-                console.log('🔍 Checking cs_reviews table schema...');
-                const { data: schemaCheck, error: schemaError } = await window.supabaseClient
-                    .from('cs_reviews')
-                    .select('*')
-                    .limit(1);
-
-                if (schemaError && schemaError.code !== 'PGRST116') {
-                    console.log('Schema check error:', schemaError);
-                }
-
-                // Log available columns if we got data
-                if (schemaCheck && schemaCheck.length > 0) {
-                    console.log('📋 Available columns in cs_reviews:', Object.keys(schemaCheck[0]));
-                } else {
-                    console.log('📋 cs_reviews table is empty or new, attempting insert with minimal columns');
-                }
-
-                // Build review data with only essential columns
-                // Start with minimal required fields
-                const reviewData = {
-                    coach_id: coach.id,
-                    rating: newReview.rating
-                };
-
-                // Try to add optional fields - the DB might have different column names
-                // We'll try common variations
                 const reviewText = newReview.comment.trim();
-                const reviewerName = newReview.name.trim() || 'Anonymous';
 
-                console.log('📝 Attempting to insert review:', { coach_id: coach.id, rating: newReview.rating, text: reviewText, name: reviewerName });
+                console.log('📝 Attempting to insert review for coach:', coach.id);
+                console.log('📝 Rating:', newReview.rating, 'Text:', reviewText);
 
-                // First attempt: just coach_id and rating (minimal)
-                let { data, error } = await window.supabaseClient
+                let data = null;
+                let lastError = null;
+
+                // Attempt 1: Try with 'text' column (matches our migration)
+                console.log('🔄 Attempt 1: Trying with text column...');
+                const attempt1 = await window.supabaseClient
                     .from('cs_reviews')
-                    .insert([reviewData])
-                    .select();
-
-                if (error) {
-                    console.log('❌ Minimal insert failed:', error.message);
-
-                    // Try with 'content' column (another common name)
-                    const reviewDataWithContent = {
+                    .insert([{
                         coach_id: coach.id,
                         rating: newReview.rating,
-                        content: reviewText
-                    };
-                    console.log('🔄 Trying with content column...');
-                    const result2 = await window.supabaseClient
+                        text: reviewText
+                    }])
+                    .select();
+
+                if (!attempt1.error) {
+                    console.log('✅ Success with text column!');
+                    data = attempt1.data;
+                } else {
+                    console.log('❌ Text column failed:', attempt1.error.message);
+                    lastError = attempt1.error;
+
+                    // Attempt 2: Try with 'comment' column
+                    console.log('🔄 Attempt 2: Trying with comment column...');
+                    const attempt2 = await window.supabaseClient
                         .from('cs_reviews')
-                        .insert([reviewDataWithContent])
-                        .select();
-
-                    if (result2.error) {
-                        console.log('❌ Content column failed:', result2.error.message);
-
-                        // Try with 'review' column
-                        const reviewDataWithReview = {
+                        .insert([{
                             coach_id: coach.id,
                             rating: newReview.rating,
-                            review: reviewText
-                        };
-                        console.log('🔄 Trying with review column...');
-                        const result3 = await window.supabaseClient
+                            comment: reviewText
+                        }])
+                        .select();
+
+                    if (!attempt2.error) {
+                        console.log('✅ Success with comment column!');
+                        data = attempt2.data;
+                    } else {
+                        console.log('❌ Comment column failed:', attempt2.error.message);
+                        lastError = attempt2.error;
+
+                        // Attempt 3: Try with 'content' column
+                        console.log('🔄 Attempt 3: Trying with content column...');
+                        const attempt3 = await window.supabaseClient
                             .from('cs_reviews')
-                            .insert([reviewDataWithReview])
+                            .insert([{
+                                coach_id: coach.id,
+                                rating: newReview.rating,
+                                content: reviewText
+                            }])
                             .select();
 
-                        if (result3.error) {
-                            console.log('❌ Review column failed:', result3.error.message);
-                            throw result3.error;
+                        if (!attempt3.error) {
+                            console.log('✅ Success with content column!');
+                            data = attempt3.data;
+                        } else {
+                            console.log('❌ Content column failed:', attempt3.error.message);
+                            lastError = attempt3.error;
+
+                            // Attempt 4: Try with 'review_text' column
+                            console.log('🔄 Attempt 4: Trying with review_text column...');
+                            const attempt4 = await window.supabaseClient
+                                .from('cs_reviews')
+                                .insert([{
+                                    coach_id: coach.id,
+                                    rating: newReview.rating,
+                                    review_text: reviewText
+                                }])
+                                .select();
+
+                            if (!attempt4.error) {
+                                console.log('✅ Success with review_text column!');
+                                data = attempt4.data;
+                            } else {
+                                console.log('❌ Review_text column failed:', attempt4.error.message);
+                                lastError = attempt4.error;
+
+                                // Attempt 5: Minimal insert (just coach_id and rating)
+                                console.log('🔄 Attempt 5: Trying minimal insert (coach_id + rating only)...');
+                                const attempt5 = await window.supabaseClient
+                                    .from('cs_reviews')
+                                    .insert([{
+                                        coach_id: coach.id,
+                                        rating: newReview.rating
+                                    }])
+                                    .select();
+
+                                if (!attempt5.error) {
+                                    console.log('✅ Success with minimal insert!');
+                                    data = attempt5.data;
+                                } else {
+                                    console.log('❌ All insert attempts failed');
+                                    console.log('💡 Please check your cs_reviews table structure');
+                                    throw lastError;
+                                }
+                            }
                         }
-                        data = result3.data;
-                    } else {
-                        data = result2.data;
                     }
                 }
 
