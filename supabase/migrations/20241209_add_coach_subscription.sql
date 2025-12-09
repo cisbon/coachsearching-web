@@ -85,11 +85,8 @@ ON public.cs_coaches(trial_ends_at);
 CREATE OR REPLACE VIEW public.cs_active_coaches AS
 SELECT * FROM public.cs_coaches
 WHERE
-    is_active = true
-    AND (
-        (subscription_status = 'trial' AND trial_ends_at > NOW())
-        OR (subscription_status = 'active' AND subscription_ends_at > NOW())
-    );
+    (subscription_status = 'trial' AND trial_ends_at > NOW())
+    OR (subscription_status = 'active' AND subscription_ends_at > NOW());
 
 -- Grant access to the view
 GRANT SELECT ON public.cs_active_coaches TO anon, authenticated;
