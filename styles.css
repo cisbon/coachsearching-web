@@ -4513,6 +4513,43 @@ footer, .site-footer {
     background: var(--petrol-dark);
 }
 
+.add-review-btn.login-to-review {
+    background: #6b7280;
+}
+
+.add-review-btn.login-to-review:hover {
+    background: #4b5563;
+}
+
+.review-action-area {
+    margin-bottom: 20px;
+}
+
+.already-reviewed-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    color: #166534;
+    font-weight: 500;
+}
+
+.already-reviewed-notice .check-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #22c55e;
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+}
+
 .add-review-form {
     background: #f9fafb;
     border-radius: 12px;

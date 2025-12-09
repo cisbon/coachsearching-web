@@ -1752,13 +1752,34 @@ const VideoPopup = ({ videoUrl, coachName, onClose }) => {
 };
 
 // Reviews Popup Component - With ability to add reviews (for testing)
-const ReviewsPopup = ({ coach, onClose }) => {
+const ReviewsPopup = ({ coach, onClose, session }) => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddReview, setShowAddReview] = useState(false);
     const [newReview, setNewReview] = useState({ rating: 5, name: '', comment: '' });
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState('');
+    const [userHasReviewed, setUserHasReviewed] = useState(false);
+
+    // Check if current user has already reviewed this coach
+    const checkUserHasReviewed = async () => {
+        if (!session?.user?.id || !window.supabaseClient) {
+            setUserHasReviewed(false);
+            return;
+        }
+        try {
+            const { data } = await window.supabaseClient
+                .from('cs_reviews')
+                .select('id')
+                .eq('coach_id', coach.id)
+                .eq('client_id', session.user.id)
+                .maybeSingle();
+            setUserHasReviewed(!!data);
+        } catch (err) {
+            console.error('Error checking user review:', err);
+            setUserHasReviewed(false);
+        }
+    };
 
     const loadReviews = async () => {
         setLoading(true);
@@ -1788,12 +1809,13 @@ const ReviewsPopup = ({ coach, onClose }) => {
         document.body.style.overflow = 'hidden';
 
         loadReviews();
+        checkUserHasReviewed();
 
         return () => {
             document.removeEventListener('keydown', handleEscape);
             document.body.style.overflow = '';
         };
-    }, [coach.id, onClose]);
+    }, [coach.id, onClose, session?.user?.id]);
 
     const handleBackdropClick = (e) => {
         if (e.target.classList.contains('reviews-popup-overlay')) {
@@ -1802,6 +1824,18 @@ const ReviewsPopup = ({ coach, onClose }) => {
     };
 
     const handleSubmitReview = async () => {
+        // Check if user is logged in
+        if (!session?.user?.id) {
+            setMessage('Please log in to write a review');
+            return;
+        }
+
+        // Check if user already reviewed
+        if (userHasReviewed) {
+            setMessage('You have already reviewed this coach');
+            return;
+        }
+
         if (!newReview.comment.trim()) {
             setMessage('Please write a review');
             return;
@@ -1814,9 +1848,10 @@ const ReviewsPopup = ({ coach, onClose }) => {
             if (window.supabaseClient) {
                 const reviewText = newReview.comment.trim();
                 const reviewerName = newReview.name.trim() || null; // null if empty, so DB can use default
+                const clientId = session.user.id;
 
                 console.log('📝 Attempting to insert review for coach:', coach.id);
-                console.log('📝 Rating:', newReview.rating, 'Text:', reviewText, 'Name:', reviewerName);
+                console.log('📝 Rating:', newReview.rating, 'Text:', reviewText, 'Name:', reviewerName, 'Client:', clientId);
 
                 let data = null;
                 let lastError = null;
@@ -1827,6 +1862,7 @@ const ReviewsPopup = ({ coach, onClose }) => {
                     .from('cs_reviews')
                     .insert([{
                         coach_id: coach.id,
+                        client_id: clientId,
                         rating: newReview.rating,
                         text: reviewText,
                         reviewer_name: reviewerName
@@ -1846,6 +1882,7 @@ const ReviewsPopup = ({ coach, onClose }) => {
                         .from('cs_reviews')
                         .insert([{
                             coach_id: coach.id,
+                            client_id: clientId,
                             rating: newReview.rating,
                             comment: reviewText,
                             reviewer_name: reviewerName
@@ -1865,6 +1902,7 @@ const ReviewsPopup = ({ coach, onClose }) => {
                             .from('cs_reviews')
                             .insert([{
                                 coach_id: coach.id,
+                                client_id: clientId,
                                 rating: newReview.rating,
                                 content: reviewText,
                                 reviewer_name: reviewerName
@@ -1884,6 +1922,7 @@ const ReviewsPopup = ({ coach, onClose }) => {
                                 .from('cs_reviews')
                                 .insert([{
                                     coach_id: coach.id,
+                                    client_id: clientId,
                                     rating: newReview.rating,
                                     review_text: reviewText,
                                     reviewer_name: reviewerName
@@ -1897,12 +1936,13 @@ const ReviewsPopup = ({ coach, onClose }) => {
                                 console.log('❌ Review_text column failed:', attempt4.error.message);
                                 lastError = attempt4.error;
 
-                                // Attempt 5: Minimal insert (just coach_id and rating)
-                                console.log('🔄 Attempt 5: Trying minimal insert (coach_id + rating only)...');
+                                // Attempt 5: Minimal insert (just coach_id, client_id and rating)
+                                console.log('🔄 Attempt 5: Trying minimal insert (coach_id + client_id + rating only)...');
                                 const attempt5 = await window.supabaseClient
                                     .from('cs_reviews')
                                     .insert([{
                                         coach_id: coach.id,
+                                        client_id: clientId,
                                         rating: newReview.rating
                                     }])
                                     .select();
@@ -1942,6 +1982,7 @@ const ReviewsPopup = ({ coach, onClose }) => {
                 setMessage('Review submitted successfully!');
                 setNewReview({ rating: 5, name: '', comment: '' });
                 setShowAddReview(false);
+                setUserHasReviewed(true); // Prevent duplicate reviews
                 await loadReviews();
             }
         } catch (err) {
@@ -1983,9 +2024,24 @@ const ReviewsPopup = ({ coach, onClose }) => {
                     `}
 
                     ${!showAddReview && html`
-                        <button class="add-review-btn" onClick=${() => setShowAddReview(true)}>
-                            ✏️ Write a Review
-                        </button>
+                        <div class="review-action-area">
+                            ${session?.user ? (
+                                userHasReviewed ? html`
+                                    <div class="already-reviewed-notice">
+                                        <span class="check-icon">✓</span>
+                                        ${t('review.alreadyReviewed') || 'You have already reviewed this coach'}
+                                    </div>
+                                ` : html`
+                                    <button class="add-review-btn" onClick=${() => setShowAddReview(true)}>
+                                        ✏️ ${t('review.writeReview') || 'Write a Review'}
+                                    </button>
+                                `
+                            ) : html`
+                                <button class="add-review-btn login-to-review" onClick=${() => window.location.hash = '#/login'}>
+                                    🔒 ${t('review.loginToReview') || 'Log in to write a review'}
+                                </button>
+                            `}
+                        </div>
                     `}
 
                     ${showAddReview && html`
@@ -2356,7 +2412,7 @@ const TrustBadges = ({ coach }) => {
     `;
 };
 
-const CoachCard = React.memo(({ coach, onViewDetails }) => {
+const CoachCard = React.memo(({ coach, onViewDetails, session }) => {
     const [showVideoPopup, setShowVideoPopup] = useState(false);
     const [showReviewsPopup, setShowReviewsPopup] = useState(false);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
@@ -2519,6 +2575,7 @@ const CoachCard = React.memo(({ coach, onViewDetails }) => {
         ${showReviewsPopup && html`
             <${ReviewsPopup}
                 coach=${coach}
+                session=${session}
                 onClose=${() => setShowReviewsPopup(false)}
             />
         `}
@@ -3043,7 +3100,7 @@ const CoachList = ({ searchFilters, session }) => {
                             Showing ${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''}
                         </div>
                         <div class="coach-list">
-                            ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} onViewDetails=${setSelectedCoach} />`)}
+                            ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} session=${session} onViewDetails=${setSelectedCoach} />`)}
                         </div>
                     `}
                 </div>
