@@ -406,7 +406,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [reviews, setReviews] = useState([]);
     const [credentials, setCredentials] = useState([]);
     const [similarCoaches, setSimilarCoaches] = useState([]);
-    const [showBooking, setShowBooking] = useState(false);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [showReviewModal, setShowReviewModal] = useState(false);
@@ -715,14 +714,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         removeStructuredData('coach-breadcrumb-schema');
     };
 
-    const handleBookClick = useCallback(() => {
-        if (!session) {
-            alert(t('auth.loginRequired') || 'Please sign in to book a session');
-            window.location.hash = '#login';
-            return;
-        }
-        setShowBooking(true);
-    }, [session]);
+    // handleBookClick removed - MVP uses Discovery Calls only
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('de-DE', {
@@ -897,12 +889,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     <span class="btn-subtitle">${t('discovery.freeNoObligation') || 'Free, no obligation'}</span>
                                 </button>
 
-                                <!-- Secondary CTA: Book Session -->
-                                <button class="btn-book-secondary" onClick=${handleBookClick}>
-                                    ${t('coach.bookSession') || 'Book a Session'}
-                                </button>
-
-                                <!-- Tertiary: Send Message -->
+                                <!-- Send Message -->
                                 <button class="btn-contact-link" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
                                     💬 ${t('coach.sendMessage') || 'Send a Message'}
                                 </button>
@@ -1174,9 +1161,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
                         <!-- Sidebar -->
                         <aside class="coach-sidebar">
-                            <!-- Booking Widget -->
+                            <!-- Discovery Call Widget -->
                             <div class="sidebar-widget booking-widget">
-                                <h3>${t('coach.bookNow') || 'Book Now'}</h3>
+                                <h3>${t('coach.getStarted') || 'Get Started'}</h3>
                                 <div class="widget-price">
                                     <span class="price-main">${formatPrice(coach.hourly_rate)}</span>
                                     <span class="price-per">/${t('coach.hour') || 'hour'}</span>
@@ -1189,9 +1176,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 `}
                                 <button class="btn-discovery-widget" onClick=${() => setShowDiscoveryModal(true)}>
                                     📞 ${t('discovery.bookFreeCall')}
-                                </button>
-                                <button class="btn-book-widget" onClick=${handleBookClick}>
-                                    ${t('coach.selectTime') || 'Select Date & Time'}
                                 </button>
                                 <p class="booking-note">
                                     ${t('discovery.freeDiscoveryAvailable')}

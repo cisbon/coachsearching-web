@@ -250,7 +250,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.7.7</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.8.0</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -965,14 +965,15 @@ const CoachOnboarding = ({ session }) => {
             if (formData.session_types_online) sessionTypesArray.push('online');
             if (formData.session_types_onsite) sessionTypesArray.push('onsite');
 
-            // Calculate trial end date if promo code gives free trial
-            let trialEndsAt = null;
+            // Calculate trial end date - default 14 days, or extended if promo code
+            const DEFAULT_TRIAL_DAYS = 14;
+            let trialDays = DEFAULT_TRIAL_DAYS;
             let subscriptionDiscount = null;
+
             if (promoStatus === 'valid' && promoDetails) {
                 if (promoDetails.discount_type === 'free_trial') {
-                    const trialDays = promoDetails.free_days || 30;
-                    trialEndsAt = new Date();
-                    trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
+                    // Extended trial from promo code
+                    trialDays = promoDetails.free_days || 30;
                 } else if (promoDetails.discount_type === 'percentage') {
                     subscriptionDiscount = {
                         type: 'percentage',
@@ -981,6 +982,10 @@ const CoachOnboarding = ({ session }) => {
                     };
                 }
             }
+
+            // Set trial end date
+            const trialEndsAt = new Date();
+            trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
 
             const coachProfile = {
                 user_id: session.user.id,
@@ -997,7 +1002,8 @@ const CoachOnboarding = ({ session }) => {
                 offers_onsite: formData.session_types_onsite,
                 avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 onboarding_completed: true,
-                trial_ends_at: trialEndsAt ? trialEndsAt.toISOString() : null,
+                subscription_status: 'trial',
+                trial_ends_at: trialEndsAt.toISOString(),
                 promo_code_used: promoStatus === 'valid' ? promoDetails?.code : null,
                 subscription_discount: subscriptionDiscount
             };
@@ -3111,404 +3117,12 @@ const CoachList = ({ searchFilters, session }) => {
     `;
 };
 
-const BookingModal = ({ coach, session, onClose }) => {
-    const [step, setStep] = useState(1); // 1: date/time, 2: confirm
-    const [selectedDate, setSelectedDate] = useState('');
-    const [selectedSlot, setSelectedSlot] = useState(null);
-    const [duration, setDuration] = useState(60);
-    const [availableSlots, setAvailableSlots] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [notes, setNotes] = useState('');
-
-    // Generate next 14 days
-    const getNextDays = () => {
-        const days = [];
-        for (let i = 0; i < 14; i++) {
-            const date = new Date();
-            date.setDate(date.getDate() + i);
-            days.push({
-                value: date.toISOString().split('T')[0],
-                label: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-            });
-        }
-        return days;
-    };
-
-    const nextDays = getNextDays();
-
-    useEffect(() => {
-        if (selectedDate) {
-            loadAvailableSlots();
-        }
-    }, [selectedDate, duration]);
-
-    const loadAvailableSlots = async () => {
-        setLoading(true);
-        try {
-            console.log('🕐 Loading available slots for:', { coach_id: coach.id, date: selectedDate, duration });
-
-            // Get the day of week for the selected date
-            const selectedDateTime = new Date(selectedDate);
-            const dayOfWeek = selectedDateTime.getDay(); // 0 = Sunday, 1 = Monday, etc.
-
-            // Load coach availability for this day
-            const { data: availability, error: availError } = await window.supabaseClient
-                .from('cs_coach_availability')
-                .select('*')
-                .eq('coach_id', coach.id)
-                .eq('day_of_week', dayOfWeek)
-                .eq('is_active', true)
-                .order('start_time');
-
-            if (availError) {
-                console.error('❌ Error loading availability:', availError);
-                setAvailableSlots([]);
-                return;
-            }
-
-            console.log('✅ Found availability slots:', availability);
-
-            // Load existing bookings for this date
-            const startOfDay = new Date(selectedDate);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(selectedDate);
-            endOfDay.setHours(23, 59, 59, 999);
-
-            const { data: bookings, error: bookError } = await window.supabaseClient
-                .from('cs_bookings')
-                .select('start_time, end_time, status')
-                .eq('coach_id', coach.id)
-                .gte('start_time', startOfDay.toISOString())
-                .lte('start_time', endOfDay.toISOString());
-
-            if (bookError) {
-                console.error('❌ Error loading bookings:', bookError);
-            }
-
-            console.log('✅ Existing bookings:', bookings);
-
-            // Generate time slots from availability
-            const slots = [];
-            availability.forEach(avail => {
-                const [startHour, startMinute] = avail.start_time.split(':').map(Number);
-                const [endHour, endMinute] = avail.end_time.split(':').map(Number);
-
-                const slotDate = new Date(selectedDate);
-                slotDate.setHours(startHour, startMinute, 0, 0);
-
-                const endDate = new Date(selectedDate);
-                endDate.setHours(endHour, endMinute, 0, 0);
-
-                // Generate slots every 30 minutes
-                while (slotDate < endDate) {
-                    const slotEnd = new Date(slotDate.getTime() + duration * 60000);
-
-                    // Check if slot end time is within availability
-                    if (slotEnd <= endDate) {
-                        // Check if slot conflicts with existing bookings (only pending or confirmed)
-                        const hasConflict = bookings?.some(booking => {
-                            // Only check pending and confirmed bookings
-                            if (booking.status !== 'pending' && booking.status !== 'confirmed') {
-                                return false;
-                            }
-                            const bookingStart = new Date(booking.start_time);
-                            const bookingEnd = new Date(booking.end_time);
-                            return (
-                                (slotDate >= bookingStart && slotDate < bookingEnd) ||
-                                (slotEnd > bookingStart && slotEnd <= bookingEnd) ||
-                                (slotDate <= bookingStart && slotEnd >= bookingEnd)
-                            );
-                        });
-
-                        if (!hasConflict) {
-                            slots.push({
-                                start_time: slotDate.toISOString()
-                            });
-                        }
-                    }
-
-                    slotDate.setMinutes(slotDate.getMinutes() + 30);
-                }
-            });
-
-            console.log('✅ Generated slots:', slots.length);
-            setAvailableSlots(slots);
-        } catch (error) {
-            console.error('❌ Failed to load available slots:', error);
-            setAvailableSlots([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSlotSelect = (slot) => {
-        setSelectedSlot(slot);
-    };
-
-    const handleConfirmBooking = async () => {
-        if (!selectedSlot) return;
-
-        // Check if email is verified before allowing booking
-        if (!session.user?.email_confirmed_at) {
-            alert('⚠️ Please verify your email address before booking a session.\n\nCheck your inbox for the verification email or click "Resend Email" in the banner above.');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            console.log('💾 Starting booking creation...');
-
-            // Get or create client_id using upsert to avoid RLS race conditions
-            console.log('📋 Getting or creating client data for user:', session.user.id);
-            let clientId = null;
-
-            // First try to fetch existing client
-            const { data: existingClient, error: clientFetchError } = await window.supabaseClient
-                .from('cs_clients')
-                .select('id')
-                .eq('user_id', session.user.id)
-                .maybeSingle();
-
-            console.log('📋 Client fetch result:', { existingClient, clientFetchError });
-
-            if (existingClient && !clientFetchError) {
-                clientId = existingClient.id;
-                console.log('✅ Existing client ID:', clientId);
-            } else {
-                // Use upsert to create or update client record
-                // This handles the case where record exists but RLS prevented us from seeing it
-                console.log('➕ Upserting client record...');
-
-                const clientData = {
-                    user_id: session.user.id,
-                    full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-                    email: session.user.email,
-                    phone: session.user.user_metadata?.phone || null,
-                    updated_at: new Date().toISOString()
-                };
-
-                const { data: upsertedClient, error: upsertError } = await window.supabaseClient
-                    .from('cs_clients')
-                    .upsert(clientData, {
-                        onConflict: 'user_id', // Use user_id as the conflict target
-                        ignoreDuplicates: false // Update if exists
-                    })
-                    .select('id')
-                    .single();
-
-                if (upsertError) {
-                    console.error('❌ Error upserting client:', upsertError);
-
-                    // If upsert failed, try one more time to fetch
-                    console.log('⚠️ Upsert failed, trying final fetch...');
-                    const { data: finalClient, error: finalError } = await window.supabaseClient
-                        .from('cs_clients')
-                        .select('id')
-                        .eq('user_id', session.user.id)
-                        .maybeSingle();
-
-                    if (finalClient) {
-                        clientId = finalClient.id;
-                        console.log('✅ Found client on final fetch:', clientId);
-                    } else {
-                        console.error('❌ Final fetch failed:', finalError);
-                        throw new Error(`Cannot access or create client profile. Error: ${upsertError.message || 'Unknown error'}. Please check database setup.`);
-                    }
-                } else {
-                    clientId = upsertedClient.id;
-                    console.log('✅ Client ID from upsert:', clientId);
-                }
-            }
-
-            // Check if coach has auto-accept enabled
-            const { data: coachSettings, error: settingsError } = await window.supabaseClient
-                .from('cs_coaches')
-                .select('auto_accept_bookings')
-                .eq('id', coach.id)
-                .single();
-
-            const autoAccept = coachSettings?.auto_accept_bookings || false;
-            console.log('✅ Auto-accept setting:', autoAccept);
-
-            // Calculate end time
-            const endTime = new Date(new Date(selectedSlot.start_time).getTime() + duration * 60000);
-
-            // Create booking
-            const bookingData = {
-                coach_id: coach.id,
-                client_id: clientId,
-                start_time: selectedSlot.start_time,
-                end_time: endTime.toISOString(),
-                duration_minutes: duration,
-                meeting_type: 'online', // Default to online, can be updated later
-                status: autoAccept ? 'confirmed' : 'pending',
-                amount: parseFloat((coach.hourly_rate * duration / 60).toFixed(2)),
-                currency: coach.currency || 'EUR',
-                client_notes: notes || null,
-                stripe_payment_intent_id: null // TODO: Integrate Stripe
-            };
-
-            console.log('📝 Booking data prepared:', bookingData);
-
-            const { data: booking, error: bookingError } = await window.supabaseClient
-                .from('cs_bookings')
-                .insert([bookingData])
-                .select()
-                .single();
-
-            if (bookingError) {
-                console.error('❌ Booking error:', bookingError);
-                throw bookingError;
-            }
-
-            console.log('✅ Booking created successfully!', booking);
-
-            const message = autoAccept
-                ? 'Booking confirmed! The coach will contact you with meeting details.'
-                : 'Booking request sent! The coach will review and confirm your booking.';
-
-            alert(message);
-            onClose();
-        } catch (error) {
-            console.error('❌ Failed to create booking:', error);
-            alert('Failed to create booking: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const totalPrice = (coach.hourly_rate * duration / 60).toFixed(2);
-
-    return html`
-        <div class="booking-modal" onClick=${onClose}>
-            <div class="booking-content" onClick=${(e) => e.stopPropagation()}>
-                <div class="booking-header">
-                    <h2>Book a Session with ${coach.full_name}</h2>
-                    <button class="modal-close-btn" onClick=${onClose}>×</button>
-                </div>
-
-                ${step === 1 && html`
-                    <div class="booking-step">
-                        <div class="form-group">
-                            <label>Duration</label>
-                            <select class="form-control" value=${duration} onChange=${(e) => setDuration(Number(e.target.value))}>
-                                <option value="30">30 minutes - ${formatPrice((coach.hourly_rate * 0.5))}</option>
-                                <option value="60">60 minutes - ${formatPrice(coach.hourly_rate)}</option>
-                                <option value="90">90 minutes - ${formatPrice((coach.hourly_rate * 1.5))}</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Select Date</label>
-                            <div class="date-selector">
-                                ${nextDays.map(day => html`
-                                    <button
-                                        key=${day.value}
-                                        class="date-btn ${selectedDate === day.value ? 'selected' : ''}"
-                                        onClick=${() => setSelectedDate(day.value)}
-                                    >
-                                        ${day.label}
-                                    </button>
-                                `)}
-                            </div>
-                        </div>
-
-                        ${selectedDate && html`
-                            <div class="form-group">
-                                <label>Available Time Slots</label>
-                                ${loading && html`<div class="spinner"></div>`}
-                                ${!loading && availableSlots.length === 0 && html`
-                                    <div class="empty-state-subtext">No available slots for this date</div>
-                                `}
-                                ${!loading && availableSlots.length > 0 && html`
-                                    <div class="time-slot-grid">
-                                        ${availableSlots.map(slot => {
-                                            const time = new Date(slot.start_time).toLocaleTimeString('en-US', {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                hour12: false
-                                            });
-                                            return html`
-                                                <button
-                                                    key=${slot.start_time}
-                                                    class="time-slot-btn ${selectedSlot?.start_time === slot.start_time ? 'selected' : ''}"
-                                                    onClick=${() => handleSlotSelect(slot)}
-                                                >
-                                                    ${time}
-                                                </button>
-                                            `;
-                                        })}
-                                    </div>
-                                `}
-                            </div>
-                        `}
-
-                        ${selectedSlot && html`
-                            <div class="form-group">
-                                <label>Notes (Optional)</label>
-                                <textarea
-                                    class="form-control"
-                                    rows="3"
-                                    placeholder="Any specific topics or questions you'd like to discuss?"
-                                    value=${notes}
-                                    onInput=${(e) => setNotes(e.target.value)}
-                                ></textarea>
-                            </div>
-
-                            <div class="booking-summary">
-                                <h3>Booking Summary</h3>
-                                <div class="summary-row">
-                                    <span>Coach:</span>
-                                    <span>${coach.full_name}</span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Date:</span>
-                                    <span>${new Date(selectedSlot.start_time).toLocaleDateString('en-US', {
-                                        weekday: 'long',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}</span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Time:</span>
-                                    <span>${new Date(selectedSlot.start_time).toLocaleTimeString('en-US', {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}</span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Duration:</span>
-                                    <span>${duration} minutes</span>
-                                </div>
-                                <div class="summary-row summary-total">
-                                    <span>Total:</span>
-                                    <span>${formatPrice(totalPrice)}</span>
-                                </div>
-                            </div>
-
-                            <div style=${{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-                                <button class="btn-secondary" onClick=${onClose} style=${{ flex: 1 }}>Cancel</button>
-                                <button
-                                    class="btn-primary"
-                                    onClick=${handleConfirmBooking}
-                                    disabled=${loading}
-                                    style=${{ flex: 1 }}
-                                >
-                                    ${loading ? 'Processing...' : 'Confirm Booking'}
-                                </button>
-                            </div>
-                        `}
-                    </div>
-                `}
-            </div>
-        </div>
-    `;
-};
+// BookingModal removed - MVP uses Discovery Calls only
+// Session booking will be handled outside the platform
 
 const CoachDetailModal = ({ coach, onClose, session }) => {
     console.log('Opening coach detail modal for', coach.full_name);
-    const [showBooking, setShowBooking] = useState(false);
+    const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [articles, setArticles] = useState([]);
     const [articlesLoading, setArticlesLoading] = useState(true);
     const [selectedArticle, setSelectedArticle] = useState(null);
@@ -3549,15 +3163,6 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
         }
     };
 
-    const handleBookClick = () => {
-        if (!session) {
-            alert('Please sign in to book a session');
-            window.navigateTo('/login');
-            return;
-        }
-        setShowBooking(true);
-    };
-
     return html`
         <div class="coach-detail-modal" onClick=${onClose}>
             <div class="coach-detail-content" onClick=${(e) => e.stopPropagation()}>
@@ -3572,8 +3177,8 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
                             <p class="coach-detail-title">${coach.title}</p>
                             <p class="coach-detail-location">📍 ${location}</p>
                         </div>
-                        <button class="btn-book-prominent" onClick=${handleBookClick}>
-                            ${t('coach.book')}
+                        <button class="btn-book-prominent" onClick=${() => setShowDiscoveryModal(true)}>
+                            📞 ${t('discovery.bookFreeCall')}
                         </button>
                     </div>
 
@@ -3659,11 +3264,10 @@ const CoachDetailModal = ({ coach, onClose, session }) => {
                 </div>
             `}
 
-            ${showBooking && html`
-                <${BookingModal}
+            ${showDiscoveryModal && html`
+                <${DiscoveryCallModal}
                     coach=${coach}
-                    session=${session}
-                    onClose=${() => setShowBooking(false)}
+                    onClose=${() => setShowDiscoveryModal(false)}
                 />
             `}
         </div>
@@ -3709,24 +3313,15 @@ const Dashboard = ({ session }) => {
                 <button class="tab-btn ${activeTab === 'overview' ? 'active' : ''}" onClick=${() => setActiveTab('overview')}>
                     ${t('dashboard.overview')}
                 </button>
-                <button class="tab-btn ${activeTab === 'bookings' ? 'active' : ''}" onClick=${() => setActiveTab('bookings')}>
-                    ${t('dashboard.bookings')}
-                </button>
                 ${userType === 'coach' && html`
                     <button class="tab-btn ${activeTab === 'discovery_requests' ? 'active' : ''}" onClick=${() => setActiveTab('discovery_requests')}>
-                        📞 Discovery Requests
+                        📞 ${t('dashboard.discoveryRequests') || 'Discovery Requests'}
                     </button>
-                    <button class="tab-btn ${activeTab === 'availability' ? 'active' : ''}" onClick=${() => setActiveTab('availability')}>
-                        Availability
-                    </button>
-                    <button class="tab-btn ${activeTab === 'session_notes' ? 'active' : ''}" onClick=${() => setActiveTab('session_notes')}>
-                        ${t('dashboard.session_notes') || 'Session Notes'}
+                    <button class="tab-btn ${activeTab === 'subscription' ? 'active' : ''}" onClick=${() => setActiveTab('subscription')}>
+                        💳 ${t('dashboard.subscription') || 'Subscription'}
                     </button>
                     <button class="tab-btn ${activeTab === 'articles' ? 'active' : ''}" onClick=${() => setActiveTab('articles')}>
                         ${t('dashboard.articles')}
-                    </button>
-                    <button class="tab-btn ${activeTab === 'probono' ? 'active' : ''}" onClick=${() => setActiveTab('probono')}>
-                        ${t('dashboard.probono')}
                     </button>
                 `}
                 <button class="tab-btn ${activeTab === 'referrals' ? 'active' : ''}" onClick=${() => setActiveTab('referrals')}>
@@ -3738,12 +3333,9 @@ const Dashboard = ({ session }) => {
             </div>
 
             ${activeTab === 'overview' && html`<${DashboardOverview} userType=${userType} session=${session} />`}
-            ${activeTab === 'bookings' && html`<${DashboardBookings} session=${session} userType=${userType} />`}
             ${activeTab === 'discovery_requests' && userType === 'coach' && html`<${DiscoveryRequestsDashboard} session=${session} />`}
-            ${activeTab === 'availability' && userType === 'coach' && html`<${DashboardAvailability} session=${session} />`}
-            ${activeTab === 'session_notes' && userType === 'coach' && html`<${SessionNotesDashboard} session=${session} />`}
+            ${activeTab === 'subscription' && userType === 'coach' && html`<${DashboardSubscription} session=${session} />`}
             ${activeTab === 'articles' && userType === 'coach' && html`<${DashboardArticles} session=${session} />`}
-            ${activeTab === 'probono' && userType === 'coach' && html`<${DashboardProBono} session=${session} />`}
             ${activeTab === 'referrals' && html`<${ReferralDashboard} session=${session} />`}
             ${activeTab === 'profile' && html`<${DashboardProfile} session=${session} userType=${userType} />`}
         </div>
@@ -4906,6 +4498,207 @@ const DiscoveryRequestsDashboard = ({ session }) => {
                     })}
                 </div>
             `}
+        </div>
+    `;
+};
+
+// Subscription Dashboard Component - MVP Coach Subscription Management
+const DashboardSubscription = ({ session }) => {
+    const [subscription, setSubscription] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [processing, setProcessing] = useState(false);
+    const [message, setMessage] = useState('');
+
+    const YEARLY_PRICE = 50; // €50/year
+    const TRIAL_DAYS = 14;
+
+    useEffect(() => {
+        loadSubscription();
+    }, []);
+
+    const loadSubscription = async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('cs_coaches')
+                .select('subscription_status, trial_ends_at, subscription_ends_at, stripe_subscription_id')
+                .eq('id', session.user.id)
+                .single();
+
+            if (error) throw error;
+            setSubscription(data);
+        } catch (err) {
+            console.error('Error loading subscription:', err);
+            setMessage('Failed to load subscription data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getSubscriptionStatus = () => {
+        if (!subscription) return { status: 'unknown', label: 'Unknown', color: 'gray' };
+
+        const now = new Date();
+
+        if (subscription.subscription_status === 'active' && subscription.subscription_ends_at) {
+            const endsAt = new Date(subscription.subscription_ends_at);
+            if (endsAt > now) {
+                return { status: 'active', label: t('subscription.active') || 'Active', color: 'green', endsAt };
+            } else {
+                return { status: 'expired', label: t('subscription.expired') || 'Expired', color: 'red' };
+            }
+        }
+
+        if (subscription.subscription_status === 'trial' && subscription.trial_ends_at) {
+            const trialEnds = new Date(subscription.trial_ends_at);
+            const daysLeft = Math.ceil((trialEnds - now) / (1000 * 60 * 60 * 24));
+
+            if (daysLeft > 0) {
+                return { status: 'trial', label: t('subscription.trial') || 'Free Trial', color: 'blue', daysLeft, endsAt: trialEnds };
+            } else {
+                return { status: 'trial_expired', label: t('subscription.trialExpired') || 'Trial Expired', color: 'orange' };
+            }
+        }
+
+        if (subscription.subscription_status === 'expired') {
+            return { status: 'expired', label: t('subscription.expired') || 'Expired', color: 'red' };
+        }
+
+        if (subscription.subscription_status === 'cancelled') {
+            return { status: 'cancelled', label: t('subscription.cancelled') || 'Cancelled', color: 'gray' };
+        }
+
+        return { status: 'unknown', label: 'Unknown', color: 'gray' };
+    };
+
+    const handleSubscribe = async () => {
+        setProcessing(true);
+        setMessage('');
+
+        try {
+            // Create Stripe checkout session
+            const response = await fetch('/api/create-subscription-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    coach_id: session.user.id,
+                    price_amount: YEARLY_PRICE * 100, // Convert to cents
+                    success_url: window.location.origin + '/dashboard?subscription=success',
+                    cancel_url: window.location.origin + '/dashboard?subscription=cancelled'
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.url) {
+                window.location.href = result.url;
+            } else {
+                throw new Error(result.error || 'Failed to create checkout session');
+            }
+        } catch (err) {
+            console.error('Subscription error:', err);
+            setMessage(t('subscription.errorGeneric') || 'Failed to start subscription. Please try again.');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const statusInfo = getSubscriptionStatus();
+
+    if (loading) {
+        return html`<div class="dashboard-section"><div class="spinner"></div></div>`;
+    }
+
+    return html`
+        <div class="dashboard-section subscription-dashboard">
+            <h3 class="section-title">${t('subscription.title') || 'Your Subscription'}</h3>
+
+            <!-- Current Status Card -->
+            <div class="subscription-status-card status-${statusInfo.status}">
+                <div class="status-header">
+                    <span class="status-badge ${statusInfo.color}">${statusInfo.label}</span>
+                    ${statusInfo.daysLeft !== undefined && html`
+                        <span class="days-left">${statusInfo.daysLeft} ${t('subscription.daysLeft') || 'days left'}</span>
+                    `}
+                </div>
+
+                ${statusInfo.status === 'trial' && html`
+                    <div class="status-message">
+                        <p>${t('subscription.trialMessage') || 'You are currently on a free trial. Your profile is visible to clients.'}</p>
+                        <p class="trial-ends">${t('subscription.trialEnds') || 'Trial ends'}: ${new Date(statusInfo.endsAt).toLocaleDateString()}</p>
+                    </div>
+                `}
+
+                ${statusInfo.status === 'active' && html`
+                    <div class="status-message">
+                        <p>${t('subscription.activeMessage') || 'Your subscription is active. Your profile is visible to clients.'}</p>
+                        <p class="renewal-date">${t('subscription.renewsOn') || 'Renews on'}: ${new Date(statusInfo.endsAt).toLocaleDateString()}</p>
+                    </div>
+                `}
+
+                ${(statusInfo.status === 'expired' || statusInfo.status === 'trial_expired') && html`
+                    <div class="status-message warning">
+                        <p>${t('subscription.expiredMessage') || 'Your subscription has expired. Your profile is hidden from clients.'}</p>
+                        <p>${t('subscription.subscribeToReactivate') || 'Subscribe now to make your profile visible again.'}</p>
+                    </div>
+                `}
+            </div>
+
+            <!-- Pricing Card -->
+            <div class="subscription-pricing-card">
+                <h4>${t('subscription.yearlyPlan') || 'Yearly Subscription'}</h4>
+                <div class="price-display">
+                    <span class="price-amount">€${YEARLY_PRICE}</span>
+                    <span class="price-period">/${t('subscription.year') || 'year'}</span>
+                </div>
+                <ul class="plan-features">
+                    <li>✓ ${t('subscription.feature1') || 'Profile visible to all clients'}</li>
+                    <li>✓ ${t('subscription.feature2') || 'Unlimited discovery call requests'}</li>
+                    <li>✓ ${t('subscription.feature3') || 'Publish articles & insights'}</li>
+                    <li>✓ ${t('subscription.feature4') || 'Client reviews & ratings'}</li>
+                    <li>✓ ${t('subscription.feature5') || 'Priority support'}</li>
+                </ul>
+
+                ${(statusInfo.status === 'trial' || statusInfo.status === 'trial_expired' || statusInfo.status === 'expired') && html`
+                    <button
+                        class="btn-primary btn-subscribe"
+                        onClick=${handleSubscribe}
+                        disabled=${processing}
+                    >
+                        ${processing
+                            ? (t('subscription.processing') || 'Processing...')
+                            : (t('subscription.subscribeNow') || 'Subscribe Now - €' + YEARLY_PRICE + '/year')
+                        }
+                    </button>
+                `}
+
+                ${statusInfo.status === 'active' && html`
+                    <button class="btn-secondary" disabled>
+                        ${t('subscription.currentPlan') || 'Current Plan'}
+                    </button>
+                `}
+            </div>
+
+            ${message && html`
+                <div class="message error">${message}</div>
+            `}
+
+            <!-- FAQ -->
+            <div class="subscription-faq">
+                <h4>${t('subscription.faq') || 'Frequently Asked Questions'}</h4>
+                <details>
+                    <summary>${t('subscription.faq1Question') || 'What happens after my trial ends?'}</summary>
+                    <p>${t('subscription.faq1Answer') || 'After your 14-day trial, your profile will be hidden from clients until you subscribe. Your data will be preserved.'}</p>
+                </details>
+                <details>
+                    <summary>${t('subscription.faq2Question') || 'Can I cancel anytime?'}</summary>
+                    <p>${t('subscription.faq2Answer') || 'Yes, you can cancel your subscription anytime. Your profile will remain active until the end of your billing period.'}</p>
+                </details>
+                <details>
+                    <summary>${t('subscription.faq3Question') || 'How do discovery calls work?'}</summary>
+                    <p>${t('subscription.faq3Answer') || 'Clients can request a free discovery call through your profile. You will be notified and can contact them directly to schedule the call.'}</p>
+                </details>
+            </div>
         </div>
     `;
 };
