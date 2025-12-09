@@ -948,6 +948,7 @@ const translations = {
         "coach.loadMoreReviews": "Load More Reviews",
         "coach.yearsExp": "years",
         "coach.new": "New Coach",
+        "coach.viewAllReviews": "View all reviews",
 
         // Coach Profile Enhancements
         "coach.verifiedClient": "Verified Client",
@@ -2253,6 +2254,7 @@ const translations = {
         "coach.loadMoreReviews": "Mehr Bewertungen laden",
         "coach.yearsExp": "Jahre",
         "coach.new": "Neuer Coach",
+        "coach.viewAllReviews": "Alle Bewertungen anzeigen",
 
         // Coach Profile Enhancements
         "coach.verifiedClient": "Verifizierter Kunde",
@@ -3534,6 +3536,7 @@ const translations = {
         "coach.loadMoreReviews": "Cargar Más Reseñas",
         "coach.yearsExp": "años",
         "coach.new": "Nuevo Coach",
+        "coach.viewAllReviews": "Ver todas las reseñas",
 
         // Discovery Call Booking
         "discovery.bookFreeCall": "Llamada Descubrimiento",
@@ -4791,6 +4794,7 @@ const translations = {
         "coach.loadMoreReviews": "Charger Plus d'Avis",
         "coach.yearsExp": "ans",
         "coach.new": "Nouveau Coach",
+        "coach.viewAllReviews": "Voir tous les avis",
 
         // Discovery Call Booking
         "discovery.bookFreeCall": "Appel Découverte",
@@ -6058,6 +6062,7 @@ const translations = {
         "coach.loadMoreReviews": "Carica Altre Recensioni",
         "coach.yearsExp": "anni",
         "coach.new": "Nuovo Coach",
+        "coach.viewAllReviews": "Vedi tutte le recensioni",
 
         // Discovery Call Booking
         "discovery.bookFreeCall": "Chiamata Conoscitiva",

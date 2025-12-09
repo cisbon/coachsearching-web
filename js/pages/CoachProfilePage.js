@@ -1133,11 +1133,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                             </div>
                                         ` : html`
                                             <div class="rating-display no-reviews">
-                                                <div class="rating-stars empty">
-                                                    ${[1,2,3,4,5].map(star => html`
-                                                        <span key=${star} class="star empty">☆</span>
-                                                    `)}
-                                                </div>
+                                                <span class="new-coach-badge">✨ ${t('coach.new') || 'New Coach'}</span>
                                                 <span class="no-reviews-text">${t('review.beFirstToReview') || 'Be the first to review!'}</span>
                                             </div>
                                         `}
