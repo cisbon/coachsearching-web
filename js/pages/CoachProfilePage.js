@@ -763,13 +763,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     return html`
         <div class="coach-profile-page">
-            <!-- Breadcrumbs -->
-            <div class="breadcrumb-container">
-                <div class="container">
-                    <${CoachBreadcrumbs} coach=${coach} specialty=${specialties[0]} />
-                </div>
-            </div>
-
             <!-- Hero Section -->
             <section class="coach-hero-section">
                 <div class="container">
@@ -789,6 +782,18 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         alt=${coach.full_name}
                                         loading="eager"
                                     />
+                                </div>
+                            `}
+
+                            <!-- About Section (below profile picture) -->
+                            ${coach.bio && html`
+                                <div class="coach-about-below-image">
+                                    <h3 class="about-title">${t('coach.about') || 'About'} ${coach.full_name.split(' ')[0]}</h3>
+                                    <div class="coach-bio" itemprop="description">
+                                        ${(coach.bio || '').split('\n').map((para, i) =>
+                                            para.trim() ? html`<p key=${i}>${para}</p>` : null
+                                        )}
+                                    </div>
                                 </div>
                             `}
                         </div>
@@ -912,16 +917,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     <div class="coach-content-grid">
                         <!-- Main Column -->
                         <div class="coach-main-column">
-                            <!-- About -->
-                            <article class="coach-section">
-                                <h2 class="section-title">${t('coach.about') || 'About'} ${coach.full_name.split(' ')[0]}</h2>
-                                <div class="coach-bio" itemprop="description">
-                                    ${(coach.bio || '').split('\n').map((para, i) =>
-                                        para.trim() ? html`<p key=${i}>${para}</p>` : null
-                                    )}
-                                </div>
-                            </article>
-
                             <!-- My Approach -->
                             ${coach.coaching_approach && html`
                                 <article class="coach-section coach-approach-section">
@@ -943,6 +938,101 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     `}
                                 </article>
                             `}
+
+                            <!-- Client Reviews Section (above What to Expect) -->
+                            <article class="coach-section coach-reviews-section" id="reviews">
+                                <div class="reviews-header">
+                                    <h2 class="section-title">
+                                        ${t('coach.reviews') || 'Client Reviews'}
+                                        ${reviews.length > 0 && html`
+                                            <span class="reviews-summary">
+                                                ⭐ ${rating.toFixed(1)} (${reviewsCount} ${t('coach.reviews') || 'reviews'})
+                                            </span>
+                                        `}
+                                    </h2>
+
+                                    <!-- Write Review Button -->
+                                    <div class="write-review-cta">
+                                        ${session?.user ? (
+                                            userHasReviewed ? html`
+                                                <div class="already-reviewed">
+                                                    <span class="check-icon">✓</span>
+                                                    ${t('review.alreadyReviewedShort') || 'You reviewed this coach'}
+                                                </div>
+                                            ` : html`
+                                                <button
+                                                    class="btn-write-review"
+                                                    onClick=${() => setShowReviewModal(true)}
+                                                >
+                                                    ✏️ ${t('review.writeReview') || 'Write a Review'}
+                                                </button>
+                                            `
+                                        ) : html`
+                                            <button
+                                                class="btn-write-review btn-write-review-login"
+                                                onClick=${() => window.navigateTo('/login')}
+                                            >
+                                                ${t('review.loginToReview') || 'Log in to write a review'}
+                                            </button>
+                                        `}
+                                    </div>
+                                </div>
+
+                                <!-- Review Breakdown Chart -->
+                                ${reviews.length >= 3 && html`
+                                    <div class="review-breakdown">
+                                        <div class="breakdown-summary">
+                                            <div class="breakdown-score">
+                                                <span class="big-rating">${rating.toFixed(1)}</span>
+                                                <div class="breakdown-stars">
+                                                    ${[1,2,3,4,5].map(star => html`
+                                                        <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                                    `)}
+                                                </div>
+                                                <span class="breakdown-total">${reviewsCount} ${t('coach.reviewsTotal') || 'reviews'}</span>
+                                            </div>
+                                            <div class="breakdown-bars">
+                                                ${[5,4,3,2,1].map(stars => {
+                                                    const breakdown = getReviewBreakdown();
+                                                    const count = breakdown[stars];
+                                                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                                                    return html`
+                                                        <div key=${stars} class="breakdown-row">
+                                                            <span class="bar-label">${stars}★</span>
+                                                            <div class="bar-track">
+                                                                <div class="bar-fill" style=${{ width: `${percentage}%` }}></div>
+                                                            </div>
+                                                            <span class="bar-count">${count}</span>
+                                                        </div>
+                                                    `;
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `}
+
+                                ${reviews.length > 0 ? html`
+                                    <div class="reviews-list">
+                                        ${reviews.map(review => html`
+                                            <${ReviewCard} key=${review.id} review=${review} />
+                                        `)}
+                                    </div>
+                                    ${reviews.length < reviewsCount && html`
+                                        <button class="btn-load-more">
+                                            ${t('coach.loadMoreReviews') || 'Load More Reviews'}
+                                        </button>
+                                    `}
+                                ` : html`
+                                    <div class="no-reviews-yet">
+                                        <div class="empty-stars">
+                                            ${[1,2,3,4,5].map(star => html`
+                                                <span key=${star} class="star empty">☆</span>
+                                            `)}
+                                        </div>
+                                        <p>${t('review.beFirstToReview') || 'Be the first to share your experience!'}</p>
+                                    </div>
+                                `}
+                            </article>
 
                             <!-- What to Expect -->
                             <article class="coach-section what-to-expect-section">
@@ -1067,96 +1157,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     </div>
                                 </article>
                             `}
-
-                            <!-- Reviews -->
-                            <article class="coach-section coach-reviews-section" id="reviews">
-                                <div class="reviews-header">
-                                    <h2 class="section-title">
-                                        ${t('coach.reviews') || 'Client Reviews'}
-                                        ${reviews.length > 0 && html`
-                                            <span class="reviews-summary">
-                                                ⭐ ${rating.toFixed(1)} (${reviewsCount} ${t('coach.reviews') || 'reviews'})
-                                            </span>
-                                        `}
-                                    </h2>
-
-                                    <!-- Write Review Button -->
-                                    <div class="write-review-cta">
-                                        ${session?.user ? (
-                                            userHasReviewed ? html`
-                                                <div class="already-reviewed">
-                                                    <span class="check-icon">✓</span>
-                                                    ${t('review.alreadyReviewedShort') || 'You reviewed this coach'}
-                                                </div>
-                                            ` : html`
-                                                <button
-                                                    class="btn-write-review"
-                                                    onClick=${() => setShowReviewModal(true)}
-                                                >
-                                                    ✏️ ${t('review.writeReview') || 'Write a Review'}
-                                                </button>
-                                            `
-                                        ) : html`
-                                            <button
-                                                class="btn-write-review btn-write-review-login"
-                                                onClick=${() => window.navigateTo('/login')}
-                                            >
-                                                ${t('review.loginToReview') || 'Log in to write a review'}
-                                            </button>
-                                        `}
-                                    </div>
-                                </div>
-
-                                <!-- Review Breakdown Chart -->
-                                ${reviews.length >= 3 && html`
-                                    <div class="review-breakdown">
-                                        <div class="breakdown-summary">
-                                            <div class="breakdown-score">
-                                                <span class="big-rating">${rating.toFixed(1)}</span>
-                                                <div class="breakdown-stars">
-                                                    ${[1,2,3,4,5].map(star => html`
-                                                        <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                                    `)}
-                                                </div>
-                                                <span class="breakdown-total">${reviewsCount} ${t('coach.reviewsTotal') || 'reviews'}</span>
-                                            </div>
-                                            <div class="breakdown-bars">
-                                                ${[5,4,3,2,1].map(stars => {
-                                                    const breakdown = getReviewBreakdown();
-                                                    const count = breakdown[stars];
-                                                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
-                                                    return html`
-                                                        <div key=${stars} class="breakdown-row">
-                                                            <span class="bar-label">${stars}★</span>
-                                                            <div class="bar-track">
-                                                                <div class="bar-fill" style=${{ width: `${percentage}%` }}></div>
-                                                            </div>
-                                                            <span class="bar-count">${count}</span>
-                                                        </div>
-                                                    `;
-                                                })}
-                                            </div>
-                                        </div>
-                                    </div>
-                                `}
-
-                                ${reviews.length > 0 ? html`
-                                    <div class="reviews-list">
-                                        ${reviews.map(review => html`
-                                            <${ReviewCard} key=${review.id} review=${review} />
-                                        `)}
-                                    </div>
-                                    ${reviews.length < reviewsCount && html`
-                                        <button class="btn-load-more">
-                                            ${t('coach.loadMoreReviews') || 'Load More Reviews'}
-                                        </button>
-                                    `}
-                                ` : html`
-                                    <div class="no-reviews-yet">
-                                        <p>${t('review.noReviewsYet') || 'No reviews yet. Be the first to share your experience!'}</p>
-                                    </div>
-                                `}
-                            </article>
                         </div>
 
                         <!-- Sidebar -->
@@ -1168,12 +1168,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     <span class="price-main">${formatPrice(coach.hourly_rate)}</span>
                                     <span class="price-per">/${t('coach.hour') || 'hour'}</span>
                                 </div>
-                                ${rating > 0 && html`
-                                    <div class="widget-rating">
-                                        <span class="stars">${'★'.repeat(Math.round(rating))}${'☆'.repeat(5 - Math.round(rating))}</span>
-                                        <span class="rating-text">${rating.toFixed(1)} (${reviewsCount})</span>
-                                    </div>
-                                `}
                                 <button class="btn-discovery-widget" onClick=${() => setShowDiscoveryModal(true)}>
                                     📞 ${t('discovery.bookFreeCall')}
                                 </button>

@@ -914,6 +914,7 @@ const translations = {
 
         // Coach Profile Page
         "coach.about": "About",
+        "coach.getStarted": "Get Started",
         "coach.specialties": "Specialties",
         "coach.sessionFormats": "Session Formats",
         "coach.credentials": "Credentials & Certifications",
@@ -1706,6 +1707,7 @@ const translations = {
         "review.loginToReview": "Log in to write a review",
         "review.alreadyReviewed": "You reviewed this coach",
         "review.editReview": "Edit your review",
+        "review.beFirstToReview": "Be the first to share your experience!",
         "review.noReviews": "No reviews yet",
         "review.beFirst": "Be the first to review this coach",
         "review.title": "Write a Review",
@@ -2217,6 +2219,7 @@ const translations = {
 
         // Coach Profile Page
         "coach.about": "Über",
+        "coach.getStarted": "Loslegen",
         "coach.specialties": "Spezialisierungen",
         "coach.sessionFormats": "Sitzungsformate",
         "coach.credentials": "Qualifikationen & Zertifizierungen",
@@ -2985,6 +2988,7 @@ const translations = {
         "review.loginToReview": "Anmelden um zu bewerten",
         "review.alreadyReviewed": "Sie haben diesen Coach bewertet",
         "review.editReview": "Bewertung bearbeiten",
+        "review.beFirstToReview": "Seien Sie der Erste, der seine Erfahrung teilt!",
         "review.noReviews": "Noch keine Bewertungen",
         "review.beFirst": "Seien Sie der Erste, der diesen Coach bewertet",
         "review.title": "Bewertung schreiben",
@@ -3496,6 +3500,7 @@ const translations = {
 
         // Coach Profile Page
         "coach.about": "Acerca de",
+        "coach.getStarted": "Comenzar",
         "coach.specialties": "Especialidades",
         "coach.sessionFormats": "Formatos de Sesión",
         "coach.credentials": "Credenciales y Certificaciones",
@@ -4240,6 +4245,7 @@ const translations = {
         "review.loginToReview": "Inicia sesión para escribir una reseña",
         "review.alreadyReviewed": "Ya has reseñado a este coach",
         "review.editReview": "Editar tu reseña",
+        "review.beFirstToReview": "¡Sé el primero en compartir tu experiencia!",
         "review.noReviews": "Aún no hay reseñas",
         "review.beFirst": "Sé el primero en reseñar a este coach",
         "review.title": "Escribir una Reseña",
@@ -4751,6 +4757,7 @@ const translations = {
 
         // Coach Profile Page
         "coach.about": "À propos",
+        "coach.getStarted": "Commencer",
         "coach.specialties": "Spécialités",
         "coach.sessionFormats": "Formats de Séance",
         "coach.credentials": "Accréditations et Certifications",
@@ -5505,6 +5512,7 @@ const translations = {
         "review.loginToReview": "Connectez-vous pour écrire un avis",
         "review.alreadyReviewed": "Vous avez déjà donné votre avis sur ce coach",
         "review.editReview": "Modifier votre avis",
+        "review.beFirstToReview": "Soyez le premier à partager votre expérience!",
         "review.noReviews": "Pas encore d'avis",
         "review.beFirst": "Soyez le premier à donner votre avis sur ce coach",
         "review.title": "Écrire un Avis",
@@ -6016,6 +6024,7 @@ const translations = {
 
         // Coach Profile Page
         "coach.about": "Chi Sono",
+        "coach.getStarted": "Inizia",
         "coach.specialties": "Specialità",
         "coach.sessionFormats": "Formati di Sessione",
         "coach.credentials": "Credenziali e Certificazioni",
@@ -6770,6 +6779,7 @@ const translations = {
         "review.loginToReview": "Accedi per scrivere una recensione",
         "review.alreadyReviewed": "Hai già recensito questo coach",
         "review.editReview": "Modifica la tua recensione",
+        "review.beFirstToReview": "Sii il primo a condividere la tua esperienza!",
         "review.noReviews": "Ancora nessuna recensione",
         "review.beFirst": "Sii il primo a recensire questo coach",
         "review.title": "Scrivi una Recensione",
