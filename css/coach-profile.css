@@ -210,7 +210,12 @@
     border: none;
 }
 
-/* Fix: Absolute positioning needed when parent uses aspect-ratio */
+/* Fix: Ensure video fills container when playing */
+.youtube-player.playing,
+.coach-video-player.playing {
+    min-height: 200px; /* Fallback height */
+}
+
 .youtube-player.playing .youtube-iframe,
 .coach-video-player.playing .video-element {
     position: absolute;
@@ -218,6 +223,13 @@
     left: 0;
     width: 100%;
     height: 100%;
+    z-index: 1;
+}
+
+/* Ensure thumbnail is removed properly when playing */
+.youtube-player.playing .video-thumbnail,
+.coach-video-player.playing .video-thumbnail {
+    display: none;
 }
 
 .video-placeholder {
