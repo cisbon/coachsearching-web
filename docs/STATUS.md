@@ -43,6 +43,7 @@
 - [x] Coach search with filters
 - [x] Booking flow
 - [x] Payment integration
+- [x] Video preview on coach profile page
 
 ## Frontend 🔄 Needs Work
 - [ ] SEO meta tags per page
@@ -76,6 +77,7 @@
 2. Replaced mock endpoints with real data
 3. Created documentation suite
 4. Cleaned up & archived old files
+5. Added video popup CSS for coach profile page
 
 ---
 *Update this file after completing work. Keep under 80 lines.*
