@@ -210,6 +210,16 @@
     border: none;
 }
 
+/* Fix: Absolute positioning needed when parent uses aspect-ratio */
+.youtube-player.playing .youtube-iframe,
+.coach-video-player.playing .video-element {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
 .video-placeholder {
     display: flex;
     flex-direction: column;
