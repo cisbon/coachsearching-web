@@ -1,101 +1,104 @@
 # Claude Instructions for CoachSearching.com
 
-## Quick Start (Do This First)
+## Workflow (Follow These Steps Every Session)
 
-1. **Read `/docs/STATUS.md`** - Current state in <50 lines
-2. **Check `/todo/` folder** - Latest TODO file has full task list
-3. **Ask user** what they want to work on today
+### Step 1: Initialize
+```
+1. Read this file (claude.md)
+2. Read /docs/STATUS.md
+```
+
+### Step 2: Research
+```
+1. Understand user's task
+2. Search ONLY files relevant to the task
+3. Identify what needs to change
+```
+
+### Step 3: Create Guidance File
+```
+1. Create /guidance/YYYY-MM-DD_HHMM.md
+2. List specific tasks to complete
+3. Keep it concise (<30 lines)
+```
+
+### Step 4: Execute
+```
+1. Follow tasks in guidance file
+2. Mark tasks complete as you go
+3. Update /docs/STATUS.md when done
+4. Commit and push
+```
+
+---
+
+## Guidance File Template
+
+```markdown
+# Guidance: [Brief Description]
+**Created:** YYYY-MM-DD HH:MM
+
+## Goal
+[One sentence]
+
+## Tasks
+- [ ] Task 1
+- [ ] Task 2
+- [ ] Task 3
+
+## Files to Modify
+- /path/to/file1.js
+- /path/to/file2.php
+
+## Notes
+[Any gotchas or constraints]
+```
+
+---
 
 ## Project Constraints
 
-- **Hosting**: GitHub Pages (static only, NO server-side)
-- **Frontend**: Vanilla JS + React via CDN (no build process)
-- **Routing**: Hash-based (`/#/route`) - required for GitHub Pages
-- **Backend**: Separate PHP API (not on GitHub Pages)
-- **Database**: Supabase with RLS policies
+| Constraint | Reality |
+|------------|---------|
+| Hosting | GitHub Pages (static only) |
+| Routing | Hash-based required (`/#/route`) |
+| Frontend | React via CDN (no build) |
+| Backend | Separate PHP API server |
+| Database | Supabase + RLS |
+| Stripe | Manual implementation (no SDK) |
 
-## Key Gotchas (Don't Repeat These Mistakes)
+## Key Gotchas
 
-| Wrong Assumption | Reality |
-|------------------|---------|
-| .htaccess works | GitHub Pages ignores it |
-| Can use clean URLs | Would 404 - hash routing required |
-| $supabase global exists | Use `new Database()` class |
-| Stripe SDK available | Manual implementation only |
+| Wrong | Right |
+|-------|-------|
+| .htaccess works | Ignored on GitHub Pages |
+| Clean URLs possible | Would 404 |
+| `$supabase` global | Use `new Database()` |
 
-## Efficient Workflow
+## File Locations
 
-### Before Starting Work
-```
-1. Read STATUS.md (30 sec)
-2. Confirm task with user
-3. Search only relevant files
-```
-
-### During Work
-```
-- Make changes incrementally
-- Commit after each logical unit
-- Update STATUS.md when completing items
-```
-
-### After Work
-```
-1. Update STATUS.md with completed items
-2. Commit with clear message
-3. Push to branch
-```
-
-## File Structure (What's Where)
-
-| Need | Location |
-|------|----------|
+| Need | Path |
+|------|------|
 | API endpoints | `/api/endpoints/*.php` |
 | React components | `/js/components/*.js` |
-| Page components | `/js/pages/*.js` |
+| Pages | `/js/pages/*.js` |
 | Database class | `/api/lib/Database.php` |
-| Config/CORS | `/api/config.php` |
-| DB schema | `/schema.sql` |
-| Full docs | `/docs/*.md` |
-| Archived files | `/archive/` |
+| Config | `/api/config.php` |
+| Schema | `/schema.sql` |
+| Docs | `/docs/*.md` |
+| Session guidance | `/guidance/*.md` |
 
-## Don't Waste Tokens On
+## Token Efficiency Rules
 
-- Reading files you won't modify
-- Re-reading documentation you've seen
-- Exploring "just in case"
-- Long explanations (be concise)
-- Creating unnecessary files
+**DO:**
+- Read only files you'll modify
+- Be concise in responses
+- Use guidance file for tracking
 
-## Do Spend Tokens On
-
-- Understanding the specific task
-- Reading files you WILL modify
-- Verifying changes work
-- Updating STATUS.md
-
-## Common Tasks Quick Reference
-
-| Task | Key Files |
-|------|-----------|
-| Fix API endpoint | `/api/endpoints/[name].php`, `/api/lib/Database.php` |
-| Modify React component | `/js/components/[Name].js` |
-| Update page | `/js/pages/[Name]Page.js` |
-| Change routing | `/js/components/Router.js`, `/js/app.js` |
-| Database changes | `/schema.sql`, then Supabase dashboard |
-| Styling | `/css/styles.css` |
-
-## Git Workflow
-
-- Branch: Always use assigned branch
-- Commits: Small, focused, clear messages
-- Push: After completing logical units
-
-## When Stuck
-
-1. Check `/docs/AI_DEVELOPMENT_GUIDE.md` for patterns
-2. Check `/docs/ARCHITECTURE.md` for system design
-3. Ask user for clarification
+**DON'T:**
+- Explore "just in case"
+- Re-read files unnecessarily
+- Write long explanations
 
 ---
-*Keep this file under 100 lines. Update only if workflow changes.*
+*Last updated: 2025-12-09*
