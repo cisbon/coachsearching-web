@@ -148,13 +148,31 @@
     background: #000;
     aspect-ratio: 16/9;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    min-height: 180px; /* Ensure minimum height even without content */
+}
+
+/* Ensure featured section also has proper sizing */
+.featured-video-section {
+    background: #000;
+    aspect-ratio: 16/9;
+    min-height: 200px;
+}
+
+.featured-video-section .coach-video-player,
+.featured-video-section .youtube-player {
+    border-radius: 0;
+    box-shadow: none;
+    height: 100%;
 }
 
 .video-thumbnail {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     cursor: pointer;
+    z-index: 2;
 }
 
 .video-thumbnail img {
@@ -175,6 +193,7 @@
     transform: translate(-50%, -50%);
     transition: transform 0.2s ease, filter 0.2s ease;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    z-index: 3;
 }
 
 .video-play-button.youtube-play {
@@ -196,37 +215,26 @@
     font-size: 12px;
     font-weight: 600;
     backdrop-filter: blur(4px);
+    z-index: 3;
 }
 
-.video-element {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
+/* Video and iframe - always absolutely positioned */
+.video-element,
 .youtube-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* Fix: Ensure video fills container when playing */
-.youtube-player.playing,
-.coach-video-player.playing {
-    min-height: 200px; /* Fallback height */
-}
-
-.youtube-player.playing .youtube-iframe,
-.coach-video-player.playing .video-element {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    border: none;
     z-index: 1;
 }
 
-/* Ensure thumbnail is removed properly when playing */
+.video-element {
+    object-fit: contain;
+}
+
+/* When playing, hide thumbnail */
 .youtube-player.playing .video-thumbnail,
 .coach-video-player.playing .video-thumbnail {
     display: none;
@@ -491,10 +499,6 @@
     .coach-card-featured {
         grid-template-columns: 1fr;
     }
-}
-
-.featured-video-section {
-    background: #000;
 }
 
 .featured-content {
