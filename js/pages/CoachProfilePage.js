@@ -440,6 +440,121 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
 };
 
 /**
+ * Reviews Popup Component
+ * Shows all reviews with ability to write a new review
+ */
+const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasReviewed, onClose, onWriteReview, getReviewBreakdown }) => {
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, [onClose]);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('reviews-popup-overlay')) {
+            onClose();
+        }
+    };
+
+    return html`
+        <div class="reviews-popup-overlay" onClick=${handleBackdropClick}>
+            <div class="reviews-popup-container">
+                <div class="reviews-popup-header">
+                    <h3>${t('coach.reviews') || 'Client Reviews'}</h3>
+                    <button class="reviews-popup-close" onClick=${onClose}>✕</button>
+                </div>
+                <div class="reviews-popup-content">
+                    <!-- Rating Overview -->
+                    <div class="reviews-popup-overview">
+                        <div class="popup-rating-big">
+                            <span class="big-score">${rating.toFixed(1)}</span>
+                            <div class="big-stars">
+                                ${[1,2,3,4,5].map(star => html`
+                                    <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                `)}
+                            </div>
+                            <span class="review-count">${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'}</span>
+                        </div>
+
+                        ${reviews.length >= 3 && html`
+                            <div class="popup-breakdown">
+                                ${[5,4,3,2,1].map(stars => {
+                                    const breakdown = getReviewBreakdown();
+                                    const count = breakdown[stars];
+                                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                                    return html`
+                                        <div key=${stars} class="breakdown-row">
+                                            <span class="bar-label">${stars}★</span>
+                                            <div class="bar-track">
+                                                <div class="bar-fill" style=${{ width: `${percentage}%` }}></div>
+                                            </div>
+                                            <span class="bar-count">${count}</span>
+                                        </div>
+                                    `;
+                                })}
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- Write Review Button -->
+                    <div class="popup-write-review">
+                        ${session?.user ? (
+                            userHasReviewed ? html`
+                                <div class="already-reviewed">
+                                    <span class="check-icon">✓</span>
+                                    ${t('review.alreadyReviewedShort') || 'You reviewed this coach'}
+                                </div>
+                            ` : html`
+                                <button class="btn-write-review-popup" onClick=${onWriteReview}>
+                                    ✏️ ${t('review.writeReview') || 'Write a Review'}
+                                </button>
+                            `
+                        ) : html`
+                            <button class="btn-write-review-popup btn-login" onClick=${() => { onClose(); window.navigateTo('/login'); }}>
+                                ${t('review.loginToReview') || 'Log in to write a review'}
+                            </button>
+                        `}
+                    </div>
+
+                    <!-- Reviews List -->
+                    ${reviews.length > 0 ? html`
+                        <div class="popup-reviews-list">
+                            ${reviews.map(review => html`
+                                <div key=${review.id} class="popup-review-item">
+                                    <div class="review-header">
+                                        <div class="reviewer-info">
+                                            <span class="reviewer-name">${review.reviewer_name || 'Anonymous'}</span>
+                                            <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                        <div class="review-rating">
+                                            ${[1,2,3,4,5].map(star => html`
+                                                <span key=${star} class="star-small ${star <= review.rating ? 'filled' : ''}">★</span>
+                                            `)}
+                                        </div>
+                                    </div>
+                                    <p class="review-content">${review.content}</p>
+                                </div>
+                            `)}
+                        </div>
+                    ` : html`
+                        <div class="popup-no-reviews">
+                            <p>${t('review.beFirstToReview') || 'Be the first to share your experience!'}</p>
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+/**
  * Helper to detect if a string is a UUID
  */
 const isUUID = (str) => {
@@ -466,6 +581,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [showReviewModal, setShowReviewModal] = useState(false);
+    const [showReviewsPopup, setShowReviewsPopup] = useState(false);
     const [userHasReviewed, setUserHasReviewed] = useState(false);
     const [userExistingReview, setUserExistingReview] = useState(null);
 
@@ -996,99 +1112,38 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 </article>
                             `}
 
-                            <!-- Client Reviews Section (above What to Expect) -->
-                            <article class="coach-section coach-reviews-section" id="reviews">
-                                <div class="reviews-header">
-                                    <h2 class="section-title">
-                                        ${t('coach.reviews') || 'Client Reviews'}
-                                        ${reviews.length > 0 && html`
-                                            <span class="reviews-summary">
-                                                ⭐ ${rating.toFixed(1)} (${reviewsCount} ${t('coach.reviews') || 'reviews'})
-                                            </span>
-                                        `}
-                                    </h2>
-
-                                    <!-- Write Review Button -->
-                                    <div class="write-review-cta">
-                                        ${session?.user ? (
-                                            userHasReviewed ? html`
-                                                <div class="already-reviewed">
-                                                    <span class="check-icon">✓</span>
-                                                    ${t('review.alreadyReviewedShort') || 'You reviewed this coach'}
-                                                </div>
-                                            ` : html`
-                                                <button
-                                                    class="btn-write-review"
-                                                    onClick=${() => setShowReviewModal(true)}
-                                                >
-                                                    ✏️ ${t('review.writeReview') || 'Write a Review'}
-                                                </button>
-                                            `
-                                        ) : html`
-                                            <button
-                                                class="btn-write-review btn-write-review-login"
-                                                onClick=${() => window.navigateTo('/login')}
-                                            >
-                                                ${t('review.loginToReview') || 'Log in to write a review'}
-                                            </button>
-                                        `}
-                                    </div>
-                                </div>
-
-                                <!-- Review Breakdown Chart -->
-                                ${reviews.length >= 3 && html`
-                                    <div class="review-breakdown">
-                                        <div class="breakdown-summary">
-                                            <div class="breakdown-score">
-                                                <span class="big-rating">${rating.toFixed(1)}</span>
-                                                <div class="breakdown-stars">
+                            <!-- Client Reviews Section - Clickable Overview -->
+                            <article
+                                class="coach-section coach-reviews-overview clickable"
+                                id="reviews"
+                                onClick=${() => setShowReviewsPopup(true)}
+                            >
+                                <div class="reviews-overview-content">
+                                    <h2 class="section-title">${t('coach.reviews') || 'Client Reviews'}</h2>
+                                    <div class="reviews-overview-rating">
+                                        ${reviews.length > 0 ? html`
+                                            <div class="rating-display">
+                                                <span class="rating-score">${rating.toFixed(1)}</span>
+                                                <div class="rating-stars">
                                                     ${[1,2,3,4,5].map(star => html`
                                                         <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
                                                     `)}
                                                 </div>
-                                                <span class="breakdown-total">${reviewsCount} ${t('coach.reviewsTotal') || 'reviews'}</span>
+                                                <span class="rating-count">(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})</span>
                                             </div>
-                                            <div class="breakdown-bars">
-                                                ${[5,4,3,2,1].map(stars => {
-                                                    const breakdown = getReviewBreakdown();
-                                                    const count = breakdown[stars];
-                                                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
-                                                    return html`
-                                                        <div key=${stars} class="breakdown-row">
-                                                            <span class="bar-label">${stars}★</span>
-                                                            <div class="bar-track">
-                                                                <div class="bar-fill" style=${{ width: `${percentage}%` }}></div>
-                                                            </div>
-                                                            <span class="bar-count">${count}</span>
-                                                        </div>
-                                                    `;
-                                                })}
+                                        ` : html`
+                                            <div class="rating-display no-reviews">
+                                                <div class="rating-stars empty">
+                                                    ${[1,2,3,4,5].map(star => html`
+                                                        <span key=${star} class="star empty">☆</span>
+                                                    `)}
+                                                </div>
+                                                <span class="no-reviews-text">${t('review.beFirstToReview') || 'Be the first to review!'}</span>
                                             </div>
-                                        </div>
+                                        `}
                                     </div>
-                                `}
-
-                                ${reviews.length > 0 ? html`
-                                    <div class="reviews-list">
-                                        ${reviews.map(review => html`
-                                            <${ReviewCard} key=${review.id} review=${review} />
-                                        `)}
-                                    </div>
-                                    ${reviews.length < reviewsCount && html`
-                                        <button class="btn-load-more">
-                                            ${t('coach.loadMoreReviews') || 'Load More Reviews'}
-                                        </button>
-                                    `}
-                                ` : html`
-                                    <div class="no-reviews-yet">
-                                        <div class="empty-stars">
-                                            ${[1,2,3,4,5].map(star => html`
-                                                <span key=${star} class="star empty">☆</span>
-                                            `)}
-                                        </div>
-                                        <p>${t('review.beFirstToReview') || 'Be the first to share your experience!'}</p>
-                                    </div>
-                                `}
+                                    <span class="view-all-link">${t('coach.viewAllReviews') || 'View all reviews'} →</span>
+                                </div>
                             </article>
 
                             <!-- What to Expect -->
@@ -1370,6 +1425,21 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     coach=${coach}
                     onClose=${() => setShowReviewModal(false)}
                     onSubmit=${handleSubmitReview}
+                />
+            `}
+
+            <!-- Reviews Popup -->
+            ${showReviewsPopup && html`
+                <${ReviewsPopup}
+                    coach=${coach}
+                    reviews=${reviews}
+                    rating=${rating}
+                    reviewsCount=${reviewsCount}
+                    session=${session}
+                    userHasReviewed=${userHasReviewed}
+                    onClose=${() => setShowReviewsPopup(false)}
+                    onWriteReview=${() => { setShowReviewsPopup(false); setShowReviewModal(true); }}
+                    getReviewBreakdown=${getReviewBreakdown}
                 />
             `}
 
