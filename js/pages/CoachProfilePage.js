@@ -19,7 +19,6 @@ import { Breadcrumbs, CoachBreadcrumbs } from '../components/common/Breadcrumbs.
 import {
     TrustScore,
     TrustSignalsBar,
-    CoachVideoPlayer,
     CoachStatsBanner,
     CredentialsList,
     ReviewCard,
@@ -83,6 +82,94 @@ const LanguageFlags = ({ languages }) => {
                 ` : html`<span key=${lang} class="flag-icon" title=${getTooltip(lang)}>🌐</span>`;
             })}
             ${langArray.length > 5 ? html`<span class="more-langs">+${langArray.length - 5}</span>` : ''}
+        </div>
+    `;
+};
+
+/**
+ * Video Popup Component - Supports YouTube, Vimeo, and direct video URLs
+ */
+const VideoPopup = ({ videoUrl, coachName, onClose }) => {
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, [onClose]);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('video-popup-overlay')) {
+            onClose();
+        }
+    };
+
+    // Convert video URL to embeddable format
+    const getEmbedUrl = (url) => {
+        if (!url) return null;
+
+        // YouTube formats: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+        const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        if (youtubeMatch) {
+            return `https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=1&rel=0`;
+        }
+
+        // Vimeo formats: vimeo.com/ID, player.vimeo.com/video/ID
+        const vimeoMatch = url.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/);
+        if (vimeoMatch) {
+            return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+        }
+
+        // Direct video URL (mp4, webm, etc.)
+        if (url.match(/\.(mp4|webm|ogg)(\?|$)/i)) {
+            return url;
+        }
+
+        // Return original URL as fallback
+        return url;
+    };
+
+    const embedUrl = getEmbedUrl(videoUrl);
+    const isDirectVideo = videoUrl && videoUrl.match(/\.(mp4|webm|ogg)(\?|$)/i);
+    const isYouTubeOrVimeo = embedUrl && (embedUrl.includes('youtube.com/embed') || embedUrl.includes('player.vimeo.com'));
+
+    return html`
+        <div class="video-popup-overlay" onClick=${handleBackdropClick}>
+            <div class="video-popup-container">
+                <div class="video-popup-header">
+                    <h3>${t('video.meet') || 'Meet'} ${coachName}</h3>
+                    <button class="video-popup-close" onClick=${onClose}>✕</button>
+                </div>
+                <div class="video-popup-content">
+                    ${isYouTubeOrVimeo ? html`
+                        <iframe
+                            src=${embedUrl}
+                            class="video-iframe"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                        ></iframe>
+                    ` : isDirectVideo ? html`
+                        <video
+                            src=${videoUrl}
+                            controls
+                            autoplay
+                            class="video-player"
+                        >
+                            Your browser does not support video playback.
+                        </video>
+                    ` : html`
+                        <div class="video-error">
+                            <p>${t('video.unableToPlay') || 'Unable to play this video format.'}</p>
+                            <a href=${videoUrl} target="_blank" class="video-external-link">${t('video.openInNewTab') || 'Open video in new tab'} →</a>
+                        </div>
+                    `}
+                </div>
+            </div>
         </div>
     `;
 };
@@ -582,6 +669,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [showReviewsPopup, setShowReviewsPopup] = useState(false);
+    const [showVideoPopup, setShowVideoPopup] = useState(false);
     const [userHasReviewed, setUserHasReviewed] = useState(false);
     const [userExistingReview, setUserExistingReview] = useState(null);
 
@@ -941,21 +1029,24 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     <div class="coach-hero-grid">
                         <!-- Video/Image Column -->
                         <div class="coach-media-column">
-                            ${coach.video_intro_url ? html`
-                                <${CoachVideoPlayer}
-                                    videoUrl=${coach.video_intro_url}
-                                    thumbnailUrl=${coach.video_thumbnail_url}
-                                    coachName=${coach.full_name}
+                            <div
+                                class="coach-hero-image ${coach.video_intro_url ? 'has-video clickable' : ''}"
+                                onClick=${coach.video_intro_url ? () => setShowVideoPopup(true) : null}
+                            >
+                                <img
+                                    src=${coach.video_thumbnail_url || coach.avatar_url || 'https://via.placeholder.com/400'}
+                                    alt=${coach.full_name}
+                                    loading="eager"
                                 />
-                            ` : html`
-                                <div class="coach-hero-image">
-                                    <img
-                                        src=${coach.avatar_url || 'https://via.placeholder.com/400'}
-                                        alt=${coach.full_name}
-                                        loading="eager"
-                                    />
-                                </div>
-                            `}
+                                ${coach.video_intro_url && html`
+                                    <div class="video-play-overlay">
+                                        <div class="play-button">
+                                            <span>▶</span>
+                                        </div>
+                                        <span class="video-label">${t('video.watchIntro') || 'Watch Intro'}</span>
+                                    </div>
+                                `}
+                            </div>
 
                             <!-- Trust Signals (below profile picture) -->
                             <${TrustSignalsBar} coach=${coach} />
@@ -1408,6 +1499,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         </div>
                     </div>
                 </section>
+            `}
+
+            <!-- Video Popup -->
+            ${showVideoPopup && coach.video_intro_url && html`
+                <${VideoPopup}
+                    videoUrl=${coach.video_intro_url}
+                    coachName=${coach.full_name}
+                    onClose=${() => setShowVideoPopup(false)}
+                />
             `}
 
             <!-- Discovery Call Modal -->

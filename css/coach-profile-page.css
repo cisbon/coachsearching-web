@@ -58,6 +58,66 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* Video Play Overlay for Coach Profile */
+.coach-hero-image.has-video {
+    cursor: pointer;
+    position: relative;
+}
+
+.coach-hero-image.has-video:hover img {
+    transform: scale(1.05);
+}
+
+.coach-hero-image .video-play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.coach-hero-image.has-video:hover .video-play-overlay {
+    opacity: 1;
+}
+
+.coach-hero-image .play-button {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease;
+}
+
+.coach-hero-image.has-video:hover .play-button {
+    transform: scale(1.1);
+}
+
+.coach-hero-image .play-button span {
+    font-size: 32px;
+    color: var(--primary-petrol, #006266);
+    margin-left: 4px;
+}
+
+.coach-hero-image .video-label {
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-top: 12px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Info Column */
