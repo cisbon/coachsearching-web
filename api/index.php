@@ -119,6 +119,12 @@ try {
             handleAuth($method, $id, $action, $input);
             break;
 
+        case 'sitemap.xml':
+        case 'sitemap':
+            require_once __DIR__ . '/endpoints/sitemap.php';
+            generateSitemap();
+            exit;
+
         case 'health':
             Response::success([
                 'status' => 'healthy',

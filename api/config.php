@@ -1,13 +1,45 @@
 <?php
 // api/config.php
 
-// CORS Headers - MUST be first
-header("Access-Control-Allow-Origin: *");
+// CORS Headers - Restricted to allowed origins
+$allowedOrigins = [
+    'https://coachsearching.com',
+    'https://www.coachsearching.com',
+    'https://cisbon.github.io'  // GitHub Pages
+];
+
+// Add localhost for development
+$serverName = $_SERVER['SERVER_NAME'] ?? '';
+if ($serverName === 'localhost' || strpos($serverName, '127.0.0.1') !== false) {
+    $allowedOrigins[] = 'http://localhost:3000';
+    $allowedOrigins[] = 'http://localhost:8080';
+    $allowedOrigins[] = 'http://127.0.0.1:3000';
+    $allowedOrigins[] = 'http://127.0.0.1:8080';
+}
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
+    header("Vary: Origin");
+} elseif (empty($origin)) {
+    // Allow requests without Origin header (direct API calls, same-origin)
+    header("Access-Control-Allow-Origin: https://coachsearching.com");
+}
+
 header("Access-Control-Max-Age: 86400");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE, PATCH");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
+// Security Headers
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: DENY");
+header("X-XSS-Protection: 1; mode=block");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+
+// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(204);
     exit(0);
 }
 
@@ -32,6 +64,10 @@ define('SUPABASE_URL', getenv('SUPABASE_URL') ?: 'https://your-project.supabase.
 define('SUPABASE_ANON_KEY', getenv('SUPABASE_ANON_KEY') ?: 'your-anon-key');
 define('STRIPE_SECRET_KEY', getenv('STRIPE_SECRET_KEY') ?: 'sk_test_...');
 define('STRIPE_CONNECT_CLIENT_ID', getenv('STRIPE_CONNECT_CLIENT_ID') ?: 'ca_...');
+define('STRIPE_WEBHOOK_SECRET', getenv('STRIPE_WEBHOOK_SECRET') ?: 'whsec_...');
+
+// Site URL for redirects
+define('SITE_URL', getenv('SITE_URL') ?: 'https://coachsearching.com');
 
 // OpenRouter AI Configuration
 define('OPENROUTER_API_KEY', getenv('OPENROUTER_API_KEY') ?: '');

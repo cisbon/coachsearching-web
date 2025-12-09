@@ -11,11 +11,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 - Pre-rendering solution for SEO
-- Dynamic sitemap generation
 - Complete admin dashboard backend
-- Full GDPR compliance (data export, deletion)
 - Code splitting for performance
-- Complete auth endpoint implementation
+- CSS bundling optimization
+
+---
+
+## [2.1.0] - 2025-12-09
+
+### Security
+- **Fixed CORS vulnerability** - Restricted `Access-Control-Allow-Origin` from `*` to specific allowed domains (coachsearching.com, www.coachsearching.com, cisbon.github.io)
+- **Enabled Stripe webhook signature verification** - Implemented HMAC-SHA256 signature validation without requiring Stripe SDK
+- **Added security headers** - X-Frame-Options: DENY, X-XSS-Protection, Referrer-Policy
+
+### Fixed
+- **Fixed undefined $supabase global** - Replaced all `global $supabase` with proper `Database` class instantiation in bookings.php
+- **Implemented real auth endpoints** - GET /auth/me now returns actual user profiles from Supabase, PATCH updates work, GDPR data export functional
+- **Fixed search endpoint** - Removed mock data, now queries real coaches from Supabase with full filter support
+
+### Added
+- **Dynamic sitemap endpoint** - GET /api/sitemap.xml now generates sitemap from database with all visible coach profiles
+- **STRIPE_WEBHOOK_SECRET config** - Added constant for webhook signature verification
+- **SITE_URL config** - Added for proper redirect URLs
+- **Enhanced webhook handling** - Added support for payment_intent.succeeded, charge.refunded, charge.dispute.created events
+
+### Changed
+- Improved auth endpoint to detect coach vs client profiles automatically
+- Search now supports video_priority sorting (coaches with videos appear first)
+- Booking endpoints now properly use Database class for all operations
 
 ---
 

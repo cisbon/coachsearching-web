@@ -23,6 +23,8 @@
  */
 
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../lib/Sanitizer.php';
 
 /**
  * Main handler for booking operations
@@ -69,7 +71,7 @@ function handleBookings($method, $bookingId, $action, $input) {
  * Book a free discovery call
  */
 function bookDiscoveryCall($input) {
-    global $supabase;
+    $db = new Database();
 
     $required = ['coach_id', 'start_time', 'client_name', 'client_email'];
     foreach ($required as $field) {
@@ -109,7 +111,7 @@ function bookDiscoveryCall($input) {
     }
 
     // Check if client already has a pending discovery call with this coach
-    $existingCall = $supabase->from('cs_bookings')
+    $existingCall = $db->from('cs_bookings')
         ->select('id')
         ->eq('coach_id', $coachId)
         ->eq('client_email', $clientEmail)
@@ -123,7 +125,7 @@ function bookDiscoveryCall($input) {
     }
 
     // Get coach info for notification
-    $coach = $supabase->from('cs_coaches')
+    $coach = $db->from('cs_coaches')
         ->select('user_id, display_name, email')
         ->eq('id', $coachId)
         ->single()
@@ -154,7 +156,7 @@ function bookDiscoveryCall($input) {
         'confirmation_sent_at' => date('c')
     ];
 
-    $booking = $supabase->from('cs_bookings')
+    $booking = $db->from('cs_bookings')
         ->insert($bookingData)
         ->execute();
 
@@ -191,7 +193,7 @@ function bookDiscoveryCall($input) {
  * Returns a Stripe PaymentIntent client_secret for frontend payment
  */
 function createBookingIntent($input) {
-    global $supabase;
+    $db = new Database();
 
     $required = ['coach_id', 'start_time', 'duration_minutes', 'client_name', 'client_email'];
     foreach ($required as $field) {
@@ -237,7 +239,7 @@ function createBookingIntent($input) {
     }
 
     // Get coach pricing and Stripe account
-    $coach = $supabase->from('cs_coaches')
+    $coach = $db->from('cs_coaches')
         ->select('id, user_id, display_name, email, hourly_rate, currency')
         ->eq('id', $coachId)
         ->single()
@@ -248,7 +250,7 @@ function createBookingIntent($input) {
     }
 
     // Get coach's Stripe account
-    $stripeAccount = $supabase->from('cs_coach_stripe_accounts')
+    $stripeAccount = $db->from('cs_coach_stripe_accounts')
         ->select('stripe_account_id, charges_enabled, founding_coach')
         ->eq('coach_id', $coachId)
         ->single()
@@ -291,7 +293,7 @@ function createBookingIntent($input) {
         'satisfaction_guarantee' => $isFirstSession // First session gets guarantee
     ];
 
-    $booking = $supabase->from('cs_bookings')
+    $booking = $db->from('cs_bookings')
         ->insert($bookingData)
         ->execute();
 
@@ -324,7 +326,7 @@ function createBookingIntent($input) {
         ]);
 
         // Update booking with payment intent
-        $supabase->from('cs_bookings')
+        $db->from('cs_bookings')
             ->update([
                 'stripe_payment_intent_id' => $paymentIntent->id
             ])
@@ -350,7 +352,7 @@ function createBookingIntent($input) {
 
     } catch (\Stripe\Exception\ApiErrorException $e) {
         // Clean up the pending booking
-        $supabase->from('cs_bookings')
+        $db->from('cs_bookings')
             ->delete()
             ->eq('id', $bookingRecord['id'])
             ->execute();
@@ -364,12 +366,12 @@ function createBookingIntent($input) {
  * Confirm a booking after successful payment
  */
 function confirmBooking($bookingId, $input) {
-    global $supabase;
+    $db = new Database();
 
     $paymentIntentId = $input['payment_intent_id'] ?? null;
 
     // Get the booking
-    $booking = $supabase->from('cs_bookings')
+    $booking = $db->from('cs_bookings')
         ->select('*, cs_coaches(display_name, email)')
         ->eq('id', $bookingId)
         ->single()
@@ -407,7 +409,7 @@ function confirmBooking($bookingId, $input) {
     $endDateTime = new DateTime($booking['end_time']);
 
     // Check for conflicting confirmed bookings (excluding this one)
-    $conflicts = $supabase->from('cs_bookings')
+    $conflicts = $db->from('cs_bookings')
         ->select('id')
         ->eq('coach_id', $booking['coach_id'])
         ->eq('status', 'confirmed')
@@ -430,7 +432,7 @@ function confirmBooking($bookingId, $input) {
             }
         }
 
-        $supabase->from('cs_bookings')
+        $db->from('cs_bookings')
             ->update(['status' => 'cancelled', 'cancelled_reason' => 'slot_conflict'])
             ->eq('id', $bookingId)
             ->execute();
@@ -439,7 +441,7 @@ function confirmBooking($bookingId, $input) {
     }
 
     // Get coach's video link
-    $settings = $supabase->from('cs_coach_booking_settings')
+    $settings = $db->from('cs_coach_booking_settings')
         ->select('video_link')
         ->eq('coach_id', $booking['coach_id'])
         ->single()
@@ -455,14 +457,14 @@ function confirmBooking($bookingId, $input) {
         'video_link' => $videoLink
     ];
 
-    $supabase->from('cs_bookings')
+    $db->from('cs_bookings')
         ->update($updateData)
         ->eq('id', $bookingId)
         ->execute();
 
     // Create payment record
     if ($booking['session_type'] === 'paid' && $paymentIntentId) {
-        $supabase->from('cs_payment_records')
+        $db->from('cs_payment_records')
             ->insert([
                 'booking_id' => $bookingId,
                 'coach_id' => $booking['coach_id'],
@@ -509,13 +511,13 @@ function confirmBooking($bookingId, $input) {
  * Cancel a booking
  */
 function cancelBooking($bookingId, $input) {
-    global $supabase;
+    $db = new Database();
 
     $cancelledBy = $input['cancelled_by'] ?? 'client'; // 'client' or 'coach'
     $reason = sanitizeInput($input['reason'] ?? '');
 
     // Get the booking
-    $booking = $supabase->from('cs_bookings')
+    $booking = $db->from('cs_bookings')
         ->select('*, cs_coaches(display_name, email)')
         ->eq('id', $bookingId)
         ->single()
@@ -575,7 +577,7 @@ function cancelBooking($bookingId, $input) {
             $refund = $stripe->refunds->create($refundData);
 
             // Record the refund
-            $supabase->from('cs_payment_records')
+            $db->from('cs_payment_records')
                 ->insert([
                     'booking_id' => $bookingId,
                     'coach_id' => $booking['coach_id'],
@@ -594,7 +596,7 @@ function cancelBooking($bookingId, $input) {
     }
 
     // Update booking status
-    $supabase->from('cs_bookings')
+    $db->from('cs_bookings')
         ->update([
             'status' => 'cancelled',
             'payment_status' => $refundAmount > 0 ? 'refunded' : $booking['payment_status'],
@@ -642,7 +644,7 @@ function cancelBooking($bookingId, $input) {
  * Reschedule a booking
  */
 function rescheduleBooking($bookingId, $input) {
-    global $supabase;
+    $db = new Database();
 
     if (empty($input['new_start_time'])) {
         return ['error' => 'New start time is required', 'status' => 400];
@@ -652,7 +654,7 @@ function rescheduleBooking($bookingId, $input) {
     $newStartTime = $input['new_start_time'];
 
     // Get the booking
-    $booking = $supabase->from('cs_bookings')
+    $booking = $db->from('cs_bookings')
         ->select('*, cs_coaches(display_name, email)')
         ->eq('id', $bookingId)
         ->single()
@@ -693,7 +695,7 @@ function rescheduleBooking($bookingId, $input) {
     $oldStartTime = $booking['start_time'];
 
     // Update booking
-    $supabase->from('cs_bookings')
+    $db->from('cs_bookings')
         ->update([
             'start_time' => $newStartDateTime->format('c'),
             'end_time' => $newEndDateTime->format('c'),
@@ -738,7 +740,7 @@ function rescheduleBooking($bookingId, $input) {
  * Book a session from a package
  */
 function bookPackageSession($input) {
-    global $supabase;
+    $db = new Database();
 
     $required = ['package_id', 'start_time'];
     foreach ($required as $field) {
@@ -752,7 +754,7 @@ function bookPackageSession($input) {
     $notes = sanitizeInput($input['notes'] ?? '');
 
     // Get the package
-    $package = $supabase->from('cs_booking_packages')
+    $package = $db->from('cs_booking_packages')
         ->select('*, cs_coaches(display_name, email)')
         ->eq('id', $packageId)
         ->single()
@@ -797,7 +799,7 @@ function bookPackageSession($input) {
     }
 
     // Get coach video link
-    $settings = $supabase->from('cs_coach_booking_settings')
+    $settings = $db->from('cs_coach_booking_settings')
         ->select('video_link')
         ->eq('coach_id', $package['coach_id'])
         ->single()
@@ -829,7 +831,7 @@ function bookPackageSession($input) {
         'confirmation_sent_at' => date('c')
     ];
 
-    $booking = $supabase->from('cs_bookings')
+    $booking = $db->from('cs_bookings')
         ->insert($bookingData)
         ->execute();
 
@@ -840,7 +842,7 @@ function bookPackageSession($input) {
     $bookingRecord = $booking[0];
 
     // Decrement package sessions
-    $supabase->from('cs_booking_packages')
+    $db->from('cs_booking_packages')
         ->update([
             'sessions_remaining' => $package['sessions_remaining'] - 1,
             'sessions_used' => ($package['sessions_used'] ?? 0) + 1
@@ -884,9 +886,9 @@ function bookPackageSession($input) {
  * Mark a booking as completed
  */
 function completeBooking($bookingId) {
-    global $supabase;
+    $db = new Database();
 
-    $booking = $supabase->from('cs_bookings')
+    $booking = $db->from('cs_bookings')
         ->select('*')
         ->eq('id', $bookingId)
         ->single()
@@ -900,7 +902,7 @@ function completeBooking($bookingId) {
         return ['error' => 'Booking must be confirmed to complete', 'status' => 400];
     }
 
-    $supabase->from('cs_bookings')
+    $db->from('cs_bookings')
         ->update([
             'status' => 'completed',
             'completed_at' => date('c')
@@ -923,9 +925,9 @@ function completeBooking($bookingId) {
  * Mark booking as no-show
  */
 function markNoShow($bookingId) {
-    global $supabase;
+    $db = new Database();
 
-    $booking = $supabase->from('cs_bookings')
+    $booking = $db->from('cs_bookings')
         ->select('*')
         ->eq('id', $bookingId)
         ->single()
@@ -939,7 +941,7 @@ function markNoShow($bookingId) {
         return ['error' => 'Booking must be confirmed to mark as no-show', 'status' => 400];
     }
 
-    $supabase->from('cs_bookings')
+    $db->from('cs_bookings')
         ->update([
             'status' => 'no_show',
             'completed_at' => date('c')
@@ -957,9 +959,9 @@ function markNoShow($bookingId) {
  * Get a single booking
  */
 function getBooking($bookingId) {
-    global $supabase;
+    $db = new Database();
 
-    $booking = $supabase->from('cs_bookings')
+    $booking = $db->from('cs_bookings')
         ->select('*, cs_coaches(id, display_name, profile_image_url, specialties)')
         ->eq('id', $bookingId)
         ->single()
@@ -976,7 +978,7 @@ function getBooking($bookingId) {
  * Get coach's bookings
  */
 function getCoachBookings() {
-    global $supabase;
+    $db = new Database();
 
     $coachId = $_GET['coach_id'] ?? null;
     $status = $_GET['status'] ?? null;
@@ -989,7 +991,7 @@ function getCoachBookings() {
         return ['error' => 'Coach ID is required', 'status' => 400];
     }
 
-    $query = $supabase->from('cs_bookings')
+    $query = $db->from('cs_bookings')
         ->select('*')
         ->eq('coach_id', $coachId)
         ->order('start_time', ['ascending' => true]);
@@ -1031,7 +1033,7 @@ function getCoachBookings() {
  * Get client's bookings
  */
 function getClientBookings() {
-    global $supabase;
+    $db = new Database();
 
     $clientId = $_GET['client_id'] ?? null;
     $clientEmail = $_GET['client_email'] ?? null;
@@ -1043,7 +1045,7 @@ function getClientBookings() {
         return ['error' => 'Client ID or email is required', 'status' => 400];
     }
 
-    $query = $supabase->from('cs_bookings')
+    $query = $db->from('cs_bookings')
         ->select('*, cs_coaches(id, display_name, profile_image_url, specialties)')
         ->order('start_time', ['ascending' => false]);
 
@@ -1082,10 +1084,10 @@ function getClientBookings() {
  * Check if a time slot is available
  */
 function isSlotAvailable($coachId, $startDateTime, $endDateTime, $excludeBookingId = null) {
-    global $supabase;
+    $db = new Database();
 
     // Check for conflicting bookings
-    $query = $supabase->from('cs_bookings')
+    $query = $db->from('cs_bookings')
         ->select('id')
         ->eq('coach_id', $coachId)
         ->in('status', ['pending', 'confirmed'])
@@ -1104,7 +1106,7 @@ function isSlotAvailable($coachId, $startDateTime, $endDateTime, $excludeBooking
 
     // Check for blocked dates
     $dateStr = $startDateTime->format('Y-m-d');
-    $blockedDates = $supabase->from('cs_coach_blocked_dates')
+    $blockedDates = $db->from('cs_coach_blocked_dates')
         ->select('id')
         ->eq('coach_id', $coachId)
         ->lte('start_date', $dateStr)
@@ -1187,9 +1189,9 @@ function formatCurrency($cents, $currency = 'eur') {
  * Queue a notification for sending
  */
 function queueNotification($userId, $type, $data, $email) {
-    global $supabase;
+    $db = new Database();
 
-    $supabase->from('cs_notifications')
+    $db->from('cs_notifications')
         ->insert([
             'user_id' => $userId,
             'type' => $type,

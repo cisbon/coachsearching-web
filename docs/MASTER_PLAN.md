@@ -839,19 +839,19 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 ## Progress Tracking
 
-### Phase A: Security [ ] 0/3
-- [ ] A1. Fix CORS
-- [ ] A2. Enable webhook signature
-- [ ] A3. Add security headers
+### Phase A: Security [x] 3/3 COMPLETE
+- [x] A1. Fix CORS - Restricted to allowed origins, added Vary header
+- [x] A2. Enable webhook signature - Implemented manual HMAC-SHA256 verification
+- [x] A3. Add security headers - X-Frame-Options, X-XSS-Protection, Referrer-Policy
 
-### Phase B: Functionality [ ] 0/3
-- [ ] B1. Fix $supabase global
-- [ ] B2. Implement auth endpoints
-- [ ] B3. Fix search endpoint
+### Phase B: Functionality [x] 3/3 COMPLETE
+- [x] B1. Fix $supabase global - Replaced with Database class throughout bookings.php
+- [x] B2. Implement auth endpoints - Real Supabase queries, GDPR export/delete
+- [x] B3. Fix search endpoint - Real queries with filters, sorting, pagination
 
-### Phase C: SEO [ ] 0/2
-- [ ] C1. Dynamic sitemap
-- [ ] C2. Pre-rendering
+### Phase C: SEO [ ] 1/2
+- [x] C1. Dynamic sitemap - API endpoint /api/sitemap.xml with coach profiles
+- [ ] C2. Pre-rendering - Planned, requires build-time generation
 
 ### Phase D: Quality [ ] 0/2
 - [ ] D1. Code splitting
@@ -863,8 +863,15 @@ require_once __DIR__ . '/vendor/autoload.php';
 ---
 
 **Plan Created:** December 9, 2025
-**Plan Status:** In Progress
-**Target Completion:** Execute tasks in order of priority
+**Plan Status:** In Progress - Phase A & B Complete
+**Last Updated:** December 9, 2025
+
+### Implementation Notes (December 9, 2025)
+- CORS now allows only coachsearching.com, www.coachsearching.com, and cisbon.github.io
+- Webhook signature verification uses native PHP HMAC instead of Stripe SDK
+- Auth endpoints return real user data from cs_coaches and cs_clients tables
+- Search endpoint filters by specialty, price, rating, language with video priority sort
+- Dynamic sitemap includes all visible coaches with SEO-friendly slugs
 
 ---
 
