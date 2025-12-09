@@ -30,19 +30,19 @@ const React = window.React;
 const { useState, useEffect, useCallback, memo } = React;
 const html = htm.bind(React.createElement);
 
-// Language to Flag Emoji Mapping
-const LANGUAGE_FLAGS = {
-    'English': '🇬🇧', 'German': '🇩🇪', 'Spanish': '🇪🇸', 'French': '🇫🇷',
-    'Italian': '🇮🇹', 'Dutch': '🇳🇱', 'Portuguese': '🇵🇹', 'Russian': '🇷🇺',
-    'Chinese': '🇨🇳', 'Japanese': '🇯🇵', 'Korean': '🇰🇷', 'Arabic': '🇸🇦',
-    'Hindi': '🇮🇳', 'Polish': '🇵🇱', 'Swedish': '🇸🇪', 'Norwegian': '🇳🇴',
-    'Danish': '🇩🇰', 'Finnish': '🇫🇮', 'Greek': '🇬🇷', 'Turkish': '🇹🇷',
-    'Czech': '🇨🇿', 'Romanian': '🇷🇴', 'Hungarian': '🇭🇺', 'Ukrainian': '🇺🇦',
-    'en': '🇬🇧', 'de': '🇩🇪', 'es': '🇪🇸', 'fr': '🇫🇷', 'it': '🇮🇹',
-    'nl': '🇳🇱', 'pt': '🇵🇹', 'ru': '🇷🇺', 'zh': '🇨🇳', 'ja': '🇯🇵',
-    'ko': '🇰🇷', 'ar': '🇸🇦', 'hi': '🇮🇳', 'pl': '🇵🇱', 'sv': '🇸🇪',
-    'no': '🇳🇴', 'da': '🇩🇰', 'fi': '🇫🇮', 'el': '🇬🇷', 'tr': '🇹🇷',
-    'cs': '🇨🇿', 'ro': '🇷🇴', 'hu': '🇭🇺', 'uk': '🇺🇦'
+// Language to Country Code Mapping (for flag images)
+const LANGUAGE_TO_COUNTRY = {
+    'English': 'gb', 'German': 'de', 'Spanish': 'es', 'French': 'fr',
+    'Italian': 'it', 'Dutch': 'nl', 'Portuguese': 'pt', 'Russian': 'ru',
+    'Chinese': 'cn', 'Japanese': 'jp', 'Korean': 'kr', 'Arabic': 'sa',
+    'Hindi': 'in', 'Polish': 'pl', 'Swedish': 'se', 'Norwegian': 'no',
+    'Danish': 'dk', 'Finnish': 'fi', 'Greek': 'gr', 'Turkish': 'tr',
+    'Czech': 'cz', 'Romanian': 'ro', 'Hungarian': 'hu', 'Ukrainian': 'ua',
+    'en': 'gb', 'de': 'de', 'es': 'es', 'fr': 'fr', 'it': 'it',
+    'nl': 'nl', 'pt': 'pt', 'ru': 'ru', 'zh': 'cn', 'ja': 'jp',
+    'ko': 'kr', 'ar': 'sa', 'hi': 'in', 'pl': 'pl', 'sv': 'se',
+    'no': 'no', 'da': 'dk', 'fi': 'fi', 'el': 'gr', 'tr': 'tr',
+    'cs': 'cz', 'ro': 'ro', 'hu': 'hu', 'uk': 'ua'
 };
 
 const LANGUAGE_NAMES = {
@@ -56,21 +56,32 @@ const LANGUAGE_NAMES = {
     'Italian': 'Italian', 'Dutch': 'Dutch', 'Portuguese': 'Portuguese', 'Russian': 'Russian'
 };
 
-// Language Flags Component
-const LanguageFlags = ({ languages, showLabel = false }) => {
+// Language Flags Component - Uses flag images for Windows compatibility
+const LanguageFlags = ({ languages }) => {
     if (!languages || languages.length === 0) return null;
     const langArray = Array.isArray(languages) ? languages : [languages];
     if (langArray.length === 0) return null;
 
     const getTooltip = (lang) => LANGUAGE_NAMES[lang] || lang;
+    const getCountryCode = (lang) => LANGUAGE_TO_COUNTRY[lang] || null;
 
     return html`
         <div class="language-flags" title="${langArray.map(getTooltip).join(', ')}">
-            ${langArray.slice(0, 5).map(lang => html`
-                <span key=${lang} class="flag-icon" title=${getTooltip(lang)}>
-                    ${LANGUAGE_FLAGS[lang] || '🌐'}
-                </span>
-            `)}
+            ${langArray.slice(0, 5).map(lang => {
+                const countryCode = getCountryCode(lang);
+                return countryCode ? html`
+                    <img
+                        key=${lang}
+                        class="flag-img"
+                        src="https://flagcdn.com/24x18/${countryCode}.png"
+                        srcset="https://flagcdn.com/48x36/${countryCode}.png 2x"
+                        alt=${getTooltip(lang)}
+                        title=${getTooltip(lang)}
+                        width="24"
+                        height="18"
+                    />
+                ` : html`<span key=${lang} class="flag-icon" title=${getTooltip(lang)}>🌐</span>`;
+            })}
             ${langArray.length > 5 ? html`<span class="more-langs">+${langArray.length - 5}</span>` : ''}
         </div>
     `;
@@ -549,7 +560,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 .from('cs_reviews')
                 .select('*')
                 .eq('coach_id', id)
-                .eq('status', 'approved')
                 .order('created_at', { ascending: false })
                 .limit(10);
             setReviews(data || []);
@@ -833,6 +843,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
                             <!-- Trust Signals (below profile picture) -->
                             <${TrustSignalsBar} coach=${coach} />
+
+                            <!-- Stats Banner (below trust signals) -->
+                            <${CoachStatsBanner} coach=${coach} />
                         </div>
 
                         <!-- Info Column -->
@@ -884,8 +897,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     </div>
                                 </div>
                             `}
-
-                            <${CoachStatsBanner} coach=${coach} />
 
                             <!-- Featured Testimonial -->
                             ${(() => {
