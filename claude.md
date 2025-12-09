@@ -27,8 +27,24 @@
 1. Follow tasks in guidance file
 2. Mark tasks complete as you go
 3. Update /docs/STATUS.md when done
-4. Commit and push
+4. Increment version in footer (see below)
+5. Commit and push
 ```
+
+---
+
+## Required: Version Increment
+
+**After ANY code change, increment the version number:**
+
+| File | Line | Current |
+|------|------|---------|
+| `/js/app.js` | ~253 | `v1.8.1` |
+
+**Format:** `vMAJOR.MINOR.PATCH`
+- PATCH: Bug fixes, CSS changes, small tweaks
+- MINOR: New features, significant changes
+- MAJOR: Breaking changes, major rewrites
 
 ---
 
