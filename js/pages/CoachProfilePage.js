@@ -223,6 +223,166 @@ const DiscoveryCallModal = ({ coach, onClose }) => {
 };
 
 /**
+ * Write Review Modal Component
+ * Allows logged-in users to write a review for a coach
+ */
+const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
+    const [rating, setRating] = useState(5);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [content, setContent] = useState('');
+    const [name, setName] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, [onClose]);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('review-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (rating < 1 || rating > 5) {
+            setError(t('review.errorRating') || 'Please select a rating');
+            return;
+        }
+        if (!content.trim() || content.trim().length < 10) {
+            setError(t('review.errorContent') || 'Please write at least 10 characters');
+            return;
+        }
+
+        setSubmitting(true);
+        setError('');
+
+        const result = await onSubmit({ rating, content: content.trim(), name: name.trim() });
+
+        if (result.success) {
+            setSuccess(true);
+        } else {
+            setError(result.error || t('review.errorGeneric') || 'Failed to submit review');
+        }
+
+        setSubmitting(false);
+    };
+
+    if (success) {
+        return html`
+            <div class="review-modal-overlay" onClick=${handleBackdropClick}>
+                <div class="review-modal-container">
+                    <div class="review-modal-header">
+                        <h3>${t('review.successTitle') || 'Review Submitted!'}</h3>
+                        <button class="review-modal-close" onClick=${onClose}>✕</button>
+                    </div>
+                    <div class="review-modal-content success-content">
+                        <div class="success-icon">✓</div>
+                        <p>${t('review.successMessage') || 'Thank you for your review!'}</p>
+                        <p>${t('review.successPending') || 'Your review will be visible after moderation.'}</p>
+                        <button class="btn-primary" onClick=${onClose}>${t('review.close') || 'Close'}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return html`
+        <div class="review-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="review-modal-container">
+                <div class="review-modal-header">
+                    <h3>${t('review.writeReview') || 'Write a Review'}</h3>
+                    <button class="review-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <div class="review-modal-content">
+                    <p class="review-intro">
+                        ${t('review.shareExperience') || 'Share your experience with'} <strong>${coach.full_name}</strong>
+                    </p>
+
+                    ${error && html`<div class="review-error">${error}</div>`}
+
+                    <form onSubmit=${handleSubmit}>
+                        <!-- Star Rating -->
+                        <div class="form-group">
+                            <label>${t('review.yourRating') || 'Your Rating'} *</label>
+                            <div class="star-rating-input">
+                                ${[1, 2, 3, 4, 5].map(star => html`
+                                    <button
+                                        key=${star}
+                                        type="button"
+                                        class="star-btn ${star <= (hoverRating || rating) ? 'filled' : ''}"
+                                        onClick=${() => setRating(star)}
+                                        onMouseEnter=${() => setHoverRating(star)}
+                                        onMouseLeave=${() => setHoverRating(0)}
+                                    >
+                                        ★
+                                    </button>
+                                `)}
+                                <span class="rating-label">
+                                    ${rating === 5 ? (t('review.excellent') || 'Excellent') :
+                                      rating === 4 ? (t('review.veryGood') || 'Very Good') :
+                                      rating === 3 ? (t('review.good') || 'Good') :
+                                      rating === 2 ? (t('review.fair') || 'Fair') :
+                                      (t('review.poor') || 'Poor')}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Name (optional) -->
+                        <div class="form-group">
+                            <label>${t('review.displayName') || 'Display Name'} (${t('review.optional') || 'optional'})</label>
+                            <input
+                                type="text"
+                                placeholder=${t('review.namePlaceholder') || 'How should we display your name?'}
+                                value=${name}
+                                onChange=${(e) => setName(e.target.value)}
+                                maxlength="50"
+                            />
+                        </div>
+
+                        <!-- Review Content -->
+                        <div class="form-group">
+                            <label>${t('review.yourReview') || 'Your Review'} *</label>
+                            <textarea
+                                placeholder=${t('review.contentPlaceholder') || 'Tell others about your experience...'}
+                                rows="5"
+                                value=${content}
+                                onChange=${(e) => setContent(e.target.value)}
+                                required
+                                minlength="10"
+                                maxlength="2000"
+                            ></textarea>
+                            <div class="char-count">${content.length}/2000</div>
+                        </div>
+
+                        <div class="review-form-actions">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>
+                                ${t('review.cancel') || 'Cancel'}
+                            </button>
+                            <button type="submit" class="btn-primary" disabled=${submitting}>
+                                ${submitting ? (t('review.submitting') || 'Submitting...') : (t('review.submit') || 'Submit Review')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+/**
  * Helper to detect if a string is a UUID
  */
 const isUUID = (str) => {
@@ -249,6 +409,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [showBooking, setShowBooking] = useState(false);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [selectedArticle, setSelectedArticle] = useState(null);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [userHasReviewed, setUserHasReviewed] = useState(false);
+    const [userExistingReview, setUserExistingReview] = useState(null);
 
     // Load coach data
     useEffect(() => {
@@ -309,6 +472,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     loadReviews(data.id),
                     loadCredentials(data.id),
                     loadSimilarCoaches(data),
+                    checkUserHasReviewed(data.id),
                 ]);
             }
         } catch (err) {
@@ -415,6 +579,75 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         const reviewsWithText = reviews.filter(r => r.content && r.content.length > 50);
         if (reviewsWithText.length === 0) return null;
         return reviewsWithText.sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
+    };
+
+    // Check if logged-in user has already reviewed this coach
+    const checkUserHasReviewed = async (coachId) => {
+        if (!session?.user?.id) {
+            setUserHasReviewed(false);
+            setUserExistingReview(null);
+            return;
+        }
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('cs_reviews')
+                .select('*')
+                .eq('coach_id', coachId)
+                .eq('client_id', session.user.id)
+                .maybeSingle();
+
+            if (error) {
+                console.error('Error checking user review:', error);
+                return;
+            }
+
+            setUserHasReviewed(!!data);
+            setUserExistingReview(data);
+        } catch (err) {
+            console.error('Failed to check user review:', err);
+        }
+    };
+
+    // Submit a new review
+    const handleSubmitReview = async (reviewData) => {
+        if (!session?.user?.id || !coach?.id) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('cs_reviews')
+                .insert({
+                    coach_id: coach.id,
+                    client_id: session.user.id,
+                    rating: reviewData.rating,
+                    content: reviewData.content,
+                    reviewer_name: reviewData.name || session.user.email?.split('@')[0] || 'Anonymous',
+                    status: 'pending' // Reviews go to pending for moderation
+                })
+                .select()
+                .single();
+
+            if (error) {
+                // Check for unique constraint violation
+                if (error.code === '23505') {
+                    return { success: false, error: t('review.alreadyReviewed') || 'You have already reviewed this coach' };
+                }
+                throw error;
+            }
+
+            // Update local state
+            setUserHasReviewed(true);
+            setUserExistingReview(data);
+
+            // Reload reviews to show the new one (if approved)
+            await loadReviews(coach.id);
+
+            return { success: true, data };
+        } catch (err) {
+            console.error('Failed to submit review:', err);
+            return { success: false, error: err.message || 'Failed to submit review' };
+        }
     };
 
     const setSEOData = () => {
@@ -849,48 +1082,78 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             `}
 
                             <!-- Reviews -->
-                            ${reviews.length > 0 && html`
-                                <article class="coach-section coach-reviews-section" id="reviews">
+                            <article class="coach-section coach-reviews-section" id="reviews">
+                                <div class="reviews-header">
                                     <h2 class="section-title">
                                         ${t('coach.reviews') || 'Client Reviews'}
-                                        <span class="reviews-summary">
-                                            ⭐ ${rating.toFixed(1)} (${reviewsCount} ${t('coach.reviews') || 'reviews'})
-                                        </span>
+                                        ${reviews.length > 0 && html`
+                                            <span class="reviews-summary">
+                                                ⭐ ${rating.toFixed(1)} (${reviewsCount} ${t('coach.reviews') || 'reviews'})
+                                            </span>
+                                        `}
                                     </h2>
 
-                                    <!-- Review Breakdown Chart -->
-                                    ${reviews.length >= 3 && html`
-                                        <div class="review-breakdown">
-                                            <div class="breakdown-summary">
-                                                <div class="breakdown-score">
-                                                    <span class="big-rating">${rating.toFixed(1)}</span>
-                                                    <div class="breakdown-stars">
-                                                        ${[1,2,3,4,5].map(star => html`
-                                                            <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                                        `)}
-                                                    </div>
-                                                    <span class="breakdown-total">${reviewsCount} ${t('coach.reviewsTotal') || 'reviews'}</span>
+                                    <!-- Write Review Button -->
+                                    <div class="write-review-cta">
+                                        ${session?.user ? (
+                                            userHasReviewed ? html`
+                                                <div class="already-reviewed">
+                                                    <span class="check-icon">✓</span>
+                                                    ${t('review.alreadyReviewedShort') || 'You reviewed this coach'}
                                                 </div>
-                                                <div class="breakdown-bars">
-                                                    ${[5,4,3,2,1].map(stars => {
-                                                        const breakdown = getReviewBreakdown();
-                                                        const count = breakdown[stars];
-                                                        const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
-                                                        return html`
-                                                            <div key=${stars} class="breakdown-row">
-                                                                <span class="bar-label">${stars}★</span>
-                                                                <div class="bar-track">
-                                                                    <div class="bar-fill" style=${{ width: `${percentage}%` }}></div>
-                                                                </div>
-                                                                <span class="bar-count">${count}</span>
+                                            ` : html`
+                                                <button
+                                                    class="btn-write-review"
+                                                    onClick=${() => setShowReviewModal(true)}
+                                                >
+                                                    ✏️ ${t('review.writeReview') || 'Write a Review'}
+                                                </button>
+                                            `
+                                        ) : html`
+                                            <button
+                                                class="btn-write-review btn-write-review-login"
+                                                onClick=${() => window.navigateTo('/login')}
+                                            >
+                                                ${t('review.loginToReview') || 'Log in to write a review'}
+                                            </button>
+                                        `}
+                                    </div>
+                                </div>
+
+                                <!-- Review Breakdown Chart -->
+                                ${reviews.length >= 3 && html`
+                                    <div class="review-breakdown">
+                                        <div class="breakdown-summary">
+                                            <div class="breakdown-score">
+                                                <span class="big-rating">${rating.toFixed(1)}</span>
+                                                <div class="breakdown-stars">
+                                                    ${[1,2,3,4,5].map(star => html`
+                                                        <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                                    `)}
+                                                </div>
+                                                <span class="breakdown-total">${reviewsCount} ${t('coach.reviewsTotal') || 'reviews'}</span>
+                                            </div>
+                                            <div class="breakdown-bars">
+                                                ${[5,4,3,2,1].map(stars => {
+                                                    const breakdown = getReviewBreakdown();
+                                                    const count = breakdown[stars];
+                                                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                                                    return html`
+                                                        <div key=${stars} class="breakdown-row">
+                                                            <span class="bar-label">${stars}★</span>
+                                                            <div class="bar-track">
+                                                                <div class="bar-fill" style=${{ width: `${percentage}%` }}></div>
                                                             </div>
-                                                        `;
-                                                    })}
-                                                </div>
+                                                            <span class="bar-count">${count}</span>
+                                                        </div>
+                                                    `;
+                                                })}
                                             </div>
                                         </div>
-                                    `}
+                                    </div>
+                                `}
 
+                                ${reviews.length > 0 ? html`
                                     <div class="reviews-list">
                                         ${reviews.map(review => html`
                                             <${ReviewCard} key=${review.id} review=${review} />
@@ -901,8 +1164,12 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                             ${t('coach.loadMoreReviews') || 'Load More Reviews'}
                                         </button>
                                     `}
-                                </article>
-                            `}
+                                ` : html`
+                                    <div class="no-reviews-yet">
+                                        <p>${t('review.noReviewsYet') || 'No reviews yet. Be the first to share your experience!'}</p>
+                                    </div>
+                                `}
+                            </article>
                         </div>
 
                         <!-- Sidebar -->
@@ -1060,6 +1327,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             <!-- Discovery Call Modal -->
             ${showDiscoveryModal && html`
                 <${DiscoveryCallModal} coach=${coach} onClose=${() => setShowDiscoveryModal(false)} />
+            `}
+
+            <!-- Write Review Modal -->
+            ${showReviewModal && html`
+                <${WriteReviewModal}
+                    coach=${coach}
+                    onClose=${() => setShowReviewModal(false)}
+                    onSubmit=${handleSubmitReview}
+                />
             `}
 
             <!-- Article Modal -->
