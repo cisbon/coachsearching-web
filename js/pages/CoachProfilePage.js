@@ -30,6 +30,52 @@ const React = window.React;
 const { useState, useEffect, useCallback, memo } = React;
 const html = htm.bind(React.createElement);
 
+// Language to Flag Emoji Mapping
+const LANGUAGE_FLAGS = {
+    'English': '🇬🇧', 'German': '🇩🇪', 'Spanish': '🇪🇸', 'French': '🇫🇷',
+    'Italian': '🇮🇹', 'Dutch': '🇳🇱', 'Portuguese': '🇵🇹', 'Russian': '🇷🇺',
+    'Chinese': '🇨🇳', 'Japanese': '🇯🇵', 'Korean': '🇰🇷', 'Arabic': '🇸🇦',
+    'Hindi': '🇮🇳', 'Polish': '🇵🇱', 'Swedish': '🇸🇪', 'Norwegian': '🇳🇴',
+    'Danish': '🇩🇰', 'Finnish': '🇫🇮', 'Greek': '🇬🇷', 'Turkish': '🇹🇷',
+    'Czech': '🇨🇿', 'Romanian': '🇷🇴', 'Hungarian': '🇭🇺', 'Ukrainian': '🇺🇦',
+    'en': '🇬🇧', 'de': '🇩🇪', 'es': '🇪🇸', 'fr': '🇫🇷', 'it': '🇮🇹',
+    'nl': '🇳🇱', 'pt': '🇵🇹', 'ru': '🇷🇺', 'zh': '🇨🇳', 'ja': '🇯🇵',
+    'ko': '🇰🇷', 'ar': '🇸🇦', 'hi': '🇮🇳', 'pl': '🇵🇱', 'sv': '🇸🇪',
+    'no': '🇳🇴', 'da': '🇩🇰', 'fi': '🇫🇮', 'el': '🇬🇷', 'tr': '🇹🇷',
+    'cs': '🇨🇿', 'ro': '🇷🇴', 'hu': '🇭🇺', 'uk': '🇺🇦'
+};
+
+const LANGUAGE_NAMES = {
+    'en': 'English', 'de': 'German', 'es': 'Spanish', 'fr': 'French',
+    'it': 'Italian', 'nl': 'Dutch', 'pt': 'Portuguese', 'ru': 'Russian',
+    'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean', 'ar': 'Arabic',
+    'hi': 'Hindi', 'pl': 'Polish', 'sv': 'Swedish', 'no': 'Norwegian',
+    'da': 'Danish', 'fi': 'Finnish', 'el': 'Greek', 'tr': 'Turkish',
+    'cs': 'Czech', 'ro': 'Romanian', 'hu': 'Hungarian', 'uk': 'Ukrainian',
+    'English': 'English', 'German': 'German', 'Spanish': 'Spanish', 'French': 'French',
+    'Italian': 'Italian', 'Dutch': 'Dutch', 'Portuguese': 'Portuguese', 'Russian': 'Russian'
+};
+
+// Language Flags Component
+const LanguageFlags = ({ languages, showLabel = false }) => {
+    if (!languages || languages.length === 0) return null;
+    const langArray = Array.isArray(languages) ? languages : [languages];
+    if (langArray.length === 0) return null;
+
+    const getTooltip = (lang) => LANGUAGE_NAMES[lang] || lang;
+
+    return html`
+        <div class="language-flags" title="${langArray.map(getTooltip).join(', ')}">
+            ${langArray.slice(0, 5).map(lang => html`
+                <span key=${lang} class="flag-icon" title=${getTooltip(lang)}>
+                    ${LANGUAGE_FLAGS[lang] || '🌐'}
+                </span>
+            `)}
+            ${langArray.length > 5 ? html`<span class="more-langs">+${langArray.length - 5}</span>` : ''}
+        </div>
+    `;
+};
+
 /**
  * Discovery Call Modal Component - Simple booking for discovery calls
  */
@@ -785,17 +831,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 </div>
                             `}
 
-                            <!-- About Section (below profile picture) -->
-                            ${coach.bio && html`
-                                <div class="coach-about-below-image">
-                                    <h3 class="about-title">${t('coach.about') || 'About'} ${coach.full_name.split(' ')[0]}</h3>
-                                    <div class="coach-bio" itemprop="description">
-                                        ${(coach.bio || '').split('\n').map((para, i) =>
-                                            para.trim() ? html`<p key=${i}>${para}</p>` : null
-                                        )}
-                                    </div>
-                                </div>
-                            `}
+                            <!-- Trust Signals (below profile picture) -->
+                            <${TrustSignalsBar} coach=${coach} />
                         </div>
 
                         <!-- Info Column -->
@@ -824,9 +861,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     <span itemprop="address">${location}</span>
                                 </span>
                                 ${languages.length > 0 && html`
-                                    <span class="coach-meta-item">
-                                        <span class="meta-icon">💬</span>
-                                        <span>${languages.slice(0, 3).join(', ')}</span>
+                                    <span class="coach-meta-item coach-meta-languages">
+                                        <${LanguageFlags} languages=${languages} />
                                     </span>
                                 `}
                                 ${coach.years_experience > 0 && html`
@@ -837,7 +873,17 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 `}
                             </div>
 
-                            <${TrustSignalsBar} coach=${coach} />
+                            <!-- About Section -->
+                            ${coach.bio && html`
+                                <div class="coach-about-section">
+                                    <h3 class="about-title">${t('coach.about') || 'About'} ${coach.full_name.split(' ')[0]}</h3>
+                                    <div class="coach-bio" itemprop="description">
+                                        ${(coach.bio || '').split('\n').map((para, i) =>
+                                            para.trim() ? html`<p key=${i}>${para}</p>` : null
+                                        )}
+                                    </div>
+                                </div>
+                            `}
 
                             <${CoachStatsBanner} coach=${coach} />
 

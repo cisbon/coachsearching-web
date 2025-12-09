@@ -115,6 +115,67 @@
     font-size: 1rem;
 }
 
+/* Language Flags in Meta Row */
+.coach-meta-languages {
+    display: flex;
+    align-items: center;
+}
+
+.coach-meta-languages .language-flags {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.coach-meta-languages .flag-icon {
+    font-size: 1.25rem;
+    cursor: default;
+}
+
+.coach-meta-languages .more-langs {
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+    margin-left: 4px;
+}
+
+/* About Section in Info Column */
+.coach-about-section {
+    background: var(--bg-body, #f5f5f5);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 8px 0;
+}
+
+.coach-about-section .about-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 12px;
+}
+
+.coach-about-section .coach-bio {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--text-secondary, #4a5568);
+}
+
+.coach-about-section .coach-bio p {
+    margin: 0 0 8px;
+}
+
+.coach-about-section .coach-bio p:last-child {
+    margin-bottom: 0;
+}
+
+/* Trust Signals Bar under Profile Picture */
+.coach-media-column .trust-signals-bar {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
 /* CTA Section */
 .coach-cta-section {
     background: var(--bg-body, #f5f5f5);
@@ -291,27 +352,6 @@
 
 .coach-bio p:last-child {
     margin-bottom: 0;
-}
-
-/* About Section Below Profile Picture */
-.coach-about-below-image {
-    margin-top: 24px;
-    padding: 20px;
-    background: var(--bg-white, #ffffff);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.coach-about-below-image .about-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-main, #1a1a1a);
-    margin: 0 0 16px;
-}
-
-.coach-about-below-image .coach-bio {
-    font-size: 0.95rem;
-    color: var(--text-secondary, #666);
 }
 
 /* No Reviews Empty Stars */
