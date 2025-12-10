@@ -2259,7 +2259,7 @@
     margin: 0;
     font-size: 1.125rem;
     font-weight: 600;
-    color: white;
+    color: var(--petrol-light);
 }
 
 .video-popup-close {
@@ -2284,6 +2284,7 @@
     width: 100%;
     padding-top: 56.25%; /* 16:9 aspect ratio */
     background: #000;
+    min-height: 500px;
 }
 
 .video-popup-content .video-iframe {

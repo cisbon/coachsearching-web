@@ -39,7 +39,7 @@
 
 | File | Line | Current |
 |------|------|---------|
-| `/js/app.js` | ~253 | `v1.8.4` |
+| `/js/app.js` | ~253 | `v1.8.5` |
 
 **Format:** `vMAJOR.MINOR.PATCH`
 - PATCH: Bug fixes, CSS changes, small tweaks
