@@ -23,6 +23,7 @@ import {
     CredentialsList,
     ReviewCard,
     GuaranteeBadge,
+    CoachVideoPlayer,
 } from '../coachProfile.js';
 
 const React = window.React;
@@ -1029,26 +1030,27 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     <div class="coach-hero-grid">
                         <!-- Video/Image Column -->
                         <div class="coach-media-column">
-                            <div
-                                class="coach-hero-image ${coach.video_intro_url ? 'has-video clickable' : ''}"
-                                onClick=${coach.video_intro_url ? () => setShowVideoPopup(true) : null}
-                            >
-                                <img
-                                    src=${coach.video_thumbnail_url || coach.avatar_url || 'https://via.placeholder.com/400'}
-                                    alt=${coach.full_name}
-                                    loading="eager"
-                                />
-                                ${coach.video_intro_url && html`
-                                    <div class="video-play-overlay">
-                                        <div class="play-button">
-                                            <span>▶</span>
-                                        </div>
-                                        <span class="video-label">${t('video.watchIntro') || 'Watch Intro'}</span>
-                                    </div>
-                                `}
-                            </div>
+                            ${coach.video_intro_url ? html`
+                                <!-- Hero Video Player -->
+                                <div class="coach-hero-video">
+                                    <${CoachVideoPlayer}
+                                        videoUrl=${coach.video_intro_url}
+                                        thumbnailUrl=${coach.video_thumbnail_url || coach.avatar_url}
+                                        coachName=${coach.full_name}
+                                    />
+                                </div>
+                            ` : html`
+                                <!-- Profile Image (no video) -->
+                                <div class="coach-hero-image">
+                                    <img
+                                        src=${coach.avatar_url || 'https://via.placeholder.com/400'}
+                                        alt=${coach.full_name}
+                                        loading="eager"
+                                    />
+                                </div>
+                            `}
 
-                            <!-- Trust Signals (below profile picture) -->
+                            <!-- Trust Signals (below profile picture/video) -->
                             <${TrustSignalsBar} coach=${coach} />
 
                             <!-- Stats Banner (below trust signals) -->

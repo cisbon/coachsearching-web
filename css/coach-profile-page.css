@@ -120,6 +120,54 @@
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* Hero Video Layout - Video as main visual when available */
+.coach-hero-video {
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    background: #000;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.coach-hero-video .youtube-player,
+.coach-hero-video .coach-video-player {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 16px;
+    min-height: 280px;
+}
+
+.coach-hero-video .video-thumbnail {
+    border-radius: 16px;
+}
+
+.coach-hero-video .video-thumbnail img {
+    border-radius: 16px;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.coach-hero-video .video-play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Responsive hero video for mobile */
+@media (max-width: 768px) {
+    .coach-hero-video {
+        min-height: 200px;
+    }
+
+    .coach-hero-video .youtube-player,
+    .coach-hero-video .coach-video-player {
+        min-height: 200px;
+    }
+}
+
 /* Info Column */
 .coach-info-column {
     display: flex;
