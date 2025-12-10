@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>CoachSearching - Redirecting...</title>
+    <script>
+        // GitHub Pages SPA Redirect
+        // This 404.html handles client-side routing for GitHub Pages
+        // It converts the path to a query parameter and redirects to index.html
+        // which then parses the query and navigates to the correct route
+
+        (function() {
+            // Get the current path
+            var path = window.location.pathname;
+            var query = window.location.search;
+            var hash = window.location.hash;
+
+            // Store the intended path in sessionStorage for index.html to read
+            sessionStorage.setItem('gh-pages-redirect', path + query + hash);
+
+            // Redirect to the root
+            window.location.replace('/');
+        })();
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+</body>
+</html>

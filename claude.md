@@ -39,7 +39,7 @@
 
 | File | Line | Current |
 |------|------|---------|
-| `/js/app.js` | ~253 | `v1.10.0` |
+| `/js/app.js` | ~253 | `v1.11.0` |
 
 **Format:** `vMAJOR.MINOR.PATCH`
 - PATCH: Bug fixes, CSS changes, small tweaks
@@ -78,10 +78,11 @@
 |------------|---------|
 | Hosting | GitHub Pages (static only) |
 | Routing | Hash-based required (`/#/route`) |
-| Frontend | React via CDN (no build) |
+| Frontend | React via CDN + Vite build |
 | Backend | Separate PHP API server |
 | Database | Supabase + RLS |
 | Stripe | Manual implementation (no SDK) |
+| Build | `npm run build` → `dist/` folder |
 
 ## Key Gotchas
 
@@ -117,4 +118,4 @@
 - Write long explanations
 
 ---
-*Last updated: 2025-12-09*
+*Last updated: 2025-12-10*

@@ -4,6 +4,13 @@ api/.env
 # Dependencies
 node_modules/
 
+# Build output
+dist/
+
+# Vite
+*.local
+.vite/
+
 # IDE
 .idea/
 .vscode/
@@ -13,3 +20,7 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

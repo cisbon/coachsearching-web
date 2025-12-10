@@ -1,11 +1,12 @@
 # Project Status
-**Updated:** 2025-12-09 | **Branch:** claude/codebase-audit-upgrade-*
+**Updated:** 2025-12-10 | **Branch:** claude/codebase-audit-upgrade-*
 
 ## Hosting & Architecture
 - **Frontend**: GitHub Pages (static, hash-routing required)
 - **API**: PHP 8.4 on separate server
 - **Database**: Supabase (Postgres + RLS)
 - **Payments**: Stripe Connect (Express accounts)
+- **Build**: Vite 5.4 for bundling/minification
 
 ---
 
@@ -46,10 +47,8 @@
 - [x] Video preview on coach profile page
 - [x] SEO meta tags per page (all public pages)
 - [x] Structured data (JSON-LD) for coaches, services, reviews
-
-## Frontend 🔄 Needs Work
-- [ ] Error boundaries
-- [ ] Loading states improvement
+- [x] Error boundaries (wrapping entire app)
+- [x] Skeleton loaders for loading states
 
 ---
 
@@ -63,9 +62,12 @@
 
 ---
 
+## Build & CI/CD ✅ Done
+- [x] Vite build configuration
+- [x] GitHub Actions for GitHub Pages deployment
+
 ## Not Started ❌
 - [ ] Automated testing
-- [ ] CI/CD pipeline
 - [ ] Error monitoring (Sentry)
 - [ ] Analytics dashboard
 - [ ] Admin panel
@@ -79,6 +81,7 @@
 4. Cleaned up & archived old files
 5. Hero video layout for coach profiles
 6. SEO meta tags added to all public pages
+7. Vite build tooling with GitHub Pages workflow
 
 ---
 *Update this file after completing work. Keep under 80 lines.*
