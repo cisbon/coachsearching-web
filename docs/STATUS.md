@@ -44,10 +44,10 @@
 - [x] Booking flow
 - [x] Payment integration
 - [x] Video preview on coach profile page
+- [x] SEO meta tags per page (all public pages)
+- [x] Structured data (JSON-LD) for coaches, services, reviews
 
 ## Frontend 🔄 Needs Work
-- [ ] SEO meta tags per page
-- [ ] Structured data (JSON-LD)
 - [ ] Error boundaries
 - [ ] Loading states improvement
 
@@ -77,7 +77,8 @@
 2. Replaced mock endpoints with real data
 3. Created documentation suite
 4. Cleaned up & archived old files
-5. Added video popup CSS for coach profile page
+5. Hero video layout for coach profiles
+6. SEO meta tags added to all public pages
 
 ---
 *Update this file after completing work. Keep under 80 lines.*

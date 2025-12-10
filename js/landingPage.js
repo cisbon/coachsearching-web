@@ -1,6 +1,7 @@
 // js/landingPage.js - Landing Page with Video Priority Layout
 import htm from './vendor/htm.js';
 import { t } from './i18n.js';
+import { setPageMeta } from './utils/seo.js';
 import {
     TrustScore,
     CoachCardEnhanced,
@@ -377,6 +378,16 @@ export const CTASection = ({ onBecomeCoach }) => {
 
 export const LandingPage = ({ session, formatPrice, onBecomeCoach }) => {
     const [searchFilters, setSearchFilters] = useState({});
+
+    // Set SEO meta tags for landing page
+    useEffect(() => {
+        setPageMeta({
+            title: t('seo.home.title') || 'Find Your Perfect Coach',
+            description: t('seo.home.description') || 'Connect with certified professional coaches for business, life, career, and personal development. Book online or in-person coaching sessions.',
+            url: 'https://coachsearching.com/',
+            type: 'website',
+        });
+    }, []);
 
     const handleSearch = useCallback((term) => {
         setSearchFilters({ searchTerm: term });

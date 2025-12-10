@@ -1,6 +1,7 @@
 // js/coachDiscovery.js - Coach Discovery System Components
 import htm from './vendor/htm.js';
 import { t, getCurrentLang } from './i18n.js';
+import { setPageMeta } from './utils/seo.js';
 import { CoachCardEnhanced, CoachCardFeatured, TrustScore } from './coachProfile.js';
 import { CoachProfileModal } from './coachProfileModal.js';
 
@@ -749,6 +750,16 @@ export const LocationBrowser = ({ onSelect, selectedLocation }) => {
 // =============================================
 
 export const DiscoveryPage = ({ session, formatPrice, onStartQuiz }) => {
+    // Set SEO meta tags for discovery page
+    useEffect(() => {
+        setPageMeta({
+            title: t('seo.coaches.title') || 'Browse Professional Coaches',
+            description: t('seo.coaches.description') || 'Explore our directory of certified professional coaches. Filter by specialty, location, price, and more to find your perfect match.',
+            url: 'https://coachsearching.com/#coaches',
+            type: 'website',
+        });
+    }, []);
+
     // URL-synced state
     const [searchTerm, setSearchTerm] = useURLState('q', '');
     const [filters, setFilters] = useURLState('filters', {

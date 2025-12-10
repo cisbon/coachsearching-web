@@ -1,6 +1,7 @@
 // js/matchingQuiz.js - Coach Matching Quiz Components
 import htm from './vendor/htm.js';
 import { t, getCurrentLang } from './i18n.js';
+import { setPageMeta } from './utils/seo.js';
 import { CoachCardFeatured, TrustScore } from './coachProfile.js';
 import { CoachProfileModal } from './coachProfileModal.js';
 
@@ -571,6 +572,16 @@ export const MatchingQuiz = ({
     const [quizSessionId, setQuizSessionId] = useState(null);
     const [aiPowered, setAiPowered] = useState(false);
     const [aiInsights, setAiInsights] = useState(null);
+
+    // Set SEO meta tags for quiz page
+    useEffect(() => {
+        setPageMeta({
+            title: t('seo.quiz.title') || 'Find Your Perfect Coach - Matching Quiz',
+            description: t('seo.quiz.description') || 'Take our free coaching match quiz to discover the perfect coach for your goals. Answer a few questions and get personalized recommendations.',
+            url: 'https://coachsearching.com/#quiz',
+            type: 'website',
+        });
+    }, []);
 
     // Load quiz questions
     useEffect(() => {
