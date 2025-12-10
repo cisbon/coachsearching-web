@@ -1030,11 +1030,11 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     <div class="coach-hero-grid">
                         <!-- Video/Image Column -->
                         <div class="coach-media-column">
-                            ${coach.video_intro_url ? html`
+                            ${(coach.video_intro_url || coach.intro_video_url) ? html`
                                 <!-- Hero Video Player -->
                                 <div class="coach-hero-video">
                                     <${CoachVideoPlayer}
-                                        videoUrl=${coach.video_intro_url}
+                                        videoUrl=${coach.video_intro_url || coach.intro_video_url}
                                         thumbnailUrl=${coach.video_thumbnail_url || coach.avatar_url}
                                         coachName=${coach.full_name}
                                     />
@@ -1060,7 +1060,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         <!-- Info Column -->
                         <div class="coach-info-column">
                             <div class="coach-header-content">
-                                ${coach.video_intro_url ? html`
+                                ${(coach.video_intro_url || coach.intro_video_url) ? html`
                                     <img
                                         src=${coach.avatar_url || 'https://via.placeholder.com/80'}
                                         alt=${coach.full_name}
@@ -1504,9 +1504,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             `}
 
             <!-- Video Popup -->
-            ${showVideoPopup && coach.video_intro_url && html`
+            ${showVideoPopup && (coach.video_intro_url || coach.intro_video_url) && html`
                 <${VideoPopup}
-                    videoUrl=${coach.video_intro_url}
+                    videoUrl=${coach.video_intro_url || coach.intro_video_url}
                     coachName=${coach.full_name}
                     onClose=${() => setShowVideoPopup(false)}
                 />
