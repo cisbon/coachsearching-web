@@ -551,12 +551,17 @@ const Navbar = ({ session }) => {
 };
 
 const Auth = () => {
+    console.log('[Auth] Component rendering...');
+
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [userType, setUserType] = useState('client');
     const [isLogin, setIsLogin] = useState(true);
     const [message, setMessage] = useState('');
+
+    // Debug: Log state on every render
+    console.log('[Auth] Current state:', { isLogin, userType, showReferral: !isLogin && userType === 'coach' });
 
     // Referral code state (for coach registration)
     const [referralCode, setReferralCode] = useState('');
@@ -630,9 +635,13 @@ const Auth = () => {
         const checkMode = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const pathname = window.location.pathname;
-            if (urlParams.get('mode') === 'register' || pathname.includes('register')) {
+            const mode = urlParams.get('mode');
+            console.log('[Auth] checkMode:', { search: window.location.search, pathname, mode });
+            if (mode === 'register' || pathname.includes('register')) {
+                console.log('[Auth] Setting isLogin to FALSE (register mode)');
                 setIsLogin(false);
             } else {
+                console.log('[Auth] Setting isLogin to TRUE (login mode)');
                 setIsLogin(true);
             }
         };
@@ -792,7 +801,7 @@ const Auth = () => {
                                 </div>
                             </div>
                             <div class="role-option ${userType === 'coach' ? 'selected' : ''}"
-                                 onClick=${() => setUserType('coach')}
+                                 onClick=${() => { console.log('[Auth] Coach selected!'); setUserType('coach'); }}
                                  role="radio"
                                  aria-checked=${userType === 'coach'}
                                  tabIndex="0">
