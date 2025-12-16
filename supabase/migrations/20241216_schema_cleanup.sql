@@ -156,6 +156,50 @@ DROP TYPE IF EXISTS cs_moderation_status CASCADE;
 -- cs_service_type (if cs_services was kept - but we dropped it)
 
 -- ============================================================================
+-- PHASE 6.5: Add Missing Columns (if they don't exist)
+-- ============================================================================
+
+-- Add is_active column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'cs_coaches' AND column_name = 'is_active') THEN
+        ALTER TABLE cs_coaches ADD COLUMN is_active boolean DEFAULT true;
+        RAISE NOTICE 'Added is_active column to cs_coaches';
+    END IF;
+END $$;
+
+-- Add onboarding_completed column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'cs_coaches' AND column_name = 'onboarding_completed') THEN
+        ALTER TABLE cs_coaches ADD COLUMN onboarding_completed boolean DEFAULT false;
+        RAISE NOTICE 'Added onboarding_completed column to cs_coaches';
+    END IF;
+END $$;
+
+-- Add location_city column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'cs_coaches' AND column_name = 'location_city') THEN
+        ALTER TABLE cs_coaches ADD COLUMN location_city text;
+        RAISE NOTICE 'Added location_city column to cs_coaches';
+    END IF;
+END $$;
+
+-- Add location_country column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'cs_coaches' AND column_name = 'location_country') THEN
+        ALTER TABLE cs_coaches ADD COLUMN location_country text;
+        RAISE NOTICE 'Added location_country column to cs_coaches';
+    END IF;
+END $$;
+
+-- ============================================================================
 -- PHASE 7: Add Missing Indexes for Performance
 -- ============================================================================
 
