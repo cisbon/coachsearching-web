@@ -6203,17 +6203,6 @@ const Home = ({ session }) => {
             <${CoachingCategoriesSection} />
             <${HowItWorksSection} />
 
-            <!-- Success Statistics Section -->
-            <section class="success-stats-section">
-                <div class="container">
-                    <div class="section-header">
-                        <h2>${t('home.stats.title') || 'Trusted by Thousands'}</h2>
-                        <p>${t('home.stats.subtitle') || 'Join our growing community of successful coaching partnerships'}</p>
-                    </div>
-                    <${SuccessStats} />
-                </div>
-            </section>
-
             <div class="featured-coaches-section">
                 <div class="container">
                     <div class="section-header">
