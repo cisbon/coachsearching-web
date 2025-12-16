@@ -6203,6 +6203,8 @@ const Home = ({ session }) => {
             <${CoachingCategoriesSection} />
             <${HowItWorksSection} />
 
+            <${CoachList} session=${session} />
+
             <!-- Testimonials Section -->
             <section class="testimonials-section">
                 <div class="container">
