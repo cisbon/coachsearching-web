@@ -80,8 +80,11 @@
 3. Created documentation suite
 4. Cleaned up & archived old files
 5. Hero video layout for coach profiles
-6. SEO meta tags added to all public pages
-7. Vite build tooling with GitHub Pages workflow
+6. SEO meta tags added to all public pages (v1.10.0)
+7. Vite build tooling with GitHub Pages workflow (v1.11.0)
+8. Coach profile hero reorganization (v1.12.0, v1.12.1)
+9. Profile hero improvements - specialties, session formats, locations (v1.13.0)
+10. Pricing Page with Free/Premium tiers comparison (v1.14.0)
 
 ---
 *Update this file after completing work. Keep under 80 lines.*

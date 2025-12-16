@@ -20,6 +20,7 @@
 @import url('./css/utils.css');
 @import url('./css/payments.css');
 @import url('./css/analytics.css');
+@import url('./css/pricing-page.css');
 
 :root {
     /* Petrol color palette - ONLY these 3 colors allowed */

@@ -20,6 +20,7 @@ import { AboutPage } from './pages/AboutPage.js';
 import { HowItWorksPage } from './pages/HowItWorksPage.js';
 import { CategoryPage, CategoriesIndexPage, COACHING_CATEGORIES } from './pages/CategoryPage.js';
 import { CoachProfilePage } from './pages/CoachProfilePage.js';
+import { PricingPage } from './pages/PricingPage.js';
 
 // Conversion Optimization Components
 import {
@@ -250,7 +251,7 @@ const Footer = ({ onOpenLegal }) => {
                             ${t('footer.tagline') || 'Find your perfect coach and start your transformation journey today.'}
                         </p>
                         <div style=${{ color: '#6b7280', fontSize: '0.85rem' }}>${t('footer.copyright')}</div>
-                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.13.0</div>
+                        <div style=${{ color: '#4b5563', fontSize: '0.75rem', marginTop: '8px' }}>v1.14.0</div>
                     </div>
 
                     <!-- Coaching Types Column -->
@@ -285,6 +286,7 @@ const Footer = ({ onOpenLegal }) => {
                             <li><a href="/faq">${t('footer.faq') || 'FAQ'}</a></li>
                             <li><a href="/coaches">${t('nav.coaches') || 'Find a Coach'}</a></li>
                             <li><a href="/quiz">${t('category.takeQuiz') || 'Take the Quiz'}</a></li>
+                            <li><a href="/pricing">${t('nav.pricing') || 'Pricing'}</a></li>
                         </ul>
                     </div>
 
@@ -533,6 +535,7 @@ const Navbar = ({ session }) => {
 
                 <nav class="nav-links ${menuOpen ? 'open' : ''}" role="navigation">
                     <a href="/coaches" class="nav-browse-link" onClick=${(e) => handleLinkClick(e, '/coaches')}>${t('nav.browseCoaches')}</a>
+                    <a href="/pricing" class="nav-browse-link" onClick=${(e) => handleLinkClick(e, '/pricing')}>${t('nav.pricing') || 'Pricing'}</a>
                     ${session ? html`
                         <a href="/dashboard" onClick=${(e) => handleLinkClick(e, '/dashboard')}>${t('nav.dashboard')}</a>
                         <a href="/signout" class="nav-auth-btn" onClick=${(e) => handleLinkClick(e, '/signout')}>${t('nav.signOut')}</a>
@@ -7958,6 +7961,7 @@ const App = () => {
             case 'about': Component = () => html`<${AboutPage} />`; break;
             case 'how-it-works': Component = () => html`<${HowItWorksPage} />`; break;
             case 'categories': Component = () => html`<${CategoriesIndexPage} />`; break;
+            case 'pricing': Component = () => html`<${PricingPage} />`; break;
             default: Component = () => html`<${Home} session=${session} />`;
         }
     }
