@@ -46,6 +46,16 @@ WHERE user_type IS NULL OR user_type = ''
   AND role IS NOT NULL;
 
 -- ============================================================================
+-- PHASE 1.5: Drop Dependent Views
+-- ============================================================================
+
+-- Drop views that depend on columns we're about to remove
+DROP VIEW IF EXISTS cs_active_coaches CASCADE;
+DROP VIEW IF EXISTS cs_coaches_with_location CASCADE;
+DROP VIEW IF EXISTS cs_coach_search CASCADE;
+DROP VIEW IF EXISTS cs_coach_listing CASCADE;
+
+-- ============================================================================
 -- PHASE 2: Drop Unused Tables
 -- ============================================================================
 
@@ -206,6 +216,20 @@ SELECT
 FROM cs_coaches;
 
 COMMENT ON VIEW cs_coaches_with_location IS 'Coach profiles with computed location_display field';
+
+-- Recreate cs_active_coaches view with new schema (no location column)
+CREATE OR REPLACE VIEW cs_active_coaches AS
+SELECT
+  c.*,
+  COALESCE(
+    NULLIF(CONCAT_WS(', ', c.location_city, c.location_country), ''),
+    'Remote'
+  ) AS location_display
+FROM cs_coaches c
+WHERE c.is_active = true
+  AND c.onboarding_completed = true;
+
+COMMENT ON VIEW cs_active_coaches IS 'Active coaches who completed onboarding, with computed location';
 
 -- ============================================================================
 -- PHASE 10: Verify Migration
