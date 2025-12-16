@@ -906,7 +906,7 @@ const CoachOnboarding = ({ session }) => {
         location: '',
         hourly_rate: '',
         specialties: '',
-        languages: 'en',
+        languages: '',
         session_types_online: true,
         session_types_onsite: false,
         avatar_url: ''
@@ -1030,9 +1030,9 @@ const CoachOnboarding = ({ session }) => {
             // Parse comma-separated values into arrays
             const specialtiesArray = formData.specialties.split(',').map(s => s.trim()).filter(Boolean);
             const languagesArray = formData.languages.split(',').map(s => s.trim()).filter(Boolean);
-            const sessionTypesArray = [];
-            if (formData.session_types_online) sessionTypesArray.push('online');
-            if (formData.session_types_onsite) sessionTypesArray.push('onsite');
+            const sessionFormatsArray = [];
+            if (formData.session_types_online) sessionFormatsArray.push('online');
+            if (formData.session_types_onsite) sessionFormatsArray.push('in-person');
 
             // Check if user has referral code for free year (from registration metadata)
             const hasReferralCode = session?.user?.user_metadata?.referral_code_valid === true;
@@ -1052,9 +1052,9 @@ const CoachOnboarding = ({ session }) => {
                 currency: 'EUR',
                 specialties: specialtiesArray,
                 languages: languagesArray,
-                session_types: sessionTypesArray,
-                offers_virtual: formData.session_types_online,
-                offers_onsite: formData.session_types_onsite,
+                session_formats: sessionFormatsArray,
+                offers_online: formData.session_types_online,
+                offers_in_person: formData.session_types_onsite,
                 avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 onboarding_completed: true,
                 subscription_status: 'trial',
@@ -1301,18 +1301,44 @@ const CoachOnboarding = ({ session }) => {
                         <div style=${{ display: 'grid', gap: '22px' }}>
                             <div>
                                 <label style=${labelStyle}>${t('onboard.specialties') || 'Specialties'} *</label>
-                                <input
-                                    type="text"
-                                    style=${inputStyle}
-                                    placeholder=${t('onboard.specialtiesPlaceholder') || 'Life Coaching, Business Strategy, Leadership'}
-                                    value=${formData.specialties}
-                                    onChange=${(e) => handleChange('specialties', e.target.value)}
-                                    onFocus=${(e) => e.target.style.borderColor = '#006266'}
-                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
-                                    required
-                                />
-                                <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
-                                    ${t('onboard.specialtiesHelp') || 'Separate with commas'}
+                                <div style=${{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    ${[
+                                        'Leadership', 'Career', 'Executive', 'Life Coaching', 'Business',
+                                        'Health & Wellness', 'Relationships', 'Mindfulness', 'Performance',
+                                        'Communication', 'Stress Management', 'Work-Life Balance'
+                                    ].map(specialty => {
+                                        const isSelected = formData.specialties.split(',').map(s => s.trim()).includes(specialty);
+                                        return html`
+                                            <button
+                                                type="button"
+                                                key=${specialty}
+                                                onClick=${() => {
+                                                    const current = formData.specialties.split(',').map(s => s.trim()).filter(Boolean);
+                                                    if (isSelected) {
+                                                        handleChange('specialties', current.filter(s => s !== specialty).join(', '));
+                                                    } else {
+                                                        handleChange('specialties', [...current, specialty].join(', '));
+                                                    }
+                                                }}
+                                                style=${{
+                                                    padding: '8px 14px',
+                                                    border: isSelected ? '2px solid #006266' : '2px solid #E5E7EB',
+                                                    borderRadius: '20px',
+                                                    background: isSelected ? '#f0fafa' : 'white',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    color: isSelected ? '#006266' : '#374151',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                ${specialty} ${isSelected ? '✓' : ''}
+                                            </button>
+                                        `;
+                                    })}
+                                </div>
+                                <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '8px' }}>
+                                    ${t('onboard.selectSpecialtiesHint') || 'Select all that apply'}
                                 </div>
                             </div>
 
@@ -1320,23 +1346,25 @@ const CoachOnboarding = ({ session }) => {
                                 <label style=${labelStyle}>${t('onboard.sessionLanguages') || 'Languages'} *</label>
                                 <div style=${{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                     ${[
-                                        { code: 'en', flag: '🇬🇧', name: 'English' },
-                                        { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
-                                        { code: 'es', flag: '🇪🇸', name: 'Español' },
-                                        { code: 'fr', flag: '🇫🇷', name: 'Français' },
-                                        { code: 'it', flag: '🇮🇹', name: 'Italiano' }
+                                        { flag: '🇬🇧', name: 'English' },
+                                        { flag: '🇩🇪', name: 'German' },
+                                        { flag: '🇪🇸', name: 'Spanish' },
+                                        { flag: '🇫🇷', name: 'French' },
+                                        { flag: '🇮🇹', name: 'Italian' },
+                                        { flag: '🇳🇱', name: 'Dutch' },
+                                        { flag: '🇵🇹', name: 'Portuguese' }
                                     ].map(lang => {
-                                        const isSelected = formData.languages.split(',').map(l => l.trim()).includes(lang.code);
+                                        const isSelected = formData.languages.split(',').map(l => l.trim()).includes(lang.name);
                                         return html`
                                             <button
                                                 type="button"
-                                                key=${lang.code}
+                                                key=${lang.name}
                                                 onClick=${() => {
                                                     const current = formData.languages.split(',').map(l => l.trim()).filter(Boolean);
                                                     if (isSelected) {
-                                                        handleChange('languages', current.filter(l => l !== lang.code).join(', '));
+                                                        handleChange('languages', current.filter(l => l !== lang.name).join(', '));
                                                     } else {
-                                                        handleChange('languages', [...current, lang.code].join(', '));
+                                                        handleChange('languages', [...current, lang.name].join(', '));
                                                     }
                                                 }}
                                                 style=${{
@@ -2709,7 +2737,7 @@ const FilterSidebar = ({ filters, onChange, onReset }) => {
                 </div>
             </div>
 
-            <!-- Trust Features -->
+            <!-- Features -->
             <div class="filter-section">
                 <h4>Features</h4>
                 <div class="filter-checkboxes">
@@ -2720,30 +2748,6 @@ const FilterSidebar = ({ filters, onChange, onReset }) => {
                             onChange=${(e) => onChange({ ...filters, hasVideo: e.target.checked })}
                         />
                         <span>🎬 Has Video Intro</span>
-                    </label>
-                    <label class="filter-checkbox">
-                        <input
-                            type="checkbox"
-                            checked=${filters.freeIntro}
-                            onChange=${(e) => onChange({ ...filters, freeIntro: e.target.checked })}
-                        />
-                        <span>🎁 Free Discovery Call</span>
-                    </label>
-                    <label class="filter-checkbox">
-                        <input
-                            type="checkbox"
-                            checked=${filters.verified}
-                            onChange=${(e) => onChange({ ...filters, verified: e.target.checked })}
-                        />
-                        <span>✓ Verified Only</span>
-                    </label>
-                    <label class="filter-checkbox">
-                        <input
-                            type="checkbox"
-                            checked=${filters.topRated}
-                            onChange=${(e) => onChange({ ...filters, topRated: e.target.checked })}
-                        />
-                        <span>🏆 Top Rated</span>
                     </label>
                 </div>
             </div>
