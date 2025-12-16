@@ -235,11 +235,33 @@
     margin-bottom: 12px;
 }
 
+.price-display.with-launch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.price-strike {
+    margin-bottom: 4px;
+}
+
+.price-original {
+    font-size: 1.25rem;
+    color: #999;
+    text-decoration: line-through;
+    font-weight: 500;
+}
+
 .price-amount {
     font-size: 3.5rem;
     font-weight: 800;
     color: #1a1a1a;
     line-height: 1;
+}
+
+.price-amount.launch {
+    color: var(--primary-petrol, #006266);
 }
 
 .pricing-card.highlighted .price-amount {
@@ -252,24 +274,15 @@
     margin-left: 4px;
 }
 
-.launch-offer-inline {
-    background: #f8f4e8;
-    border-radius: 8px;
-    padding: 10px 16px;
-    margin: 12px 0;
-}
-
-.launch-price-small {
-    font-weight: 700;
-    color: var(--primary-petrol, #006266);
-    font-size: 1.1rem;
-}
-
-.launch-period {
-    display: block;
+.launch-badge-inline {
+    background: linear-gradient(90deg, #f8f4e8 0%, #fef9e7 100%);
+    border: 1px solid #e8dfc4;
+    border-radius: 20px;
+    padding: 6px 16px;
     font-size: 0.85rem;
-    color: #666;
-    margin-top: 2px;
+    font-weight: 600;
+    color: var(--primary-petrol, #006266);
+    margin: 8px 0 4px;
 }
 
 .tier-tagline {

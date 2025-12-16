@@ -21,12 +21,12 @@ const html = htm.bind(React.createElement);
 // ============================================================================
 
 const PRICING = {
-    monthly: 29,
-    yearly: 261,
-    yearlyPerMonth: 21.75,
-    launchOffer: 19,
+    monthly: 19,
+    yearly: 108,
+    yearlyPerMonth: 9,
+    launchOffer: 15,
     launchOfferLimit: 100,
-    yearlySavingsPercent: 25,
+    yearlySavingsPercent: 53,
 };
 
 // ============================================================================
@@ -127,7 +127,7 @@ function BillingToggle({ isYearly, onToggle }) {
                 onClick=${() => onToggle(true)}
             >
                 ${t('pricing.yearly') || 'Yearly'}
-                <span class="save-badge">${t('pricing.save25') || 'Save 25%'}</span>
+                <span class="save-badge">${t('pricing.save53') || 'Save 53%'}</span>
             </button>
         </div>
     `;
@@ -230,21 +230,24 @@ function PricingCard({ tier, isYearly, isHighlighted }) {
 
     return html`
         <div class="pricing-card ${isHighlighted ? 'highlighted' : ''}">
-            ${isHighlighted && html`
-                <div class="recommended-badge">${t('pricing.recommended') || 'Recommended'}</div>
-            `}
-
             <div class="card-header">
                 <h3 class="tier-name">${isFree ? t('pricing.free') || 'Free' : t('pricing.premium') || 'Premium'}</h3>
-                <div class="price-display">
-                    <span class="price-amount">${priceDisplay}</span>
-                    <span class="price-period">${priceSubtext}</span>
-                </div>
 
-                ${!isFree && html`
-                    <div class="launch-offer-inline">
-                        <span class="launch-price-small">€${PRICING.launchOffer}/${t('pricing.month') || 'month'}</span>
-                        <span class="launch-period">${t('pricing.firstYearThen') || 'first year, then'} €${PRICING.monthly}/${t('pricing.month') || 'month'}</span>
+                ${isFree ? html`
+                    <div class="price-display">
+                        <span class="price-amount">€0</span>
+                        <span class="price-period">${t('pricing.forever') || 'forever'}</span>
+                    </div>
+                ` : html`
+                    <div class="price-display with-launch">
+                        <div class="price-strike">
+                            <span class="price-original">€${isYearly ? PRICING.yearly : PRICING.monthly}</span>
+                        </div>
+                        <span class="price-amount launch">€${isYearly ? PRICING.yearlyPerMonth : PRICING.launchOffer}</span>
+                        <span class="price-period">/${t('pricing.month') || 'month'}${isYearly ? `, ${t('pricing.billedYearly') || 'billed yearly'}` : ''}</span>
+                    </div>
+                    <div class="launch-badge-inline">
+                        🚀 ${t('pricing.launchOffer') || 'Launch Offer'}
                     </div>
                 `}
 
