@@ -3597,6 +3597,14 @@ const translations = {
         "onboard.avatar": "URL de foto de perfil",
         "onboard.submit": "Completar perfil",
         "onboard.uploading": "Guardando...",
+        "onboard.referralCode": "Código de referido",
+        "onboard.optional": "(opcional)",
+        "onboard.referralPlaceholder": "Introduce el código",
+        "onboard.referralInvalid": "Código de referido inválido",
+        "onboard.referralValid": "¡Código válido! Obtienes tu primer año de Premium gratis!",
+        "onboard.referralError": "No se pudo validar el código",
+        "onboard.referralSuccessTitle": "¡Primer Año de Premium Gratis!",
+        "onboard.referralSuccessDesc": "Tu código de referido ha sido aplicado. Disfruta de todas las funciones Premium gratis durante tu primer año.",
 
         // Quiz (Spanish)
         "quiz.back": "Atrás",
@@ -4855,6 +4863,14 @@ const translations = {
         "onboard.avatar": "URL photo de profil",
         "onboard.submit": "Compléter le profil",
         "onboard.uploading": "Enregistrement...",
+        "onboard.referralCode": "Code de parrainage",
+        "onboard.optional": "(facultatif)",
+        "onboard.referralPlaceholder": "Entrez le code",
+        "onboard.referralInvalid": "Code de parrainage invalide",
+        "onboard.referralValid": "Code valide ! Vous bénéficiez de votre première année Premium gratuite !",
+        "onboard.referralError": "Impossible de valider le code",
+        "onboard.referralSuccessTitle": "Première Année Premium Gratuite !",
+        "onboard.referralSuccessDesc": "Votre code de parrainage a été appliqué. Profitez de toutes les fonctionnalités Premium gratuitement pendant votre première année.",
 
         // Quiz (French)
         "quiz.back": "Retour",
@@ -6123,6 +6139,14 @@ const translations = {
         "onboard.avatar": "URL foto profilo",
         "onboard.submit": "Completa profilo",
         "onboard.uploading": "Salvataggio...",
+        "onboard.referralCode": "Codice referral",
+        "onboard.optional": "(facoltativo)",
+        "onboard.referralPlaceholder": "Inserisci il codice",
+        "onboard.referralInvalid": "Codice referral non valido",
+        "onboard.referralValid": "Codice valido! Ottieni il tuo primo anno di Premium gratis!",
+        "onboard.referralError": "Impossibile validare il codice",
+        "onboard.referralSuccessTitle": "Primo Anno di Premium Gratis!",
+        "onboard.referralSuccessDesc": "Il tuo codice referral è stato applicato. Goditi tutte le funzionalità Premium gratuitamente per il tuo primo anno.",
 
         // Quiz (Italian)
         "quiz.back": "Indietro",
