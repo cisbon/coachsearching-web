@@ -535,7 +535,6 @@ const Navbar = ({ session }) => {
 
                 <nav class="nav-links ${menuOpen ? 'open' : ''}" role="navigation">
                     <a href="/coaches" class="nav-browse-link" onClick=${(e) => handleLinkClick(e, '/coaches')}>${t('nav.browseCoaches')}</a>
-                    <a href="/pricing" class="nav-browse-link" onClick=${(e) => handleLinkClick(e, '/pricing')}>${t('nav.pricing') || 'Pricing'}</a>
                     ${session ? html`
                         <a href="/dashboard" onClick=${(e) => handleLinkClick(e, '/dashboard')}>${t('nav.dashboard')}</a>
                         <a href="/signout" class="nav-auth-btn" onClick=${(e) => handleLinkClick(e, '/signout')}>${t('nav.signOut')}</a>
