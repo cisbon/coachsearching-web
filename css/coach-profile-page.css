@@ -2412,3 +2412,312 @@
         padding-top: 75%; /* Taller ratio for small screens */
     }
 }
+
+/* ==========================================================================
+   Reviews in Hero Section
+   ========================================================================== */
+
+.coach-reviews-hero {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.coach-reviews-hero:hover {
+    background: linear-gradient(135deg, #f0f2f5 0%, #e9ecef 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.reviews-hero-rating {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.rating-score-hero {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-petrol, #006266);
+    line-height: 1;
+}
+
+.rating-details-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.rating-stars-hero {
+    display: flex;
+    gap: 2px;
+}
+
+.rating-stars-hero .star {
+    color: #d1d5db;
+    font-size: 1rem;
+}
+
+.rating-stars-hero .star.filled {
+    color: #fbbf24;
+}
+
+.rating-count-hero {
+    font-size: 0.85rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.view-reviews-link {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--primary-petrol, #006266);
+    font-weight: 500;
+}
+
+.reviews-hero-empty {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.be-first-text {
+    color: var(--text-muted, #6b7280);
+    font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   LinkedIn-Style Articles Feed
+   ========================================================================== */
+
+.coach-articles-feed {
+    margin-top: 32px;
+}
+
+.articles-feed-header {
+    margin-bottom: 24px;
+}
+
+.articles-feed-header .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.articles-icon {
+    font-size: 1.25rem;
+}
+
+.articles-subtitle {
+    color: var(--text-muted, #6b7280);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.articles-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.article-feed-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.article-feed-card:hover {
+    border-color: var(--primary-petrol, #006266);
+    box-shadow: 0 4px 16px rgba(0, 98, 102, 0.1);
+    transform: translateY(-2px);
+}
+
+.article-feed-card.featured {
+    border: 2px solid var(--primary-petrol, #006266);
+}
+
+.article-feed-card.featured::before {
+    content: "Featured";
+    display: block;
+    background: var(--primary-petrol, #006266);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 16px;
+}
+
+/* Author Header - LinkedIn Style */
+.article-author-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px 12px;
+}
+
+.article-author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.article-author-info {
+    flex: 1;
+}
+
+.article-author-name {
+    display: block;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    font-size: 0.95rem;
+}
+
+.article-author-title {
+    display: block;
+    color: var(--text-muted, #6b7280);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.article-publish-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.article-read-time {
+    color: var(--text-muted, #6b7280);
+}
+
+/* Article Body */
+.article-feed-body {
+    padding: 0 20px 16px;
+}
+
+.article-feed-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 10px;
+    line-height: 1.4;
+}
+
+.article-feed-card.featured .article-feed-title {
+    font-size: 1.35rem;
+}
+
+.article-feed-excerpt {
+    color: var(--text-muted, #6b7280);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Article Image */
+.article-feed-image {
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+}
+
+.article-feed-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.article-feed-card:hover .article-feed-image img {
+    transform: scale(1.02);
+}
+
+/* Article Footer */
+.article-feed-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-color, #e5e7eb);
+    background: #f9fafb;
+}
+
+.article-views {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.view-icon {
+    font-size: 0.9rem;
+}
+
+.article-read-more {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--primary-petrol, #006266);
+}
+
+/* Mobile Responsive - Articles Feed */
+@media (max-width: 768px) {
+    .coach-reviews-hero {
+        padding: 14px 16px;
+    }
+
+    .rating-score-hero {
+        font-size: 1.75rem;
+    }
+
+    .view-reviews-link {
+        width: 100%;
+        text-align: center;
+        margin-top: 8px;
+        margin-left: 0;
+    }
+
+    .coach-articles-feed {
+        margin-top: 24px;
+    }
+
+    .article-author-header {
+        padding: 14px 16px 10px;
+    }
+
+    .article-author-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .article-feed-body {
+        padding: 0 16px 14px;
+    }
+
+    .article-feed-title {
+        font-size: 1.1rem;
+    }
+
+    .article-feed-card.featured .article-feed-title {
+        font-size: 1.2rem;
+    }
+
+    .article-feed-footer {
+        padding: 10px 16px;
+    }
+}
