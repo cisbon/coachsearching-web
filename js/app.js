@@ -275,9 +275,9 @@ const Footer = ({ onOpenLegal }) => {
                         </ul>
                     </div>
 
-                    <!-- Company Column -->
+                    <!-- Info Column -->
                     <div class="footer-column">
-                        <h4>${t('footer.company') || 'Company'}</h4>
+                        <h4>${t('footer.info') || 'Info'}</h4>
                         <ul>
                             <li><a href="/faq">${t('footer.faq') || 'FAQ'}</a></li>
                             <li><a href="/coaches">${t('nav.coaches') || 'Find a Coach'}</a></li>
