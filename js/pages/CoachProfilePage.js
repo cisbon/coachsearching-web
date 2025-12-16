@@ -1055,6 +1055,33 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
                             <!-- Stats Banner (below trust signals) -->
                             <${CoachStatsBanner} coach=${coach} />
+
+                            <!-- Reviews Overview (below stats banner) -->
+                            <div
+                                class="coach-reviews-hero clickable"
+                                id="reviews"
+                                onClick=${() => setShowReviewsPopup(true)}
+                            >
+                                ${reviews.length > 0 ? html`
+                                    <div class="reviews-hero-rating">
+                                        <span class="rating-score-hero">${rating.toFixed(1)}</span>
+                                        <div class="rating-details-hero">
+                                            <div class="rating-stars-hero">
+                                                ${[1,2,3,4,5].map(star => html`
+                                                    <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                                `)}
+                                            </div>
+                                            <span class="rating-count-hero">${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'}</span>
+                                        </div>
+                                        <span class="view-reviews-link">${t('coach.viewAllReviews') || 'View all'} →</span>
+                                    </div>
+                                ` : html`
+                                    <div class="reviews-hero-empty">
+                                        <span class="new-coach-badge">✨ ${t('coach.new') || 'New Coach'}</span>
+                                        <span class="be-first-text">${t('review.beFirstToReview') || 'Be the first to review!'}</span>
+                                    </div>
+                                `}
+                            </div>
                         </div>
 
                         <!-- Info Column -->
@@ -1106,33 +1133,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     </div>
                                 </div>
                             `}
-
-                            <!-- Reviews Overview (moved from content section) -->
-                            <div
-                                class="coach-reviews-hero clickable"
-                                id="reviews"
-                                onClick=${() => setShowReviewsPopup(true)}
-                            >
-                                ${reviews.length > 0 ? html`
-                                    <div class="reviews-hero-rating">
-                                        <span class="rating-score-hero">${rating.toFixed(1)}</span>
-                                        <div class="rating-details-hero">
-                                            <div class="rating-stars-hero">
-                                                ${[1,2,3,4,5].map(star => html`
-                                                    <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                                `)}
-                                            </div>
-                                            <span class="rating-count-hero">${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'}</span>
-                                        </div>
-                                        <span class="view-reviews-link">${t('coach.viewAllReviews') || 'View all'} →</span>
-                                    </div>
-                                ` : html`
-                                    <div class="reviews-hero-empty">
-                                        <span class="new-coach-badge">✨ ${t('coach.new') || 'New Coach'}</span>
-                                        <span class="be-first-text">${t('review.beFirstToReview') || 'Be the first to review!'}</span>
-                                    </div>
-                                `}
-                            </div>
 
                             <!-- Featured Testimonial -->
                             ${(() => {
@@ -1210,6 +1210,88 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     <div class="coach-content-grid">
                         <!-- Main Column -->
                         <div class="coach-main-column">
+                            <!-- Articles - LinkedIn Style Feed (First thing to see) -->
+                            ${articles.length > 0 && html`
+                                <section class="coach-articles-feed" id="articles">
+                                    <div class="articles-feed-header">
+                                        <h2 class="section-title">
+                                            <span class="articles-icon">📝</span>
+                                            ${t('coach.articles') || 'Articles & Insights'}
+                                        </h2>
+                                        <p class="articles-subtitle">
+                                            ${t('coach.articlesSubtitle') || `Explore ${coach.full_name.split(' ')[0]}'s expertise and thought leadership`}
+                                        </p>
+                                    </div>
+                                    <div class="articles-feed-list">
+                                        ${articles.map((article, index) => html`
+                                            <article
+                                                key=${article.id}
+                                                class="article-feed-card ${index === 0 ? 'featured' : ''}"
+                                                onClick=${() => setSelectedArticle(article)}
+                                                itemscope
+                                                itemtype="https://schema.org/Article"
+                                            >
+                                                <!-- Author Header (LinkedIn-style) -->
+                                                <div class="article-author-header">
+                                                    <img
+                                                        src=${coach.avatar_url || 'https://via.placeholder.com/48'}
+                                                        alt=${coach.full_name}
+                                                        class="article-author-avatar"
+                                                    />
+                                                    <div class="article-author-info">
+                                                        <span class="article-author-name" itemprop="author">${coach.full_name}</span>
+                                                        <span class="article-author-title">${coach.title}</span>
+                                                        <div class="article-publish-info">
+                                                            <time datetime=${article.created_at} itemprop="datePublished">
+                                                                ${new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                            </time>
+                                                            ${article.read_time_minutes ? html`
+                                                                <span class="article-read-time">· ${article.read_time_minutes} min read</span>
+                                                            ` : html`
+                                                                <span class="article-read-time">· ${Math.max(1, Math.ceil((article.content_html?.length || 500) / 1000))} min read</span>
+                                                            `}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Article Content -->
+                                                <div class="article-feed-body">
+                                                    <h3 class="article-feed-title" itemprop="headline">${article.title}</h3>
+                                                    <p class="article-feed-excerpt" itemprop="description">
+                                                        ${article.excerpt || (article.content_html
+                                                            ? article.content_html.replace(/<[^>]*>/g, '').substring(0, index === 0 ? 250 : 150) + '...'
+                                                            : '')}
+                                                    </p>
+                                                </div>
+
+                                                <!-- Article Image -->
+                                                ${article.featured_image && html`
+                                                    <div class="article-feed-image">
+                                                        <img
+                                                            src=${article.featured_image}
+                                                            alt=${article.title}
+                                                            loading="lazy"
+                                                            itemprop="image"
+                                                        />
+                                                    </div>
+                                                `}
+
+                                                <!-- Article Footer (engagement) -->
+                                                <div class="article-feed-footer">
+                                                    ${article.view_count > 0 && html`
+                                                        <span class="article-views">
+                                                            <span class="view-icon">👁️</span>
+                                                            ${article.view_count} ${t('coach.views') || 'views'}
+                                                        </span>
+                                                    `}
+                                                    <span class="article-read-more">${t('coach.readArticle') || 'Read article'} →</span>
+                                                </div>
+                                            </article>
+                                        `)}
+                                    </div>
+                                </section>
+                            `}
+
                             <!-- My Approach -->
                             ${coach.coaching_approach && html`
                                 <article class="coach-section coach-approach-section">
@@ -1308,87 +1390,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 </article>
                             `}
 
-                            <!-- Articles - LinkedIn Style Feed -->
-                            ${articles.length > 0 && html`
-                                <section class="coach-articles-feed" id="articles">
-                                    <div class="articles-feed-header">
-                                        <h2 class="section-title">
-                                            <span class="articles-icon">📝</span>
-                                            ${t('coach.articles') || 'Articles & Insights'}
-                                        </h2>
-                                        <p class="articles-subtitle">
-                                            ${t('coach.articlesSubtitle') || `Explore ${coach.full_name.split(' ')[0]}'s expertise and thought leadership`}
-                                        </p>
-                                    </div>
-                                    <div class="articles-feed-list">
-                                        ${articles.map((article, index) => html`
-                                            <article
-                                                key=${article.id}
-                                                class="article-feed-card ${index === 0 ? 'featured' : ''}"
-                                                onClick=${() => setSelectedArticle(article)}
-                                                itemscope
-                                                itemtype="https://schema.org/Article"
-                                            >
-                                                <!-- Author Header (LinkedIn-style) -->
-                                                <div class="article-author-header">
-                                                    <img
-                                                        src=${coach.avatar_url || 'https://via.placeholder.com/48'}
-                                                        alt=${coach.full_name}
-                                                        class="article-author-avatar"
-                                                    />
-                                                    <div class="article-author-info">
-                                                        <span class="article-author-name" itemprop="author">${coach.full_name}</span>
-                                                        <span class="article-author-title">${coach.title}</span>
-                                                        <div class="article-publish-info">
-                                                            <time datetime=${article.created_at} itemprop="datePublished">
-                                                                ${new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                            </time>
-                                                            ${article.read_time_minutes ? html`
-                                                                <span class="article-read-time">· ${article.read_time_minutes} min read</span>
-                                                            ` : html`
-                                                                <span class="article-read-time">· ${Math.max(1, Math.ceil((article.content_html?.length || 500) / 1000))} min read</span>
-                                                            `}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Article Content -->
-                                                <div class="article-feed-body">
-                                                    <h3 class="article-feed-title" itemprop="headline">${article.title}</h3>
-                                                    <p class="article-feed-excerpt" itemprop="description">
-                                                        ${article.excerpt || (article.content_html
-                                                            ? article.content_html.replace(/<[^>]*>/g, '').substring(0, index === 0 ? 250 : 150) + '...'
-                                                            : '')}
-                                                    </p>
-                                                </div>
-
-                                                <!-- Article Image -->
-                                                ${article.featured_image && html`
-                                                    <div class="article-feed-image">
-                                                        <img
-                                                            src=${article.featured_image}
-                                                            alt=${article.title}
-                                                            loading="lazy"
-                                                            itemprop="image"
-                                                        />
-                                                    </div>
-                                                `}
-
-                                                <!-- Article Footer (engagement) -->
-                                                <div class="article-feed-footer">
-                                                    ${article.view_count > 0 && html`
-                                                        <span class="article-views">
-                                                            <span class="view-icon">👁️</span>
-                                                            ${article.view_count} ${t('coach.views') || 'views'}
-                                                        </span>
-                                                    `}
-                                                    <span class="article-read-more">${t('coach.readArticle') || 'Read article'} →</span>
-                                                </div>
-                                            </article>
-                                        `)}
-                                    </div>
-                                </section>
-                            `}
                         </div>
 
                         <!-- Sidebar -->
