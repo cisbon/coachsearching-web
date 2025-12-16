@@ -701,9 +701,10 @@ const CoachStep1Profile = ({ data, updateData, session }) => {
         try {
             const supabase = window.supabaseClient;
             const { data: codeData, error } = await supabase
-                .from('referral_codes')
+                .from('cs_referral_codes')
                 .select('code, user_id')
                 .eq('code', code.trim().toUpperCase())
+                .eq('is_active', true)
                 .single();
 
             if (error || !codeData) {
