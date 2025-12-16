@@ -443,9 +443,6 @@
 
 .referral-input {
     padding-right: 48px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 500;
 }
 
 .referral-input.valid {
