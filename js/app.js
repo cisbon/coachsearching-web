@@ -558,6 +558,73 @@ const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [message, setMessage] = useState('');
 
+    // Referral code state (for coach registration)
+    const [referralCode, setReferralCode] = useState('');
+    const [referralStatus, setReferralStatus] = useState(null); // null, 'checking', 'valid', 'invalid'
+    const [referralMessage, setReferralMessage] = useState('');
+    const [referrerId, setReferrerId] = useState(null);
+    const referralDebounceRef = useRef(null);
+
+    // Validate referral code against Supabase
+    const validateReferralCode = useCallback(async (code) => {
+        if (!code || code.trim().length < 3) {
+            setReferralStatus(null);
+            setReferralMessage('');
+            setReferrerId(null);
+            return;
+        }
+
+        setReferralStatus('checking');
+        try {
+            const supabase = window.supabaseClient;
+            const { data: codeData, error } = await supabase
+                .from('cs_referral_codes')
+                .select('code, user_id')
+                .eq('code', code.trim().toUpperCase())
+                .eq('is_active', true)
+                .single();
+
+            if (error || !codeData) {
+                setReferralStatus('invalid');
+                setReferralMessage(t('onboard.referralInvalid') || 'Invalid referral code');
+                setReferrerId(null);
+            } else {
+                setReferralStatus('valid');
+                setReferralMessage(t('onboard.referralValid') || 'Valid code! You get your first year of Premium free!');
+                setReferrerId(codeData.user_id);
+            }
+        } catch (err) {
+            console.error('Error validating referral code:', err);
+            setReferralStatus('invalid');
+            setReferralMessage(t('onboard.referralError') || 'Could not validate code');
+            setReferrerId(null);
+        }
+    }, []);
+
+    // Handle referral code input change with debounce
+    const handleReferralCodeChange = useCallback((e) => {
+        const code = e.target.value;
+        setReferralCode(code);
+
+        if (referralDebounceRef.current) {
+            clearTimeout(referralDebounceRef.current);
+        }
+
+        referralDebounceRef.current = setTimeout(() => {
+            validateReferralCode(code);
+        }, 500);
+    }, [validateReferralCode]);
+
+    // Reset referral when switching user types or modes
+    useEffect(() => {
+        if (userType !== 'coach' || isLogin) {
+            setReferralCode('');
+            setReferralStatus(null);
+            setReferralMessage('');
+            setReferrerId(null);
+        }
+    }, [userType, isLogin]);
+
     // Check URL for mode=register parameter and listen for changes
     useEffect(() => {
         const checkMode = () => {
@@ -603,25 +670,28 @@ const Auth = () => {
                 });
                 console.log('Sign in result:', result);
             } else {
+                // Build metadata, include referral info for coaches
+                const metadata = {
+                    user_type: userType,
+                    full_name: email.split('@')[0]
+                };
+
+                // Add referral code data if valid
+                if (userType === 'coach' && referralStatus === 'valid' && referralCode) {
+                    metadata.referral_code = referralCode.trim().toUpperCase();
+                    metadata.referral_code_valid = true;
+                    metadata.referrer_id = referrerId;
+                }
+
                 console.log('Attempting sign up as:', userType);
                 console.log('Sign up params:', {
                     email,
-                    options: {
-                        data: {
-                            user_type: userType,
-                            full_name: email.split('@')[0]
-                        }
-                    }
+                    options: { data: metadata }
                 });
                 result = await window.supabaseClient.auth.signUp({
                     email,
                     password,
-                    options: {
-                        data: {
-                            user_type: userType,
-                            full_name: email.split('@')[0]
-                        }
-                    }
+                    options: { data: metadata }
                 });
                 console.log('Sign up result:', result);
                 console.log('Sign up error details:', {
@@ -765,6 +835,48 @@ const Auth = () => {
                         minLength="6"
                         aria-label="Password"
                     />
+
+                    ${!isLogin && userType === 'coach' && html`
+                        <div class="referral-code-group">
+                            <div class="referral-input-wrapper">
+                                <input
+                                    type="text"
+                                    class="auth-input referral-input ${referralStatus ? 'referral-' + referralStatus : ''}"
+                                    placeholder=${(t('onboard.referralCode') || 'Referral Code') + ' ' + (t('onboard.optional') || '(optional)')}
+                                    value=${referralCode}
+                                    onInput=${handleReferralCodeChange}
+                                    disabled=${loading}
+                                    maxLength="50"
+                                    aria-label="Referral Code"
+                                />
+                                ${referralStatus === 'checking' && html`
+                                    <span class="referral-status-icon checking">
+                                        <span class="spinner-small"></span>
+                                    </span>
+                                `}
+                                ${referralStatus === 'valid' && html`
+                                    <span class="referral-status-icon valid">✓</span>
+                                `}
+                                ${referralStatus === 'invalid' && html`
+                                    <span class="referral-status-icon invalid">✗</span>
+                                `}
+                            </div>
+                            ${referralMessage && html`
+                                <div class="referral-message ${referralStatus}">
+                                    ${referralMessage}
+                                </div>
+                            `}
+                            ${referralStatus === 'valid' && html`
+                                <div class="referral-success-banner">
+                                    <span class="success-icon">🎉</span>
+                                    <div class="success-content">
+                                        <strong>${t('onboard.referralSuccessTitle') || 'Free First Year of Premium!'}</strong>
+                                        <p>${t('onboard.referralSuccessDesc') || 'Your referral code has been applied. Enjoy all Premium features free for your first year.'}</p>
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+                    `}
 
                     <button class="auth-btn" disabled=${loading} type="submit">
                         ${loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Register')}
