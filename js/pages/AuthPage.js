@@ -24,9 +24,23 @@ export function AuthPage() {
         // Check URL for mode=register parameter
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
-        return urlParams.get('mode') !== 'register' && hashParams.get('mode') !== 'register';
+        const isRegisterMode = urlParams.get('mode') === 'register' || hashParams.get('mode') === 'register';
+        console.log('[AuthPage] URL check:', {
+            search: window.location.search,
+            hash: window.location.hash,
+            urlMode: urlParams.get('mode'),
+            hashMode: hashParams.get('mode'),
+            isRegisterMode,
+            isLogin: !isRegisterMode
+        });
+        return !isRegisterMode;
     });
     const [message, setMessage] = useState('');
+
+    // Debug: Log state changes
+    useEffect(() => {
+        console.log('[AuthPage] State:', { isLogin, userType, showReferralField: !isLogin && userType === 'coach' });
+    }, [isLogin, userType]);
 
     // Referral code state (for coach registration)
     const [referralCode, setReferralCode] = useState('');
@@ -253,6 +267,11 @@ export function AuthPage() {
                             disabled=${loading}
                             minLength="6"
                         />
+                    </div>
+
+                    ${/* DEBUG: Show state values */}
+                    <div style="background: #fffbe6; border: 1px solid #ffe58f; padding: 8px; margin: 8px 0; font-size: 12px; border-radius: 4px;">
+                        <strong>DEBUG:</strong> isLogin=${String(isLogin)}, userType=${userType}, showField=${String(!isLogin && userType === 'coach')}
                     </div>
 
                     ${!isLogin && userType === 'coach' && html`
