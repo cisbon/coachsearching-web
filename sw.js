@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'coachsearching-v4';
+const CACHE_NAME = 'coachsearching-v5';
 const urlsToCache = [
     './',
     './index.html',
