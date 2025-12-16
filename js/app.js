@@ -1195,6 +1195,58 @@ const CoachOnboarding = ({ session }) => {
                     <!-- Step 1: Basic Info & Pricing -->
                     ${step === 1 && html`
                         <div style=${{ display: 'grid', gap: '22px' }}>
+                            <!-- Profile Picture Upload -->
+                            <div>
+                                <label style=${labelStyle}>${t('onboard.profilePicture') || 'Profile Picture'}</label>
+                                <div style=${{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '16px'
+                                }}>
+                                    <div style=${{
+                                        width: '80px',
+                                        height: '80px',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
+                                        border: '3px solid #E5E7EB',
+                                        background: '#F3F4F6',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0
+                                    }}>
+                                        ${formData.avatar_url
+                                            ? html`<img src=${formData.avatar_url} alt="Profile" style=${{ width: '100%', height: '100%', objectFit: 'cover' }} />`
+                                            : html`<span style=${{ fontSize: '32px', color: '#9CA3AF' }}>👤</span>`
+                                        }
+                                    </div>
+                                    <div style=${{ flex: 1 }}>
+                                        <label style=${{
+                                            display: 'inline-block',
+                                            padding: '10px 20px',
+                                            background: uploading ? '#9CA3AF' : '#006266',
+                                            color: 'white',
+                                            borderRadius: '8px',
+                                            cursor: uploading ? 'not-allowed' : 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '500'
+                                        }}>
+                                            ${uploading ? (t('onboard.uploading') || 'Uploading...') : (t('onboard.uploadPhoto') || 'Upload Photo')}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange=${handleImageUpload}
+                                                disabled=${uploading}
+                                                style=${{ display: 'none' }}
+                                            />
+                                        </label>
+                                        <div style=${{ fontSize: '12px', color: '#9CA3AF', marginTop: '6px' }}>
+                                            ${t('onboard.uploadHint') || 'JPG, PNG up to 5MB'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <label style=${labelStyle}>${t('onboard.fullName') || 'Full Name'} *</label>
                                 <input
@@ -1250,15 +1302,30 @@ const CoachOnboarding = ({ session }) => {
                                 </div>
                                 <div>
                                     <label style=${labelStyle}>${t('onboard.country') || 'Country'}</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         style=${inputStyle}
-                                        placeholder=${t('onboard.countryPlaceholder') || 'e.g., Switzerland'}
                                         value=${formData.location_country}
                                         onChange=${(e) => handleChange('location_country', e.target.value)}
-                                        onFocus=${(e) => e.target.style.borderColor = '#006266'}
-                                        onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
-                                    />
+                                    >
+                                        <option value="">${t('onboard.selectCountry') || 'Select country...'}</option>
+                                        <option value="Austria">Austria</option>
+                                        <option value="Belgium">Belgium</option>
+                                        <option value="Denmark">Denmark</option>
+                                        <option value="Finland">Finland</option>
+                                        <option value="France">France</option>
+                                        <option value="Germany">Germany</option>
+                                        <option value="Ireland">Ireland</option>
+                                        <option value="Italy">Italy</option>
+                                        <option value="Luxembourg">Luxembourg</option>
+                                        <option value="Netherlands">Netherlands</option>
+                                        <option value="Norway">Norway</option>
+                                        <option value="Poland">Poland</option>
+                                        <option value="Portugal">Portugal</option>
+                                        <option value="Spain">Spain</option>
+                                        <option value="Sweden">Sweden</option>
+                                        <option value="Switzerland">Switzerland</option>
+                                        <option value="United Kingdom">United Kingdom</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -1394,13 +1461,13 @@ const CoachOnboarding = ({ session }) => {
                                 <label style=${labelStyle}>${t('onboard.sessionLanguages') || 'Languages'} *</label>
                                 <div style=${{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                     ${[
-                                        { flag: '🇬🇧', name: 'English' },
-                                        { flag: '🇩🇪', name: 'German' },
-                                        { flag: '🇪🇸', name: 'Spanish' },
-                                        { flag: '🇫🇷', name: 'French' },
-                                        { flag: '🇮🇹', name: 'Italian' },
-                                        { flag: '🇳🇱', name: 'Dutch' },
-                                        { flag: '🇵🇹', name: 'Portuguese' }
+                                        { flagCode: 'gb', name: 'English' },
+                                        { flagCode: 'de', name: 'German' },
+                                        { flagCode: 'es', name: 'Spanish' },
+                                        { flagCode: 'fr', name: 'French' },
+                                        { flagCode: 'it', name: 'Italian' },
+                                        { flagCode: 'nl', name: 'Dutch' },
+                                        { flagCode: 'pt', name: 'Portuguese' }
                                     ].map(lang => {
                                         const isSelected = formData.languages.split(',').map(l => l.trim()).includes(lang.name);
                                         return html`
@@ -1430,7 +1497,11 @@ const CoachOnboarding = ({ session }) => {
                                                     transition: 'all 0.2s'
                                                 }}
                                             >
-                                                <span style=${{ fontSize: '20px' }}>${lang.flag}</span>
+                                                <img
+                                                    src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${lang.flagCode}.svg"
+                                                    alt=${lang.name}
+                                                    style=${{ width: '24px', height: '18px', borderRadius: '2px', objectFit: 'cover' }}
+                                                />
                                                 <span>${lang.name}</span>
                                                 ${isSelected && html`<span style=${{ color: '#006266', fontWeight: 'bold' }}>✓</span>`}
                                             </button>
@@ -1481,56 +1552,6 @@ const CoachOnboarding = ({ session }) => {
                                         />
                                         <span style=${{ fontSize: '15px', fontWeight: '500' }}>📍 ${t('onboard.inPersonDesc') || 'On-Site Sessions'}</span>
                                     </label>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label style=${labelStyle}>${t('onboard.profilePicture') || 'Profile Picture'} (${t('onboard.optional') || 'Optional'})</label>
-                                <div style=${{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '16px'
-                                }}>
-                                    <div style=${{
-                                        width: '80px',
-                                        height: '80px',
-                                        borderRadius: '50%',
-                                        overflow: 'hidden',
-                                        border: '3px solid #E5E7EB',
-                                        background: '#F3F4F6',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        ${formData.avatar_url
-                                            ? html`<img src=${formData.avatar_url} alt="Profile" style=${{ width: '100%', height: '100%', objectFit: 'cover' }} />`
-                                            : html`<span style=${{ fontSize: '32px', color: '#9CA3AF' }}>👤</span>`
-                                        }
-                                    </div>
-                                    <div style=${{ flex: 1 }}>
-                                        <label style=${{
-                                            display: 'inline-block',
-                                            padding: '10px 20px',
-                                            background: uploading ? '#9CA3AF' : '#006266',
-                                            color: 'white',
-                                            borderRadius: '8px',
-                                            cursor: uploading ? 'not-allowed' : 'pointer',
-                                            fontSize: '14px',
-                                            fontWeight: '500'
-                                        }}>
-                                            ${uploading ? (t('onboard.uploading') || 'Uploading...') : (t('onboard.uploadPhoto') || 'Upload Photo')}
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange=${handleImageUpload}
-                                                disabled=${uploading}
-                                                style=${{ display: 'none' }}
-                                            />
-                                        </label>
-                                        <div style=${{ fontSize: '12px', color: '#9CA3AF', marginTop: '6px' }}>
-                                            ${t('onboard.uploadHint') || 'JPG, PNG up to 5MB'}
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -5521,15 +5542,15 @@ const DashboardProfile = ({ session, userType }) => {
         intro_video_url: ''
     });
 
-    // Predefined options matching filters exactly
+    // Predefined options matching filters exactly - using SVG flags for Windows compatibility
     const languageOptions = [
-        { name: 'English', flag: '🇬🇧' },
-        { name: 'German', flag: '🇩🇪' },
-        { name: 'Spanish', flag: '🇪🇸' },
-        { name: 'French', flag: '🇫🇷' },
-        { name: 'Italian', flag: '🇮🇹' },
-        { name: 'Dutch', flag: '🇳🇱' },
-        { name: 'Portuguese', flag: '🇵🇹' }
+        { name: 'English', flagCode: 'gb' },
+        { name: 'German', flagCode: 'de' },
+        { name: 'Spanish', flagCode: 'es' },
+        { name: 'French', flagCode: 'fr' },
+        { name: 'Italian', flagCode: 'it' },
+        { name: 'Dutch', flagCode: 'nl' },
+        { name: 'Portuguese', flagCode: 'pt' }
     ];
 
     const specialtyOptions = [
@@ -6017,7 +6038,7 @@ const DashboardProfile = ({ session, userType }) => {
                                 <label>Languages</label>
                                 <div class="checkbox-grid">
                                     ${languageOptions.map(lang => html`
-                                        <label key=${lang.name} class="checkbox-item">
+                                        <label key=${lang.name} class="checkbox-item" style=${{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <input type="checkbox"
                                                 checked=${formData.languages.includes(lang.name)}
                                                 onChange=${(e) => {
@@ -6029,7 +6050,12 @@ const DashboardProfile = ({ session, userType }) => {
                                                     }
                                                 }}
                                             />
-                                            ${lang.flag} ${lang.name}
+                                            <img
+                                                src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${lang.flagCode}.svg"
+                                                alt=${lang.name}
+                                                style=${{ width: '20px', height: '15px', borderRadius: '2px' }}
+                                            />
+                                            ${lang.name}
                                         </label>
                                     `)}
                                 </div>
