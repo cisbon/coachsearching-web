@@ -909,101 +909,58 @@ const CoachOnboarding = ({ session }) => {
         languages: 'en',
         session_types_online: true,
         session_types_onsite: false,
-        avatar_url: '',
-        promo_code: ''
+        avatar_url: ''
     });
 
-    // Promo code validation state
-    const [promoStatus, setPromoStatus] = useState('idle'); // idle, validating, valid, invalid, expired
-    const [promoDetails, setPromoDetails] = useState(null);
-    const [promoValidating, setPromoValidating] = useState(false);
+    // Image upload state
+    const [uploading, setUploading] = useState(false);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    // Validate promo code
-    const validatePromoCode = async (code) => {
-        if (!code || code.length < 3) {
-            setPromoStatus('idle');
-            setPromoDetails(null);
+    // Handle profile picture upload
+    const handleImageUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            setMessage(t('onboard.invalidImageType') || 'Please select an image file');
             return;
         }
 
-        setPromoValidating(true);
-        setPromoStatus('validating');
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setMessage(t('onboard.imageTooLarge') || 'Image must be less than 5MB');
+            return;
+        }
+
+        setUploading(true);
+        setMessage('');
 
         try {
-            if (!window.supabaseClient) {
-                throw new Error('Database not available');
-            }
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
+            const filePath = `avatars/${fileName}`;
 
-            // Query the promo_codes table for coach registration codes
-            const { data, error } = await window.supabaseClient
-                .from('cs_promo_codes')
-                .select('*')
-                .eq('code', code.toUpperCase())
-                .eq('is_active', true)
-                .or('target_type.eq.coach,target_type.eq.all')
-                .maybeSingle();
+            const { error: uploadError } = await window.supabaseClient.storage
+                .from('avatars')
+                .upload(filePath, file);
 
-            if (error) {
-                console.error('Promo code validation error:', error);
-                setPromoStatus('invalid');
-                setPromoDetails(null);
-                return;
-            }
+            if (uploadError) throw uploadError;
 
-            if (!data) {
-                setPromoStatus('invalid');
-                setPromoDetails(null);
-                return;
-            }
+            const { data: { publicUrl } } = window.supabaseClient.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
 
-            // Check expiry
-            if (data.expires_at && new Date(data.expires_at) < new Date()) {
-                setPromoStatus('expired');
-                setPromoDetails(null);
-                return;
-            }
-
-            // Check usage limit
-            if (data.max_uses && data.current_uses >= data.max_uses) {
-                setPromoStatus('invalid');
-                setPromoDetails(null);
-                return;
-            }
-
-            // Valid promo code!
-            setPromoStatus('valid');
-            setPromoDetails({
-                id: data.id,
-                code: data.code,
-                discount_type: data.discount_type, // 'percentage', 'fixed', 'free_trial'
-                discount_value: data.discount_value,
-                free_days: data.free_days || 30,
-                description: data.description
-            });
+            handleChange('avatar_url', publicUrl);
         } catch (err) {
-            console.error('Error validating promo code:', err);
-            setPromoStatus('invalid');
-            setPromoDetails(null);
+            console.error('Error uploading image:', err);
+            setMessage(t('onboard.uploadFailed') || 'Failed to upload image');
         } finally {
-            setPromoValidating(false);
+            setUploading(false);
         }
-    };
-
-    // Debounced promo code validation
-    const handlePromoCodeChange = (value) => {
-        handleChange('promo_code', value);
-        // Clear timeout if exists
-        if (window.promoCodeTimeout) {
-            clearTimeout(window.promoCodeTimeout);
-        }
-        // Debounce validation
-        window.promoCodeTimeout = setTimeout(() => {
-            validatePromoCode(value);
-        }, 500);
     };
 
     const handleNext = () => {
@@ -1077,23 +1034,9 @@ const CoachOnboarding = ({ session }) => {
             if (formData.session_types_online) sessionTypesArray.push('online');
             if (formData.session_types_onsite) sessionTypesArray.push('onsite');
 
-            // Calculate trial end date - default 14 days, or extended if promo code
-            const DEFAULT_TRIAL_DAYS = 14;
-            let trialDays = DEFAULT_TRIAL_DAYS;
-            let subscriptionDiscount = null;
-
-            if (promoStatus === 'valid' && promoDetails) {
-                if (promoDetails.discount_type === 'free_trial') {
-                    // Extended trial from promo code
-                    trialDays = promoDetails.free_days || 30;
-                } else if (promoDetails.discount_type === 'percentage') {
-                    subscriptionDiscount = {
-                        type: 'percentage',
-                        value: promoDetails.discount_value,
-                        promo_code: promoDetails.code
-                    };
-                }
-            }
+            // Check if user has referral code for free year (from registration metadata)
+            const hasReferralCode = session?.user?.user_metadata?.referral_code_valid === true;
+            const trialDays = hasReferralCode ? 365 : 14; // 1 year if referral, otherwise 14 days
 
             // Set trial end date
             const trialEndsAt = new Date();
@@ -1115,9 +1058,7 @@ const CoachOnboarding = ({ session }) => {
                 avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 onboarding_completed: true,
                 subscription_status: 'trial',
-                trial_ends_at: trialEndsAt.toISOString(),
-                promo_code_used: promoStatus === 'valid' ? promoDetails?.code : null,
-                subscription_discount: subscriptionDiscount
+                trial_ends_at: trialEndsAt.toISOString()
             };
 
             console.log('💾 Saving coach profile to Supabase:', coachProfile);
@@ -1136,34 +1077,9 @@ const CoachOnboarding = ({ session }) => {
 
             console.log('✅ Coach profile saved successfully:', data);
 
-            // Update promo code usage count if a valid code was used
-            if (promoStatus === 'valid' && promoDetails?.id) {
-                try {
-                    await window.supabaseClient
-                        .from('cs_promo_codes')
-                        .update({ current_uses: promoDetails.current_uses ? promoDetails.current_uses + 1 : 1 })
-                        .eq('id', promoDetails.id);
-
-                    // Record the promo code usage
-                    await window.supabaseClient
-                        .from('cs_promo_code_uses')
-                        .insert([{
-                            promo_code_id: promoDetails.id,
-                            user_id: session.user.id,
-                            used_at: new Date().toISOString(),
-                            context: 'coach_registration'
-                        }]);
-
-                    console.log('✅ Promo code usage recorded');
-                } catch (promoErr) {
-                    console.warn('Failed to update promo code usage:', promoErr);
-                    // Don't fail the registration if promo tracking fails
-                }
-            }
-
-            const successMsg = promoStatus === 'valid' && promoDetails
-                ? `✓ Profile completed! ${promoDetails.discount_type === 'free_trial' ? `You have ${promoDetails.free_days} days free!` : `${promoDetails.discount_value}% discount applied!`} Redirecting...`
-                : '✓ Profile completed successfully! Redirecting to dashboard...';
+            const successMsg = hasReferralCode
+                ? t('onboard.successWithReferral') || '✓ Profile completed! You have 1 year of Premium free! Redirecting...'
+                : t('onboard.successDefault') || '✓ Profile completed successfully! Redirecting to dashboard...';
 
             setMessage(successMsg);
             setTimeout(() => {
@@ -1221,10 +1137,10 @@ const CoachOnboarding = ({ session }) => {
                         color: '#1F2937',
                         marginBottom: '12px'
                     }}>
-                        ${step === 1 ? '👋 Welcome, Coach!' : '✨ Almost There!'}
+                        ${step === 1 ? (t('onboard.welcomeCoach') || '👋 Welcome, Coach!') : (t('onboard.almostThere') || '✨ Almost There!')}
                     </h1>
                     <p style=${{ fontSize: '16px', color: '#6B7280' }}>
-                        ${step === 1 ? 'Set up your profile to attract clients' : 'Tell us about your expertise and availability'}
+                        ${step === 1 ? (t('onboard.step1Subtitle') || 'Set up your profile to attract clients') : (t('onboard.step2Subtitle') || 'Tell us about your expertise and availability')}
                     </p>
 
                     <!-- Progress Bar -->
@@ -1250,7 +1166,7 @@ const CoachOnboarding = ({ session }) => {
                         }}></div>
                     </div>
                     <div style=${{ marginTop: '8px', fontSize: '13px', color: '#9CA3AF', fontWeight: '500' }}>
-                        Step ${step} of 2
+                        ${t('onboard.stepOf') || 'Step'} ${step} ${t('onboard.of') || 'of'} 2
                     </div>
                 </div>
 
@@ -1273,7 +1189,7 @@ const CoachOnboarding = ({ session }) => {
                     ${step === 1 && html`
                         <div style=${{ display: 'grid', gap: '22px' }}>
                             <div>
-                                <label style=${labelStyle}>Full Name *</label>
+                                <label style=${labelStyle}>${t('onboard.fullName') || 'Full Name'} *</label>
                                 <input
                                     type="text"
                                     style=${inputStyle}
@@ -1286,11 +1202,11 @@ const CoachOnboarding = ({ session }) => {
                             </div>
 
                             <div>
-                                <label style=${labelStyle}>Professional Title *</label>
+                                <label style=${labelStyle}>${t('onboard.jobTitle') || 'Professional Title'} *</label>
                                 <input
                                     type="text"
                                     style=${inputStyle}
-                                    placeholder="e.g., Life Coach, Business Consultant"
+                                    placeholder=${t('onboard.jobTitlePlaceholder') || 'e.g., Life Coach, Business Consultant'}
                                     value=${formData.title}
                                     onChange=${(e) => handleChange('title', e.target.value)}
                                     onFocus=${(e) => e.target.style.borderColor = '#006266'}
@@ -1300,10 +1216,10 @@ const CoachOnboarding = ({ session }) => {
                             </div>
 
                             <div>
-                                <label style=${labelStyle}>About You *</label>
+                                <label style=${labelStyle}>${t('onboard.bio') || 'About You'} *</label>
                                 <textarea
                                     style=${{...inputStyle, minHeight: '120px', resize: 'vertical'}}
-                                    placeholder="Share your coaching philosophy, experience, and approach..."
+                                    placeholder=${t('onboard.bioPlaceholder') || 'Share your coaching philosophy, experience, and approach...'}
                                     value=${formData.bio}
                                     onChange=${(e) => handleChange('bio', e.target.value)}
                                     onFocus=${(e) => e.target.style.borderColor = '#006266'}
@@ -1314,11 +1230,11 @@ const CoachOnboarding = ({ session }) => {
 
                             <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                 <div>
-                                    <label style=${labelStyle}>Hourly Rate (EUR) *</label>
+                                    <label style=${labelStyle}>${t('onboard.hourlyRate') || 'Hourly Rate'} (EUR) *</label>
                                     <input
                                         type="number"
                                         style=${inputStyle}
-                                        placeholder="150"
+                                        placeholder=${t('onboard.hourlyRatePlaceholder') || '150'}
                                         min="0"
                                         step="1"
                                         value=${formData.hourly_rate}
@@ -1330,11 +1246,11 @@ const CoachOnboarding = ({ session }) => {
                                 </div>
 
                                 <div>
-                                    <label style=${labelStyle}>Location</label>
+                                    <label style=${labelStyle}>${t('onboard.location') || 'Location'}</label>
                                     <input
                                         type="text"
                                         style=${inputStyle}
-                                        placeholder="e.g., Zurich"
+                                        placeholder=${t('onboard.locationPlaceholder') || 'e.g., Zurich'}
                                         value=${formData.location}
                                         onChange=${(e) => handleChange('location', e.target.value)}
                                         onFocus=${(e) => e.target.style.borderColor = '#006266'}
@@ -1359,7 +1275,7 @@ const CoachOnboarding = ({ session }) => {
                                     cursor: 'pointer'
                                 }}
                             >
-                                Skip for Now
+                                ${t('onboard.skipForNow') || 'Skip for Now'}
                             </button>
                             <button
                                 type="submit"
@@ -1375,7 +1291,7 @@ const CoachOnboarding = ({ session }) => {
                                     boxShadow: '0 4px 12px rgba(0, 98, 102, 0.4)'
                                 }}
                             >
-                                Next Step →
+                                ${t('onboard.next') || 'Next Step →'}
                             </button>
                         </div>
                     `}
@@ -1384,11 +1300,11 @@ const CoachOnboarding = ({ session }) => {
                     ${step === 2 && html`
                         <div style=${{ display: 'grid', gap: '22px' }}>
                             <div>
-                                <label style=${labelStyle}>Specialties *</label>
+                                <label style=${labelStyle}>${t('onboard.specialties') || 'Specialties'} *</label>
                                 <input
                                     type="text"
                                     style=${inputStyle}
-                                    placeholder="Life Coaching, Business Strategy, Leadership"
+                                    placeholder=${t('onboard.specialtiesPlaceholder') || 'Life Coaching, Business Strategy, Leadership'}
                                     value=${formData.specialties}
                                     onChange=${(e) => handleChange('specialties', e.target.value)}
                                     onFocus=${(e) => e.target.style.borderColor = '#006266'}
@@ -1396,29 +1312,62 @@ const CoachOnboarding = ({ session }) => {
                                     required
                                 />
                                 <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
-                                    Separate with commas
+                                    ${t('onboard.specialtiesHelp') || 'Separate with commas'}
                                 </div>
                             </div>
 
                             <div>
-                                <label style=${labelStyle}>Languages *</label>
-                                <input
-                                    type="text"
-                                    style=${inputStyle}
-                                    placeholder="en, de, es"
-                                    value=${formData.languages}
-                                    onChange=${(e) => handleChange('languages', e.target.value)}
-                                    onFocus=${(e) => e.target.style.borderColor = '#006266'}
-                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
-                                    required
-                                />
-                                <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
-                                    Use codes: en, de, es, fr, it
+                                <label style=${labelStyle}>${t('onboard.sessionLanguages') || 'Languages'} *</label>
+                                <div style=${{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    ${[
+                                        { code: 'en', flag: '🇬🇧', name: 'English' },
+                                        { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
+                                        { code: 'es', flag: '🇪🇸', name: 'Español' },
+                                        { code: 'fr', flag: '🇫🇷', name: 'Français' },
+                                        { code: 'it', flag: '🇮🇹', name: 'Italiano' }
+                                    ].map(lang => {
+                                        const isSelected = formData.languages.split(',').map(l => l.trim()).includes(lang.code);
+                                        return html`
+                                            <button
+                                                type="button"
+                                                key=${lang.code}
+                                                onClick=${() => {
+                                                    const current = formData.languages.split(',').map(l => l.trim()).filter(Boolean);
+                                                    if (isSelected) {
+                                                        handleChange('languages', current.filter(l => l !== lang.code).join(', '));
+                                                    } else {
+                                                        handleChange('languages', [...current, lang.code].join(', '));
+                                                    }
+                                                }}
+                                                style=${{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    padding: '10px 16px',
+                                                    border: isSelected ? '2px solid #006266' : '2px solid #E5E7EB',
+                                                    borderRadius: '8px',
+                                                    background: isSelected ? '#f0fafa' : 'white',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    color: isSelected ? '#006266' : '#374151',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                <span style=${{ fontSize: '20px' }}>${lang.flag}</span>
+                                                <span>${lang.name}</span>
+                                                ${isSelected && html`<span style=${{ color: '#006266', fontWeight: 'bold' }}>✓</span>`}
+                                            </button>
+                                        `;
+                                    })}
+                                </div>
+                                <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '8px' }}>
+                                    ${t('onboard.selectLanguagesHint') || 'Select all languages you offer coaching in'}
                                 </div>
                             </div>
 
                             <div>
-                                <label style=${{...labelStyle, marginBottom: '12px'}}>Session Types *</label>
+                                <label style=${{...labelStyle, marginBottom: '12px'}}>${t('onboard.sessionFormats') || 'Session Types'} *</label>
                                 <div style=${{ display: 'grid', gap: '12px' }}>
                                     <label style=${{
                                         display: 'flex',
@@ -1436,7 +1385,7 @@ const CoachOnboarding = ({ session }) => {
                                             onChange=${(e) => handleChange('session_types_online', e.target.checked)}
                                             style=${{ width: '18px', height: '18px', cursor: 'pointer' }}
                                         />
-                                        <span style=${{ fontSize: '15px', fontWeight: '500' }}>💻 Online Sessions</span>
+                                        <span style=${{ fontSize: '15px', fontWeight: '500' }}>💻 ${t('onboard.videoCallDesc') || 'Online Sessions'}</span>
                                     </label>
                                     <label style=${{
                                         display: 'flex',
@@ -1454,113 +1403,57 @@ const CoachOnboarding = ({ session }) => {
                                             onChange=${(e) => handleChange('session_types_onsite', e.target.checked)}
                                             style=${{ width: '18px', height: '18px', cursor: 'pointer' }}
                                         />
-                                        <span style=${{ fontSize: '15px', fontWeight: '500' }}>📍 On-Site Sessions</span>
+                                        <span style=${{ fontSize: '15px', fontWeight: '500' }}>📍 ${t('onboard.inPersonDesc') || 'On-Site Sessions'}</span>
                                     </label>
                                 </div>
                             </div>
 
                             <div>
-                                <label style=${labelStyle}>Profile Picture URL (Optional)</label>
-                                <input
-                                    type="url"
-                                    style=${inputStyle}
-                                    placeholder="https://example.com/photo.jpg"
-                                    value=${formData.avatar_url}
-                                    onChange=${(e) => handleChange('avatar_url', e.target.value)}
-                                    onFocus=${(e) => e.target.style.borderColor = '#006266'}
-                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
-                                />
-                                <div style=${{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
-                                    Leave blank for auto-generated avatar
-                                </div>
-                            </div>
-
-                            <!-- Promo Code Section -->
-                            <div style=${{
-                                marginTop: '8px',
-                                padding: '20px',
-                                background: 'linear-gradient(135deg, #f0fafa 0%, #ffffff 100%)',
-                                borderRadius: '12px',
-                                border: '2px dashed #006266'
-                            }}>
-                                <label style=${{...labelStyle, display: 'flex', alignItems: 'center', gap: '8px'}}>
-                                    <span style=${{ fontSize: '18px' }}>🎁</span>
-                                    ${t('onboard.promoCode') || 'Have a Promo Code?'}
-                                </label>
-                                <div style=${{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                                <label style=${labelStyle}>${t('onboard.profilePicture') || 'Profile Picture'} (${t('onboard.optional') || 'Optional'})</label>
+                                <div style=${{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '16px'
+                                }}>
+                                    <div style=${{
+                                        width: '80px',
+                                        height: '80px',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
+                                        border: '3px solid #E5E7EB',
+                                        background: '#F3F4F6',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        ${formData.avatar_url
+                                            ? html`<img src=${formData.avatar_url} alt="Profile" style=${{ width: '100%', height: '100%', objectFit: 'cover' }} />`
+                                            : html`<span style=${{ fontSize: '32px', color: '#9CA3AF' }}>👤</span>`
+                                        }
+                                    </div>
                                     <div style=${{ flex: 1 }}>
-                                        <input
-                                            type="text"
-                                            style=${{
-                                                ...inputStyle,
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '2px',
-                                                fontWeight: '600',
-                                                borderColor: promoStatus === 'valid' ? '#10B981' : promoStatus === 'invalid' || promoStatus === 'expired' ? '#EF4444' : '#E5E7EB'
-                                            }}
-                                            placeholder="WELCOME30"
-                                            value=${formData.promo_code}
-                                            onChange=${(e) => handlePromoCodeChange(e.target.value)}
-                                            onFocus=${(e) => e.target.style.borderColor = '#006266'}
-                                            onBlur=${(e) => {
-                                                if (promoStatus === 'valid') e.target.style.borderColor = '#10B981';
-                                                else if (promoStatus === 'invalid' || promoStatus === 'expired') e.target.style.borderColor = '#EF4444';
-                                                else e.target.style.borderColor = '#E5E7EB';
-                                            }}
-                                        />
-
-                                        ${/* Validation feedback */ ''}
-                                        ${promoStatus === 'validating' && html`
-                                            <div style=${{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6B7280' }}>
-                                                <span style=${{ animation: 'spin 1s linear infinite' }}>⏳</span>
-                                                ${t('onboard.promoValidating') || 'Checking code...'}
-                                            </div>
-                                        `}
-
-                                        ${promoStatus === 'valid' && promoDetails && html`
-                                            <div style=${{
-                                                marginTop: '12px',
-                                                padding: '14px',
-                                                background: 'linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 100%)',
-                                                borderRadius: '10px',
-                                                border: '1px solid #10B981'
-                                            }}>
-                                                <div style=${{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                                                    <span style=${{ fontSize: '20px' }}>✅</span>
-                                                    <span style=${{ fontWeight: '700', color: '#065F46', fontSize: '15px' }}>
-                                                        ${t('onboard.promoApplied') || 'Promo Code Applied!'}
-                                                    </span>
-                                                </div>
-                                                <div style=${{ fontSize: '14px', color: '#047857', fontWeight: '500' }}>
-                                                    ${promoDetails.discount_type === 'free_trial'
-                                                        ? `🎉 ${promoDetails.free_days} ${t('onboard.promoDaysFree') || 'days FREE access!'}`
-                                                        : promoDetails.discount_type === 'percentage'
-                                                        ? `💰 ${promoDetails.discount_value}% ${t('onboard.promoDiscountOff') || 'off your subscription!'}`
-                                                        : promoDetails.description || 'Special discount applied!'
-                                                    }
-                                                </div>
-                                            </div>
-                                        `}
-
-                                        ${promoStatus === 'invalid' && formData.promo_code.length >= 3 && html`
-                                            <div style=${{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#DC2626' }}>
-                                                <span>❌</span>
-                                                ${t('onboard.promoInvalid') || 'Invalid promo code'}
-                                            </div>
-                                        `}
-
-                                        ${promoStatus === 'expired' && html`
-                                            <div style=${{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#DC2626' }}>
-                                                <span>⏰</span>
-                                                ${t('onboard.promoExpired') || 'This promo code has expired'}
-                                            </div>
-                                        `}
-
-                                        ${promoStatus === 'idle' && html`
-                                            <div style=${{ marginTop: '8px', fontSize: '13px', color: '#9CA3AF' }}>
-                                                ${t('onboard.promoHint') || 'Enter your code to get a special discount or free trial'}
-                                            </div>
-                                        `}
+                                        <label style=${{
+                                            display: 'inline-block',
+                                            padding: '10px 20px',
+                                            background: uploading ? '#9CA3AF' : '#006266',
+                                            color: 'white',
+                                            borderRadius: '8px',
+                                            cursor: uploading ? 'not-allowed' : 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '500'
+                                        }}>
+                                            ${uploading ? (t('onboard.uploading') || 'Uploading...') : (t('onboard.uploadPhoto') || 'Upload Photo')}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange=${handleImageUpload}
+                                                disabled=${uploading}
+                                                style=${{ display: 'none' }}
+                                            />
+                                        </label>
+                                        <div style=${{ fontSize: '12px', color: '#9CA3AF', marginTop: '6px' }}>
+                                            ${t('onboard.uploadHint') || 'JPG, PNG up to 5MB'}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1583,7 +1476,7 @@ const CoachOnboarding = ({ session }) => {
                                     flex: 1
                                 }}
                             >
-                                ← Back
+                                ← ${t('onboard.previous') || 'Back'}
                             </button>
                             <button
                                 type="submit"
@@ -1601,7 +1494,7 @@ const CoachOnboarding = ({ session }) => {
                                     flex: 2
                                 }}
                             >
-                                ${loading ? '💾 Creating Profile...' : '✅ Complete Setup'}
+                                ${loading ? (t('onboard.uploading') || '💾 Creating Profile...') : ('✅ ' + (t('onboard.complete') || 'Complete Setup'))}
                             </button>
                         </div>
                     `}
