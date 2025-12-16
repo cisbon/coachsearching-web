@@ -23,9 +23,9 @@ BEGIN
     -- Create base slug from name
     base_slug := lower(full_name);
 
-    -- Add title if provided (take first 30 chars max)
+    -- Add title if provided (take first 30 chars max, lowercased)
     IF title IS NOT NULL AND title != '' THEN
-        base_slug := base_slug || ' ' || left(title, 30);
+        base_slug := base_slug || ' ' || lower(left(title, 30));
     END IF;
 
     -- Replace special characters and spaces with hyphens
