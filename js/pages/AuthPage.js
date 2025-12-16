@@ -20,7 +20,12 @@ export function AuthPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [userType, setUserType] = useState('client');
-    const [isLogin, setIsLogin] = useState(true);
+    const [isLogin, setIsLogin] = useState(() => {
+        // Check URL for mode=register parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+        return urlParams.get('mode') !== 'register' && hashParams.get('mode') !== 'register';
+    });
     const [message, setMessage] = useState('');
 
     // Referral code state (for coach registration)
