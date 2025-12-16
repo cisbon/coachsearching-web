@@ -1,6 +1,7 @@
 /**
  * Pricing Page Component
- * @fileoverview Pricing page with Free vs Premium tier comparison for coaches
+ * @fileoverview Premium pricing page with Free vs Premium tier comparison for coaches
+ * Freemium model - no commission on sessions, just subscription for premium features
  */
 
 import htm from '../vendor/htm.js';
@@ -16,274 +17,339 @@ const { useState, useEffect } = React;
 const html = htm.bind(React.createElement);
 
 // ============================================================================
-// Pricing Data
+// Pricing Configuration
 // ============================================================================
 
 const PRICING = {
-    free: {
-        name: 'Free',
-        monthlyPrice: 0,
-        yearlyPrice: 0,
-        description: 'Perfect for coaches just getting started',
-        cta: 'Get Started Free',
-        ctaLink: '#onboarding',
-        highlight: false,
-    },
-    premium: {
-        name: 'Premium',
-        monthlyPrice: 39,
-        yearlyPrice: 349,
-        description: 'For established coaches who want to grow',
-        cta: 'Upgrade to Premium',
-        ctaLink: '#dashboard',
-        highlight: true,
-        savings: '25%',
-    },
+    monthly: 29,
+    yearly: 261,
+    yearlyPerMonth: 21.75,
+    launchOffer: 19,
+    launchOfferLimit: 100,
+    yearlySavingsPercent: 25,
 };
 
-// Data-driven feature list with tier flags
+// ============================================================================
+// Feature Data Structure
+// ============================================================================
+
 const FEATURES = [
     {
-        name: 'Profile Listing',
-        description: 'Get discovered by potential clients',
-        free: 'Basic profile',
-        premium: 'Enhanced profile with video intro',
-        category: 'visibility',
+        category: 'pricing.features.profileVisibility',
+        categoryKey: 'profileVisibility',
+        items: [
+            { key: 'profileListing', name: 'pricing.features.profileListing', free: true, premium: true },
+            { key: 'searchResults', name: 'pricing.features.searchResults', free: true, premium: true },
+            { key: 'specializations', name: 'pricing.features.specializations', free: '3', premium: '8' },
+            { key: 'clientReviews', name: 'pricing.features.clientReviews', free: true, premium: true },
+            { key: 'shareableLink', name: 'pricing.features.shareableLink', free: true, premium: true },
+        ],
     },
     {
-        name: 'Search Ranking',
-        description: 'How you appear in search results',
-        free: 'Standard ranking',
-        premium: 'Priority placement + "Featured" badge',
-        category: 'visibility',
+        category: 'pricing.features.discoveryCalls',
+        categoryKey: 'discoveryCalls',
+        items: [
+            { key: 'discoverySlots', name: 'pricing.features.discoverySlots', free: 'pricing.features.onePerWeek', premium: 'pricing.features.unlimited' },
+            { key: 'searchPlacement', name: 'pricing.features.searchPlacement', free: 'pricing.features.standard', premium: 'pricing.features.priorityBadge' },
+        ],
     },
     {
-        name: 'Discovery Call Slots',
-        description: 'Free intro calls with potential clients',
-        free: 'Max 4 per week',
-        premium: 'Unlimited',
-        category: 'booking',
+        category: 'pricing.features.profileContent',
+        categoryKey: 'profileContent',
+        items: [
+            { key: 'bioLength', name: 'pricing.features.bioLength', free: 'pricing.features.chars300', premium: 'pricing.features.chars1000' },
+            { key: 'profilePhotos', name: 'pricing.features.profilePhotos', free: '1', premium: '5' },
+            { key: 'videoIntro', name: 'pricing.features.videoIntro', free: false, premium: true },
+            { key: 'myApproach', name: 'pricing.features.myApproach', free: false, premium: true },
+            { key: 'customFaq', name: 'pricing.features.customFaq', free: false, premium: 'pricing.features.threeQAs' },
+        ],
     },
     {
-        name: 'Client Reviews',
-        description: 'Collect and display testimonials',
-        free: true,
-        premium: true,
-        category: 'social',
-    },
-    {
-        name: 'Calendar Integration',
-        description: 'Manage your availability',
-        free: 'Basic calendar',
-        premium: 'Google & Outlook sync',
-        category: 'booking',
-    },
-    {
-        name: 'Coach Notes CRM',
-        description: 'Track client progress and session notes',
-        free: false,
-        premium: true,
-        category: 'crm',
-    },
-    {
-        name: 'Client Analytics',
-        description: 'Profile views, booking rates, engagement',
-        free: false,
-        premium: true,
-        category: 'analytics',
-    },
-    {
-        name: 'Video Introduction',
-        description: 'Add a personal video to your profile',
-        free: false,
-        premium: true,
-        category: 'visibility',
-    },
-    {
-        name: 'Marketing Toolkit',
-        description: 'Social media templates & badges',
-        free: false,
-        premium: true,
-        category: 'marketing',
-    },
-    {
-        name: 'Priority Support',
-        description: 'Get help when you need it',
-        free: 'Email support',
-        premium: 'Priority email & chat support',
-        category: 'support',
-    },
-];
-
-// FAQ data for pricing page
-const PRICING_FAQ = [
-    {
-        question: 'Can I switch from Free to Premium anytime?',
-        answer: 'Yes! You can upgrade to Premium at any time from your dashboard. Your profile enhancements will be activated immediately.',
-    },
-    {
-        question: 'Is there a trial period for Premium?',
-        answer: 'We offer a 14-day free trial of Premium features. No credit card required to start.',
-    },
-    {
-        question: 'What payment methods do you accept?',
-        answer: 'We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and SEPA direct debit for European customers.',
-    },
-    {
-        question: 'Can I cancel anytime?',
-        answer: 'Absolutely. You can cancel your Premium subscription at any time. Your premium features will remain active until the end of your billing period.',
-    },
-    {
-        question: 'What happens to my data if I downgrade?',
-        answer: 'Your data is safe. Session notes and client information are preserved. You\'ll retain read access but some editing features will be limited.',
-    },
-    {
-        question: 'Do you offer discounts for annual billing?',
-        answer: 'Yes! Save 25% when you choose annual billing (€349/year instead of €468/year).',
+        category: 'pricing.features.practiceManagement',
+        categoryKey: 'practiceManagement',
+        items: [
+            { key: 'coachNotes', name: 'pricing.features.coachNotes', free: false, premium: true },
+            { key: 'profileAnalytics', name: 'pricing.features.profileAnalytics', free: false, premium: true },
+        ],
     },
 ];
 
 // ============================================================================
-// Components
+// FAQ Data
 // ============================================================================
 
-function PricingToggle({ isYearly, onToggle }) {
+const FAQ_ITEMS = [
+    {
+        questionKey: 'pricing.faq.commissionQ',
+        answerKey: 'pricing.faq.commissionA',
+    },
+    {
+        questionKey: 'pricing.faq.discoverySlotQ',
+        answerKey: 'pricing.faq.discoverySlotA',
+    },
+    {
+        questionKey: 'pricing.faq.coachNotesQ',
+        answerKey: 'pricing.faq.coachNotesA',
+    },
+    {
+        questionKey: 'pricing.faq.prioritySearchQ',
+        answerKey: 'pricing.faq.prioritySearchA',
+    },
+    {
+        questionKey: 'pricing.faq.cancelNotesQ',
+        answerKey: 'pricing.faq.cancelNotesA',
+    },
+    {
+        questionKey: 'pricing.faq.upgradeDowngradeQ',
+        answerKey: 'pricing.faq.upgradeDowngradeA',
+    },
+    {
+        questionKey: 'pricing.faq.launchOfferQ',
+        answerKey: 'pricing.faq.launchOfferA',
+    },
+];
+
+// ============================================================================
+// Helper Components
+// ============================================================================
+
+function BillingToggle({ isYearly, onToggle }) {
     return html`
-        <div class="pricing-toggle">
-            <span class="toggle-label ${!isYearly ? 'active' : ''}">Monthly</span>
+        <div class="billing-toggle">
             <button
-                class="toggle-switch ${isYearly ? 'yearly' : ''}"
-                onClick=${onToggle}
-                aria-label="Toggle between monthly and yearly pricing"
+                class="toggle-option ${!isYearly ? 'active' : ''}"
+                onClick=${() => onToggle(false)}
             >
-                <span class="toggle-slider"></span>
+                ${t('pricing.monthly') || 'Monthly'}
             </button>
-            <span class="toggle-label ${isYearly ? 'active' : ''}">
-                Yearly
-                <span class="save-badge">Save 25%</span>
-            </span>
+            <button
+                class="toggle-option ${isYearly ? 'active' : ''}"
+                onClick=${() => onToggle(true)}
+            >
+                ${t('pricing.yearly') || 'Yearly'}
+                <span class="save-badge">${t('pricing.save25') || 'Save 25%'}</span>
+            </button>
         </div>
     `;
 }
 
-function PriceDisplay({ price, isYearly, highlight }) {
-    const period = isYearly ? '/year' : '/month';
-
-    if (price === 0) {
-        return html`
-            <div class="price-display">
-                <span class="price-amount">€0</span>
-                <span class="price-period">/forever</span>
-            </div>
-        `;
-    }
-
+function LaunchOfferBanner() {
     return html`
-        <div class="price-display ${highlight ? 'highlighted' : ''}">
-            <span class="price-amount">€${price}</span>
-            <span class="price-period">${period}</span>
-            ${isYearly && html`
-                <div class="price-monthly-equiv">
-                    (€${Math.round(price / 12)}/month)
+        <div class="launch-offer-banner">
+            <div class="launch-offer-content">
+                <span class="launch-emoji">🚀</span>
+                <div class="launch-text">
+                    <strong>${t('pricing.launchOffer') || 'Launch Offer'}</strong>
+                    <span class="launch-price">
+                        ${t('pricing.lockIn') || 'Lock in'} <strong>€${PRICING.launchOffer}/${t('pricing.month') || 'month'}</strong> ${t('pricing.firstYear') || 'for your entire first year'}
+                    </span>
                 </div>
-            `}
+                <span class="launch-scarcity">${t('pricing.limitedTo') || 'Limited to first'} ${PRICING.launchOfferLimit} ${t('pricing.coaches') || 'coaches'}</span>
+            </div>
         </div>
     `;
 }
 
 function FeatureValue({ value }) {
-    if (value === true) {
-        return html`<span class="feature-check">✓</span>`;
+    // Handle translation keys
+    const displayValue = typeof value === 'string' && value.startsWith('pricing.')
+        ? t(value) || value
+        : value;
+
+    if (displayValue === true) {
+        return html`<span class="feature-check" aria-label="Included">✓</span>`;
     }
-    if (value === false) {
-        return html`<span class="feature-dash">—</span>`;
+    if (displayValue === false) {
+        return html`<span class="feature-dash" aria-label="Not included">—</span>`;
     }
-    return html`<span class="feature-text">${value}</span>`;
+    return html`<span class="feature-text">${displayValue}</span>`;
 }
 
-function PricingCard({ tier, isYearly }) {
-    const price = isYearly ? tier.yearlyPrice : tier.monthlyPrice;
+function FeatureRow({ name, free, premium }) {
+    const displayName = name.startsWith('pricing.') ? t(name) || name : name;
 
     return html`
-        <div class="pricing-card ${tier.highlight ? 'highlighted' : ''}">
-            ${tier.highlight && html`
-                <div class="popular-badge">Most Popular</div>
+        <div class="feature-row">
+            <span class="feature-name">${displayName}</span>
+            <span class="feature-value free-value">
+                <${FeatureValue} value=${free} />
+            </span>
+            <span class="feature-value premium-value">
+                <${FeatureValue} value=${premium} />
+            </span>
+        </div>
+    `;
+}
+
+function PricingCard({ tier, isYearly, isHighlighted }) {
+    const isFree = tier === 'free';
+
+    let priceDisplay, priceSubtext;
+
+    if (isFree) {
+        priceDisplay = '€0';
+        priceSubtext = t('pricing.forever') || 'forever';
+    } else if (isYearly) {
+        priceDisplay = `€${PRICING.yearlyPerMonth}`;
+        priceSubtext = `/${t('pricing.month') || 'month'}, ${t('pricing.billedYearly') || 'billed yearly'}`;
+    } else {
+        priceDisplay = `€${PRICING.monthly}`;
+        priceSubtext = `/${t('pricing.month') || 'month'}`;
+    }
+
+    // Feature items for cards (simplified view)
+    const freeFeatures = [
+        t('pricing.card.profileListing') || 'Profile listing (photo, bio, credentials)',
+        t('pricing.card.appearSearch') || 'Appear in search results',
+        t('pricing.card.upTo3Specs') || 'Up to 3 specializations',
+        t('pricing.card.clientReviews') || 'Client reviews displayed',
+        t('pricing.card.shareableLink') || 'Shareable profile link',
+        t('pricing.card.oneSlotWeek') || '1 discovery call slot per week',
+    ];
+
+    const freeLimits = [
+        t('pricing.card.bio300') || 'Bio: 300 characters',
+        t('pricing.card.photos1') || 'Photos: 1',
+        t('pricing.card.noVideo') || 'No video introduction',
+    ];
+
+    const premiumFeatures = [
+        t('pricing.card.everythingFree') || 'Everything in Free, plus:',
+        t('pricing.card.unlimitedSlots') || 'Unlimited discovery call slots',
+        t('pricing.card.prioritySearch') || 'Priority placement in search results',
+        t('pricing.card.featuredBadge') || '"Featured Coach" badge',
+        t('pricing.card.extendedBio') || 'Extended bio (1000 characters)',
+        t('pricing.card.photos5') || 'Up to 5 photos',
+        t('pricing.card.videoIntro') || 'Video introduction',
+        t('pricing.card.specs8') || 'Up to 8 specializations',
+        t('pricing.card.myApproach') || '"My Approach" section',
+        t('pricing.card.customFaq') || 'Custom FAQ (3 questions)',
+        t('pricing.card.coachNotes') || 'Coach Notes – track client journeys',
+        t('pricing.card.analytics') || 'Profile analytics',
+    ];
+
+    return html`
+        <div class="pricing-card ${isHighlighted ? 'highlighted' : ''}">
+            ${isHighlighted && html`
+                <div class="recommended-badge">${t('pricing.recommended') || 'Recommended'}</div>
             `}
-            <div class="pricing-card-header">
-                <h3 class="tier-name">${tier.name}</h3>
-                <p class="tier-description">${tier.description}</p>
-                <${PriceDisplay}
-                    price=${price}
-                    isYearly=${isYearly}
-                    highlight=${tier.highlight}
-                />
+
+            <div class="card-header">
+                <h3 class="tier-name">${isFree ? t('pricing.free') || 'Free' : t('pricing.premium') || 'Premium'}</h3>
+                <div class="price-display">
+                    <span class="price-amount">${priceDisplay}</span>
+                    <span class="price-period">${priceSubtext}</span>
+                </div>
+
+                ${!isFree && html`
+                    <div class="launch-offer-inline">
+                        <span class="launch-price-small">€${PRICING.launchOffer}/${t('pricing.month') || 'month'}</span>
+                        <span class="launch-period">${t('pricing.firstYearThen') || 'first year, then'} €${PRICING.monthly}/${t('pricing.month') || 'month'}</span>
+                    </div>
+                `}
+
+                <p class="tier-tagline">
+                    ${isFree
+                        ? t('pricing.freeTagline') || 'Get discovered by clients'
+                        : t('pricing.premiumTagline') || 'Grow your coaching practice'
+                    }
+                </p>
             </div>
-            <div class="pricing-card-features">
-                <ul class="feature-list">
-                    ${FEATURES.map(feature => html`
-                        <li key=${feature.name} class="feature-item">
-                            <${FeatureValue} value=${tier.name === 'Free' ? feature.free : feature.premium} />
-                            <span class="feature-name">${feature.name}</span>
-                        </li>
-                    `)}
-                </ul>
+
+            <div class="card-features">
+                ${isFree ? html`
+                    <div class="features-section">
+                        <h4>${t('pricing.profileVisibility') || 'Profile & Visibility'}</h4>
+                        <ul class="feature-list">
+                            ${freeFeatures.map((f, i) => html`
+                                <li key=${i}><span class="check">✓</span> ${f}</li>
+                            `)}
+                        </ul>
+                    </div>
+                    <div class="features-section limits">
+                        <h4>${t('pricing.profileLimits') || 'Profile Limits'}</h4>
+                        <ul class="feature-list muted">
+                            ${freeLimits.map((f, i) => html`
+                                <li key=${i}><span class="bullet">•</span> ${f}</li>
+                            `)}
+                        </ul>
+                    </div>
+                ` : html`
+                    <ul class="feature-list premium-list">
+                        ${premiumFeatures.map((f, i) => html`
+                            <li key=${i} class=${i === 0 ? 'highlight-intro' : ''}>
+                                ${i === 0 ? '' : html`<span class="check">✓</span>`} ${f}
+                            </li>
+                        `)}
+                    </ul>
+                `}
             </div>
-            <div class="pricing-card-footer">
-                <a href=${tier.ctaLink} class="btn ${tier.highlight ? 'btn-primary' : 'btn-secondary'} btn-lg btn-block">
-                    ${tier.cta}
+
+            <div class="card-footer">
+                <a
+                    href=${isFree ? '#onboarding' : '#onboarding?plan=premium'}
+                    class="cta-button ${isFree ? 'secondary' : 'primary'}"
+                >
+                    ${isFree
+                        ? t('pricing.getStartedFree') || 'Get Started Free'
+                        : t('pricing.getPremium') || 'Get Premium'
+                    }
                 </a>
             </div>
         </div>
     `;
 }
 
-function FeatureComparisonTable({ isYearly }) {
+function FeatureComparisonTable() {
     return html`
         <div class="feature-comparison">
-            <h2>Feature Comparison</h2>
+            <h2>${t('pricing.featureComparison') || 'Feature Comparison'}</h2>
             <div class="comparison-table-wrapper">
-                <table class="comparison-table">
-                    <thead>
-                        <tr>
-                            <th>Feature</th>
-                            <th>Free</th>
-                            <th class="highlight-column">Premium</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${FEATURES.map(feature => html`
-                            <tr key=${feature.name}>
-                                <td class="feature-cell">
-                                    <div class="feature-name">${feature.name}</div>
-                                    <div class="feature-description">${feature.description}</div>
-                                </td>
-                                <td class="value-cell">
-                                    <${FeatureValue} value=${feature.free} />
-                                </td>
-                                <td class="value-cell highlight-column">
-                                    <${FeatureValue} value=${feature.premium} />
-                                </td>
-                            </tr>
-                        `)}
-                    </tbody>
-                </table>
+                <div class="comparison-table">
+                    <div class="table-header">
+                        <span class="header-feature">${t('pricing.feature') || 'Feature'}</span>
+                        <span class="header-free">${t('pricing.free') || 'Free'}</span>
+                        <span class="header-premium">${t('pricing.premium') || 'Premium'}</span>
+                    </div>
+
+                    ${FEATURES.map(category => html`
+                        <div key=${category.categoryKey} class="feature-category">
+                            <div class="category-header">
+                                ${t(category.category) || category.category}
+                            </div>
+                            ${category.items.map(item => html`
+                                <${FeatureRow}
+                                    key=${item.key}
+                                    name=${item.name}
+                                    free=${item.free}
+                                    premium=${item.premium}
+                                />
+                            `)}
+                        </div>
+                    `)}
+                </div>
             </div>
         </div>
     `;
 }
 
-function FAQItem({ question, answer, isOpen, onToggle }) {
+function FAQItem({ questionKey, answerKey, isOpen, onToggle }) {
+    const question = t(questionKey) || questionKey;
+    const answer = t(answerKey) || answerKey;
+
     return html`
         <div class="faq-item ${isOpen ? 'open' : ''}">
-            <button class="faq-question" onClick=${onToggle}>
+            <button
+                class="faq-question"
+                onClick=${onToggle}
+                aria-expanded=${isOpen}
+            >
                 <span>${question}</span>
                 <span class="faq-icon">${isOpen ? '−' : '+'}</span>
             </button>
-            ${isOpen && html`
-                <div class="faq-answer">
-                    <p>${answer}</p>
-                </div>
-            `}
+            <div class="faq-answer" aria-hidden=${!isOpen}>
+                <p>${answer}</p>
+            </div>
         </div>
     `;
 }
@@ -296,15 +362,15 @@ function PricingFAQ() {
     };
 
     return html`
-        <section class="pricing-faq">
+        <section class="pricing-faq-section">
             <div class="container">
-                <h2>Frequently Asked Questions</h2>
+                <h2>${t('pricing.faqTitle') || 'Frequently Asked Questions'}</h2>
                 <div class="faq-list">
-                    ${PRICING_FAQ.map((item, index) => html`
+                    ${FAQ_ITEMS.map((item, index) => html`
                         <${FAQItem}
                             key=${index}
-                            question=${item.question}
-                            answer=${item.answer}
+                            questionKey=${item.questionKey}
+                            answerKey=${item.answerKey}
                             isOpen=${openIndex === index}
                             onToggle=${() => toggleFAQ(index)}
                         />
@@ -325,30 +391,36 @@ export function PricingPage() {
     // Set SEO meta tags
     useEffect(() => {
         setPageMeta({
-            title: 'Pricing - CoachSearching | Free & Premium Plans for Coaches',
-            description: 'Compare CoachSearching pricing plans. Start free or upgrade to Premium for €39/month. Get more clients with enhanced visibility, CRM tools, and analytics.',
-            url: 'https://coachsearching.com/#pricing',
+            title: t('pricing.pageTitle') || 'Pricing - CoachSearching | Free & Premium Plans for Coaches',
+            description: t('pricing.pageDescription') || 'Simple, transparent pricing for coaches. Start free or upgrade to Premium. No commission on your sessions, ever.',
+            url: 'https://coachsearching.com/pricing',
         });
 
-        // Breadcrumb schema
         setStructuredData('breadcrumb-schema', generateBreadcrumbSchema([
-            { name: 'Home', url: 'https://coachsearching.com' },
-            { name: 'Pricing', url: 'https://coachsearching.com/#pricing' },
+            { name: t('nav.home') || 'Home', url: 'https://coachsearching.com' },
+            { name: t('pricing.title') || 'Pricing', url: 'https://coachsearching.com/pricing' },
         ]));
     }, []);
-
-    const toggleBilling = () => setIsYearly(!isYearly);
 
     return html`
         <div class="pricing-page">
             <!-- Hero Section -->
             <section class="pricing-hero">
                 <div class="container">
-                    <h1>Simple, Transparent Pricing</h1>
+                    <h1>${t('pricing.heroTitle') || 'Simple, Transparent Pricing'}</h1>
                     <p class="hero-subtitle">
-                        Start free and upgrade when you're ready to grow your coaching business
+                        ${t('pricing.heroSubtitle') || 'No commission on your sessions. No hidden fees. Just the tools you need to grow your coaching practice.'}
                     </p>
-                    <${PricingToggle} isYearly=${isYearly} onToggle=${toggleBilling} />
+                </div>
+            </section>
+
+            <!-- Launch Offer Banner -->
+            <${LaunchOfferBanner} />
+
+            <!-- Billing Toggle -->
+            <section class="billing-section">
+                <div class="container">
+                    <${BillingToggle} isYearly=${isYearly} onToggle=${setIsYearly} />
                 </div>
             </section>
 
@@ -356,8 +428,8 @@ export function PricingPage() {
             <section class="pricing-cards-section">
                 <div class="container">
                     <div class="pricing-cards">
-                        <${PricingCard} tier=${PRICING.free} isYearly=${isYearly} />
-                        <${PricingCard} tier=${PRICING.premium} isYearly=${isYearly} />
+                        <${PricingCard} tier="free" isYearly=${isYearly} isHighlighted=${false} />
+                        <${PricingCard} tier="premium" isYearly=${isYearly} isHighlighted=${true} />
                     </div>
                 </div>
             </section>
@@ -365,33 +437,25 @@ export function PricingPage() {
             <!-- Feature Comparison Table -->
             <section class="pricing-comparison-section">
                 <div class="container">
-                    <${FeatureComparisonTable} isYearly=${isYearly} />
-                </div>
-            </section>
-
-            <!-- Testimonial -->
-            <section class="pricing-testimonial">
-                <div class="container">
-                    <blockquote class="testimonial-quote">
-                        <p>"Upgrading to Premium doubled my bookings within the first month. The CRM features alone are worth it."</p>
-                        <footer>
-                            <cite>— Sarah M., Executive Coach</cite>
-                        </footer>
-                    </blockquote>
+                    <${FeatureComparisonTable} />
                 </div>
             </section>
 
             <!-- FAQ Section -->
             <${PricingFAQ} />
 
-            <!-- CTA Section -->
-            <section class="pricing-cta">
+            <!-- Bottom CTA Section -->
+            <section class="pricing-bottom-cta">
                 <div class="container">
-                    <h2>Ready to grow your coaching practice?</h2>
-                    <p>Join hundreds of coaches who trust CoachSearching to connect with clients.</p>
+                    <h2>${t('pricing.ctaTitle') || 'Ready to grow your coaching practice?'}</h2>
+                    <p>${t('pricing.ctaSubtitle') || 'Join coaches across Europe already on CoachSearching.com'}</p>
                     <div class="cta-buttons">
-                        <a href="#onboarding" class="btn btn-primary btn-lg">Start Free Today</a>
-                        <a href="#about" class="btn btn-secondary btn-lg">Learn More</a>
+                        <a href="#onboarding" class="cta-button secondary">
+                            ${t('pricing.getStartedFree') || 'Get Started Free'}
+                        </a>
+                        <a href="#onboarding?plan=premium" class="cta-button primary">
+                            ${t('pricing.getPremium') || 'Get Premium'}
+                        </a>
                     </div>
                 </div>
             </section>
