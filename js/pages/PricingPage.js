@@ -410,12 +410,26 @@ export function PricingPage() {
             <!-- Hero Section -->
             <section class="pricing-hero">
                 <div class="container">
+                    <div class="hero-badge">${t('pricing.forCoaches') || 'For Coaches'}</div>
                     <h1>${t('pricing.heroTitle') || 'Simple, Transparent Pricing'}</h1>
                     <p class="hero-subtitle">
                         ${t('pricing.heroSubtitle') || 'No commission on your sessions. No hidden fees. Just the tools you need to grow your coaching practice.'}
                     </p>
                 </div>
             </section>
+
+            <!-- Client Notice -->
+            <div class="client-notice">
+                <div class="container">
+                    <div class="notice-content">
+                        <span class="notice-icon">👋</span>
+                        <p>
+                            <strong>${t('pricing.lookingForCoach') || 'Looking for a coach?'}</strong> ${t('pricing.clientsFree') || 'Clients and businesses can browse coaches, book discovery calls, and find their perfect match – completely free, forever.'}
+                            <a href="#coaches" class="notice-link">${t('pricing.findCoach') || 'Find a Coach'} →</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             <!-- Launch Offer Banner -->
             <${LaunchOfferBanner} />

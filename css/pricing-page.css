@@ -39,6 +39,81 @@
     line-height: 1.6;
 }
 
+.pricing-hero .hero-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: 30px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* ==========================================================================
+   Client Notice Banner
+   ========================================================================== */
+
+.client-notice {
+    background: #e8f5f5;
+    border-bottom: 1px solid #c5e4e4;
+    padding: 16px 20px;
+}
+
+.client-notice .notice-content {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
+}
+
+.client-notice .notice-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.client-notice p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.5;
+}
+
+.client-notice strong {
+    color: var(--primary-petrol, #006266);
+}
+
+.client-notice .notice-link {
+    color: var(--primary-petrol, #006266);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+
+.client-notice .notice-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .client-notice .notice-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+
+    .client-notice .notice-link {
+        display: block;
+        margin-left: 0;
+        margin-top: 8px;
+    }
+}
+
 /* ==========================================================================
    Launch Offer Banner
    ========================================================================== */
