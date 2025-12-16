@@ -2590,18 +2590,6 @@ const FilterSidebar = ({ filters, onChange, onReset }) => {
                 <button class="filter-reset-btn" onClick=${onReset}>Reset</button>
             </div>
 
-            <!-- Sort By -->
-            <div class="filter-section">
-                <h4>Sort By</h4>
-                <select class="filter-select" value=${filters.sortBy} onChange=${(e) => onChange({ ...filters, sortBy: e.target.value })}>
-                    <option value="relevance">Relevance</option>
-                    <option value="rating">Highest Rated</option>
-                    <option value="price_low">Price: Low to High</option>
-                    <option value="price_high">Price: High to Low</option>
-                    <option value="reviews">Most Reviews</option>
-                </select>
-            </div>
-
             <!-- Price Range -->
             <div class="filter-section">
                 <h4>Price Range</h4>
