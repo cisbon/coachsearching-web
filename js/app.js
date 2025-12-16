@@ -16,8 +16,6 @@ import { PromoCodeWidget, PromoCodeBanner, PromoCodeManager } from './promoCode.
 
 // SEO Content Pages
 import { FAQPage } from './pages/FAQPage.js';
-import { AboutPage } from './pages/AboutPage.js';
-import { HowItWorksPage } from './pages/HowItWorksPage.js';
 import { CategoryPage, CategoriesIndexPage, COACHING_CATEGORIES } from './pages/CategoryPage.js';
 import { CoachProfilePage } from './pages/CoachProfilePage.js';
 import { PricingPage } from './pages/PricingPage.js';
@@ -281,8 +279,6 @@ const Footer = ({ onOpenLegal }) => {
                     <div class="footer-column">
                         <h4>${t('footer.company') || 'Company'}</h4>
                         <ul>
-                            <li><a href="/about">${t('footer.aboutUs') || 'About Us'}</a></li>
-                            <li><a href="/how-it-works">${t('footer.howItWorks') || 'How It Works'}</a></li>
                             <li><a href="/faq">${t('footer.faq') || 'FAQ'}</a></li>
                             <li><a href="/coaches">${t('nav.coaches') || 'Find a Coach'}</a></li>
                             <li><a href="/quiz">${t('category.takeQuiz') || 'Take the Quiz'}</a></li>
@@ -6307,9 +6303,6 @@ const HowItWorksSection = () => {
                         </div>
                     `)}
                 </div>
-                <div class="hiw-cta-home">
-                    <a href="/how-it-works" class="btn-link">${t('home.howItWorks.learnMore') || 'Learn more about how it works →'}</a>
-                </div>
             </div>
         </section>
     `;
@@ -8102,8 +8095,6 @@ const App = () => {
             case 'signout': Component = SignOut; break;
             // Content pages
             case 'faq': Component = () => html`<${FAQPage} />`; break;
-            case 'about': Component = () => html`<${AboutPage} />`; break;
-            case 'how-it-works': Component = () => html`<${HowItWorksPage} />`; break;
             case 'categories': Component = () => html`<${CategoriesIndexPage} />`; break;
             case 'pricing': Component = () => html`<${PricingPage} />`; break;
             default: Component = () => html`<${Home} session=${session} />`;
