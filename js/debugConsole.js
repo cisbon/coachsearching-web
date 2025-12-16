@@ -4,6 +4,7 @@ export class DebugConsole {
     constructor() {
         this.logs = [];
         this.isVisible = localStorage.getItem('debugConsoleVisible') === 'true';
+        this.uiEnabled = false; // UI hidden by default until user is logged in
         this.maxLogs = 100;
         this.errorCount = 0;
         this.warnCount = 0;
@@ -16,6 +17,7 @@ export class DebugConsole {
         const container = document.createElement('div');
         container.id = 'debug-console';
         container.className = `debug-console ${this.isVisible ? 'visible' : 'hidden'}`;
+        container.style.display = 'none'; // Hidden until logged in
         container.innerHTML = `
             <div class="debug-console-header">
                 <span class="debug-console-title">Debug Console</span>
@@ -35,17 +37,33 @@ export class DebugConsole {
         `;
         document.body.appendChild(container);
 
-        // Create toggle button (always visible)
+        // Create toggle button (hidden until logged in)
         const toggleBtn = document.createElement('button');
         toggleBtn.id = 'debug-console-fab';
         toggleBtn.className = 'debug-console-fab';
+        toggleBtn.style.display = 'none'; // Hidden until logged in
         toggleBtn.innerHTML = '🐛';
         toggleBtn.title = 'Toggle Debug Console';
         document.body.appendChild(toggleBtn);
 
         this.container = container;
+        this.fab = toggleBtn;
         this.body = document.getElementById('debug-console-body');
         this.attachEvents();
+    }
+
+    // Enable/disable UI visibility based on login state
+    setUIEnabled(enabled) {
+        this.uiEnabled = enabled;
+        if (enabled) {
+            this.fab.style.display = '';
+            if (this.isVisible) {
+                this.container.style.display = '';
+            }
+        } else {
+            this.fab.style.display = 'none';
+            this.container.style.display = 'none';
+        }
     }
 
     attachEvents() {
@@ -183,6 +201,9 @@ export class DebugConsole {
     toggle() {
         this.isVisible = !this.isVisible;
         this.container.className = `debug-console ${this.isVisible ? 'visible' : 'hidden'}`;
+        if (this.uiEnabled) {
+            this.container.style.display = this.isVisible ? '' : 'none';
+        }
         localStorage.setItem('debugConsoleVisible', this.isVisible);
 
         const toggleBtn = document.getElementById('debug-toggle');
@@ -191,7 +212,9 @@ export class DebugConsole {
     }
 
     show() {
+        if (!this.uiEnabled) return;
         this.isVisible = true;
+        this.container.style.display = '';
         this.container.className = 'debug-console visible';
         localStorage.setItem('debugConsoleVisible', 'true');
         document.getElementById('debug-toggle').innerHTML = '▼';
@@ -199,6 +222,7 @@ export class DebugConsole {
 
     hide() {
         this.isVisible = false;
+        this.container.style.display = 'none';
         this.container.className = 'debug-console hidden';
         localStorage.setItem('debugConsoleVisible', 'false');
         document.getElementById('debug-toggle').innerHTML = '▲';

@@ -8023,6 +8023,13 @@ const App = () => {
         };
     }, []);
 
+    // Show/hide debug console based on login state
+    useEffect(() => {
+        if (window.debugConsole) {
+            window.debugConsole.setUIEnabled(!!session);
+        }
+    }, [session]);
+
     const openLegal = (type) => {
         console.log('Opening legal modal:', type);
         setLegalModal({ isOpen: true, type });
