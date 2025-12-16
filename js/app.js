@@ -437,7 +437,7 @@ const Navbar = ({ session }) => {
             header[role="banner"] .logo { color: white !important; }
             header[role="banner"] .logo span { color: #a7d5d2 !important; }
             header[role="banner"] .nav-browse-link { color: white !important; text-decoration: none; }
-            header[role="banner"] .nav-auth-btn { background: white !important; color: #006266 !important; border: none !important; padding: 8px 16px !important; border-radius: 6px !important; font-weight: 500 !important; }
+            header[role="banner"] .nav-auth-btn { background: white !important; color: #006266 !important; border: none !important; padding: 8px 16px !important; border-radius: 6px !important; font-weight: 500 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; text-decoration: none !important; line-height: 1 !important; }
             header[role="banner"] .nav-auth-btn:hover { background: #f0f0f0 !important; }
             .nav-browse-link { color: white !important; font-weight: 500; text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; white-space: nowrap; }
             .nav-browse-link:hover { background: rgba(255,255,255,0.15); }
