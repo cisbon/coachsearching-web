@@ -1991,12 +1991,12 @@
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
-    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-    border: 1px solid #86efac;
+    background: linear-gradient(135deg, #006266 0%, #004d50 100%);
+    border: 1px solid #003d40;
     border-radius: 20px;
     font-size: 0.9375rem;
     font-weight: 600;
-    color: #15803d;
+    color: white;
 }
 
 .view-all-link {
