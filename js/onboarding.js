@@ -682,7 +682,61 @@ const ClientStep4Complete = ({ data }) => html`
 // COACH ONBOARDING STEPS
 // ============================================
 
-const CoachStep1Profile = ({ data, updateData, session }) => html`
+const CoachStep1Profile = ({ data, updateData, session }) => {
+    const [referralCode, setReferralCode] = useState(data.referral_code || '');
+    const [referralStatus, setReferralStatus] = useState(null); // null, 'checking', 'valid', 'invalid'
+    const [referralMessage, setReferralMessage] = useState('');
+
+    // Validate referral code against Supabase
+    const validateReferralCode = async (code) => {
+        if (!code || code.trim().length < 3) {
+            setReferralStatus(null);
+            setReferralMessage('');
+            updateData('referral_code', '');
+            updateData('referral_code_valid', false);
+            return;
+        }
+
+        setReferralStatus('checking');
+        try {
+            const supabase = window.supabaseClient;
+            const { data: codeData, error } = await supabase
+                .from('referral_codes')
+                .select('code, user_id')
+                .eq('code', code.trim().toUpperCase())
+                .single();
+
+            if (error || !codeData) {
+                setReferralStatus('invalid');
+                setReferralMessage(t('onboard.referralInvalid') || 'Invalid referral code');
+                updateData('referral_code', code);
+                updateData('referral_code_valid', false);
+            } else {
+                setReferralStatus('valid');
+                setReferralMessage(t('onboard.referralValid') || '🎉 Valid code! You get your first year of Premium free!');
+                updateData('referral_code', code.trim().toUpperCase());
+                updateData('referral_code_valid', true);
+                updateData('referrer_id', codeData.user_id);
+            }
+        } catch (err) {
+            console.error('Error validating referral code:', err);
+            setReferralStatus('invalid');
+            setReferralMessage(t('onboard.referralError') || 'Could not validate code');
+            updateData('referral_code_valid', false);
+        }
+    };
+
+    // Debounced validation
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (referralCode) {
+                validateReferralCode(referralCode);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [referralCode]);
+
+    return html`
     <div class="onboarding-step">
         <h2 class="step-title">${t('onboard.coach.step1Title') || 'Create Your Coach Profile'}</h2>
         <p class="step-description">${t('onboard.coach.step1Desc') || 'This is how clients will discover you.'}</p>
@@ -743,8 +797,48 @@ const CoachStep1Profile = ({ data, updateData, session }) => html`
                 onInput=${(e) => updateData('location', e.target.value)}
             />
         </div>
+
+        <!-- Referral Code Field -->
+        <div class="form-group referral-code-group">
+            <label class="form-label">
+                ${t('onboard.referralCode') || 'Referral Code'}
+                <span class="optional-label">${t('onboard.optional') || '(optional)'}</span>
+            </label>
+            <div class="referral-input-wrapper">
+                <input
+                    type="text"
+                    class="form-input referral-input ${referralStatus === 'valid' ? 'valid' : ''} ${referralStatus === 'invalid' ? 'invalid' : ''}"
+                    placeholder=${t('onboard.referralPlaceholder') || 'Enter code'}
+                    value=${referralCode}
+                    onInput=${(e) => setReferralCode(e.target.value.toUpperCase())}
+                    maxlength="20"
+                />
+                ${referralStatus === 'checking' && html`
+                    <span class="referral-status checking">⏳</span>
+                `}
+                ${referralStatus === 'valid' && html`
+                    <span class="referral-status valid">✓</span>
+                `}
+                ${referralStatus === 'invalid' && html`
+                    <span class="referral-status invalid">✗</span>
+                `}
+            </div>
+            ${referralStatus === 'valid' && html`
+                <div class="referral-success-banner">
+                    <span class="success-icon">🎁</span>
+                    <div class="success-text">
+                        <strong>${t('onboard.referralSuccessTitle') || 'Free First Year of Premium!'}</strong>
+                        <span>${t('onboard.referralSuccessDesc') || 'Your referral code has been applied. Enjoy all Premium features free for your first year.'}</span>
+                    </div>
+                </div>
+            `}
+            ${referralStatus === 'invalid' && html`
+                <p class="form-error">${referralMessage}</p>
+            `}
+        </div>
     </div>
-`;
+`};
+
 
 const CoachStep2Specialties = ({ data, updateData }) => {
     return html`
