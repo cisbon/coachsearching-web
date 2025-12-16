@@ -935,29 +935,13 @@ footer, .site-footer {
 }
 
 /* Referral Code Field (Auth Page) */
-.referral-code-group {
-    margin-top: 0.5rem;
-}
-
-.referral-code-group .form-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.referral-code-group .optional-label {
-    font-size: 0.85rem;
-    color: #888;
-    font-weight: normal;
-}
-
 .referral-input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-.referral-input-wrapper .form-control {
+.referral-input-wrapper .auth-input {
     padding-right: 2.5rem;
 }
 
@@ -1011,7 +995,6 @@ footer, .site-footer {
 
 .referral-message {
     font-size: 0.85rem;
-    margin-top: 0.5rem;
     padding: 0.25rem 0;
 }
 

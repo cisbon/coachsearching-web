@@ -551,17 +551,12 @@ const Navbar = ({ session }) => {
 };
 
 const Auth = () => {
-    console.log('[Auth] Component rendering...');
-
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [userType, setUserType] = useState('client');
     const [isLogin, setIsLogin] = useState(true);
     const [message, setMessage] = useState('');
-
-    // Debug: Log state on every render
-    console.log('[Auth] Current state:', { isLogin, userType, showReferral: !isLogin && userType === 'coach' });
 
     // Referral code state (for coach registration)
     const [referralCode, setReferralCode] = useState('');
@@ -635,13 +630,9 @@ const Auth = () => {
         const checkMode = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const pathname = window.location.pathname;
-            const mode = urlParams.get('mode');
-            console.log('[Auth] checkMode:', { search: window.location.search, pathname, mode });
-            if (mode === 'register' || pathname.includes('register')) {
-                console.log('[Auth] Setting isLogin to FALSE (register mode)');
+            if (urlParams.get('mode') === 'register' || pathname.includes('register')) {
                 setIsLogin(false);
             } else {
-                console.log('[Auth] Setting isLogin to TRUE (login mode)');
                 setIsLogin(true);
             }
         };
@@ -801,7 +792,7 @@ const Auth = () => {
                                 </div>
                             </div>
                             <div class="role-option ${userType === 'coach' ? 'selected' : ''}"
-                                 onClick=${() => { console.log('[Auth] Coach selected!'); setUserType('coach'); }}
+                                 onClick=${() => setUserType('coach')}
                                  role="radio"
                                  aria-checked=${userType === 'coach'}
                                  tabIndex="0">
@@ -846,45 +837,43 @@ const Auth = () => {
                     />
 
                     ${!isLogin && userType === 'coach' && html`
-                        <div class="referral-code-group">
-                            <div class="referral-input-wrapper">
-                                <input
-                                    type="text"
-                                    class="auth-input referral-input ${referralStatus ? 'referral-' + referralStatus : ''}"
-                                    placeholder=${(t('onboard.referralCode') || 'Referral Code') + ' ' + (t('onboard.optional') || '(optional)')}
-                                    value=${referralCode}
-                                    onInput=${handleReferralCodeChange}
-                                    disabled=${loading}
-                                    maxLength="50"
-                                    aria-label="Referral Code"
-                                />
-                                ${referralStatus === 'checking' && html`
-                                    <span class="referral-status-icon checking">
-                                        <span class="spinner-small"></span>
-                                    </span>
-                                `}
-                                ${referralStatus === 'valid' && html`
-                                    <span class="referral-status-icon valid">✓</span>
-                                `}
-                                ${referralStatus === 'invalid' && html`
-                                    <span class="referral-status-icon invalid">✗</span>
-                                `}
-                            </div>
-                            ${referralMessage && html`
-                                <div class="referral-message ${referralStatus}">
-                                    ${referralMessage}
-                                </div>
+                        <div class="referral-input-wrapper">
+                            <input
+                                type="text"
+                                class="auth-input referral-input ${referralStatus ? 'referral-' + referralStatus : ''}"
+                                placeholder="Referral code (optional)"
+                                value=${referralCode}
+                                onInput=${handleReferralCodeChange}
+                                disabled=${loading}
+                                maxLength="50"
+                                aria-label="Referral Code"
+                            />
+                            ${referralStatus === 'checking' && html`
+                                <span class="referral-status-icon checking">
+                                    <span class="spinner-small"></span>
+                                </span>
                             `}
                             ${referralStatus === 'valid' && html`
-                                <div class="referral-success-banner">
-                                    <span class="success-icon">🎉</span>
-                                    <div class="success-content">
-                                        <strong>${t('onboard.referralSuccessTitle') || 'Free First Year of Premium!'}</strong>
-                                        <p>${t('onboard.referralSuccessDesc') || 'Your referral code has been applied. Enjoy all Premium features free for your first year.'}</p>
-                                    </div>
-                                </div>
+                                <span class="referral-status-icon valid">✓</span>
+                            `}
+                            ${referralStatus === 'invalid' && html`
+                                <span class="referral-status-icon invalid">✗</span>
                             `}
                         </div>
+                        ${referralMessage && html`
+                            <div class="referral-message ${referralStatus}">
+                                ${referralMessage}
+                            </div>
+                        `}
+                        ${referralStatus === 'valid' && html`
+                            <div class="referral-success-banner">
+                                <span class="success-icon">🎉</span>
+                                <div class="success-content">
+                                    <strong>${t('onboard.referralSuccessTitle') || 'Free First Year of Premium!'}</strong>
+                                    <p>${t('onboard.referralSuccessDesc') || 'Your referral code has been applied. Enjoy all Premium features free for your first year.'}</p>
+                                </div>
+                            </div>
+                        `}
                     `}
 
                     <button class="auth-btn" disabled=${loading} type="submit">
