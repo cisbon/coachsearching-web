@@ -6203,16 +6203,6 @@ const Home = ({ session }) => {
             <${CoachingCategoriesSection} />
             <${HowItWorksSection} />
 
-            <div class="featured-coaches-section">
-                <div class="container">
-                    <div class="section-header">
-                        <h2>${t('home.featuredCoaches.title') || 'Featured Coaches'}</h2>
-                        <p>${t('home.featuredCoaches.subtitle') || 'Connect with our top-rated verified professionals'}</p>
-                    </div>
-                </div>
-            </div>
-            <${CoachList} session=${session} />
-
             <!-- Testimonials Section -->
             <section class="testimonials-section">
                 <div class="container">
