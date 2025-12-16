@@ -903,13 +903,17 @@ const CoachOnboarding = ({ session }) => {
         full_name: session?.user?.user_metadata?.full_name || '',
         title: '',
         bio: '',
-        location: '',
+        location_city: '',
+        location_country: '',
         hourly_rate: '',
+        currency: 'EUR',
         specialties: '',
         languages: '',
+        years_experience: '',
         session_types_online: true,
         session_types_onsite: false,
-        avatar_url: ''
+        avatar_url: '',
+        intro_video_url: ''
     });
 
     // Image upload state
@@ -1047,15 +1051,18 @@ const CoachOnboarding = ({ session }) => {
                 full_name: formData.full_name,
                 title: formData.title,
                 bio: formData.bio,
-                location: formData.location,
+                location_city: formData.location_city,
+                location_country: formData.location_country,
                 hourly_rate: parseFloat(formData.hourly_rate) || 0,
-                currency: 'EUR',
+                currency: formData.currency || 'EUR',
                 specialties: specialtiesArray,
                 languages: languagesArray,
+                years_experience: parseInt(formData.years_experience) || 0,
                 session_formats: sessionFormatsArray,
                 offers_online: formData.session_types_online,
                 offers_in_person: formData.session_types_onsite,
                 avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                intro_video_url: formData.intro_video_url || '',
                 onboarding_completed: true,
                 subscription_status: 'trial',
                 trial_ends_at: trialEndsAt.toISOString()
@@ -1230,7 +1237,34 @@ const CoachOnboarding = ({ session }) => {
 
                             <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                 <div>
-                                    <label style=${labelStyle}>${t('onboard.hourlyRate') || 'Hourly Rate'} (EUR) *</label>
+                                    <label style=${labelStyle}>${t('onboard.city') || 'City'}</label>
+                                    <input
+                                        type="text"
+                                        style=${inputStyle}
+                                        placeholder=${t('onboard.cityPlaceholder') || 'e.g., Zurich'}
+                                        value=${formData.location_city}
+                                        onChange=${(e) => handleChange('location_city', e.target.value)}
+                                        onFocus=${(e) => e.target.style.borderColor = '#006266'}
+                                        onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
+                                    />
+                                </div>
+                                <div>
+                                    <label style=${labelStyle}>${t('onboard.country') || 'Country'}</label>
+                                    <input
+                                        type="text"
+                                        style=${inputStyle}
+                                        placeholder=${t('onboard.countryPlaceholder') || 'e.g., Switzerland'}
+                                        value=${formData.location_country}
+                                        onChange=${(e) => handleChange('location_country', e.target.value)}
+                                        onFocus=${(e) => e.target.style.borderColor = '#006266'}
+                                        onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                                <div>
+                                    <label style=${labelStyle}>${t('onboard.hourlyRate') || 'Hourly Rate'} *</label>
                                     <input
                                         type="number"
                                         style=${inputStyle}
@@ -1244,15 +1278,29 @@ const CoachOnboarding = ({ session }) => {
                                         required
                                     />
                                 </div>
-
                                 <div>
-                                    <label style=${labelStyle}>${t('onboard.location') || 'Location'}</label>
-                                    <input
-                                        type="text"
+                                    <label style=${labelStyle}>${t('onboard.currency') || 'Currency'}</label>
+                                    <select
                                         style=${inputStyle}
-                                        placeholder=${t('onboard.locationPlaceholder') || 'e.g., Zurich'}
-                                        value=${formData.location}
-                                        onChange=${(e) => handleChange('location', e.target.value)}
+                                        value=${formData.currency}
+                                        onChange=${(e) => handleChange('currency', e.target.value)}
+                                    >
+                                        <option value="EUR">EUR €</option>
+                                        <option value="USD">USD $</option>
+                                        <option value="GBP">GBP £</option>
+                                        <option value="CHF">CHF</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style=${labelStyle}>${t('onboard.yearsExperience') || 'Years Experience'}</label>
+                                    <input
+                                        type="number"
+                                        style=${inputStyle}
+                                        placeholder="0"
+                                        min="0"
+                                        max="50"
+                                        value=${formData.years_experience}
+                                        onChange=${(e) => handleChange('years_experience', e.target.value)}
                                         onFocus=${(e) => e.target.style.borderColor = '#006266'}
                                         onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
                                     />
@@ -1484,6 +1532,36 @@ const CoachOnboarding = ({ session }) => {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Video Introduction -->
+                            <div style=${{
+                                background: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
+                                border: '2px dashed #f59e0b',
+                                borderRadius: '12px',
+                                padding: '20px'
+                            }}>
+                                <div style=${{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+                                    <span style=${{ fontSize: '24px' }}>🎬</span>
+                                    <div>
+                                        <strong style=${{ color: '#92400e', fontSize: '15px' }}>${t('onboard.videoIntroTitle') || 'Video Introduction (Recommended)'}</strong>
+                                        <p style=${{ fontSize: '13px', color: '#78716c', margin: '4px 0 0 0' }}>
+                                            ${t('onboard.videoIntroHint') || 'Coaches with video intros get 3x more bookings and appear at the top of search results!'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <input
+                                    type="url"
+                                    style=${{...inputStyle, background: 'white'}}
+                                    placeholder=${t('onboard.videoUrlPlaceholder') || 'https://youtube.com/watch?v=... or https://vimeo.com/...'}
+                                    value=${formData.intro_video_url}
+                                    onChange=${(e) => handleChange('intro_video_url', e.target.value)}
+                                    onFocus=${(e) => e.target.style.borderColor = '#f59e0b'}
+                                    onBlur=${(e) => e.target.style.borderColor = '#E5E7EB'}
+                                />
+                                <p style=${{ fontSize: '12px', color: '#78716c', marginTop: '6px' }}>
+                                    ${t('onboard.videoUrlHint') || 'Paste a link to your YouTube or Vimeo video (1-3 minutes recommended)'}
+                                </p>
                             </div>
                         </div>
 
@@ -5436,20 +5514,28 @@ const DashboardProfile = ({ session, userType }) => {
         specialties: [],
         languages: [],
         years_experience: 0,
-        offers_virtual: true,
-        offers_onsite: false,
+        offers_online: true,
+        offers_in_person: false,
         website_url: '',
         linkedin_url: '',
         intro_video_url: ''
     });
 
+    // Predefined options matching filters exactly
     const languageOptions = [
-        { code: 'en', name: 'English', flag: '🇬🇧' },
-        { code: 'de', name: 'German', flag: '🇩🇪' },
-        { code: 'es', name: 'Spanish', flag: '🇪🇸' },
-        { code: 'fr', name: 'French', flag: '🇫🇷' },
-        { code: 'it', name: 'Italian', flag: '🇮🇹' },
-        { code: 'nl', name: 'Dutch', flag: '🇳🇱' }
+        { name: 'English', flag: '🇬🇧' },
+        { name: 'German', flag: '🇩🇪' },
+        { name: 'Spanish', flag: '🇪🇸' },
+        { name: 'French', flag: '🇫🇷' },
+        { name: 'Italian', flag: '🇮🇹' },
+        { name: 'Dutch', flag: '🇳🇱' },
+        { name: 'Portuguese', flag: '🇵🇹' }
+    ];
+
+    const specialtyOptions = [
+        'Leadership', 'Career', 'Executive', 'Life Coaching', 'Business',
+        'Health & Wellness', 'Relationships', 'Mindfulness', 'Performance',
+        'Communication', 'Stress Management', 'Work-Life Balance'
     ];
 
     useEffect(() => {
@@ -5473,21 +5559,37 @@ const DashboardProfile = ({ session, userType }) => {
 
             if (coach) {
                 setCoachId(coach.id);
+                // Handle both old field names (offers_virtual/offers_onsite) and new (offers_online/offers_in_person)
+                const offersOnline = coach.offers_online ?? coach.offers_virtual ?? true;
+                const offersInPerson = coach.offers_in_person ?? coach.offers_onsite ?? false;
+                // Handle location - support both single 'location' field and split city/country
+                let locationCity = coach.location_city || '';
+                let locationCountry = coach.location_country || '';
+                if (!locationCity && !locationCountry && coach.location) {
+                    // Parse legacy single location field
+                    const parts = coach.location.split(',').map(p => p.trim());
+                    if (parts.length >= 2) {
+                        locationCity = parts[0];
+                        locationCountry = parts[1];
+                    } else {
+                        locationCity = coach.location;
+                    }
+                }
                 setFormData({
                     full_name: coach.full_name || '',
                     avatar_url: coach.avatar_url || '',
                     banner_url: coach.banner_url || '',
                     title: coach.title || '',
                     bio: coach.bio || '',
-                    location_city: coach.location_city || '',
-                    location_country: coach.location_country || '',
+                    location_city: locationCity,
+                    location_country: locationCountry,
                     hourly_rate: coach.hourly_rate || '',
                     currency: coach.currency || 'EUR',
                     specialties: Array.isArray(coach.specialties) ? coach.specialties : [],
                     languages: Array.isArray(coach.languages) ? coach.languages : [],
                     years_experience: coach.years_experience || 0,
-                    offers_virtual: coach.offers_virtual !== false,
-                    offers_onsite: coach.offers_onsite || false,
+                    offers_online: offersOnline,
+                    offers_in_person: offersInPerson,
                     website_url: coach.website_url || '',
                     linkedin_url: coach.linkedin_url || '',
                     intro_video_url: coach.intro_video_url || ''
@@ -5520,13 +5622,13 @@ const DashboardProfile = ({ session, userType }) => {
             const fileName = `${session.user.id}-${fieldName}-${Date.now()}.${fileExt}`;
 
             const { error: uploadError } = await window.supabaseClient.storage
-                .from('profile-images')
+                .from('avatars')
                 .upload(fileName, file, { upsert: true });
 
             if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = window.supabaseClient.storage
-                .from('profile-images')
+                .from('avatars')
                 .getPublicUrl(fileName);
 
             setFormData(prev => ({ ...prev, [fieldName]: publicUrl }));
@@ -5556,6 +5658,11 @@ const DashboardProfile = ({ session, userType }) => {
     const handleSave = async () => {
         setLoading(true);
         try {
+            // Build session_formats array for filter compatibility
+            const sessionFormats = [];
+            if (formData.offers_online) sessionFormats.push('online');
+            if (formData.offers_in_person) sessionFormats.push('in-person');
+
             const profileData = {
                 user_id: session.user.id,
                 full_name: formData.full_name,
@@ -5570,8 +5677,9 @@ const DashboardProfile = ({ session, userType }) => {
                 specialties: formData.specialties,
                 languages: formData.languages,
                 years_experience: parseInt(formData.years_experience) || 0,
-                offers_virtual: formData.offers_virtual,
-                offers_onsite: formData.offers_onsite,
+                offers_online: formData.offers_online,
+                offers_in_person: formData.offers_in_person,
+                session_formats: sessionFormats,
                 website_url: formData.website_url,
                 linkedin_url: formData.linkedin_url,
                 intro_video_url: formData.intro_video_url,
@@ -5600,9 +5708,10 @@ const DashboardProfile = ({ session, userType }) => {
         return (symbols[formData.currency] || '€') + (price || 0);
     };
 
-    const getLanguageName = (code) => {
-        const lang = languageOptions.find(l => l.code === code);
-        return lang ? lang.name : String(code);
+    // Languages are now stored as full names (English, German, etc.)
+    const getLanguageDisplay = (langName) => {
+        const lang = languageOptions.find(l => l.name === langName);
+        return lang ? `${lang.flag} ${lang.name}` : String(langName);
     };
 
     const locationText = formData.location_city
@@ -5784,7 +5893,7 @@ const DashboardProfile = ({ session, userType }) => {
                     <div class="profile-meta">
                         <span>📍 ${locationText}</span>
                         ${formData.languages.length > 0 && html`
-                            <span>💬 ${formData.languages.slice(0, 3).map(c => getLanguageName(c)).join(', ')}</span>
+                            <span>💬 ${formData.languages.slice(0, 3).join(', ')}</span>
                         `}
                         ${formData.years_experience > 0 && html`
                             <span>🏆 ${String(formData.years_experience)}+ years</span>
@@ -5793,8 +5902,8 @@ const DashboardProfile = ({ session, userType }) => {
 
                     <div class="profile-pricing">
                         <span class="price-badge">${formatPrice(formData.hourly_rate)} / hour</span>
-                        ${formData.offers_virtual && html`<span class="format-badge">💻 Online</span>`}
-                        ${formData.offers_onsite && html`<span class="format-badge">🤝 In-Person</span>`}
+                        ${formData.offers_online && html`<span class="format-badge">💻 Online</span>`}
+                        ${formData.offers_in_person && html`<span class="format-badge">🤝 In-Person</span>`}
                     </div>
                 </div>
             </div>
@@ -5908,15 +6017,15 @@ const DashboardProfile = ({ session, userType }) => {
                                 <label>Languages</label>
                                 <div class="checkbox-grid">
                                     ${languageOptions.map(lang => html`
-                                        <label key=${lang.code} class="checkbox-item">
+                                        <label key=${lang.name} class="checkbox-item">
                                             <input type="checkbox"
-                                                checked=${formData.languages.includes(lang.code)}
+                                                checked=${formData.languages.includes(lang.name)}
                                                 onChange=${(e) => {
                                                     const langs = formData.languages;
                                                     if (e.target.checked) {
-                                                        setFormData({...formData, languages: [...langs, lang.code]});
+                                                        setFormData({...formData, languages: [...langs, lang.name]});
                                                     } else {
-                                                        setFormData({...formData, languages: langs.filter(l => l !== lang.code)});
+                                                        setFormData({...formData, languages: langs.filter(l => l !== lang.name)});
                                                     }
                                                 }}
                                             />
@@ -5932,6 +6041,7 @@ const DashboardProfile = ({ session, userType }) => {
                                         <option value="EUR">EUR €</option>
                                         <option value="USD">USD $</option>
                                         <option value="GBP">GBP £</option>
+                                        <option value="CHF">CHF</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -5943,11 +6053,11 @@ const DashboardProfile = ({ session, userType }) => {
                                 <label>Session Formats</label>
                                 <div class="checkbox-row">
                                     <label class="checkbox-item">
-                                        <input type="checkbox" checked=${formData.offers_virtual} onChange=${(e) => setFormData({...formData, offers_virtual: e.target.checked})} />
+                                        <input type="checkbox" checked=${formData.offers_online} onChange=${(e) => setFormData({...formData, offers_online: e.target.checked})} />
                                         💻 Video/Online
                                     </label>
                                     <label class="checkbox-item">
-                                        <input type="checkbox" checked=${formData.offers_onsite} onChange=${(e) => setFormData({...formData, offers_onsite: e.target.checked})} />
+                                        <input type="checkbox" checked=${formData.offers_in_person} onChange=${(e) => setFormData({...formData, offers_in_person: e.target.checked})} />
                                         🤝 In-Person
                                     </label>
                                 </div>
@@ -5991,30 +6101,38 @@ const DashboardProfile = ({ session, userType }) => {
                         </div>
                         <div class="modal-body">
                             <div class="form-group">
-                                <label>Your Specialties</label>
-                                <div class="current-tags">
-                                    ${formData.specialties.map((s, i) => html`
-                                        <span key=${i} class="tag-chip">
-                                            ${String(s)}
-                                            <button onClick=${() => setFormData({...formData, specialties: formData.specialties.filter((_, idx) => idx !== i)})}>×</button>
-                                        </span>
-                                    `)}
-                                </div>
-                                <input type="text" placeholder="Type and press Enter to add" onKeyDown=${(e) => {
-                                    if (e.key === 'Enter' && e.target.value.trim()) {
-                                        e.preventDefault();
-                                        const val = e.target.value.trim();
-                                        if (!formData.specialties.includes(val)) {
-                                            setFormData({...formData, specialties: [...formData.specialties, val]});
-                                        }
-                                        e.target.value = '';
-                                    }
-                                }} />
-                                <div class="suggestions">
-                                    ${['Executive Coaching', 'Life Coaching', 'Career Coaching', 'Leadership', 'Business Coaching', 'Health & Wellness']
-                                        .filter(s => !formData.specialties.includes(s))
-                                        .slice(0, 4)
-                                        .map(s => html`<button key=${s} class="suggestion-btn" onClick=${() => setFormData({...formData, specialties: [...formData.specialties, s]})}>+ ${s}</button>`)}
+                                <label>Select Your Specialties</label>
+                                <p style=${{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>Click to select or deselect specialties</p>
+                                <div style=${{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    ${specialtyOptions.map(specialty => {
+                                        const isSelected = formData.specialties.includes(specialty);
+                                        return html`
+                                            <button
+                                                type="button"
+                                                key=${specialty}
+                                                onClick=${() => {
+                                                    if (isSelected) {
+                                                        setFormData({...formData, specialties: formData.specialties.filter(s => s !== specialty)});
+                                                    } else {
+                                                        setFormData({...formData, specialties: [...formData.specialties, specialty]});
+                                                    }
+                                                }}
+                                                style=${{
+                                                    padding: '8px 14px',
+                                                    border: isSelected ? '2px solid #1a5f5a' : '2px solid #E5E7EB',
+                                                    borderRadius: '20px',
+                                                    background: isSelected ? '#e8f5f3' : 'white',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    color: isSelected ? '#1a5f5a' : '#374151',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                ${specialty} ${isSelected ? '✓' : ''}
+                                            </button>
+                                        `;
+                                    })}
                                 </div>
                             </div>
                         </div>

@@ -347,6 +347,14 @@ const translations = {
         "onboard.avatar": "Profile Picture URL",
         "onboard.submit": "Complete Profile",
         "onboard.uploading": "Saving...",
+        "onboard.currency": "Currency",
+        "onboard.cityPlaceholder": "e.g., Zurich",
+        "onboard.countryPlaceholder": "e.g., Switzerland",
+        "onboard.selectSpecialtiesHint": "Select all that apply",
+        "onboard.videoIntroTitle": "Video Introduction (Recommended)",
+        "onboard.videoIntroHint": "Coaches with video intros get 3x more bookings and appear at the top of search results!",
+        "onboard.videoUrlPlaceholder": "https://youtube.com/watch?v=... or https://vimeo.com/...",
+        "onboard.videoUrlHint": "Paste a link to your YouTube or Vimeo video (1-3 minutes recommended)",
 
         // Trust Building - Coach Profile
         "trust.excellent": "Excellent",
@@ -2231,6 +2239,14 @@ const translations = {
         "onboard.avatar": "Profilbild-URL",
         "onboard.submit": "Profil vervollständigen",
         "onboard.uploading": "Wird gespeichert...",
+        "onboard.currency": "Währung",
+        "onboard.cityPlaceholder": "z.B. Zürich",
+        "onboard.countryPlaceholder": "z.B. Schweiz",
+        "onboard.selectSpecialtiesHint": "Wählen Sie alle zutreffenden aus",
+        "onboard.videoIntroTitle": "Video-Vorstellung (Empfohlen)",
+        "onboard.videoIntroHint": "Coaches mit Video-Vorstellung erhalten 3x mehr Buchungen und erscheinen ganz oben in den Suchergebnissen!",
+        "onboard.videoUrlPlaceholder": "https://youtube.com/watch?v=... oder https://vimeo.com/...",
+        "onboard.videoUrlHint": "Fügen Sie einen Link zu Ihrem YouTube- oder Vimeo-Video ein (1-3 Minuten empfohlen)",
 
         // Quiz
         "quiz.back": "Zurück",
@@ -3635,6 +3651,14 @@ const translations = {
         "onboard.successWithReferral": "✓ ¡Perfil completado! ¡Tienes 1 año de Premium gratis! Redirigiendo...",
         "onboard.successDefault": "✓ ¡Perfil completado exitosamente! Redirigiendo al panel...",
         "onboard.uploadFailed": "Error al subir la imagen. Por favor intenta de nuevo.",
+        "onboard.currency": "Moneda",
+        "onboard.cityPlaceholder": "ej. Madrid",
+        "onboard.countryPlaceholder": "ej. España",
+        "onboard.selectSpecialtiesHint": "Selecciona todas las que apliquen",
+        "onboard.videoIntroTitle": "Video de Presentación (Recomendado)",
+        "onboard.videoIntroHint": "¡Los coaches con video de presentación obtienen 3x más reservas y aparecen primero en los resultados de búsqueda!",
+        "onboard.videoUrlPlaceholder": "https://youtube.com/watch?v=... o https://vimeo.com/...",
+        "onboard.videoUrlHint": "Pega un enlace a tu video de YouTube o Vimeo (1-3 minutos recomendado)",
 
         // Quiz (Spanish)
         "quiz.back": "Atrás",
@@ -4911,6 +4935,14 @@ const translations = {
         "onboard.successWithReferral": "✓ Profil complété ! Vous avez 1 an de Premium gratuit ! Redirection...",
         "onboard.successDefault": "✓ Profil complété avec succès ! Redirection vers le tableau de bord...",
         "onboard.uploadFailed": "Échec du téléchargement de l'image. Veuillez réessayer.",
+        "onboard.currency": "Devise",
+        "onboard.cityPlaceholder": "ex. Paris",
+        "onboard.countryPlaceholder": "ex. France",
+        "onboard.selectSpecialtiesHint": "Sélectionnez toutes celles qui s'appliquent",
+        "onboard.videoIntroTitle": "Vidéo de Présentation (Recommandé)",
+        "onboard.videoIntroHint": "Les coachs avec vidéo de présentation reçoivent 3x plus de réservations et apparaissent en haut des résultats de recherche !",
+        "onboard.videoUrlPlaceholder": "https://youtube.com/watch?v=... ou https://vimeo.com/...",
+        "onboard.videoUrlHint": "Collez un lien vers votre vidéo YouTube ou Vimeo (1-3 minutes recommandées)",
 
         // Quiz (French)
         "quiz.back": "Retour",
@@ -6197,6 +6229,14 @@ const translations = {
         "onboard.successWithReferral": "✓ Profilo completato! Hai 1 anno di Premium gratis! Reindirizzamento...",
         "onboard.successDefault": "✓ Profilo completato con successo! Reindirizzamento alla dashboard...",
         "onboard.uploadFailed": "Caricamento immagine fallito. Riprova.",
+        "onboard.currency": "Valuta",
+        "onboard.cityPlaceholder": "es. Milano",
+        "onboard.countryPlaceholder": "es. Italia",
+        "onboard.selectSpecialtiesHint": "Seleziona tutte quelle applicabili",
+        "onboard.videoIntroTitle": "Video di Presentazione (Consigliato)",
+        "onboard.videoIntroHint": "I coach con video di presentazione ricevono 3x più prenotazioni e appaiono in cima ai risultati di ricerca!",
+        "onboard.videoUrlPlaceholder": "https://youtube.com/watch?v=... o https://vimeo.com/...",
+        "onboard.videoUrlHint": "Incolla un link al tuo video YouTube o Vimeo (1-3 minuti consigliati)",
 
         // Quiz (Italian)
         "quiz.back": "Indietro",
