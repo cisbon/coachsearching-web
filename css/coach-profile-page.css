@@ -2721,3 +2721,124 @@
         padding: 10px 16px;
     }
 }
+
+/* ==========================================================================
+   Specialties in Hero (compact tags)
+   ========================================================================== */
+
+.coach-specialties-hero {
+    margin: 12px 0;
+}
+
+.specialties-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.specialty-tag-hero {
+    display: inline-block;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    color: var(--primary-petrol, #006266);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid rgba(0, 98, 102, 0.15);
+    transition: all 0.2s ease;
+}
+
+.specialty-tag-hero:hover {
+    background: var(--primary-petrol, #006266);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.specialty-more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    color: var(--text-muted, #6b7280);
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Session Formats in Hero (compact badges)
+   ========================================================================== */
+
+.session-formats-hero {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.format-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f9fafb;
+    border: 1px solid var(--border-color, #e5e7eb);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-main, #333);
+}
+
+.format-badge .format-icon {
+    font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   Sidebar Language Flags & Location
+   ========================================================================== */
+
+.languages-list-flags {
+    padding: 8px 0;
+}
+
+.languages-list-flags .language-flags {
+    gap: 8px;
+}
+
+.location-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.location-icon {
+    font-size: 1.1rem;
+}
+
+.location-text {
+    color: var(--text-main, #333);
+    font-size: 0.95rem;
+}
+
+/* Mobile Responsive - New Hero Elements */
+@media (max-width: 768px) {
+    .coach-specialties-hero {
+        margin: 10px 0;
+    }
+
+    .specialty-tag-hero {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+
+    .session-formats-hero {
+        margin: 10px 0;
+    }
+
+    .format-badge {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+}

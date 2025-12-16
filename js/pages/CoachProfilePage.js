@@ -1050,10 +1050,27 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 </div>
                             `}
 
-                            <!-- Trust Signals (below profile picture/video) -->
-                            <${TrustSignalsBar} coach=${coach} />
+                            <!-- Specialties (compact, in hero) -->
+                            ${specialties.length > 0 && html`
+                                <div class="coach-specialties-hero">
+                                    <div class="specialties-tags">
+                                        ${specialties.slice(0, 6).map((spec, i) => html`
+                                            <a
+                                                key=${i}
+                                                href="#coaching/${spec.toLowerCase().replace(/\s+/g, '-')}"
+                                                class="specialty-tag-hero"
+                                            >
+                                                ${spec}
+                                            </a>
+                                        `)}
+                                        ${specialties.length > 6 && html`
+                                            <span class="specialty-more">+${specialties.length - 6}</span>
+                                        `}
+                                    </div>
+                                </div>
+                            `}
 
-                            <!-- Stats Banner (below trust signals) -->
+                            <!-- Stats Banner (below specialties) -->
                             <${CoachStatsBanner} coach=${coach} />
 
                             <!-- Reviews Overview (below stats banner) -->
@@ -1163,6 +1180,19 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     `}
                                 </div>
                             `}
+
+                            <!-- Session Formats (compact) -->
+                            <div class="session-formats-hero">
+                                ${sessionFormats.includes('online') && html`
+                                    <span class="format-badge"><span class="format-icon">💻</span> ${t('coach.online') || 'Online'}</span>
+                                `}
+                                ${sessionFormats.includes('in-person') && html`
+                                    <span class="format-badge"><span class="format-icon">🏢</span> ${t('coach.inPerson') || 'In-Person'}</span>
+                                `}
+                                ${sessionFormats.includes('phone') && html`
+                                    <span class="format-badge"><span class="format-icon">📞</span> ${t('coach.phone') || 'Phone'}</span>
+                                `}
+                            </div>
 
                             <!-- Pricing & CTA -->
                             <div class="coach-cta-section">
@@ -1314,73 +1344,29 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 </article>
                             `}
 
-                            <!-- What to Expect -->
-                            <article class="coach-section what-to-expect-section">
-                                <h2 class="section-title">${t('coach.whatToExpect') || 'What to Expect'}</h2>
-                                <div class="expect-grid">
-                                    <div class="expect-item">
-                                        <span class="expect-icon">📞</span>
-                                        <h4>${t('coach.expectStep1Title') || 'Free Discovery Call'}</h4>
-                                        <p>${t('coach.expectStep1Desc') || 'Start with a free call to discuss your goals and see if we\'re a good fit.'}</p>
-                                    </div>
-                                    <div class="expect-item">
-                                        <span class="expect-icon">🎯</span>
-                                        <h4>${t('coach.expectStep2Title') || 'Personalized Plan'}</h4>
-                                        <p>${t('coach.expectStep2Desc') || 'Together we\'ll create a tailored coaching plan based on your unique needs.'}</p>
-                                    </div>
-                                    <div class="expect-item">
-                                        <span class="expect-icon">🚀</span>
-                                        <h4>${t('coach.expectStep3Title') || 'Ongoing Support'}</h4>
-                                        <p>${t('coach.expectStep3Desc') || 'Regular sessions with accountability and support between meetings.'}</p>
-                                    </div>
-                                </div>
-                            </article>
-
-                            <!-- Specialties -->
-                            ${specialties.length > 0 && html`
-                                <article class="coach-section">
-                                    <h2 class="section-title">${t('coach.specialties') || 'Specialties'}</h2>
-                                    <div class="specialties-grid">
-                                        ${specialties.map((spec, i) => html`
-                                            <a
-                                                key=${i}
-                                                href="#coaching/${spec.toLowerCase().replace(/\s+/g, '-')}"
-                                                class="specialty-card"
-                                            >
-                                                ${spec}
-                                            </a>
-                                        `)}
+                            <!-- What to Expect (only shown if no articles) -->
+                            ${articles.length === 0 && html`
+                                <article class="coach-section what-to-expect-section">
+                                    <h2 class="section-title">${t('coach.whatToExpect') || 'What to Expect'}</h2>
+                                    <div class="expect-grid">
+                                        <div class="expect-item">
+                                            <span class="expect-icon">📞</span>
+                                            <h4>${t('coach.expectStep1Title') || 'Free Discovery Call'}</h4>
+                                            <p>${t('coach.expectStep1Desc') || 'Start with a free call to discuss your goals and see if we\'re a good fit.'}</p>
+                                        </div>
+                                        <div class="expect-item">
+                                            <span class="expect-icon">🎯</span>
+                                            <h4>${t('coach.expectStep2Title') || 'Personalized Plan'}</h4>
+                                            <p>${t('coach.expectStep2Desc') || 'Together we\'ll create a tailored coaching plan based on your unique needs.'}</p>
+                                        </div>
+                                        <div class="expect-item">
+                                            <span class="expect-icon">🚀</span>
+                                            <h4>${t('coach.expectStep3Title') || 'Ongoing Support'}</h4>
+                                            <p>${t('coach.expectStep3Desc') || 'Regular sessions with accountability and support between meetings.'}</p>
+                                        </div>
                                     </div>
                                 </article>
                             `}
-
-                            <!-- Session Formats -->
-                            <article class="coach-section">
-                                <h2 class="section-title">${t('coach.sessionFormats') || 'Session Formats'}</h2>
-                                <div class="session-formats-grid">
-                                    ${sessionFormats.includes('online') && html`
-                                        <div class="format-card">
-                                            <span class="format-icon">💻</span>
-                                            <span class="format-name">${t('coach.online') || 'Online'}</span>
-                                            <span class="format-desc">${t('coach.onlineDesc') || 'Video call sessions'}</span>
-                                        </div>
-                                    `}
-                                    ${sessionFormats.includes('in-person') && html`
-                                        <div class="format-card">
-                                            <span class="format-icon">🏢</span>
-                                            <span class="format-name">${t('coach.inPerson') || 'In-Person'}</span>
-                                            <span class="format-desc">${location}</span>
-                                        </div>
-                                    `}
-                                    ${sessionFormats.includes('phone') && html`
-                                        <div class="format-card">
-                                            <span class="format-icon">📞</span>
-                                            <span class="format-name">${t('coach.phone') || 'Phone'}</span>
-                                            <span class="format-desc">${t('coach.phoneDesc') || 'Voice call sessions'}</span>
-                                        </div>
-                                    `}
-                                </div>
-                            </article>
 
                             <!-- Credentials -->
                             ${credentials.length > 0 && html`
@@ -1413,41 +1399,19 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             ${languages.length > 0 && html`
                                 <div class="sidebar-widget">
                                     <h3>${t('coach.languages') || 'Languages'}</h3>
-                                    <div class="languages-list">
-                                        ${languages.map((lang, i) => html`
-                                            <span key=${i} class="language-badge">${lang}</span>
-                                        `)}
+                                    <div class="languages-list-flags">
+                                        <${LanguageFlags} languages=${languages} />
                                     </div>
                                 </div>
                             `}
 
-                            <!-- Quick Stats -->
+                            <!-- Location -->
                             <div class="sidebar-widget">
-                                <h3>${t('coach.quickStats') || 'Quick Stats'}</h3>
-                                <ul class="quick-stats-list">
-                                    ${coach.total_sessions > 0 && html`
-                                        <li>
-                                            <span class="stat-icon">📅</span>
-                                            <span>${coach.total_sessions}+ ${t('coach.sessionsCompleted') || 'sessions'}</span>
-                                        </li>
-                                    `}
-                                    ${coach.years_experience > 0 && html`
-                                        <li>
-                                            <span class="stat-icon">🏆</span>
-                                            <span>${coach.years_experience}+ ${t('coach.yearsExperience') || 'years experience'}</span>
-                                        </li>
-                                    `}
-                                    ${coach.response_time_hours && html`
-                                        <li>
-                                            <span class="stat-icon">⚡</span>
-                                            <span>${t('coach.respondsIn') || 'Responds in'} ${coach.response_time_hours}h</span>
-                                        </li>
-                                    `}
-                                    <li>
-                                        <span class="stat-icon">📍</span>
-                                        <span>${location}</span>
-                                    </li>
-                                </ul>
+                                <h3>${t('coach.location') || 'Location'}</h3>
+                                <div class="location-display">
+                                    <span class="location-icon">📍</span>
+                                    <span class="location-text">${location}</span>
+                                </div>
                             </div>
 
                             <!-- Share Widget -->
