@@ -8015,7 +8015,32 @@ const App = () => {
     };
 
     if (!configLoaded) {
-        return html`<div class="container" style=${{ marginTop: '100px', textAlign: 'center' }}>Loading configuration...</div>`;
+        return html`
+            <div style=${{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                width: '100%',
+                background: '#fff'
+            }}>
+                <style>
+                    @keyframes pulse-loader {
+                        0%, 100% { transform: scale(1); opacity: 1; }
+                        50% { transform: scale(1.15); opacity: 0.7; }
+                    }
+                </style>
+                <img
+                    src="/favicon.ico"
+                    alt="Loading..."
+                    style=${{
+                        width: '64px',
+                        height: '64px',
+                        animation: 'pulse-loader 1.2s ease-in-out infinite'
+                    }}
+                />
+            </div>
+        `;
     }
 
     let Component;
