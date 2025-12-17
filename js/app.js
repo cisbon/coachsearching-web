@@ -271,6 +271,8 @@ window.navigateTo = (path) => {
     console.log('Navigating to:', path);
     window.history.pushState(null, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
+    // Scroll to top on navigation
+    window.scrollTo(0, 0);
 };
 
 // Global click handler for all internal links (SPA navigation)
