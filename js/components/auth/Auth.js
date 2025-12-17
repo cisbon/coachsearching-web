@@ -58,17 +58,17 @@ export function Auth() {
 
             if (error || !codeData) {
                 setReferralStatus('invalid');
-                setReferralMessage(t('auth.referralInvalid') || 'Invalid referral code');
+                setReferralMessage('Invalid referral code');
                 setReferrerId(null);
             } else {
                 setReferralStatus('valid');
-                setReferralMessage(t('auth.referralValid') || 'Code applied!');
+                setReferralMessage('Code applied!');
                 setReferrerId(codeData.user_id);
             }
         } catch (err) {
             console.error('Error validating referral code:', err);
             setReferralStatus('invalid');
-            setReferralMessage(t('auth.referralError') || 'Could not validate code');
+            setReferralMessage('Could not validate code');
             setReferrerId(null);
         }
     }, []);
@@ -190,48 +190,59 @@ export function Auth() {
         setMessage({ type: '', text: '' });
     };
 
+    // Get role display info
+    const getRoleName = (roleId) => {
+        const translations = {
+            client: t('auth.client') || 'Client',
+            coach: t('auth.coach') || 'Coach',
+            business: t('auth.business') || 'Business'
+        };
+        return translations[roleId] || roleId;
+    };
+
+    const getRoleDesc = (roleId) => {
+        const translations = {
+            client: t('auth.clientDesc') || 'Find a coach',
+            coach: t('auth.coachDesc') || 'Offer coaching',
+            business: t('auth.businessDesc') || 'Team coaching'
+        };
+        return translations[roleId] || '';
+    };
+
     return html`
         <div class="premium-auth">
             <div class="premium-auth-card">
-                <!-- Header -->
-                <div class="premium-auth-header">
-                    <div class="auth-logo">
-                        <div class="auth-logo-icon">🎯</div>
-                        <div class="auth-logo-text">Coach<span>Searching</span></div>
-                    </div>
-                    <h1 class="premium-auth-title">
-                        ${isLogin ? (t('auth.welcomeBack') || 'Welcome Back') : (t('auth.createAccount') || 'Create Account')}
-                    </h1>
-                    <p class="premium-auth-subtitle">
-                        ${isLogin
-                            ? (t('auth.signInSubtitle') || 'Sign in to continue your journey')
-                            : (t('auth.signUpSubtitle') || 'Join thousands of coaches and clients')}
-                    </p>
-                </div>
-
                 <!-- Body -->
                 <div class="premium-auth-body">
+                    <!-- Logo -->
+                    <div style=${{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                        <div class="auth-logo" style=${{ justifyContent: 'center' }}>
+                            <div class="auth-logo-icon">🎯</div>
+                            <div class="auth-logo-text">Coach<span>Searching</span></div>
+                        </div>
+                    </div>
+
                     <!-- Mode Tabs -->
                     <div class="auth-mode-tabs">
                         <button
                             type="button"
-                            class="auth-mode-tab ${isLogin ? 'active' : ''}"
+                            class=${'auth-mode-tab ' + (isLogin ? 'active' : '')}
                             onClick=${() => { setIsLogin(true); setMessage({ type: '', text: '' }); }}
                         >
-                            ${t('auth.signIn') || 'Sign In'}
+                            ${t('auth.signin') || 'Sign In'}
                         </button>
                         <button
                             type="button"
-                            class="auth-mode-tab ${!isLogin ? 'active' : ''}"
+                            class=${'auth-mode-tab ' + (!isLogin ? 'active' : '')}
                             onClick=${() => { setIsLogin(false); setMessage({ type: '', text: '' }); }}
                         >
-                            ${t('auth.signUp') || 'Sign Up'}
+                            ${t('auth.signup') || 'Sign Up'}
                         </button>
                     </div>
 
                     <!-- Message -->
                     ${message.text && html`
-                        <div class="auth-message ${message.type}">
+                        <div class=${'auth-message ' + message.type}>
                             <span class="auth-message-icon">
                                 ${message.type === 'success' ? '✓' : '⚠'}
                             </span>
@@ -244,22 +255,22 @@ export function Auth() {
                         ${!isLogin && html`
                             <div class="auth-role-section">
                                 <label class="auth-role-label">
-                                    ${t('auth.iAmA') || "I'm a..."}
+                                    ${t('auth.selectType') || "I'm a..."}
                                 </label>
                                 <div class="auth-role-grid">
                                     ${ROLES.map(role => html`
                                         <div
                                             key=${role.id}
-                                            class="auth-role-card ${userType === role.id ? 'selected' : ''}"
+                                            class=${'auth-role-card ' + (userType === role.id ? 'selected' : '')}
                                             onClick=${() => setUserType(role.id)}
                                             role="radio"
-                                            aria-checked=${userType === role.id}
+                                            aria-checked=${String(userType === role.id)}
                                             tabIndex="0"
                                             onKeyDown=${(e) => e.key === 'Enter' && setUserType(role.id)}
                                         >
                                             <div class="auth-role-icon">${role.icon}</div>
-                                            <div class="auth-role-name">${t(`auth.${role.id}`) || role.name}</div>
-                                            <div class="auth-role-desc">${t(`auth.${role.id}Desc`) || role.desc}</div>
+                                            <div class="auth-role-name">${getRoleName(role.id)}</div>
+                                            <div class="auth-role-desc">${getRoleDesc(role.id)}</div>
                                         </div>
                                     `)}
                                 </div>
@@ -273,7 +284,7 @@ export function Auth() {
                                 <input
                                     type="email"
                                     class="premium-auth-input"
-                                    placeholder=${t('auth.emailPlaceholder') || 'you@example.com'}
+                                    placeholder="you@example.com"
                                     value=${email}
                                     onInput=${(e) => setEmail(e.target.value)}
                                     required
@@ -290,7 +301,7 @@ export function Auth() {
                                 <input
                                     type=${showPassword ? 'text' : 'password'}
                                     class="premium-auth-input"
-                                    placeholder=${isLogin ? '••••••••' : (t('auth.passwordPlaceholder') || 'Min. 6 characters')}
+                                    placeholder=${isLogin ? '••••••••' : 'Min. 6 characters'}
                                     value=${password}
                                     onInput=${(e) => setPassword(e.target.value)}
                                     required
@@ -313,22 +324,18 @@ export function Auth() {
                         ${!isLogin && userType === 'coach' && html`
                             <div class="auth-referral-section">
                                 <div class="auth-referral-header">
-                                    <span class="auth-referral-label">
-                                        ${t('auth.referralCode') || 'Referral Code'}
-                                    </span>
-                                    <span class="auth-referral-optional">
-                                        ${t('auth.optional') || '(optional)'}
-                                    </span>
+                                    <span class="auth-referral-label">Referral Code</span>
+                                    <span class="auth-referral-optional">(optional)</span>
                                 </div>
                                 <div class="auth-referral-input-wrapper">
                                     <div class="auth-input-wrapper">
                                         <input
                                             type="text"
-                                            class="premium-auth-input ${referralStatus ? `referral-${referralStatus}` : ''}"
-                                            placeholder=${t('auth.referralPlaceholder') || 'Enter code'}
+                                            class=${'premium-auth-input' + (referralStatus ? ' referral-' + referralStatus : '')}
+                                            placeholder="Enter code"
                                             value=${referralCode}
                                             onInput=${handleReferralCodeChange}
-                                            disabled=${loading}
+                                            disabled=${loading ? true : false}
                                             maxLength="20"
                                             style="padding-left: 1rem; padding-right: 3rem;"
                                         />
@@ -348,8 +355,8 @@ export function Auth() {
                                     <div class="auth-referral-success">
                                         <span class="auth-referral-success-icon">🎁</span>
                                         <div class="auth-referral-success-text">
-                                            <strong>${t('auth.referralSuccessTitle') || 'Free Premium Year!'}</strong>
-                                            <span>${t('auth.referralSuccessDesc') || 'Enjoy all Premium features free for your first year.'}</span>
+                                            <strong>Free Premium Year!</strong>
+                                            <span>Enjoy all Premium features free for your first year.</span>
                                         </div>
                                     </div>
                                 `}
@@ -364,14 +371,12 @@ export function Auth() {
                         <button
                             type="submit"
                             class="premium-auth-submit"
-                            disabled=${loading}
+                            disabled=${loading ? true : false}
                         >
                             ${loading && html`<span class="btn-spinner"></span>`}
                             ${loading
-                                ? (t('auth.processing') || 'Processing...')
-                                : (isLogin
-                                    ? (t('auth.signInBtn') || 'Sign In')
-                                    : (t('auth.createAccountBtn') || 'Create Account'))}
+                                ? 'Processing...'
+                                : (isLogin ? (t('auth.signin') || 'Sign In') : (t('auth.signup') || 'Create Account'))}
                         </button>
 
                         <!-- Social Proof (Register only) -->
@@ -397,14 +402,10 @@ export function Auth() {
                 <!-- Footer -->
                 <div class="premium-auth-footer">
                     <span class="auth-switch-text">
-                        ${isLogin
-                            ? (t('auth.noAccount') || "Don't have an account?")
-                            : (t('auth.hasAccount') || 'Already have an account?')}
+                        ${isLogin ? "Don't have an account?" : 'Already have an account?'}
                         ${' '}
                         <button type="button" class="auth-switch-link" onClick=${toggleMode}>
-                            ${isLogin
-                                ? (t('auth.signUpLink') || 'Sign up')
-                                : (t('auth.signInLink') || 'Sign in')}
+                            ${isLogin ? 'Sign up' : 'Sign in'}
                         </button>
                     </span>
                 </div>

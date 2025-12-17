@@ -140,7 +140,7 @@
 .auth-logo-icon {
     width: 48px;
     height: 48px;
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--petrol-50);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -151,7 +151,7 @@
 .auth-logo-text {
     font-size: 1.5rem;
     font-weight: 800;
-    color: white;
+    color: var(--petrol);
 }
 
 .auth-logo-text span {
