@@ -370,24 +370,6 @@ export function Auth() {
                                 ? 'Processing...'
                                 : (isLogin ? (t('auth.signin') || 'Sign In') : (t('auth.signup') || 'Create Account'))}
                         </button>
-
-                        <!-- Social Proof (Register only) -->
-                        ${!isLogin && html`
-                            <div class="auth-social-proof">
-                                <div class="auth-proof-item">
-                                    <div class="auth-proof-number">2,500+</div>
-                                    <div class="auth-proof-label">Coaches</div>
-                                </div>
-                                <div class="auth-proof-item">
-                                    <div class="auth-proof-number">50,000+</div>
-                                    <div class="auth-proof-label">Sessions</div>
-                                </div>
-                                <div class="auth-proof-item">
-                                    <div class="auth-proof-number">4.9★</div>
-                                    <div class="auth-proof-label">Rating</div>
-                                </div>
-                            </div>
-                        `}
                     </form>
                 </div>
 
