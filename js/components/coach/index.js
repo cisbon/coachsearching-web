@@ -13,3 +13,4 @@ export { CoachCardSkeleton } from './CoachCardSkeleton.js';
 export { FilterSidebar, SPECIALTY_OPTIONS, LANGUAGE_OPTIONS } from './FilterSidebar.js';
 export { CoachList } from './CoachList.js';
 export { CoachDetailModal } from './CoachDetailModal.js';
+export { FavoriteButton } from './FavoriteButton.js';

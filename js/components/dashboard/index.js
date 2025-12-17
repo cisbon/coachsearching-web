@@ -10,3 +10,4 @@ export { DashboardProfile } from './DashboardProfile.js';
 export { DashboardBookings } from './DashboardBookings.js';
 export { DashboardAvailability } from './DashboardAvailability.js';
 export { DashboardArticles } from './DashboardArticles.js';
+export { CoachEarningsDashboard } from './CoachEarningsDashboard.js';
