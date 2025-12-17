@@ -174,94 +174,14 @@ function markdownToHTML(md) {
     return html;
 }
 
-// legalContent now in components/ui/Modal.js (LegalModal)
+// --- Page Components ---
 
-// Mock data for coaches (will be replaced with API data)
-const mockCoaches = [
-    {
-        id: '1',
-        full_name: 'Sarah Johnson',
-        avatar_url: 'https://i.pravatar.cc/200?img=1',
-        title: 'Executive Leadership Coach',
-        bio: 'Helping executives and entrepreneurs achieve their full potential through strategic coaching and mentorship.',
-        location: 'New York, USA',
-        languages: ['English', 'Spanish'],
-        specialties: ['Leadership', 'Career Transition', 'Executive Coaching'],
-        hourly_rate: 150,
-        rating: 4.9,
-        reviews_count: 127
-    },
-    {
-        id: '2',
-        full_name: 'Michael Chen',
-        avatar_url: 'https://i.pravatar.cc/200?img=12',
-        title: 'Career Development Coach',
-        bio: 'Specializing in career transitions and professional development for mid-career professionals.',
-        location: 'San Francisco, USA',
-        languages: ['English', 'Mandarin'],
-        specialties: ['Career Change', 'Interview Prep', 'Salary Negotiation'],
-        hourly_rate: 120,
-        rating: 4.8,
-        reviews_count: 89
-    },
-    {
-        id: '3',
-        full_name: 'Emma Schmidt',
-        avatar_url: 'https://i.pravatar.cc/200?img=5',
-        title: 'Life & Wellness Coach',
-        bio: 'Empowering individuals to create balanced, fulfilling lives through holistic coaching approaches.',
-        location: 'Berlin, Germany',
-        languages: ['German', 'English'],
-        specialties: ['Work-Life Balance', 'Stress Management', 'Personal Growth'],
-        hourly_rate: 100,
-        rating: 5.0,
-        reviews_count: 64
-    }
-];
-
-// --- Components ---
-// Layout components (LegalModal, Footer, CurrencySelector, LanguageSelector, Navbar)
-// are now imported from components/layout/ and components/ui/
-
-// Auth component now imported from ./components/auth/Auth.js
-
-// CoachOnboarding now imported from ./components/auth/CoachOnboarding.js
-// Removed ~735 lines of inline CoachOnboarding component
-
-// SignOut now imported from components/auth/index.js
-// Hero now imported from pages/HomePage.js
-
-// Coach components now imported from components/coach/index.js:
-// LanguageFlags, TrustBadges, VideoPopup, ReviewsPopup, DiscoveryCallModal,
-// CoachCard, CoachCardSkeleton, FilterSidebar, SPECIALTY_OPTIONS, LANGUAGE_OPTIONS, CoachList
-
-// CoachList now imported from components/coach/CoachList.js
-// Note: The imported CoachList accepts CoachDetailModal as a prop
-
-// Wrapper to use imported CoachList with inline CoachDetailModal
+// CoachList wrapper that passes CoachDetailModal
 const CoachListWithModal = ({ searchFilters, session }) => {
     return html`<${CoachList} searchFilters=${searchFilters} session=${session} CoachDetailModal=${CoachDetailModal} />`;
 };
 
-// BookingModal removed - MVP uses Discovery Calls only
-// Session booking will be handled outside the platform
-
-// CoachDetailModal now imported from ./components/coach/CoachDetailModal.js
-
-// Dashboard now imported from ./components/dashboard/Dashboard.js
-
-// DashboardBookings - imported from ./components/dashboard/DashboardBookings.js
-
-// Discovery Requests Dashboard Component - imported from ./components/dashboard/DiscoveryRequestsDashboard.js
-
-// Subscription Dashboard Component - imported from ./components/dashboard/DashboardSubscription.js
-
-// DashboardOverview - imported from ./components/dashboard/DashboardOverview.js
-
-// DashboardAvailability - imported from ./components/dashboard/DashboardAvailability.js
-
-// DashboardArticles (with ArticleEditor) - imported from ./components/dashboard/DashboardArticles.js
-
+// Pro-bono dashboard stub (future feature)
 const DashboardProBono = ({ session }) => {
     console.log('Loading pro-bono dashboard');
 
@@ -292,9 +212,7 @@ const DashboardProBono = ({ session }) => {
     `;
 };
 
-// Home page sections (Hero, CoachingCategoriesSection, HowItWorksSection, TrustBadgesSection)
-// now imported from pages/HomePage.js
-
+// Home page component
 const Home = ({ session }) => {
     return html`
         <div>
@@ -308,27 +226,9 @@ const Home = ({ session }) => {
     `;
 };
 
-// Review components (StarRating, ReviewCard, WriteReviewModal) now imported from ./components/reviews/index.js
+// --- SPA Router Helpers ---
 
-// Messaging components (MessagingInbox, ConversationView) now imported from ./components/messaging/index.js
-
-// NotificationBell now imported from ./components/ui/NotificationBell.js
-
-// FavoriteButton now imported from ./components/coach/FavoriteButton.js
-
-// TimezoneSelector now imported from ./components/ui/TimezoneSelector.js
-
-// GDPR components (DataExportRequest, AccountDeletion) now imported from components/account/
-
-// CoachEarningsDashboard now imported from ./components/dashboard/CoachEarningsDashboard.js
-
-// EmailVerificationBanner now imported from ./components/ui/EmailVerificationBanner.js
-
-// ErrorBoundary now imported from ./components/ui/ErrorBoundary.js
-
-// Matching components (MatchingQuiz, AIMatchPage, getQuizQuestions) now imported from ./components/matching/index.js
-
-// Helper function to get current route from pathname
+// Get current route from pathname
 const getCurrentRoute = () => {
     const pathname = window.location.pathname;
     // Handle root path
