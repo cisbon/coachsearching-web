@@ -65,6 +65,9 @@ import { MessagingInbox, ConversationView } from './components/messaging/index.j
 // Matching Components (modular)
 import { MatchingQuiz, AIMatchPage, getQuizQuestions } from './components/matching/index.js';
 
+// Context Provider
+import { AppProvider } from './context/AppContext.js';
+
 console.log('App.js: React global', React);
 console.log('App.js: ReactDOM global', ReactDOM);
 console.log('App.js: htm imported');
@@ -475,6 +478,8 @@ const App = () => {
 console.log('App.js: Rendering app...');
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-    React.createElement(ErrorBoundary, null, html`<${App} />`)
+    React.createElement(ErrorBoundary, null,
+        html`<${AppProvider}><${App} /></${AppProvider}>`
+    )
 );
 console.log('App.js: App rendered successfully');
