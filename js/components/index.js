@@ -45,3 +45,6 @@ export {
     SPECIALTY_OPTIONS,
     LANGUAGE_OPTIONS
 } from './coach/index.js';
+
+// Dashboard components
+export { Dashboard } from './dashboard/index.js';
