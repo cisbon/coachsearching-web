@@ -25,6 +25,7 @@ export function Auth() {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [userType, setUserType] = useState('client');
     const [isLogin, setIsLogin] = useState(true);
@@ -119,6 +120,12 @@ export function Auth() {
 
         if (!window.supabaseClient) {
             setMessage({ type: 'error', text: 'Connection error. Please refresh the page.' });
+            return;
+        }
+
+        // Validate passwords match for registration
+        if (!isLogin && password !== confirmPassword) {
+            setMessage({ type: 'error', text: 'Passwords do not match.' });
             return;
         }
 
@@ -311,6 +318,26 @@ export function Auth() {
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Confirm Password (Register only) -->
+                        ${!isLogin && html`
+                            <div class="auth-form-group">
+                                <label class="auth-form-label">${t('auth.confirmPassword') || 'Confirm Password'}</label>
+                                <div class="auth-input-wrapper">
+                                    <input
+                                        type=${showPassword ? 'text' : 'password'}
+                                        class="premium-auth-input"
+                                        placeholder="Re-enter password"
+                                        value=${confirmPassword}
+                                        onInput=${(e) => setConfirmPassword(e.target.value)}
+                                        required
+                                        minLength="6"
+                                        autocomplete="new-password"
+                                    />
+                                    <span class="auth-input-icon">🔒</span>
+                                </div>
+                            </div>
+                        `}
 
                         <!-- Referral Code (Coach registration only) -->
                         ${!isLogin && userType === 'coach' && html`
