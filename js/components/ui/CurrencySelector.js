@@ -4,7 +4,6 @@
  */
 
 import htm from '../../vendor/htm.js';
-import { useCurrency } from '../../context/index.js';
 
 const React = window.React;
 const { useState, useEffect, useRef } = React;
@@ -13,14 +12,32 @@ const html = htm.bind(React.createElement);
 const CURRENCIES = [
     { code: 'EUR', symbol: '€', label: 'Euro' },
     { code: 'USD', symbol: '$', label: 'US Dollar' },
-    { code: 'GBP', symbol: '£', label: 'Pound' },
-    { code: 'CHF', symbol: 'CHF', label: 'Swiss Franc' }
+    { code: 'GBP', symbol: '£', label: 'Pound' }
 ];
 
+// Currency management functions (can also be imported from utils)
+function getCurrentCurrency() {
+    return localStorage.getItem('currency') || 'EUR';
+}
+
+function setCurrencyValue(code) {
+    localStorage.setItem('currency', code);
+    window.dispatchEvent(new Event('currencyChange'));
+}
+
 export function CurrencySelector() {
-    const { currency, setCurrency } = useCurrency();
     const [isOpen, setIsOpen] = useState(false);
+    const [currency, setCurrencyState] = useState(getCurrentCurrency());
     const dropdownRef = useRef(null);
+
+    // Listen for currency changes
+    useEffect(() => {
+        const handleCurrencyChange = () => {
+            setCurrencyState(getCurrentCurrency());
+        };
+        window.addEventListener('currencyChange', handleCurrencyChange);
+        return () => window.removeEventListener('currencyChange', handleCurrencyChange);
+    }, []);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -29,13 +46,12 @@ export function CurrencySelector() {
                 setIsOpen(false);
             }
         }
-
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const handleSelect = (code) => {
-        setCurrency(code);
+        setCurrencyValue(code);
         setIsOpen(false);
     };
 

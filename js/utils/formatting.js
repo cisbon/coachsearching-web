@@ -382,11 +382,72 @@ export function formatNameShort(name) {
   return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
 }
 
+// ============================================================================
+// Markdown Conversion
+// ============================================================================
+
+/**
+ * Convert markdown to HTML
+ * @param {string} md - Markdown string
+ * @returns {string} - HTML string
+ */
+export function markdownToHTML(md) {
+  if (!md) return '';
+
+  let html = md;
+
+  // Convert headings (must be done line by line)
+  html = html.replace(/^### (.*)$/gim, '<h3>$1</h3>');
+  html = html.replace(/^## (.*)$/gim, '<h2>$1</h2>');
+  html = html.replace(/^# (.*)$/gim, '<h1>$1</h1>');
+
+  // Convert links [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  // Convert bold and italic
+  html = html.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
+
+  // Convert bullet lists
+  const bulletRegex = /^- (.*)$/gm;
+  if (bulletRegex.test(html)) {
+    html = html.replace(/(^- .*$(\n|$))+/gm, function(match) {
+      const items = match.trim().split('\n').map(line =>
+        '<li>' + line.replace(/^- /, '') + '</li>'
+      ).join('');
+      return '<ul>' + items + '</ul>';
+    });
+  }
+
+  // Convert numbered lists
+  const numberRegex = /^\d+\. (.*)$/gm;
+  if (numberRegex.test(md)) {
+    html = html.replace(/(^\d+\. .*$(\n|$))+/gm, function(match) {
+      const items = match.trim().split('\n').map(line =>
+        '<li>' + line.replace(/^\d+\. /, '') + '</li>'
+      ).join('');
+      return '<ol>' + items + '</ol>';
+    });
+  }
+
+  // Convert line breaks to paragraphs
+  html = html.split('\n\n').map(para => {
+    // Don't wrap headings, lists in p tags
+    if (para.match(/^<(h[123]|ul|ol)/)) {
+      return para;
+    }
+    return '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+  }).join('');
+
+  return html;
+}
+
 export default {
   getCurrentCurrency,
   setCurrency,
   formatPrice,
   parsePrice,
+  markdownToHTML,
   formatDate,
   formatDateTime,
   formatTime,
