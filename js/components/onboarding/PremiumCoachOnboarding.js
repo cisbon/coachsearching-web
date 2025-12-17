@@ -11,7 +11,7 @@
  */
 
 import htm from '../../vendor/htm.js';
-import { t } from '../../i18n.js';
+import { t, getCurrentLang } from '../../i18n.js';
 
 const React = window.React;
 const { useState, useEffect, useRef, useCallback } = React;
@@ -28,36 +28,24 @@ const STEPS = [
     { id: 'launch', label: 'Launch', icon: '4' }
 ];
 
-const LANGUAGE_FLAGS = [
-    { code: 'en', name: 'English', flag: '🇬🇧' },
-    { code: 'de', name: 'German', flag: '🇩🇪' },
-    { code: 'fr', name: 'French', flag: '🇫🇷' },
-    { code: 'es', name: 'Spanish', flag: '🇪🇸' },
-    { code: 'it', name: 'Italian', flag: '🇮🇹' },
-    { code: 'nl', name: 'Dutch', flag: '🇳🇱' },
-    { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
-    { code: 'pl', name: 'Polish', flag: '🇵🇱' }
-];
-
-const SPECIALTY_SUGGESTIONS = [
-    'Life Coaching', 'Career Coaching', 'Executive Coaching',
-    'Leadership Development', 'Business Coaching', 'Health & Wellness',
-    'Relationship Coaching', 'Performance Coaching', 'Mindset Coaching',
-    'Financial Coaching', 'Stress Management', 'Work-Life Balance'
-];
-
-const SESSION_FORMATS = [
-    { id: 'video', icon: '💻', title: 'Video Call', desc: 'Online via Zoom/Meet' },
-    { id: 'in-person', icon: '🤝', title: 'In-Person', desc: 'Face-to-face meetings' },
-    { id: 'phone', icon: '📞', title: 'Phone Call', desc: 'Audio-only sessions' }
-];
-
+// Session durations (kept hardcoded as they rarely change)
 const SESSION_DURATIONS = [
     { value: 30, label: '30 min' },
     { value: 60, label: '1 hour' },
     { value: 90, label: '1.5 hours' },
     { value: 120, label: '2 hours' }
 ];
+
+// Helper to get localized name from lookup option
+const getLocalizedName = (option, lang = null) => {
+    const currentLang = lang || getCurrentLang() || 'en';
+    return option[`name_${currentLang}`] || option.name_en || option.code;
+};
+
+const getLocalizedDesc = (option, lang = null) => {
+    const currentLang = lang || getCurrentLang() || 'en';
+    return option[`description_${currentLang}`] || option.description_en || '';
+};
 
 // ============================================================================
 // MAIN COMPONENT
@@ -85,6 +73,47 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
         referral_code_valid: false,
         referrer_id: null
     });
+
+    // Lookup options from database
+    const [lookupOptions, setLookupOptions] = useState({
+        specialties: [],
+        languages: [],
+        sessionFormats: []
+    });
+
+    // Fetch lookup options on mount
+    useEffect(() => {
+        const fetchLookupOptions = async () => {
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+
+                const { data: options, error } = await supabase
+                    .from('cs_lookup_options')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('sort_order', { ascending: true });
+
+                if (error) {
+                    console.error('Failed to fetch lookup options:', error);
+                    return;
+                }
+
+                // Group by type
+                const grouped = {
+                    specialties: options.filter(o => o.type === 'specialty'),
+                    languages: options.filter(o => o.type === 'language'),
+                    sessionFormats: options.filter(o => o.type === 'session_format')
+                };
+
+                setLookupOptions(grouped);
+            } catch (err) {
+                console.error('Error fetching lookup options:', err);
+            }
+        };
+
+        fetchLookupOptions();
+    }, []);
 
     // Referral code validation
     const referralDebounceRef = useRef(null);
@@ -326,9 +355,18 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             case 0:
                 return html`<${StepProfile} data=${data} updateData=${updateData} session=${session} />`;
             case 1:
-                return html`<${StepExpertise} data=${data} updateData=${updateData} />`;
+                return html`<${StepExpertise}
+                    data=${data}
+                    updateData=${updateData}
+                    specialties=${lookupOptions.specialties}
+                    languages=${lookupOptions.languages}
+                />`;
             case 2:
-                return html`<${StepServices} data=${data} updateData=${updateData} />`;
+                return html`<${StepServices}
+                    data=${data}
+                    updateData=${updateData}
+                    sessionFormats=${lookupOptions.sessionFormats}
+                />`;
             case 3:
                 return html`<${StepLaunch}
                     data=${data}
@@ -336,6 +374,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     loading=${loading}
                     onComplete=${completeOnboarding}
                     onReferralChange=${handleReferralCodeChange}
+                    languages=${lookupOptions.languages}
                 />`;
             default:
                 return null;
@@ -669,29 +708,13 @@ const StepProfile = ({ data, updateData, session }) => {
 // STEP 2: EXPERTISE
 // ============================================================================
 
-const StepExpertise = ({ data, updateData }) => {
-    const [inputValue, setInputValue] = useState('');
-    const inputRef = useRef(null);
-
-    const addSpecialty = (specialty) => {
-        const trimmed = specialty.trim();
-        if (trimmed && !data.specialties.includes(trimmed) && data.specialties.length < 10) {
-            updateData('specialties', [...data.specialties, trimmed]);
-        }
-    };
-
-    const removeSpecialty = (index) => {
-        updateData('specialties', data.specialties.filter((_, i) => i !== index));
-    };
-
-    const handleKeyDown = (e) => {
-        if ((e.key === ',' || e.key === 'Enter') && inputValue.trim()) {
-            e.preventDefault();
-            addSpecialty(inputValue);
-            setInputValue('');
-        } else if (e.key === 'Backspace' && !inputValue && data.specialties.length > 0) {
-            removeSpecialty(data.specialties.length - 1);
-        }
+const StepExpertise = ({ data, updateData, specialties = [], languages = [] }) => {
+    const toggleSpecialty = (code) => {
+        const current = data.specialties || [];
+        const newSpecialties = current.includes(code)
+            ? current.filter(s => s !== code)
+            : current.length < 10 ? [...current, code] : current;
+        updateData('specialties', newSpecialties);
     };
 
     const toggleLanguage = (code) => {
@@ -700,6 +723,12 @@ const StepExpertise = ({ data, updateData }) => {
             ? langs.filter(l => l !== code)
             : [...langs, code];
         updateData('languages', newLangs);
+    };
+
+    // Get display name for selected specialty
+    const getSpecialtyDisplayName = (code) => {
+        const specialty = specialties.find(s => s.code === code);
+        return specialty ? getLocalizedName(specialty) : code;
     };
 
     return html`
@@ -716,46 +745,58 @@ const StepExpertise = ({ data, updateData }) => {
             <div class="form-section">
                 <div class="form-section-title">🎯 Your Specialties</div>
                 <div class="form-hint">
-                    Add up to 10 areas you specialize in. Press comma or Enter to add.
+                    Select up to 10 areas you specialize in.
                 </div>
 
-                <div class="specialty-input-container" onClick=${() => inputRef.current?.focus()}>
-                    ${data.specialties.map((specialty, index) => html`
-                        <span key=${index} class="specialty-pill">
-                            ${specialty}
-                            <button
-                                class="specialty-pill-remove"
-                                onClick=${(e) => { e.stopPropagation(); removeSpecialty(index); }}
-                            >×</button>
-                        </span>
-                    `)}
-                    <input
-                        ref=${inputRef}
-                        type="text"
-                        class="specialty-input"
-                        placeholder=${data.specialties.length === 0 ? 'Type a specialty...' : ''}
-                        value=${inputValue}
-                        onInput=${(e) => setInputValue(e.target.value)}
-                        onKeyDown=${handleKeyDown}
-                        onBlur=${() => { if (inputValue.trim()) { addSpecialty(inputValue); setInputValue(''); }}}
-                    />
-                </div>
-
-                <div class="specialty-suggestions">
-                    <div class="suggestions-title">Popular Specialties</div>
-                    <div class="suggestion-chips">
-                        ${SPECIALTY_SUGGESTIONS.map(specialty => html`
-                            <button
-                                key=${specialty}
-                                class="suggestion-chip"
-                                onClick=${() => addSpecialty(specialty)}
-                                disabled=${data.specialties.includes(specialty) || data.specialties.length >= 10}
-                            >
-                                + ${specialty}
-                            </button>
+                <!-- Selected specialties -->
+                ${data.specialties.length > 0 && html`
+                    <div class="selected-specialties" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${data.specialties.map((code, index) => html`
+                            <span key=${index} class="specialty-pill">
+                                ${getSpecialtyDisplayName(code)}
+                                <button
+                                    class="specialty-pill-remove"
+                                    onClick=${() => toggleSpecialty(code)}
+                                >×</button>
+                            </span>
                         `)}
                     </div>
+                `}
+
+                <!-- Specialty options grid -->
+                <div class="specialty-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem;">
+                    ${specialties.map(specialty => html`
+                        <button
+                            key=${specialty.code}
+                            type="button"
+                            class=${'specialty-option ' + (data.specialties.includes(specialty.code) ? 'selected' : '')}
+                            onClick=${() => toggleSpecialty(specialty.code)}
+                            disabled=${!data.specialties.includes(specialty.code) && data.specialties.length >= 10}
+                            style=${{
+                                padding: '0.75rem 1rem',
+                                borderRadius: '8px',
+                                border: data.specialties.includes(specialty.code) ? '2px solid var(--petrol)' : '1px solid #e0e0e0',
+                                background: data.specialties.includes(specialty.code) ? 'var(--petrol-50)' : '#fff',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                fontSize: '0.9rem',
+                                transition: 'all 0.2s ease',
+                                opacity: (!data.specialties.includes(specialty.code) && data.specialties.length >= 10) ? 0.5 : 1
+                            }}
+                        >
+                            <span>${specialty.icon || '🎯'}</span>
+                            <span>${getLocalizedName(specialty)}</span>
+                        </button>
+                    `)}
                 </div>
+
+                ${data.specialties.length > 0 && html`
+                    <div style="margin-top: 0.75rem; font-size: 0.875rem; color: #666;">
+                        ${data.specialties.length}/10 selected
+                    </div>
+                `}
             </div>
 
             <!-- Languages -->
@@ -766,15 +807,15 @@ const StepExpertise = ({ data, updateData }) => {
                 </div>
 
                 <div class="language-grid">
-                    ${LANGUAGE_FLAGS.map(lang => html`
+                    ${languages.map(lang => html`
                         <button
                             key=${lang.code}
                             type="button"
-                            class="language-option ${data.languages.includes(lang.code) ? 'selected' : ''}"
+                            class=${'language-option ' + (data.languages.includes(lang.code) ? 'selected' : '')}
                             onClick=${() => toggleLanguage(lang.code)}
                         >
-                            <span class="language-flag">${lang.flag}</span>
-                            <span class="language-name">${lang.name}</span>
+                            <span class="language-flag">${lang.icon || '🌐'}</span>
+                            <span class="language-name">${getLocalizedName(lang)}</span>
                         </button>
                     `)}
                 </div>
@@ -787,12 +828,12 @@ const StepExpertise = ({ data, updateData }) => {
 // STEP 3: SERVICES & PRICING
 // ============================================================================
 
-const StepServices = ({ data, updateData }) => {
-    const toggleFormat = (formatId) => {
+const StepServices = ({ data, updateData, sessionFormats = [] }) => {
+    const toggleFormat = (formatCode) => {
         const formats = data.session_formats || [];
-        const newFormats = formats.includes(formatId)
-            ? formats.filter(f => f !== formatId)
-            : [...formats, formatId];
+        const newFormats = formats.includes(formatCode)
+            ? formats.filter(f => f !== formatCode)
+            : [...formats, formatCode];
         updateData('session_formats', newFormats);
     };
 
@@ -826,15 +867,15 @@ const StepServices = ({ data, updateData }) => {
                 </div>
 
                 <div class="format-grid">
-                    ${SESSION_FORMATS.map(format => html`
+                    ${sessionFormats.map(format => html`
                         <div
-                            key=${format.id}
-                            class="format-card ${data.session_formats.includes(format.id) ? 'selected' : ''}"
-                            onClick=${() => toggleFormat(format.id)}
+                            key=${format.code}
+                            class=${'format-card ' + (data.session_formats.includes(format.code) ? 'selected' : '')}
+                            onClick=${() => toggleFormat(format.code)}
                         >
-                            <div class="format-icon">${format.icon}</div>
-                            <div class="format-title">${format.title}</div>
-                            <div class="format-desc">${format.desc}</div>
+                            <div class="format-icon">${format.icon || '💬'}</div>
+                            <div class="format-title">${getLocalizedName(format)}</div>
+                            <div class="format-desc">${getLocalizedDesc(format)}</div>
                         </div>
                     `)}
                 </div>
@@ -852,7 +893,7 @@ const StepServices = ({ data, updateData }) => {
                         <button
                             key=${dur.value}
                             type="button"
-                            class="language-option ${data.session_durations.includes(dur.value) ? 'selected' : ''}"
+                            class=${'language-option ' + (data.session_durations.includes(dur.value) ? 'selected' : '')}
                             onClick=${() => toggleDuration(dur.value)}
                         >
                             <span class="language-flag">⏰</span>
@@ -908,11 +949,11 @@ const StepServices = ({ data, updateData }) => {
 // STEP 4: LAUNCH
 // ============================================================================
 
-const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange }) => {
+const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, languages = [] }) => {
     const languageNames = (data.languages || [])
-        .map(code => LANGUAGE_FLAGS.find(l => l.code === code))
+        .map(code => languages.find(l => l.code === code))
         .filter(Boolean)
-        .map(l => `${l.flag} ${l.name}`);
+        .map(l => `${l.icon || '🌐'} ${getLocalizedName(l)}`);
 
     const FREE_FEATURES = [
         'Basic profile listing',

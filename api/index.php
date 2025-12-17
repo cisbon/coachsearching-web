@@ -148,6 +148,11 @@ try {
             ]);
             break;
 
+        case 'lookup':
+            require_once __DIR__ . '/endpoints/lookup.php';
+            handleLookup($method, $id, $action, $input);
+            break;
+
         case '':
             Response::success([
                 'name' => 'CoachSearching API',
@@ -157,6 +162,7 @@ try {
                     'coaches' => '/api/coaches',
                     'search' => '/api/search',
                     'bookings' => '/api/bookings',
+                    'lookup' => '/api/lookup',
                     'health' => '/api/health',
                 ],
             ]);
