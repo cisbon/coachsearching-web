@@ -80,9 +80,69 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
         session_formats: ['video'],
         session_durations: [60],
         hourly_rate: '',
+        plan_type: 'free', // 'free' or 'premium'
         referral_code: '',
-        referral_code_valid: false
+        referral_code_valid: false,
+        referrer_id: null
     });
+
+    // Referral code validation
+    const referralDebounceRef = useRef(null);
+
+    const validateReferralCode = useCallback(async (code) => {
+        if (!code || code.trim().length < 3) {
+            setData(prev => ({
+                ...prev,
+                referral_code_valid: false,
+                referrer_id: null
+            }));
+            return;
+        }
+
+        try {
+            const supabase = window.supabaseClient;
+            const { data: codeData, error } = await supabase
+                .from('cs_referral_codes')
+                .select('code, user_id')
+                .eq('code', code.trim().toUpperCase())
+                .eq('is_active', true)
+                .single();
+
+            if (error || !codeData) {
+                setData(prev => ({
+                    ...prev,
+                    referral_code_valid: false,
+                    referrer_id: null
+                }));
+            } else {
+                setData(prev => ({
+                    ...prev,
+                    referral_code_valid: true,
+                    referrer_id: codeData.user_id,
+                    plan_type: 'premium' // Auto-select premium when valid code entered
+                }));
+            }
+        } catch (err) {
+            console.error('Error validating referral code:', err);
+            setData(prev => ({
+                ...prev,
+                referral_code_valid: false,
+                referrer_id: null
+            }));
+        }
+    }, []);
+
+    const handleReferralCodeChange = useCallback((code) => {
+        setData(prev => ({ ...prev, referral_code: code }));
+
+        if (referralDebounceRef.current) {
+            clearTimeout(referralDebounceRef.current);
+        }
+
+        referralDebounceRef.current = setTimeout(() => {
+            validateReferralCode(code);
+        }, 500);
+    }, [validateReferralCode]);
 
     // Load saved progress
     useEffect(() => {
@@ -156,6 +216,18 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             const supabase = window.supabaseClient;
             const userId = session.user.id;
 
+            // Determine premium status
+            const isPremium = data.plan_type === 'premium';
+            const hasValidReferral = data.referral_code_valid && data.referral_code;
+
+            // Calculate premium expiry (1 year from now if valid referral)
+            let premiumExpiresAt = null;
+            if (isPremium && hasValidReferral) {
+                const oneYearFromNow = new Date();
+                oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+                premiumExpiresAt = oneYearFromNow.toISOString();
+            }
+
             // Prepare coach profile data
             const coachData = {
                 user_id: userId,
@@ -172,6 +244,9 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 hourly_rate: parseFloat(data.hourly_rate) || 0,
                 currency: 'EUR',
                 is_active: true,
+                is_premium: isPremium,
+                premium_expires_at: premiumExpiresAt,
+                referral_code_used: hasValidReferral ? data.referral_code.trim().toUpperCase() : null,
                 onboarding_completed: true,
                 onboarding_completed_at: new Date().toISOString()
             };
@@ -255,7 +330,13 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             case 2:
                 return html`<${StepServices} data=${data} updateData=${updateData} />`;
             case 3:
-                return html`<${StepLaunch} data=${data} loading=${loading} onComplete=${completeOnboarding} />`;
+                return html`<${StepLaunch}
+                    data=${data}
+                    updateData=${updateData}
+                    loading=${loading}
+                    onComplete=${completeOnboarding}
+                    onReferralChange=${handleReferralCodeChange}
+                />`;
             default:
                 return null;
         }
@@ -827,91 +908,214 @@ const StepServices = ({ data, updateData }) => {
 // STEP 4: LAUNCH
 // ============================================================================
 
-const StepLaunch = ({ data, loading, onComplete }) => {
+const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange }) => {
     const languageNames = (data.languages || [])
         .map(code => LANGUAGE_FLAGS.find(l => l.code === code))
         .filter(Boolean)
         .map(l => `${l.flag} ${l.name}`);
 
+    const FREE_FEATURES = [
+        'Basic profile listing',
+        'Up to 5 client connections/month',
+        'Standard search visibility',
+        'Email support'
+    ];
+
+    const PREMIUM_FEATURES = [
+        'Featured profile listing',
+        'Unlimited client connections',
+        'Priority search visibility',
+        'Verified badge',
+        'Analytics dashboard',
+        'Priority support'
+    ];
+
     return html`
         <div class="slide-up">
             <div class="completion-screen">
-                <div class="completion-icon">🎉</div>
+                <div class="step-header" style="text-align: center; margin-bottom: 2rem;">
+                    <div class="step-number">Step 4 of 4</div>
+                    <h2 class="step-title">Choose Your Plan</h2>
+                    <p class="step-description">
+                        Select the plan that works best for you. You can always upgrade later.
+                    </p>
+                </div>
 
-                <h2 class="completion-title">You're Almost Live!</h2>
-                <p class="completion-subtitle">
-                    Review your profile below. Once you launch, clients will be able to discover
-                    and book sessions with you.
-                </p>
+                <!-- Plan Selection -->
+                <div class="plan-selection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                    <!-- Free Plan -->
+                    <div
+                        class=${'plan-card ' + (data.plan_type === 'free' ? 'selected' : '')}
+                        onClick=${() => updateData('plan_type', 'free')}
+                        style=${{
+                            padding: '1.5rem',
+                            borderRadius: '12px',
+                            border: data.plan_type === 'free' ? '2px solid var(--petrol)' : '2px solid #e0e0e0',
+                            cursor: 'pointer',
+                            background: data.plan_type === 'free' ? 'var(--petrol-50)' : '#fff',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span style="font-size: 1.5rem;">🆓</span>
+                            <h3 style="margin: 0; font-size: 1.25rem;">Free</h3>
+                        </div>
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--petrol); margin-bottom: 1rem;">
+                            €0<span style="font-size: 1rem; font-weight: 400;">/month</span>
+                        </div>
+                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem;">
+                            ${FREE_FEATURES.map(feature => html`
+                                <li key=${feature} style="padding: 0.25rem 0; color: #666;">
+                                    ✓ ${feature}
+                                </li>
+                            `)}
+                        </ul>
+                    </div>
 
-                <!-- Profile Preview -->
-                <div class="profile-preview">
-                    <div class="preview-header">
-                        ${data.avatar_url ? html`
-                            <img src=${data.avatar_url} alt="Profile" class="preview-avatar" />
-                        ` : html`
-                            <div class="preview-avatar-placeholder">👤</div>
+                    <!-- Premium Plan -->
+                    <div
+                        class=${'plan-card ' + (data.plan_type === 'premium' ? 'selected' : '')}
+                        onClick=${() => updateData('plan_type', 'premium')}
+                        style=${{
+                            padding: '1.5rem',
+                            borderRadius: '12px',
+                            border: data.plan_type === 'premium' ? '2px solid var(--petrol)' : '2px solid #e0e0e0',
+                            cursor: 'pointer',
+                            background: data.plan_type === 'premium' ? 'var(--petrol-50)' : '#fff',
+                            transition: 'all 0.2s ease',
+                            position: 'relative'
+                        }}
+                    >
+                        <div style="position: absolute; top: -10px; right: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+                            RECOMMENDED
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span style="font-size: 1.5rem;">⭐</span>
+                            <h3 style="margin: 0; font-size: 1.25rem;">Premium</h3>
+                        </div>
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--petrol); margin-bottom: 1rem;">
+                            ${data.referral_code_valid ? html`
+                                <span style="text-decoration: line-through; color: #999; font-size: 1.5rem;">€29</span>
+                                <span style="color: #10b981;"> €0</span>
+                                <span style="font-size: 1rem; font-weight: 400;">/year</span>
+                            ` : html`
+                                €29<span style="font-size: 1rem; font-weight: 400;">/month</span>
+                            `}
+                        </div>
+                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem;">
+                            ${PREMIUM_FEATURES.map(feature => html`
+                                <li key=${feature} style="padding: 0.25rem 0; color: #666;">
+                                    ✓ ${feature}
+                                </li>
+                            `)}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Referral Code Section -->
+                <div class="referral-section" style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.25rem;">🎁</span>
+                        <span style="font-weight: 600; color: var(--petrol);">Have a referral code?</span>
+                    </div>
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 1rem;">
+                        Enter a valid referral code to get <strong>1 year of Premium for free!</strong>
+                    </p>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <input
+                            type="text"
+                            class="premium-input"
+                            placeholder="Enter referral code"
+                            value=${data.referral_code || ''}
+                            onInput=${(e) => onReferralChange(e.target.value)}
+                            style=${{
+                                flex: 1,
+                                textTransform: 'uppercase',
+                                borderColor: data.referral_code_valid ? '#10b981' : (data.referral_code && !data.referral_code_valid ? '#ef4444' : '#e0e0e0')
+                            }}
+                        />
+                        ${data.referral_code && html`
+                            <span style="font-size: 1.5rem;">
+                                ${data.referral_code_valid ? '✅' : '❌'}
+                            </span>
                         `}
-                        <div class="preview-info">
-                            <h3 class="preview-name">${data.full_name || 'Your Name'}</h3>
-                            <p class="preview-title">${data.professional_title || 'Your Title'}</p>
-                            <div class="preview-meta">
-                                ${data.location_city && html`<span>📍 ${data.location_city}${data.location_country ? `, ${data.location_country}` : ''}</span>`}
-                                ${data.years_experience && html`<span>🏆 ${data.years_experience} years</span>`}
+                    </div>
+                    ${data.referral_code_valid && html`
+                        <div style="margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 8px; display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.5rem;">🎉</span>
+                            <div>
+                                <div style="font-weight: 600;">Referral code applied!</div>
+                                <div style="font-size: 0.875rem; opacity: 0.9;">You'll get 1 year of Premium absolutely free.</div>
                             </div>
                         </div>
-                    </div>
-
-                    ${data.bio && html`
-                        <p class="preview-bio">${data.bio}</p>
                     `}
-
-                    ${data.specialties.length > 0 && html`
-                        <div class="preview-tags">
-                            ${data.specialties.map(s => html`
-                                <span key=${s} class="preview-tag">${s}</span>
-                            `)}
+                    ${data.referral_code && !data.referral_code_valid && data.referral_code.length >= 3 && html`
+                        <div style="margin-top: 0.5rem; color: #ef4444; font-size: 0.875rem;">
+                            Invalid referral code. Please check and try again.
                         </div>
                     `}
-
-                    ${languageNames.length > 0 && html`
-                        <p style="font-size: 0.9rem; color: var(--petrol-600); margin-bottom: 1rem;">
-                            <strong>Languages:</strong> ${languageNames.join(', ')}
-                        </p>
-                    `}
-
-                    ${data.hourly_rate && html`
-                        <p class="preview-price">€${data.hourly_rate}/hour</p>
-                    `}
                 </div>
 
-                <!-- Next Steps Preview -->
-                <div class="next-steps">
-                    <div class="next-step-card">
-                        <div class="next-step-icon">📅</div>
-                        <div class="next-step-title">Set Availability</div>
-                        <div class="next-step-desc">Add your available time slots</div>
+                <!-- Profile Preview (Collapsed) -->
+                <details style="margin-bottom: 2rem;">
+                    <summary style="cursor: pointer; font-weight: 600; color: var(--petrol); padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                        📋 Preview Your Profile
+                    </summary>
+                    <div class="profile-preview" style="margin-top: 1rem;">
+                        <div class="preview-header">
+                            ${data.avatar_url ? html`
+                                <img src=${data.avatar_url} alt="Profile" class="preview-avatar" />
+                            ` : html`
+                                <div class="preview-avatar-placeholder">👤</div>
+                            `}
+                            <div class="preview-info">
+                                <h3 class="preview-name">${data.full_name || 'Your Name'}</h3>
+                                <p class="preview-title">${data.professional_title || 'Your Title'}</p>
+                                <div class="preview-meta">
+                                    ${data.location_city && html`<span>📍 ${data.location_city}${data.location_country ? `, ${data.location_country}` : ''}</span>`}
+                                    ${data.years_experience && html`<span>🏆 ${data.years_experience} years</span>`}
+                                </div>
+                            </div>
+                        </div>
+
+                        ${data.bio && html`
+                            <p class="preview-bio">${data.bio}</p>
+                        `}
+
+                        ${data.specialties.length > 0 && html`
+                            <div class="preview-tags">
+                                ${data.specialties.map(s => html`
+                                    <span key=${s} class="preview-tag">${s}</span>
+                                `)}
+                            </div>
+                        `}
+
+                        ${languageNames.length > 0 && html`
+                            <p style="font-size: 0.9rem; color: var(--petrol-600); margin-bottom: 1rem;">
+                                <strong>Languages:</strong> ${languageNames.join(', ')}
+                            </p>
+                        `}
+
+                        ${data.hourly_rate && html`
+                            <p class="preview-price">€${data.hourly_rate}/hour</p>
+                        `}
                     </div>
-                    <div class="next-step-card">
-                        <div class="next-step-icon">✅</div>
-                        <div class="next-step-title">Get Verified</div>
-                        <div class="next-step-desc">Boost trust with a verified badge</div>
-                    </div>
-                    <div class="next-step-card">
-                        <div class="next-step-icon">📣</div>
-                        <div class="next-step-title">Share Profile</div>
-                        <div class="next-step-desc">Spread the word on social media</div>
-                    </div>
-                </div>
+                </details>
 
                 <button
                     class="btn-primary btn-success"
-                    style="font-size: 1.25rem; padding: 1.25rem 3rem; margin-top: 1rem;"
+                    style="font-size: 1.25rem; padding: 1.25rem 3rem; width: 100%;"
                     onClick=${onComplete}
                     disabled=${loading}
                 >
-                    ${loading ? 'Launching...' : '🚀 Launch My Profile'}
+                    ${loading ? 'Launching...' : (data.plan_type === 'premium' && !data.referral_code_valid ? '🚀 Launch & Subscribe to Premium' : '🚀 Launch My Profile')}
                 </button>
+
+                ${data.plan_type === 'premium' && !data.referral_code_valid && html`
+                    <p style="text-align: center; font-size: 0.875rem; color: #666; margin-top: 1rem;">
+                        You'll be redirected to complete your Premium subscription after launch.
+                    </p>
+                `}
             </div>
         </div>
     `;

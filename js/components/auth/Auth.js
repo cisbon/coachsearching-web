@@ -7,7 +7,7 @@ import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
 
 const React = window.React;
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect } = React;
 const html = htm.bind(React.createElement);
 
 // Role options for registration
@@ -30,73 +30,6 @@ export function Auth() {
     const [userType, setUserType] = useState('client');
     const [isLogin, setIsLogin] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
-
-    // Referral code state (for coach registration)
-    const [referralCode, setReferralCode] = useState('');
-    const [referralStatus, setReferralStatus] = useState(null);
-    const [referralMessage, setReferralMessage] = useState('');
-    const [referrerId, setReferrerId] = useState(null);
-    const referralDebounceRef = useRef(null);
-
-    // Validate referral code against Supabase
-    const validateReferralCode = useCallback(async (code) => {
-        if (!code || code.trim().length < 3) {
-            setReferralStatus(null);
-            setReferralMessage('');
-            setReferrerId(null);
-            return;
-        }
-
-        setReferralStatus('checking');
-        try {
-            const supabase = window.supabaseClient;
-            const { data: codeData, error } = await supabase
-                .from('cs_referral_codes')
-                .select('code, user_id')
-                .eq('code', code.trim().toUpperCase())
-                .eq('is_active', true)
-                .single();
-
-            if (error || !codeData) {
-                setReferralStatus('invalid');
-                setReferralMessage('Invalid referral code');
-                setReferrerId(null);
-            } else {
-                setReferralStatus('valid');
-                setReferralMessage('Code applied!');
-                setReferrerId(codeData.user_id);
-            }
-        } catch (err) {
-            console.error('Error validating referral code:', err);
-            setReferralStatus('invalid');
-            setReferralMessage('Could not validate code');
-            setReferrerId(null);
-        }
-    }, []);
-
-    // Handle referral code input change with debounce
-    const handleReferralCodeChange = useCallback((e) => {
-        const code = e.target.value;
-        setReferralCode(code);
-
-        if (referralDebounceRef.current) {
-            clearTimeout(referralDebounceRef.current);
-        }
-
-        referralDebounceRef.current = setTimeout(() => {
-            validateReferralCode(code);
-        }, 500);
-    }, [validateReferralCode]);
-
-    // Reset referral when switching user types or modes
-    useEffect(() => {
-        if (userType !== 'coach' || isLogin) {
-            setReferralCode('');
-            setReferralStatus(null);
-            setReferralMessage('');
-            setReferrerId(null);
-        }
-    }, [userType, isLogin]);
 
     // Check URL for mode=register parameter
     useEffect(() => {
@@ -144,12 +77,6 @@ export function Auth() {
                     user_type: userType,
                     full_name: email.split('@')[0]
                 };
-
-                if (userType === 'coach' && referralStatus === 'valid' && referralCode) {
-                    metadata.referral_code = referralCode.trim().toUpperCase();
-                    metadata.referral_code_valid = true;
-                    metadata.referrer_id = referrerId;
-                }
 
                 result = await window.supabaseClient.auth.signUp({
                     email,
@@ -336,53 +263,6 @@ export function Auth() {
                                     />
                                     <span class="auth-input-icon">🔒</span>
                                 </div>
-                            </div>
-                        `}
-
-                        <!-- Referral Code (Coach registration only) -->
-                        ${!isLogin && userType === 'coach' && html`
-                            <div class="auth-referral-section">
-                                <div class="auth-referral-header">
-                                    <span class="auth-referral-label">Referral Code</span>
-                                    <span class="auth-referral-optional">(optional)</span>
-                                </div>
-                                <div class="auth-referral-input-wrapper">
-                                    <div class="auth-input-wrapper">
-                                        <input
-                                            type="text"
-                                            class=${'premium-auth-input' + (referralStatus ? ' referral-' + referralStatus : '')}
-                                            placeholder="Enter code"
-                                            value=${referralCode}
-                                            onInput=${handleReferralCodeChange}
-                                            disabled=${loading ? true : false}
-                                            maxLength="20"
-                                            style=${{ paddingLeft: '1rem', paddingRight: '3rem' }}
-                                        />
-                                        ${referralStatus === 'checking' && html`
-                                            <span class="auth-referral-status checking">⏳</span>
-                                        `}
-                                        ${referralStatus === 'valid' && html`
-                                            <span class="auth-referral-status valid">✓</span>
-                                        `}
-                                        ${referralStatus === 'invalid' && html`
-                                            <span class="auth-referral-status invalid">✗</span>
-                                        `}
-                                    </div>
-                                </div>
-
-                                ${referralStatus === 'valid' && html`
-                                    <div class="auth-referral-success">
-                                        <span class="auth-referral-success-icon">🎁</span>
-                                        <div class="auth-referral-success-text">
-                                            <strong>Free Premium Year!</strong>
-                                            <span>Enjoy all Premium features free for your first year.</span>
-                                        </div>
-                                    </div>
-                                `}
-
-                                ${referralStatus === 'invalid' && html`
-                                    <div class="auth-referral-error">${referralMessage}</div>
-                                `}
                             </div>
                         `}
 
