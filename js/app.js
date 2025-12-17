@@ -38,8 +38,6 @@ import {
     CoachCard,
     CoachCardSkeleton,
     FilterSidebar,
-    SPECIALTY_OPTIONS,
-    LANGUAGE_OPTIONS,
     CoachList,
     CoachDetailModal,
     FavoriteButton

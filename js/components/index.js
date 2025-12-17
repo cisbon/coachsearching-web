@@ -41,9 +41,7 @@ export {
     DiscoveryCallModal,
     CoachCard,
     CoachCardSkeleton,
-    FilterSidebar,
-    SPECIALTY_OPTIONS,
-    LANGUAGE_OPTIONS
+    FilterSidebar
 } from './coach/index.js';
 
 // Dashboard components
