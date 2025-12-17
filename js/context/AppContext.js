@@ -86,9 +86,16 @@ export function AppProvider({ children }) {
             lookupFetchRef.current = true;
 
             try {
-                // Check if supabase client is available
+                // Wait for supabase client to be available (initialized in App component)
+                let attempts = 0;
+                while (!window.supabaseClient && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+
                 if (!window.supabaseClient) {
-                    console.warn('AppContext: Supabase client not available');
+                    console.warn('AppContext: Supabase client not available after waiting');
+                    lookupFetchRef.current = false; // Allow retry
                     return;
                 }
 
@@ -101,6 +108,7 @@ export function AppProvider({ children }) {
 
                 if (error) {
                     console.error('AppContext: Error fetching lookup options:', error);
+                    lookupFetchRef.current = false; // Allow retry
                     return;
                 }
 
@@ -111,6 +119,8 @@ export function AppProvider({ children }) {
                     sessionFormats: options?.filter(o => o.type === 'session_format') || [],
                     isLoaded: true
                 };
+
+                console.log('AppContext: Loaded', grouped.specialties.length, 'specialties,', grouped.languages.length, 'languages');
 
                 // Update state
                 setLookupOptions(grouped);
@@ -127,6 +137,7 @@ export function AppProvider({ children }) {
                 }
             } catch (error) {
                 console.error('AppContext: Failed to fetch lookup options:', error);
+                lookupFetchRef.current = false; // Allow retry
             }
         };
 
