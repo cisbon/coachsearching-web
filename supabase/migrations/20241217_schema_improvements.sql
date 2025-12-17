@@ -77,6 +77,12 @@ ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone DEFAULT now();
 -- 3. RENAME client_id TO user_id IN CS_FAVORITES
 -- ============================================================================
 
+-- Step 0: Drop existing RLS policies that depend on client_id
+DROP POLICY IF EXISTS "Users can manage own favorites" ON public.cs_favorites;
+DROP POLICY IF EXISTS "Users can view own favorites" ON public.cs_favorites;
+DROP POLICY IF EXISTS "Users can insert own favorites" ON public.cs_favorites;
+DROP POLICY IF EXISTS "Users can delete own favorites" ON public.cs_favorites;
+
 -- Step 1: Add new user_id column
 ALTER TABLE public.cs_favorites
 ADD COLUMN IF NOT EXISTS user_id uuid;
@@ -84,18 +90,32 @@ ADD COLUMN IF NOT EXISTS user_id uuid;
 -- Step 2: Copy data from client_id to user_id
 UPDATE public.cs_favorites
 SET user_id = client_id
-WHERE user_id IS NULL;
+WHERE user_id IS NULL AND client_id IS NOT NULL;
 
--- Step 3: Add NOT NULL constraint and foreign key
+-- Step 3: Drop old client_id foreign key constraint first
 ALTER TABLE public.cs_favorites
-ALTER COLUMN user_id SET NOT NULL;
+DROP CONSTRAINT IF EXISTS cs_favorites_client_id_fkey;
 
--- Step 4: Add foreign key constraint for user_id (if not exists)
+-- Step 4: Drop old client_id column
+ALTER TABLE public.cs_favorites
+DROP COLUMN IF EXISTS client_id;
+
+-- Step 5: Add NOT NULL constraint (only if column has data)
+DO $$
+BEGIN
+    -- Only set NOT NULL if there's no NULL values
+    IF NOT EXISTS (SELECT 1 FROM public.cs_favorites WHERE user_id IS NULL) THEN
+        ALTER TABLE public.cs_favorites ALTER COLUMN user_id SET NOT NULL;
+    END IF;
+END $$;
+
+-- Step 6: Add foreign key constraint for user_id (if not exists)
 DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.table_constraints
         WHERE constraint_name = 'cs_favorites_user_id_fkey'
+        AND table_name = 'cs_favorites'
     ) THEN
         ALTER TABLE public.cs_favorites
         ADD CONSTRAINT cs_favorites_user_id_fkey
@@ -103,17 +123,19 @@ BEGIN
     END IF;
 END $$;
 
--- Step 5: Drop old client_id foreign key constraint
-ALTER TABLE public.cs_favorites
-DROP CONSTRAINT IF EXISTS cs_favorites_client_id_fkey;
-
--- Step 6: Drop old client_id column
-ALTER TABLE public.cs_favorites
-DROP COLUMN IF EXISTS client_id;
-
 -- Step 7: Add unique constraint (user can only favorite a coach once)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cs_favorites_user_coach_unique
 ON public.cs_favorites(user_id, coach_id);
+
+-- Step 8: Recreate RLS policies with new column name
+CREATE POLICY "Users can view own favorites" ON public.cs_favorites
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own favorites" ON public.cs_favorites
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own favorites" ON public.cs_favorites
+    FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================================================
 -- 4. ADDITIONAL INDEXES FOR PERFORMANCE
