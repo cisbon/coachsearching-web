@@ -329,7 +329,7 @@ export function Auth() {
                                             onInput=${handleReferralCodeChange}
                                             disabled=${loading ? true : false}
                                             maxLength="20"
-                                            style="padding-left: 1rem; padding-right: 3rem;"
+                                            style=${{ paddingLeft: '1rem', paddingRight: '3rem' }}
                                         />
                                         ${referralStatus === 'checking' && html`
                                             <span class="auth-referral-status checking">⏳</span>
