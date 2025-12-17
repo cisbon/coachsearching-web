@@ -214,14 +214,6 @@ export function Auth() {
             <div class="premium-auth-card">
                 <!-- Body -->
                 <div class="premium-auth-body">
-                    <!-- Logo -->
-                    <div style=${{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div class="auth-logo" style=${{ justifyContent: 'center' }}>
-                            <div class="auth-logo-icon">🎯</div>
-                            <div class="auth-logo-text">Coach<span>Searching</span></div>
-                        </div>
-                    </div>
-
                     <!-- Mode Tabs -->
                     <div class="auth-mode-tabs">
                         <button
