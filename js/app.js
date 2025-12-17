@@ -47,7 +47,7 @@ import {
 
 // Layout & UI Components (modular)
 import { Navbar, Footer } from './components/layout/index.js';
-import { LegalModal, CurrencySelector, LanguageSelector, NotificationBell, TimezoneSelector, EmailVerificationBanner } from './components/ui/index.js';
+import { LegalModal, CurrencySelector, LanguageSelector, NotificationBell, TimezoneSelector, EmailVerificationBanner, ErrorBoundary } from './components/ui/index.js';
 
 // Auth Components (modular)
 import { SignOut, Auth, CoachOnboarding } from './components/auth/index.js';
@@ -56,7 +56,7 @@ import { SignOut, Auth, CoachOnboarding } from './components/auth/index.js';
 import { DataExportRequest, AccountDeletion } from './components/account/index.js';
 
 // Dashboard Components (modular)
-import { DashboardOverview, DiscoveryRequestsDashboard, DashboardSubscription, DashboardProfile, DashboardBookings, DashboardAvailability, DashboardArticles, CoachEarningsDashboard } from './components/dashboard/index.js';
+import { Dashboard, DashboardOverview, DiscoveryRequestsDashboard, DashboardSubscription, DashboardProfile, DashboardBookings, DashboardAvailability, DashboardArticles, CoachEarningsDashboard } from './components/dashboard/index.js';
 
 // Review Components (modular)
 import { StarRating, ReviewCard, WriteReviewModal } from './components/reviews/index.js';
@@ -248,73 +248,7 @@ const CoachListWithModal = ({ searchFilters, session }) => {
 
 // CoachDetailModal now imported from ./components/coach/CoachDetailModal.js
 
-const Dashboard = ({ session }) => {
-    const [activeTab, setActiveTab] = useState('overview');
-
-    console.log('Dashboard component rendering, session:', !!session);
-
-    // Listen for custom tab switching events from dashboard overview
-    useEffect(() => {
-        const handleTabSwitch = (event) => {
-            setActiveTab(event.detail);
-        };
-        window.addEventListener('switchTab', handleTabSwitch);
-        return () => window.removeEventListener('switchTab', handleTabSwitch);
-    }, []);
-
-    if (!session) {
-        console.log('No session in Dashboard, waiting for auth state...');
-        // Show loading state instead of redirecting immediately
-        return html`
-            <div class="container" style=${{ marginTop: '100px', textAlign: 'center' }}>
-                <div class="spinner"></div>
-                <p>Loading dashboard...</p>
-            </div>
-        `;
-    }
-
-    const userType = session.user?.user_metadata?.user_type || 'client';
-    console.log('Dashboard loaded successfully for user:', session.user.email, 'User Type:', userType);
-
-    return html`
-    <div class="dashboard-container">
-            <div class="dashboard-header">
-                <h2 class="section-title">${t('dashboard.welcome')}, ${session.user.email}</h2>
-                <div class="badge badge-petrol">${userType === 'client' ? 'Client' : userType === 'coach' ? 'Coach' : 'Business'}</div>
-            </div>
-
-            <div class="dashboard-tabs">
-                <button class="tab-btn ${activeTab === 'overview' ? 'active' : ''}" onClick=${() => setActiveTab('overview')}>
-                    ${t('dashboard.overview')}
-                </button>
-                ${userType === 'coach' && html`
-                    <button class="tab-btn ${activeTab === 'discovery_requests' ? 'active' : ''}" onClick=${() => setActiveTab('discovery_requests')}>
-                        📞 ${t('dashboard.discoveryRequests') || 'Discovery Requests'}
-                    </button>
-                    <button class="tab-btn ${activeTab === 'subscription' ? 'active' : ''}" onClick=${() => setActiveTab('subscription')}>
-                        💳 ${t('dashboard.subscription') || 'Subscription'}
-                    </button>
-                    <button class="tab-btn ${activeTab === 'articles' ? 'active' : ''}" onClick=${() => setActiveTab('articles')}>
-                        ${t('dashboard.articles')}
-                    </button>
-                `}
-                <button class="tab-btn ${activeTab === 'referrals' ? 'active' : ''}" onClick=${() => setActiveTab('referrals')}>
-                    ${t('dashboard.referrals') || 'Referrals'}
-                </button>
-                <button class="tab-btn ${activeTab === 'profile' ? 'active' : ''}" onClick=${() => setActiveTab('profile')}>
-                    ${t('dashboard.profile')}
-                </button>
-            </div>
-
-            ${activeTab === 'overview' && html`<${DashboardOverview} userType=${userType} session=${session} />`}
-            ${activeTab === 'discovery_requests' && userType === 'coach' && html`<${DiscoveryRequestsDashboard} session=${session} />`}
-            ${activeTab === 'subscription' && userType === 'coach' && html`<${DashboardSubscription} session=${session} />`}
-            ${activeTab === 'articles' && userType === 'coach' && html`<${DashboardArticles} session=${session} />`}
-            ${activeTab === 'referrals' && html`<${ReferralDashboard} session=${session} />`}
-            ${activeTab === 'profile' && html`<${DashboardProfile} session=${session} userType=${userType} />`}
-        </div>
-    `;
-};
+// Dashboard now imported from ./components/dashboard/Dashboard.js
 
 // DashboardBookings - imported from ./components/dashboard/DashboardBookings.js
 
@@ -390,103 +324,7 @@ const Home = ({ session }) => {
 
 // EmailVerificationBanner now imported from ./components/ui/EmailVerificationBanner.js
 
-// =====================================================
-// ERROR BOUNDARY
-// =====================================================
-
-// Error Boundary Component (must be a class component)
-class ErrorBoundary extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError: false, error: null, errorInfo: null };
-    }
-
-    static getDerivedStateFromError(error) {
-        return { hasError: true };
-    }
-
-    componentDidCatch(error, errorInfo) {
-        console.error('React Error Boundary caught an error:', error, errorInfo);
-        this.setState({ error, errorInfo });
-
-        // Log to debug console if available
-        if (window.debugConsole) {
-            window.debugConsole.addLog('error', [
-                'React Error:',
-                error.toString(),
-                errorInfo.componentStack
-            ]);
-        }
-    }
-
-    handleReset() {
-        this.setState({ hasError: false, error: null, errorInfo: null });
-        window.navigateTo('/home');
-        window.location.reload();
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return React.createElement('div', {
-                style: {
-                    padding: '40px',
-                    textAlign: 'center',
-                    maxWidth: '600px',
-                    margin: '100px auto',
-                    background: 'white',
-                    borderRadius: '12px',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                }
-            },
-                React.createElement('div', {
-                    style: { fontSize: '64px', marginBottom: '20px' }
-                }, '⚠️'),
-                React.createElement('h2', {
-                    style: { color: '#dc2626', marginBottom: '16px' }
-                }, 'Oops! Something went wrong'),
-                React.createElement('p', {
-                    style: { color: '#6b7280', marginBottom: '24px' }
-                }, 'We encountered an unexpected error. Our team has been notified.'),
-                this.state.error && React.createElement('details', {
-                    style: {
-                        textAlign: 'left',
-                        background: '#f3f4f6',
-                        padding: '16px',
-                        borderRadius: '8px',
-                        marginBottom: '24px',
-                        fontSize: '14px',
-                        fontFamily: 'monospace'
-                    }
-                },
-                    React.createElement('summary', {
-                        style: { cursor: 'pointer', marginBottom: '8px', fontWeight: 'bold' }
-                    }, 'Error Details'),
-                    React.createElement('pre', {
-                        style: { whiteSpace: 'pre-wrap', wordBreak: 'break-word' }
-                    }, this.state.error.toString()),
-                    this.state.errorInfo && React.createElement('pre', {
-                        style: { whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginTop: '8px' }
-                    }, this.state.errorInfo.componentStack)
-                ),
-                React.createElement('button', {
-                    onClick: () => this.handleReset(),
-                    style: {
-                        background: '#006266',
-                        color: 'white',
-                        padding: '12px 24px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                    }
-                }, '🔄 Reload Application')
-            );
-        }
-
-        return this.props.children;
-    }
-}
+// ErrorBoundary now imported from ./components/ui/ErrorBoundary.js
 
 // Matching components (MatchingQuiz, AIMatchPage, getQuizQuestions) now imported from ./components/matching/index.js
 

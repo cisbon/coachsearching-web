@@ -1,19 +1,16 @@
 /**
  * Dashboard Component
  * Main dashboard container with tab navigation
- *
- * NOTE: This component currently relies on inline sub-components from app.js.
- * Sub-components to be extracted:
- * - DashboardOverview
- * - DiscoveryRequestsDashboard
- * - DashboardSubscription
- * - DashboardArticles
- * - ReferralDashboard (already in js/referrals.js)
- * - DashboardProfile
  */
 
 import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
+import { DashboardOverview } from './DashboardOverview.js';
+import { DiscoveryRequestsDashboard } from './DiscoveryRequestsDashboard.js';
+import { DashboardSubscription } from './DashboardSubscription.js';
+import { DashboardArticles } from './DashboardArticles.js';
+import { DashboardProfile } from './DashboardProfile.js';
+import { ReferralDashboard } from '../../referrals.js';
 
 const React = window.React;
 const { useState, useEffect } = React;
@@ -23,19 +20,11 @@ const html = htm.bind(React.createElement);
  * Dashboard Component
  * @param {Object} props
  * @param {Object} props.session - User session
- * @param {Object} props.components - Sub-components to render (passed from app.js)
  */
-export function Dashboard({ session, components = {} }) {
+export function Dashboard({ session }) {
     const [activeTab, setActiveTab] = useState('overview');
 
-    const {
-        DashboardOverview,
-        DiscoveryRequestsDashboard,
-        DashboardSubscription,
-        DashboardArticles,
-        ReferralDashboard,
-        DashboardProfile
-    } = components;
+    console.log('Dashboard component rendering, session:', !!session);
 
     // Listen for custom tab switching events from dashboard overview
     useEffect(() => {
@@ -47,6 +36,7 @@ export function Dashboard({ session, components = {} }) {
     }, []);
 
     if (!session) {
+        console.log('No session in Dashboard, waiting for auth state...');
         return html`
             <div class="container" style=${{ marginTop: '100px', textAlign: 'center' }}>
                 <div class="spinner"></div>
@@ -56,6 +46,7 @@ export function Dashboard({ session, components = {} }) {
     }
 
     const userType = session.user?.user_metadata?.user_type || 'client';
+    console.log('Dashboard loaded successfully for user:', session.user.email, 'User Type:', userType);
 
     return html`
         <div class="dashboard-container">
@@ -87,12 +78,12 @@ export function Dashboard({ session, components = {} }) {
                 </button>
             </div>
 
-            ${activeTab === 'overview' && DashboardOverview && html`<${DashboardOverview} userType=${userType} session=${session} />`}
-            ${activeTab === 'discovery_requests' && userType === 'coach' && DiscoveryRequestsDashboard && html`<${DiscoveryRequestsDashboard} session=${session} />`}
-            ${activeTab === 'subscription' && userType === 'coach' && DashboardSubscription && html`<${DashboardSubscription} session=${session} />`}
-            ${activeTab === 'articles' && userType === 'coach' && DashboardArticles && html`<${DashboardArticles} session=${session} />`}
-            ${activeTab === 'referrals' && ReferralDashboard && html`<${ReferralDashboard} session=${session} />`}
-            ${activeTab === 'profile' && DashboardProfile && html`<${DashboardProfile} session=${session} userType=${userType} />`}
+            ${activeTab === 'overview' && html`<${DashboardOverview} userType=${userType} session=${session} />`}
+            ${activeTab === 'discovery_requests' && userType === 'coach' && html`<${DiscoveryRequestsDashboard} session=${session} />`}
+            ${activeTab === 'subscription' && userType === 'coach' && html`<${DashboardSubscription} session=${session} />`}
+            ${activeTab === 'articles' && userType === 'coach' && html`<${DashboardArticles} session=${session} />`}
+            ${activeTab === 'referrals' && html`<${ReferralDashboard} session=${session} />`}
+            ${activeTab === 'profile' && html`<${DashboardProfile} session=${session} userType=${userType} />`}
         </div>
     `;
 }
