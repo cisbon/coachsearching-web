@@ -27,6 +27,27 @@ import {
     ExitIntentPopup,
 } from './components/conversion/SocialProof.js';
 
+// Coach Components (modular) - Import only constants for now to test
+// Full component imports commented until inline definitions are removed
+import {
+    SPECIALTY_OPTIONS as SPECIALTY_OPTIONS_IMPORTED,
+    LANGUAGE_OPTIONS as LANGUAGE_OPTIONS_IMPORTED
+} from './components/coach/index.js';
+
+// TODO: Enable these imports after removing inline definitions:
+// import {
+//     LanguageFlags,
+//     TrustBadges,
+//     VideoPopup,
+//     ReviewsPopup,
+//     DiscoveryCallModal,
+//     CoachCard,
+//     CoachCardSkeleton,
+//     FilterSidebar,
+// } from './components/coach/index.js';
+
+// Note: formatPrice and markdownToHTML kept inline as they use app.js local state
+
 console.log('App.js: React global', React);
 console.log('App.js: ReactDOM global', ReactDOM);
 console.log('App.js: htm imported');
