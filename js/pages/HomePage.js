@@ -1,175 +1,49 @@
 /**
  * Home Page Component
- * Landing page with hero section and coach list
+ * Landing page with hero, categories, how it works, and trust badges
  */
 
 import htm from '../vendor/htm.js';
-import { useAuth } from '../context/index.js';
 import { t } from '../i18n.js';
 
 const React = window.React;
-const { useState, useEffect, useCallback } = React;
 const html = htm.bind(React.createElement);
 
 /**
- * Hero Section Component
+ * Hero Section - Main landing area with discovery options
  */
-function Hero({ onSearch }) {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [sessionType, setSessionType] = useState('online');
-    const [location, setLocation] = useState('');
-    const [radius, setRadius] = useState('25');
-    const [date, setDate] = useState('');
-    const [maxRate, setMaxRate] = useState('');
-    const [gettingLocation, setGettingLocation] = useState(false);
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        if (onSearch) {
-            onSearch({ searchTerm, sessionType, location, radius, date, maxRate });
+export function Hero() {
+    const handleNavigate = (path) => {
+        if (window.navigateTo) {
+            window.navigateTo(path);
+        } else {
+            window.location.hash = path.replace('/', '#');
         }
-    };
-
-    const handleUseMyLocation = () => {
-        if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser');
-            return;
-        }
-
-        setGettingLocation(true);
-
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-
-                try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-                        { headers: { 'User-Agent': 'CoachSearching/1.0' } }
-                    );
-                    const data = await response.json();
-                    const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county;
-                    const country = data.address?.country;
-                    const locationString = city ? `${city}, ${country}` : `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-                    setLocation(locationString);
-                } catch (error) {
-                    console.error('Geocoding error:', error);
-                    setLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
-                }
-
-                setGettingLocation(false);
-            },
-            (error) => {
-                console.error('Geolocation error:', error);
-                let errorMessage = 'Unable to get your location. Please enter it manually.';
-
-                if (error.code === 1) {
-                    errorMessage = 'Location access was denied. Please enter your location manually.';
-                }
-
-                alert(errorMessage);
-                setGettingLocation(false);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
     };
 
     return html`
         <section class="hero">
             <div class="container">
                 <h1>${t('hero.title')}</h1>
-                <p class="hero-subtitle">${t('hero.subtitle')}</p>
+                <p>${t('hero.subtitle')}</p>
 
-                <form class="search-form" onSubmit=${handleSearch}>
-                    <div class="search-input-wrapper">
-                        <input
-                            type="text"
-                            class="search-input"
-                            placeholder=${t('search.placeholder')}
-                            value=${searchTerm}
-                            onInput=${(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-
-                    <div class="search-filters">
-                        <div class="filter-group">
-                            <label class="filter-label">Session Type</label>
-                            <div class="session-type-toggle">
-                                <button
-                                    type="button"
-                                    class="toggle-btn ${sessionType === 'online' ? 'active' : ''}"
-                                    onClick=${() => setSessionType('online')}
-                                >
-                                    ${t('search.online')}
-                                </button>
-                                <button
-                                    type="button"
-                                    class="toggle-btn ${sessionType === 'onsite' ? 'active' : ''}"
-                                    onClick=${() => setSessionType('onsite')}
-                                >
-                                    ${t('search.onsite')}
-                                </button>
-                            </div>
-                        </div>
-
-                        ${sessionType === 'onsite' && html`
-                            <div class="filter-group location-group">
-                                <label class="filter-label">${t('search.locationPlaceholder')}</label>
-                                <div class="location-input-group">
-                                    <input
-                                        type="text"
-                                        class="form-control"
-                                        placeholder=${t('search.locationPlaceholder')}
-                                        value=${location}
-                                        onInput=${(e) => setLocation(e.target.value)}
-                                    />
-                                    <button
-                                        type="button"
-                                        class="btn-secondary location-btn"
-                                        onClick=${handleUseMyLocation}
-                                        disabled=${gettingLocation}
-                                        title="Use my location"
-                                    >
-                                        ${gettingLocation ? '...' : '📍'}
-                                    </button>
-                                </div>
-                                <div class="radius-select">
-                                    <label>${t('search.within')}</label>
-                                    <select
-                                        class="form-control"
-                                        value=${radius}
-                                        onChange=${(e) => setRadius(e.target.value)}
-                                    >
-                                        <option value="10">10 km</option>
-                                        <option value="25">25 km</option>
-                                        <option value="50">50 km</option>
-                                        <option value="100">100 km</option>
-                                    </select>
-                                </div>
-                            </div>
-                        `}
-                    </div>
-
-                    <button type="submit" class="btn-primary search-btn">
-                        ${t('search.btn')}
+                <!-- Discovery Options -->
+                <div class="discovery-options">
+                    <button class="discovery-option quiz-option" onClick=${() => handleNavigate('/quiz')}>
+                        <span class="discovery-icon">🎯</span>
+                        <span class="discovery-label">${t('discovery.takeQuiz')}</span>
+                        <span class="discovery-desc">${t('discovery.takeQuizDesc')}</span>
                     </button>
-                </form>
-            </div>
-        </section>
-    `;
-}
-
-/**
- * Featured Coaches Section (placeholder - will load from CoachList)
- */
-function FeaturedCoaches() {
-    return html`
-        <section class="featured-coaches">
-            <div class="container">
-                <h2 class="section-title">Featured Coaches</h2>
-                <p class="text-center text-muted">Browse our network of professional coaches</p>
-                <div class="text-center" style=${{ marginTop: '20px' }}>
-                    <a href="#coaches" class="btn-primary">View All Coaches</a>
+                    <button class="discovery-option browse-option" onClick=${() => handleNavigate('/coaches')}>
+                        <span class="discovery-icon">🔍</span>
+                        <span class="discovery-label">${t('discovery.browse')}</span>
+                        <span class="discovery-desc">${t('discovery.browseDesc')}</span>
+                    </button>
+                    <button class="discovery-option ai-option" onClick=${() => handleNavigate('/ai-match')}>
+                        <span class="discovery-icon">✨</span>
+                        <span class="discovery-label">${t('discovery.aiMatch')}</span>
+                        <span class="discovery-desc">${t('discovery.aiMatchDesc')}</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -177,27 +51,121 @@ function FeaturedCoaches() {
 }
 
 /**
- * Home Page Component
+ * Coaching Categories Section
  */
-export function HomePage() {
-    const { session } = useAuth();
-    const [searchFilters, setSearchFilters] = useState(null);
-
-    const handleSearch = useCallback((filters) => {
-        console.log('Search filters:', filters);
-        setSearchFilters(filters);
-        // Navigate to coaches page with filters
-        const params = new URLSearchParams();
-        if (filters.searchTerm) params.set('q', filters.searchTerm);
-        if (filters.sessionType) params.set('type', filters.sessionType);
-        if (filters.location) params.set('location', filters.location);
-        window.location.hash = `#coaches${params.toString() ? '?' + params.toString() : ''}`;
-    }, []);
+export function CoachingCategoriesSection() {
+    const categories = [
+        { slug: 'executive-coaching', titleKey: 'category.executive.title', icon: '👔', descKey: 'category.executive.desc' },
+        { slug: 'life-coaching', titleKey: 'category.life.title', icon: '🌟', descKey: 'category.life.desc' },
+        { slug: 'career-coaching', titleKey: 'category.career.title', icon: '💼', descKey: 'category.career.desc' },
+        { slug: 'business-coaching', titleKey: 'category.business.title', icon: '📊', descKey: 'category.business.desc' },
+        { slug: 'leadership', titleKey: 'category.leadership.title', icon: '👑', descKey: 'category.leadership.desc' },
+        { slug: 'health-wellness', titleKey: 'category.health.title', icon: '💪', descKey: 'category.health.desc' },
+        { slug: 'mindfulness', titleKey: 'category.mindfulness.title', icon: '🧘', descKey: 'category.mindfulness.desc' },
+        { slug: 'relationship-coaching', titleKey: 'category.relationship.title', icon: '💑', descKey: 'category.relationship.desc' },
+    ];
 
     return html`
+        <section class="coaching-categories-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>${t('home.categories.title') || 'Find Your Perfect Coach'}</h2>
+                    <p>${t('home.categories.subtitle') || 'Explore our coaching specialties and discover how we can help you grow'}</p>
+                </div>
+                <div class="categories-grid-home">
+                    ${categories.map(cat => html`
+                        <a href="/coaching/${cat.slug}" class="category-card-home" key=${cat.slug}>
+                            <div class="category-icon-home">${cat.icon}</div>
+                            <h3>${t(cat.titleKey)}</h3>
+                            <p>${t(cat.descKey)}</p>
+                        </a>
+                    `)}
+                </div>
+                <div class="categories-cta-home">
+                    <a href="/categories" class="btn-secondary">${t('category.browseAll') || 'View All Categories'}</a>
+                    <a href="/quiz" class="btn-primary">${t('category.findMatch') || 'Find Your Match'}</a>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+/**
+ * How It Works Section
+ */
+export function HowItWorksSection() {
+    const steps = [
+        { number: '1', title: t('home.howItWorks.step1.title') || 'Find Your Coach', description: t('home.howItWorks.step1.desc') || 'Browse verified coaches or take our matching quiz', icon: '🔍' },
+        { number: '2', title: t('home.howItWorks.step2.title') || 'Book a Session', description: t('home.howItWorks.step2.desc') || 'Choose a time and format that works for you', icon: '📅' },
+        { number: '3', title: t('home.howItWorks.step3.title') || 'Transform', description: t('home.howItWorks.step3.desc') || 'Work with your coach to achieve your goals', icon: '🚀' },
+    ];
+
+    return html`
+        <section class="how-it-works-section-home">
+            <div class="container">
+                <div class="section-header">
+                    <h2>${t('home.howItWorks.title') || 'How It Works'}</h2>
+                    <p>${t('home.howItWorks.subtitle') || 'Start your transformation in three simple steps'}</p>
+                </div>
+                <div class="steps-grid-home">
+                    ${steps.map(step => html`
+                        <div class="step-card-home" key=${step.number}>
+                            <div class="step-icon-home">${step.icon}</div>
+                            <div class="step-number-home">${step.number}</div>
+                            <h3>${step.title}</h3>
+                            <p>${step.description}</p>
+                        </div>
+                    `)}
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+/**
+ * Trust Badges Section
+ */
+export function TrustBadgesSection() {
+    return html`
+        <section class="trust-section-home">
+            <div class="container">
+                <div class="trust-badges-home">
+                    <div class="trust-badge-home">
+                        <span class="trust-icon">✓</span>
+                        <span class="trust-text">${t('trust.verifiedCoaches') || '500+ Verified Coaches'}</span>
+                    </div>
+                    <div class="trust-badge-home">
+                        <span class="trust-icon">⭐</span>
+                        <span class="trust-text">${t('trust.avgRating') || '4.9 Average Rating'}</span>
+                    </div>
+                    <div class="trust-badge-home">
+                        <span class="trust-icon">🔒</span>
+                        <span class="trust-text">${t('trust.securePayments') || 'Secure Payments'}</span>
+                    </div>
+                    <div class="trust-badge-home">
+                        <span class="trust-icon">💯</span>
+                        <span class="trust-text">${t('trust.satisfaction') || 'Satisfaction Guaranteed'}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+/**
+ * Home Page - Combines all sections
+ * @param {Object} props
+ * @param {Object} props.session - User session (optional)
+ * @param {React.Component} props.CoachList - CoachList component to render
+ */
+export function HomePage({ session, CoachList }) {
+    return html`
         <div class="home-page">
-            <${Hero} onSearch=${handleSearch} />
-            <${FeaturedCoaches} />
+            <${Hero} />
+            <${TrustBadgesSection} />
+            <${CoachingCategoriesSection} />
+            <${HowItWorksSection} />
+            ${CoachList && html`<${CoachList} session=${session} />`}
         </div>
     `;
 }
