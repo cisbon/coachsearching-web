@@ -218,17 +218,17 @@ export function Auth() {
                     <div class="auth-mode-tabs">
                         <button
                             type="button"
+                            class=${'auth-mode-tab ' + (!isLogin ? 'active' : '')}
+                            onClick=${() => { setIsLogin(false); setMessage({ type: '', text: '' }); }}
+                        >
+                            ${t('auth.signup') || 'Create Account'}
+                        </button>
+                        <button
+                            type="button"
                             class=${'auth-mode-tab ' + (isLogin ? 'active' : '')}
                             onClick=${() => { setIsLogin(true); setMessage({ type: '', text: '' }); }}
                         >
                             ${t('auth.signin') || 'Sign In'}
-                        </button>
-                        <button
-                            type="button"
-                            class=${'auth-mode-tab ' + (!isLogin ? 'active' : '')}
-                            onClick=${() => { setIsLogin(false); setMessage({ type: '', text: '' }); }}
-                        >
-                            ${t('auth.signup') || 'Sign Up'}
                         </button>
                     </div>
 
