@@ -39,7 +39,8 @@ import {
     CoachCardSkeleton,
     FilterSidebar,
     SPECIALTY_OPTIONS,
-    LANGUAGE_OPTIONS
+    LANGUAGE_OPTIONS,
+    CoachList
 } from './components/coach/index.js';
 
 // Layout & UI Components (modular)
@@ -1294,325 +1295,14 @@ const CoachOnboarding = ({ session }) => {
 
 // Coach components now imported from components/coach/index.js:
 // LanguageFlags, TrustBadges, VideoPopup, ReviewsPopup, DiscoveryCallModal,
-// CoachCard, CoachCardSkeleton, FilterSidebar, SPECIALTY_OPTIONS, LANGUAGE_OPTIONS
+// CoachCard, CoachCardSkeleton, FilterSidebar, SPECIALTY_OPTIONS, LANGUAGE_OPTIONS, CoachList
 
-const CoachList = ({ searchFilters, session }) => {
-    const [coaches, setCoaches] = useState(mockCoaches);
-    const [selectedCoach, setSelectedCoach] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [, forceUpdate] = useState({});
-    const [showFilters, setShowFilters] = useState(true);
-    const [filters, setFilters] = useState({
-        sortBy: 'relevance',
-        minPrice: '',
-        maxPrice: '',
-        specialties: [],
-        languages: [],
-        hasVideo: false,
-        freeIntro: false,
-        verified: false,
-        topRated: false,
-        minRating: null,
-        onlineOnly: false,
-        inPersonOnly: false,
-        experience: ''
-    });
+// CoachList now imported from components/coach/CoachList.js
+// Note: The imported CoachList accepts CoachDetailModal as a prop
 
-    const resetFilters = () => {
-        setFilters({
-            sortBy: 'relevance',
-            minPrice: '',
-            maxPrice: '',
-            specialties: [],
-            languages: [],
-            hasVideo: false,
-            freeIntro: false,
-            verified: false,
-            topRated: false,
-            minRating: null,
-            onlineOnly: false,
-            inPersonOnly: false,
-            experience: ''
-        });
-    };
-
-    console.log('CoachList rendering with', coaches.length, 'coaches');
-
-    // Memoized filtered and sorted coaches
-    const filteredCoaches = React.useMemo(() => {
-        let result = [...coaches];
-
-        // Text search filter
-        if (searchFilters && searchFilters.searchTerm) {
-            const term = searchFilters.searchTerm.toLowerCase();
-            result = result.filter(coach =>
-                coach.full_name?.toLowerCase().includes(term) ||
-                coach.title?.toLowerCase().includes(term) ||
-                coach.bio?.toLowerCase().includes(term) ||
-                coach.specialties?.some(s => s.toLowerCase().includes(term)) ||
-                coach.location?.toLowerCase().includes(term)
-            );
-        }
-
-        // Price filters
-        if (filters.minPrice) {
-            result = result.filter(coach => coach.hourly_rate >= Number(filters.minPrice));
-        }
-        if (filters.maxPrice) {
-            result = result.filter(coach => coach.hourly_rate <= Number(filters.maxPrice));
-        }
-
-        // Specialty filter
-        if (filters.specialties?.length > 0) {
-            result = result.filter(coach =>
-                filters.specialties.some(s =>
-                    coach.specialties?.some(cs => cs.toLowerCase().includes(s.toLowerCase()))
-                )
-            );
-        }
-
-        // Language filter
-        if (filters.languages?.length > 0) {
-            result = result.filter(coach =>
-                filters.languages.some(l =>
-                    coach.languages?.some(cl => cl.toLowerCase().includes(l.toLowerCase()))
-                )
-            );
-        }
-
-        // Feature filters
-        if (filters.hasVideo) {
-            result = result.filter(coach => coach.intro_video_url || coach.video_url || coach.video_intro_url);
-        }
-        if (filters.freeIntro) {
-            result = result.filter(coach => coach.offers_free_intro || coach.free_discovery_call);
-        }
-        if (filters.verified) {
-            result = result.filter(coach => coach.is_verified || coach.verified);
-        }
-        if (filters.topRated) {
-            result = result.filter(coach => (coach.rating_average || coach.rating || 0) >= 4.5);
-        }
-
-        // Rating filter
-        if (filters.minRating) {
-            result = result.filter(coach => (coach.rating_average || coach.rating || 0) >= filters.minRating);
-        }
-
-        // Session format filters
-        if (filters.onlineOnly) {
-            result = result.filter(coach =>
-                coach.session_formats?.includes('online') ||
-                coach.offers_online ||
-                !coach.session_formats // Assume online if not specified
-            );
-        }
-        if (filters.inPersonOnly) {
-            result = result.filter(coach =>
-                coach.session_formats?.includes('in-person') ||
-                coach.offers_in_person ||
-                coach.location
-            );
-        }
-
-        // Experience filter
-        if (filters.experience) {
-            const minYears = Number(filters.experience);
-            result = result.filter(coach => (coach.years_experience || 0) >= minYears);
-        }
-
-        // Helper to check if coach has video
-        const hasVideo = (coach) => !!(coach.intro_video_url || coach.video_url || coach.video_intro_url);
-
-        // Sorting - always prioritize coaches with videos first, then apply selected sort
-        switch (filters.sortBy) {
-            case 'rating':
-                result.sort((a, b) => {
-                    // Videos first
-                    const aVideo = hasVideo(a) ? 1 : 0;
-                    const bVideo = hasVideo(b) ? 1 : 0;
-                    if (bVideo !== aVideo) return bVideo - aVideo;
-                    // Then by rating
-                    return (b.rating_average || b.rating || 0) - (a.rating_average || a.rating || 0);
-                });
-                break;
-            case 'price_low':
-                result.sort((a, b) => {
-                    const aVideo = hasVideo(a) ? 1 : 0;
-                    const bVideo = hasVideo(b) ? 1 : 0;
-                    if (bVideo !== aVideo) return bVideo - aVideo;
-                    return (a.hourly_rate || 0) - (b.hourly_rate || 0);
-                });
-                break;
-            case 'price_high':
-                result.sort((a, b) => {
-                    const aVideo = hasVideo(a) ? 1 : 0;
-                    const bVideo = hasVideo(b) ? 1 : 0;
-                    if (bVideo !== aVideo) return bVideo - aVideo;
-                    return (b.hourly_rate || 0) - (a.hourly_rate || 0);
-                });
-                break;
-            case 'reviews':
-                result.sort((a, b) => {
-                    const aVideo = hasVideo(a) ? 1 : 0;
-                    const bVideo = hasVideo(b) ? 1 : 0;
-                    if (bVideo !== aVideo) return bVideo - aVideo;
-                    return (b.rating_count || b.reviews_count || 0) - (a.rating_count || a.reviews_count || 0);
-                });
-                break;
-            default:
-                // relevance - prioritize coaches with videos, then by rating
-                result.sort((a, b) => {
-                    const aVideo = hasVideo(a) ? 1 : 0;
-                    const bVideo = hasVideo(b) ? 1 : 0;
-                    if (bVideo !== aVideo) return bVideo - aVideo;
-                    // Then by rating as secondary
-                    return (b.rating_average || b.rating || 0) - (a.rating_average || a.rating || 0);
-                });
-                break;
-        }
-
-        return result;
-    }, [searchFilters, coaches, filters]);
-
-    // Load coaches from Supabase directly
-    const loadCoaches = useCallback(async () => {
-            console.log('🔍 Loading coaches from database...');
-            setLoading(true);
-
-            let loadedSuccessfully = false;
-
-            // Load directly from Supabase
-            if (window.supabaseClient) {
-                try {
-                    const { data: supabaseCoaches, error } = await window.supabaseClient
-                        .from('cs_coaches')
-                        .select('*')
-                        .order('created_at', { ascending: false });
-
-                    if (error) {
-                        console.error('❌ Error loading coaches:', error);
-                    } else if (supabaseCoaches && supabaseCoaches.length > 0) {
-                        console.log('✅ Loaded', supabaseCoaches.length, 'coaches');
-                        setCoaches(supabaseCoaches);
-                        loadedSuccessfully = true;
-                    } else {
-                        console.log('ℹ️ No coaches found in database');
-                    }
-                } catch (error) {
-                    console.error('❌ Failed to load coaches:', error);
-                }
-            }
-
-            // Fall back to mock data if needed
-            if (!loadedSuccessfully) {
-                console.log('ℹ️ Using mock data');
-                setCoaches(mockCoaches);
-            }
-
-            setLoading(false);
-    }, []);
-
-    useEffect(() => {
-        loadCoaches();
-    }, [loadCoaches]);
-
-    useEffect(() => {
-        const handleCurrencyChange = () => {
-            console.log('CoachList: Currency changed, re-rendering');
-            forceUpdate({});
-        };
-        window.addEventListener('currencyChange', handleCurrencyChange);
-        return () => window.removeEventListener('currencyChange', handleCurrencyChange);
-    }, []);
-
-    const activeFilterCount = [
-        filters.minPrice,
-        filters.maxPrice,
-        ...(filters.specialties || []),
-        ...(filters.languages || []),
-        filters.hasVideo,
-        filters.freeIntro,
-        filters.verified,
-        filters.topRated,
-        filters.minRating,
-        filters.onlineOnly,
-        filters.inPersonOnly,
-        filters.experience
-    ].filter(Boolean).length;
-
-    return html`
-    <div class="coaches-section">
-        <div class="container" style=${{ marginTop: '40px', paddingBottom: '40px' }}>
-            <!-- Header with title and filter toggle -->
-            <div class="coaches-header">
-                <h2 class="section-title">
-                    ${searchFilters?.searchTerm ? `Search Results (${filteredCoaches.length})` : 'Top Rated Coaches'}
-                </h2>
-                <div class="header-actions">
-                    <button
-                        class="filter-toggle-btn ${showFilters ? 'active' : ''}"
-                        onClick=${() => setShowFilters(!showFilters)}
-                    >
-                        <span>⚙️ Filters</span>
-                        ${activeFilterCount > 0 && html`<span class="filter-count">${activeFilterCount}</span>`}
-                    </button>
-                    <select
-                        class="sort-select-mobile"
-                        value=${filters.sortBy}
-                        onChange=${(e) => setFilters({ ...filters, sortBy: e.target.value })}
-                    >
-                        <option value="relevance">Sort: Relevance</option>
-                        <option value="rating">Sort: Highest Rated</option>
-                        <option value="price_low">Sort: Price Low-High</option>
-                        <option value="price_high">Sort: Price High-Low</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="coaches-layout ${showFilters ? 'with-filters' : ''}">
-                <!-- Filter Sidebar -->
-                ${showFilters && html`
-                    <${FilterSidebar}
-                        filters=${filters}
-                        onChange=${setFilters}
-                        onReset=${resetFilters}
-                    />
-                `}
-
-                <!-- Coach List -->
-                <div class="coaches-main">
-                    ${loading && html`
-                        <div class="coach-list">
-                            ${[...Array(6)].map((_, i) => html`<${CoachCardSkeleton} key=${'skeleton-' + i} />`)}
-                        </div>
-                    `}
-                    ${!loading && filteredCoaches.length === 0 && html`
-                        <div class="empty-state">
-                            <div class="empty-state-icon">🔍</div>
-                            <div class="empty-state-text">No coaches found</div>
-                            <div class="empty-state-subtext">Try adjusting your filters or search criteria</div>
-                            ${activeFilterCount > 0 && html`
-                                <button class="btn-secondary" onClick=${resetFilters} style=${{ marginTop: '16px' }}>
-                                    Clear All Filters
-                                </button>
-                            `}
-                        </div>
-                    `}
-                    ${!loading && filteredCoaches.length > 0 && html`
-                        <div class="results-info">
-                            Showing ${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''}
-                        </div>
-                        <div class="coach-list">
-                            ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} session=${session} onViewDetails=${setSelectedCoach} />`)}
-                        </div>
-                    `}
-                </div>
-            </div>
-        </div>
-        ${selectedCoach && html`<${CoachDetailModal} coach=${selectedCoach} session=${session} onClose=${() => setSelectedCoach(null)} />`}
-    </div>
-    `;
+// Wrapper to use imported CoachList with inline CoachDetailModal
+const CoachListWithModal = ({ searchFilters, session }) => {
+    return html`<${CoachList} searchFilters=${searchFilters} session=${session} CoachDetailModal=${CoachDetailModal} />`;
 };
 
 // BookingModal removed - MVP uses Discovery Calls only
@@ -4686,7 +4376,7 @@ const Home = ({ session }) => {
             <${CoachingCategoriesSection} />
             <${HowItWorksSection} />
 
-            <${CoachList} session=${session} />
+            <${CoachListWithModal} session=${session} />
         </div>
     `;
 };
@@ -6308,7 +5998,7 @@ const App = () => {
             case 'home':
             case '':
                 Component = () => html`<${Home} session=${session} />`; break;
-            case 'coaches': Component = () => html`<${CoachList} session=${session} />`; break;
+            case 'coaches': Component = () => html`<${CoachListWithModal} session=${session} />`; break;
             case 'login': Component = Auth; break;
             case 'onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
             case 'dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;

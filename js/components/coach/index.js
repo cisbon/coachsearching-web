@@ -11,3 +11,4 @@ export { DiscoveryCallModal } from './DiscoveryCallModal.js';
 export { CoachCard } from './CoachCard.js';
 export { CoachCardSkeleton } from './CoachCardSkeleton.js';
 export { FilterSidebar, SPECIALTY_OPTIONS, LANGUAGE_OPTIONS } from './FilterSidebar.js';
+export { CoachList } from './CoachList.js';
