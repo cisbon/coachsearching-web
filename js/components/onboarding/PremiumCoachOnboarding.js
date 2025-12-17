@@ -12,6 +12,7 @@
 
 import htm from '../../vendor/htm.js';
 import { t, getCurrentLang } from '../../i18n.js';
+import { useLookupOptions } from '../../context/AppContext.js';
 
 const React = window.React;
 const { useState, useEffect, useRef, useCallback } = React;
@@ -35,17 +36,6 @@ const SESSION_DURATIONS = [
     { value: 90, label: '1.5 hours' },
     { value: 120, label: '2 hours' }
 ];
-
-// Helper to get localized name from lookup option
-const getLocalizedName = (option, lang = null) => {
-    const currentLang = lang || getCurrentLang() || 'en';
-    return option[`name_${currentLang}`] || option.name_en || option.code;
-};
-
-const getLocalizedDesc = (option, lang = null) => {
-    const currentLang = lang || getCurrentLang() || 'en';
-    return option[`description_${currentLang}`] || option.description_en || '';
-};
 
 // ============================================================================
 // MAIN COMPONENT
@@ -74,46 +64,8 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
         referrer_id: null
     });
 
-    // Lookup options from database
-    const [lookupOptions, setLookupOptions] = useState({
-        specialties: [],
-        languages: [],
-        sessionFormats: []
-    });
-
-    // Fetch lookup options on mount
-    useEffect(() => {
-        const fetchLookupOptions = async () => {
-            try {
-                const supabase = window.supabaseClient;
-                if (!supabase) return;
-
-                const { data: options, error } = await supabase
-                    .from('cs_lookup_options')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('sort_order', { ascending: true });
-
-                if (error) {
-                    console.error('Failed to fetch lookup options:', error);
-                    return;
-                }
-
-                // Group by type
-                const grouped = {
-                    specialties: options.filter(o => o.type === 'specialty'),
-                    languages: options.filter(o => o.type === 'language'),
-                    sessionFormats: options.filter(o => o.type === 'session_format')
-                };
-
-                setLookupOptions(grouped);
-            } catch (err) {
-                console.error('Error fetching lookup options:', err);
-            }
-        };
-
-        fetchLookupOptions();
-    }, []);
+    // Get lookup options from global context (cached)
+    const { lookupOptions, getLocalizedName, getLocalizedDescription } = useLookupOptions();
 
     // Referral code validation
     const referralDebounceRef = useRef(null);
@@ -360,12 +312,15 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     updateData=${updateData}
                     specialties=${lookupOptions.specialties}
                     languages=${lookupOptions.languages}
+                    getLocalizedName=${getLocalizedName}
                 />`;
             case 2:
                 return html`<${StepServices}
                     data=${data}
                     updateData=${updateData}
                     sessionFormats=${lookupOptions.sessionFormats}
+                    getLocalizedName=${getLocalizedName}
+                    getLocalizedDescription=${getLocalizedDescription}
                 />`;
             case 3:
                 return html`<${StepLaunch}
@@ -375,6 +330,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     onComplete=${completeOnboarding}
                     onReferralChange=${handleReferralCodeChange}
                     languages=${lookupOptions.languages}
+                    getLocalizedName=${getLocalizedName}
                 />`;
             default:
                 return null;
@@ -708,7 +664,7 @@ const StepProfile = ({ data, updateData, session }) => {
 // STEP 2: EXPERTISE
 // ============================================================================
 
-const StepExpertise = ({ data, updateData, specialties = [], languages = [] }) => {
+const StepExpertise = ({ data, updateData, specialties = [], languages = [], getLocalizedName }) => {
     const toggleSpecialty = (code) => {
         const current = data.specialties || [];
         const newSpecialties = current.includes(code)
@@ -828,7 +784,7 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [] }) =
 // STEP 3: SERVICES & PRICING
 // ============================================================================
 
-const StepServices = ({ data, updateData, sessionFormats = [] }) => {
+const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName, getLocalizedDescription }) => {
     const toggleFormat = (formatCode) => {
         const formats = data.session_formats || [];
         const newFormats = formats.includes(formatCode)
@@ -875,7 +831,7 @@ const StepServices = ({ data, updateData, sessionFormats = [] }) => {
                         >
                             <div class="format-icon">${format.icon || '💬'}</div>
                             <div class="format-title">${getLocalizedName(format)}</div>
-                            <div class="format-desc">${getLocalizedDesc(format)}</div>
+                            <div class="format-desc">${getLocalizedDescription(format)}</div>
                         </div>
                     `)}
                 </div>
@@ -949,7 +905,7 @@ const StepServices = ({ data, updateData, sessionFormats = [] }) => {
 // STEP 4: LAUNCH
 // ============================================================================
 
-const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, languages = [] }) => {
+const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, languages = [], getLocalizedName }) => {
     const languageNames = (data.languages || [])
         .map(code => languages.find(l => l.code === code))
         .filter(Boolean)

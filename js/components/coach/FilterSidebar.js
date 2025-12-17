@@ -1,21 +1,14 @@
 /**
  * FilterSidebar Component
  * Sidebar for filtering coach list by price, specialty, language, etc.
+ * Uses dynamic lookup options from AppContext
  */
 
 import htm from '../../vendor/htm.js';
+import { useLookupOptions } from '../../context/AppContext.js';
 
 const React = window.React;
 const html = htm.bind(React.createElement);
-
-// Available filter options
-export const SPECIALTY_OPTIONS = [
-    'Leadership', 'Career', 'Executive', 'Life Coaching', 'Business',
-    'Health & Wellness', 'Relationships', 'Mindfulness', 'Performance',
-    'Communication', 'Stress Management', 'Work-Life Balance'
-];
-
-export const LANGUAGE_OPTIONS = ['English', 'German', 'Spanish', 'French', 'Italian', 'Dutch', 'Portuguese'];
 
 /**
  * FilterSidebar Component
@@ -25,6 +18,13 @@ export const LANGUAGE_OPTIONS = ['English', 'German', 'Spanish', 'French', 'Ital
  * @param {function} props.onReset - Handler for resetting filters
  */
 export function FilterSidebar({ filters, onChange, onReset }) {
+    // Get lookup options from global context (cached)
+    const { lookupOptions, getLocalizedName } = useLookupOptions();
+
+    // Extract specialties and languages from lookup options
+    const specialtyOptions = lookupOptions.specialties || [];
+    const languageOptions = lookupOptions.languages || [];
+
     return html`
         <div class="filter-sidebar">
             <div class="filter-header">
@@ -58,20 +58,20 @@ export function FilterSidebar({ filters, onChange, onReset }) {
             <div class="filter-section">
                 <h4>Specialties</h4>
                 <div class="filter-checkboxes">
-                    ${SPECIALTY_OPTIONS.map(specialty => html`
-                        <label key=${specialty} class="filter-checkbox">
+                    ${specialtyOptions.map(specialty => html`
+                        <label key=${specialty.code} class="filter-checkbox">
                             <input
                                 type="checkbox"
-                                checked=${filters.specialties?.includes(specialty)}
+                                checked=${filters.specialties?.includes(specialty.code)}
                                 onChange=${(e) => {
                                     const current = filters.specialties || [];
                                     const updated = e.target.checked
-                                        ? [...current, specialty]
-                                        : current.filter(s => s !== specialty);
+                                        ? [...current, specialty.code]
+                                        : current.filter(s => s !== specialty.code);
                                     onChange({ ...filters, specialties: updated });
                                 }}
                             />
-                            <span>${specialty}</span>
+                            <span>${specialty.icon || ''} ${getLocalizedName(specialty)}</span>
                         </label>
                     `)}
                 </div>
@@ -81,20 +81,20 @@ export function FilterSidebar({ filters, onChange, onReset }) {
             <div class="filter-section">
                 <h4>Languages</h4>
                 <div class="filter-checkboxes">
-                    ${LANGUAGE_OPTIONS.map(lang => html`
-                        <label key=${lang} class="filter-checkbox">
+                    ${languageOptions.map(lang => html`
+                        <label key=${lang.code} class="filter-checkbox">
                             <input
                                 type="checkbox"
-                                checked=${filters.languages?.includes(lang)}
+                                checked=${filters.languages?.includes(lang.code)}
                                 onChange=${(e) => {
                                     const current = filters.languages || [];
                                     const updated = e.target.checked
-                                        ? [...current, lang]
-                                        : current.filter(l => l !== lang);
+                                        ? [...current, lang.code]
+                                        : current.filter(l => l !== lang.code);
                                     onChange({ ...filters, languages: updated });
                                 }}
                             />
-                            <span>${lang}</span>
+                            <span>${lang.icon || ''} ${getLocalizedName(lang)}</span>
                         </label>
                     `)}
                 </div>

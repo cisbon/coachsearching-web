@@ -1,14 +1,19 @@
 /**
  * App Context
- * Manages global application state (currency, language, UI state)
+ * Manages global application state (currency, language, UI state, lookup options)
  */
 
 import htm from '../vendor/htm.js';
 import { CONFIG } from '../config.js';
+import { getCurrentLang } from '../i18n.js';
 
 const React = window.React;
-const { createContext, useContext, useState, useEffect, useCallback, useMemo } = React;
+const { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } = React;
 const html = htm.bind(React.createElement);
+
+// Cache configuration
+const LOOKUP_CACHE_KEY = 'cs_lookup_options';
+const LOOKUP_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 // Create context
 const AppContext = createContext(null);
@@ -32,6 +37,29 @@ export function AppProvider({ children }) {
     const [isLoading, setIsLoading] = useState(false);
     const [notification, setNotification] = useState(null);
 
+    // Lookup options state (specialties, languages, session formats)
+    const [lookupOptions, setLookupOptions] = useState(() => {
+        // Try to load from cache on initial render
+        try {
+            const cached = localStorage.getItem(LOOKUP_CACHE_KEY);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < LOOKUP_CACHE_TTL) {
+                    return data;
+                }
+            }
+        } catch (e) {
+            console.warn('AppContext: Failed to load lookup cache', e);
+        }
+        return {
+            specialties: [],
+            languages: [],
+            sessionFormats: [],
+            isLoaded: false
+        };
+    });
+    const lookupFetchRef = useRef(false); // Prevent duplicate fetches
+
     // Current route
     const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#home');
 
@@ -44,6 +72,89 @@ export function AppProvider({ children }) {
 
         window.addEventListener('hashchange', handleHashChange);
         return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
+
+    // Fetch lookup options on mount (if not cached)
+    useEffect(() => {
+        const fetchLookupOptions = async () => {
+            // Prevent duplicate fetches
+            if (lookupFetchRef.current) return;
+
+            // Skip if already loaded from cache
+            if (lookupOptions.isLoaded) return;
+
+            lookupFetchRef.current = true;
+
+            try {
+                // Check if supabase client is available
+                if (!window.supabaseClient) {
+                    console.warn('AppContext: Supabase client not available');
+                    return;
+                }
+
+                console.log('AppContext: Fetching lookup options...');
+                const { data: options, error } = await window.supabaseClient
+                    .from('cs_lookup_options')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('sort_order', { ascending: true });
+
+                if (error) {
+                    console.error('AppContext: Error fetching lookup options:', error);
+                    return;
+                }
+
+                // Group by type
+                const grouped = {
+                    specialties: options?.filter(o => o.type === 'specialty') || [],
+                    languages: options?.filter(o => o.type === 'language') || [],
+                    sessionFormats: options?.filter(o => o.type === 'session_format') || [],
+                    isLoaded: true
+                };
+
+                // Update state
+                setLookupOptions(grouped);
+
+                // Save to localStorage cache
+                try {
+                    localStorage.setItem(LOOKUP_CACHE_KEY, JSON.stringify({
+                        data: grouped,
+                        timestamp: Date.now()
+                    }));
+                    console.log('AppContext: Lookup options cached');
+                } catch (e) {
+                    console.warn('AppContext: Failed to cache lookup options', e);
+                }
+            } catch (error) {
+                console.error('AppContext: Failed to fetch lookup options:', error);
+            }
+        };
+
+        fetchLookupOptions();
+    }, [lookupOptions.isLoaded]);
+
+    // Helper to get localized name from lookup option
+    const getLocalizedName = useCallback((option, lang = null) => {
+        const currentLang = lang || getCurrentLang() || language || 'en';
+        return option?.[`name_${currentLang}`] || option?.name_en || option?.code || '';
+    }, [language]);
+
+    // Helper to get localized description from lookup option
+    const getLocalizedDescription = useCallback((option, lang = null) => {
+        const currentLang = lang || getCurrentLang() || language || 'en';
+        return option?.[`description_${currentLang}`] || option?.description_en || '';
+    }, [language]);
+
+    // Force refresh lookup options (clears cache)
+    const refreshLookupOptions = useCallback(() => {
+        localStorage.removeItem(LOOKUP_CACHE_KEY);
+        lookupFetchRef.current = false;
+        setLookupOptions({
+            specialties: [],
+            languages: [],
+            sessionFormats: [],
+            isLoaded: false
+        });
     }, []);
 
     // Currency methods
@@ -139,6 +250,12 @@ export function AppProvider({ children }) {
         routeInfo,
         navigate,
 
+        // Lookup Options
+        lookupOptions,
+        getLocalizedName,
+        getLocalizedDescription,
+        refreshLookupOptions,
+
         // Config
         config: CONFIG
     };
@@ -183,6 +300,14 @@ export function useNavigation() {
 export function useNotification() {
     const { notification, showNotification, clearNotification } = useApp();
     return { notification, showNotification, clearNotification };
+}
+
+/**
+ * Hook for lookup options (specialties, languages, session formats)
+ */
+export function useLookupOptions() {
+    const { lookupOptions, getLocalizedName, getLocalizedDescription, refreshLookupOptions } = useApp();
+    return { lookupOptions, getLocalizedName, getLocalizedDescription, refreshLookupOptions };
 }
 
 export default AppContext;
