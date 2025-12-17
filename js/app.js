@@ -6345,17 +6345,6 @@ const Home = ({ session }) => {
             <${HowItWorksSection} />
 
             <${CoachList} session=${session} />
-
-            <!-- Testimonials Section -->
-            <section class="testimonials-section">
-                <div class="container">
-                    <div class="section-header">
-                        <h2>${t('home.testimonials.title') || 'What Our Clients Say'}</h2>
-                        <p>${t('home.testimonials.subtitle') || 'Real stories from people who transformed their lives'}</p>
-                    </div>
-                    <${TestimonialCarousel} />
-                </div>
-            </section>
         </div>
     `;
 };
