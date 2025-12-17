@@ -104,6 +104,17 @@ try {
             handleReferrals($method, $id, $action, $input);
             break;
 
+        case 'favorites':
+            require_once __DIR__ . '/endpoints/favorites.php';
+            handleFavorites($method, $id, $action, $input);
+            break;
+
+        case 'conversations':
+        case 'messages':
+            require_once __DIR__ . '/endpoints/messaging.php';
+            handleMessaging($method, $resource, $id, $action, $input);
+            break;
+
         case 'promo-codes':
             require_once __DIR__ . '/endpoints/promo-codes.php';
             handlePromoCodes($method, $id, $action, $input);

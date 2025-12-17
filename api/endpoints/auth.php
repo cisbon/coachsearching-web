@@ -325,11 +325,36 @@ function exportUserData() {
     // Get reviews written by user
     $reviewsWritten = $db->from('cs_reviews')
         ->select('*')
-        ->eq('author_id', $userId)
+        ->eq('user_id', $userId)
         ->execute();
 
     if ($reviewsWritten && !isset($reviewsWritten['error'])) {
-        $exportData['reviews_written'] = $reviewsWritten;
+        $exportData['reviews_written'] = $reviewsWritten['data'] ?? [];
+    }
+
+    // Get favorites
+    $favorites = $db->from('cs_favorites')
+        ->select('*, cs_coaches(full_name, slug)')
+        ->eq('user_id', $userId)
+        ->execute();
+
+    if ($favorites && !isset($favorites['error'])) {
+        $exportData['favorites'] = $favorites['data'] ?? [];
+    }
+
+    // Get conversations and messages
+    if ($clientProfile && !isset($clientProfile['error'])) {
+        $clientId = $clientProfile['data']['id'] ?? $clientProfile['id'] ?? null;
+        if ($clientId) {
+            $conversations = $db->from('cs_conversations')
+                ->select('*, cs_messages(*)')
+                ->eq('client_id', $clientId)
+                ->execute();
+
+            if ($conversations && !isset($conversations['error'])) {
+                $exportData['conversations'] = $conversations['data'] ?? [];
+            }
+        }
     }
 
     return [
