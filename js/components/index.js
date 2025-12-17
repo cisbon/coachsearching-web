@@ -31,3 +31,17 @@ export {
     Link,
     Redirect
 } from './Router.js';
+
+// Coach components
+export {
+    LanguageFlags,
+    TrustBadges,
+    VideoPopup,
+    ReviewsPopup,
+    DiscoveryCallModal,
+    CoachCard,
+    CoachCardSkeleton,
+    FilterSidebar,
+    SPECIALTY_OPTIONS,
+    LANGUAGE_OPTIONS
+} from './coach/index.js';
