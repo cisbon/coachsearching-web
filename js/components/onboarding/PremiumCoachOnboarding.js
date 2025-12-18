@@ -399,7 +399,7 @@ const WelcomeScreen = ({ onStart, onSkip }) => {
             <div class="welcome-fullscreen">
                 <div class="welcome-content">
                     <div class="welcome-badge">
-                        ✨ Join 2,500+ coaches worldwide
+                        ✨ ${t('onboard.premium.welcomeBadge')}
                     </div>
 
                     <div class="welcome-icon-container">
@@ -407,54 +407,36 @@ const WelcomeScreen = ({ onStart, onSkip }) => {
                     </div>
 
                     <h1 class="welcome-title">
-                        Welcome to <span>CoachSearching</span>
+                        ${t('onboard.premium.welcomeTitle')} <span>CoachSearching</span>
                     </h1>
 
                     <p class="welcome-subtitle">
-                        Let's set up your professional coaching profile in just a few minutes.
-                        Connect with clients who are looking for exactly what you offer.
+                        ${t('onboard.premium.welcomeSubtitle')}
                     </p>
 
                     <div class="welcome-features">
                         <div class="welcome-feature">
                             <div class="feature-icon">⚡</div>
-                            <div class="feature-title">5 Minutes</div>
-                            <div class="feature-desc">Quick & easy setup</div>
+                            <div class="feature-title" style=${{ color: 'white' }}>${t('onboard.premium.feature1Title')}</div>
+                            <div class="feature-desc">${t('onboard.premium.feature1Desc')}</div>
                         </div>
                         <div class="welcome-feature">
                             <div class="feature-icon">💾</div>
-                            <div class="feature-title">Auto-Save</div>
-                            <div class="feature-desc">Continue anytime</div>
+                            <div class="feature-title" style=${{ color: 'white' }}>${t('onboard.premium.feature2Title')}</div>
+                            <div class="feature-desc">${t('onboard.premium.feature2Desc')}</div>
                         </div>
                         <div class="welcome-feature">
                             <div class="feature-icon">🚀</div>
-                            <div class="feature-title">Go Live</div>
-                            <div class="feature-desc">Start getting bookings</div>
+                            <div class="feature-title" style=${{ color: 'white' }}>${t('onboard.premium.feature3Title')}</div>
+                            <div class="feature-desc">${t('onboard.premium.feature3Desc')}</div>
                         </div>
                     </div>
 
                     <div class="welcome-cta">
                         <button class="btn-start" onClick=${onStart}>
-                            Create My Profile
+                            ${t('onboard.premium.createProfile')}
                             <span class="arrow">→</span>
                         </button>
-                    </div>
-
-                    <div class="social-proof">
-                        <div class="trust-logos">
-                            <div class="trust-stat">
-                                <div class="trust-number">2,500+</div>
-                                <div class="trust-label">Active Coaches</div>
-                            </div>
-                            <div class="trust-stat">
-                                <div class="trust-number">50,000+</div>
-                                <div class="trust-label">Sessions Booked</div>
-                            </div>
-                            <div class="trust-stat">
-                                <div class="trust-number">4.9★</div>
-                                <div class="trust-label">Average Rating</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
