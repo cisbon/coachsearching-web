@@ -364,7 +364,6 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
     return html`
         <div class="premium-onboarding">
             <div class="onboarding-wrapper">
-                <!-- Progress Header -->
                 <header class="onboarding-header">
                     <div class="progress-container">
                         ${STEPS.map((step, index) => html`
@@ -381,13 +380,11 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     </div>
                 </header>
 
-                <!-- Main Card -->
                 <div class="onboarding-card">
                     <div class="card-content step-transition" key=${currentStep}>
                         ${renderStep()}
                     </div>
 
-                    <!-- Footer with navigation -->
                     ${currentStep < 3 && html`
                         <footer class="card-footer">
                             <button
@@ -555,7 +552,6 @@ const StepProfile = ({ data, updateData, session }) => {
                 </p>
             </div>
 
-            <!-- Avatar Upload -->
             <div class="avatar-upload-section">
                 <div
                     class=${`avatar-upload-zone ${dragOver ? 'dragging' : ''} ${data.avatar_url ? 'has-image' : ''}`}
@@ -600,7 +596,6 @@ const StepProfile = ({ data, updateData, session }) => {
                 </div>
             </div>
 
-            <!-- Name & Title -->
             <div class="form-section">
                 <div class="form-group">
                     <label class="form-label">
@@ -632,7 +627,6 @@ const StepProfile = ({ data, updateData, session }) => {
                 </div>
             </div>
 
-            <!-- Bio -->
             <div class="form-section">
                 <div class="form-group">
                     <label class="form-label">About You</label>
@@ -652,7 +646,6 @@ const StepProfile = ({ data, updateData, session }) => {
                 </div>
             </div>
 
-            <!-- Location & Experience -->
             <div class="form-section">
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
@@ -729,14 +722,12 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                 </p>
             </div>
 
-            <!-- Specialties -->
             <div class="form-section">
                 <div class="form-section-title">🎯 Your Specialties</div>
                 <div class="form-hint">
                     Select up to 10 areas you specialize in.
                 </div>
 
-                <!-- Selected specialties -->
                 ${data.specialties.length > 0 && html`
                     <div class="selected-specialties" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
                         ${data.specialties.map((code, index) => html`
@@ -751,7 +742,6 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                     </div>
                 `}
 
-                <!-- Specialty options grid -->
                 <div class="specialty-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem;">
                     ${specialties.map(specialty => html`
                         <button
@@ -787,7 +777,6 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                 `}
             </div>
 
-            <!-- Languages -->
             <div class="form-section">
                 <div class="form-section-title">🌍 Languages You Coach In</div>
                 <div class="form-hint">
@@ -847,7 +836,6 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                 </p>
             </div>
 
-            <!-- Session Formats -->
             <div class="form-section">
                 <div class="form-section-title">💬 Session Formats</div>
                 <div class="form-hint">
@@ -869,7 +857,6 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                 </div>
             </div>
 
-            <!-- Session Durations -->
             <div class="form-section">
                 <div class="form-section-title">⏱️ Session Durations</div>
                 <div class="form-hint">
@@ -891,7 +878,6 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                 </div>
             </div>
 
-            <!-- Pricing -->
             <div class="form-section">
                 <div class="form-section-title">💰 Your Hourly Rate</div>
                 <div class="form-hint">
@@ -970,9 +956,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
                     </p>
                 </div>
 
-                <!-- Plan Selection -->
                 <div class="plan-selection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-                    <!-- Free Plan -->
                     <div
                         class=${'plan-card ' + (data.plan_type === 'free' ? 'selected' : '')}
                         onClick=${() => updateData('plan_type', 'free')}
@@ -1001,7 +985,6 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
                         </ul>
                     </div>
 
-                    <!-- Premium Plan -->
                     <div
                         class=${'plan-card ' + (data.plan_type === 'premium' ? 'selected' : '')}
                         onClick=${() => updateData('plan_type', 'premium')}
@@ -1041,7 +1024,6 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
                     </div>
                 </div>
 
-                <!-- Referral Code Section -->
                 <div class="referral-section" style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
                         <span style="font-size: 1.25rem;">🎁</span>
@@ -1085,7 +1067,6 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
                     `}
                 </div>
 
-                <!-- Profile Preview (Collapsed) -->
                 <details style="margin-bottom: 2rem;">
                     <summary style="cursor: pointer; font-weight: 600; color: var(--petrol); padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
                         📋 Preview Your Profile
