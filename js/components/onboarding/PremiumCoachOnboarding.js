@@ -492,112 +492,21 @@ const StepProfile = ({ data, updateData, session }) => {
 // ============================================================================
 
 const StepExpertise = ({ data, updateData, specialties = [], languages = [], getLocalizedName }) => {
-    const toggleSpecialty = (code) => {
-        const current = data.specialties || [];
-        const newSpecialties = current.includes(code)
-            ? current.filter(s => s !== code)
-            : current.length < 10 ? [...current, code] : current;
-        updateData('specialties', newSpecialties);
-    };
-
-    const toggleLanguage = (code) => {
-        const langs = data.languages || [];
-        const newLangs = langs.includes(code)
-            ? langs.filter(l => l !== code)
-            : [...langs, code];
-        updateData('languages', newLangs);
-    };
-
-    // Get display name for selected specialty
-    const getSpecialtyDisplayName = (code) => {
-        const specialty = specialties.find(s => s.code === code);
-        return specialty ? getLocalizedName(specialty) : code;
-    };
+    console.log('StepExpertise: MINIMAL VERSION - Testing basic render');
+    console.log('StepExpertise: specialties count:', specialties.length);
+    console.log('StepExpertise: languages count:', languages.length);
 
     return html`
         <div class="slide-up">
             <div class="step-header">
                 <div class="step-number">Step 2 of 4</div>
                 <h2 class="step-title">Your Expertise</h2>
-                <p class="step-description">
-                    Help clients understand what you specialize in and how they can work with you.
-                </p>
+                <p class="step-description">Testing StepExpertise...</p>
             </div>
-
             <div class="form-section">
-                <div class="form-section-title">🎯 Your Specialties</div>
-                <div class="form-hint">
-                    Select up to 10 areas you specialize in.
-                </div>
-
-                ${data.specialties.length > 0 && html`
-                    <div class="selected-specialties" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                        ${data.specialties.map((code, index) => html`
-                            <span key=${index} class="specialty-pill">
-                                ${getSpecialtyDisplayName(code)}
-                                <button
-                                    class="specialty-pill-remove"
-                                    onClick=${() => toggleSpecialty(code)}
-                                >×</button>
-                            </span>
-                        `)}
-                    </div>
-                `}
-
-                <div class="specialty-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem;">
-                    ${specialties.map(specialty => html`
-                        <button
-                            key=${specialty.code}
-                            type="button"
-                            class=${'specialty-option ' + (data.specialties.includes(specialty.code) ? 'selected' : '')}
-                            onClick=${() => toggleSpecialty(specialty.code)}
-                            disabled=${!data.specialties.includes(specialty.code) && data.specialties.length >= 10}
-                            style=${{
-                                padding: '0.75rem 1rem',
-                                borderRadius: '8px',
-                                border: data.specialties.includes(specialty.code) ? '2px solid var(--petrol)' : '1px solid #e0e0e0',
-                                background: data.specialties.includes(specialty.code) ? 'var(--petrol-50)' : '#fff',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                fontSize: '0.9rem',
-                                transition: 'all 0.2s ease',
-                                opacity: (!data.specialties.includes(specialty.code) && data.specialties.length >= 10) ? 0.5 : 1
-                            }}
-                        >
-                            <span>${specialty.icon || '🎯'}</span>
-                            <span>${getLocalizedName(specialty)}</span>
-                        </button>
-                    `)}
-                </div>
-
-                ${data.specialties.length > 0 && html`
-                    <div style="margin-top: 0.75rem; font-size: 0.875rem; color: #666;">
-                        ${data.specialties.length}/10 selected
-                    </div>
-                `}
-            </div>
-
-            <div class="form-section">
-                <div class="form-section-title">🌍 Languages You Coach In</div>
-                <div class="form-hint">
-                    Select all languages you can conduct coaching sessions in.
-                </div>
-
-                <div class="language-grid">
-                    ${languages.map(lang => html`
-                        <button
-                            key=${lang.code}
-                            type="button"
-                            class=${'language-option ' + (data.languages.includes(lang.code) ? 'selected' : '')}
-                            onClick=${() => toggleLanguage(lang.code)}
-                        >
-                            <span class="language-flag">${lang.icon || '🌐'}</span>
-                            <span class="language-name">${getLocalizedName(lang)}</span>
-                        </button>
-                    `)}
-                </div>
+                <p>If you see this, StepExpertise basic rendering works!</p>
+                <p>Specialties available: ${String(specialties.length)}</p>
+                <p>Languages available: ${String(languages.length)}</p>
             </div>
         </div>
     `;
@@ -608,114 +517,17 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
 // ============================================================================
 
 const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName, getLocalizedDescription }) => {
-    const toggleFormat = (formatCode) => {
-        const formats = data.session_formats || [];
-        const newFormats = formats.includes(formatCode)
-            ? formats.filter(f => f !== formatCode)
-            : [...formats, formatCode];
-        updateData('session_formats', newFormats);
-    };
-
-    const toggleDuration = (duration) => {
-        const durations = data.session_durations || [];
-        const newDurations = durations.includes(duration)
-            ? durations.filter(d => d !== duration)
-            : [...durations, duration];
-        updateData('session_durations', newDurations);
-    };
-
-    const hourlyRate = parseFloat(data.hourly_rate) || 0;
-    const platformFee = (hourlyRate * 0.15).toFixed(2);
-    const netEarnings = (hourlyRate * 0.85).toFixed(2);
+    console.log('StepServices: MINIMAL VERSION - Testing basic render');
 
     return html`
         <div class="slide-up">
             <div class="step-header">
                 <div class="step-number">Step 3 of 4</div>
-                <h2 class="step-title">Services & Pricing</h2>
-                <p class="step-description">
-                    Define how clients can book sessions with you and set your rates.
-                </p>
+                <h2 class="step-title">Services and Pricing</h2>
+                <p class="step-description">Testing StepServices...</p>
             </div>
-
             <div class="form-section">
-                <div class="form-section-title">💬 Session Formats</div>
-                <div class="form-hint">
-                    Select all formats you offer. Most coaches offer video at minimum.
-                </div>
-
-                <div class="format-grid">
-                    ${sessionFormats.map(format => html`
-                        <div
-                            key=${format.code}
-                            class=${'format-card ' + (data.session_formats.includes(format.code) ? 'selected' : '')}
-                            onClick=${() => toggleFormat(format.code)}
-                        >
-                            <div class="format-icon">${format.icon || '💬'}</div>
-                            <div class="format-title">${getLocalizedName(format)}</div>
-                            <div class="format-desc">${getLocalizedDescription(format)}</div>
-                        </div>
-                    `)}
-                </div>
-            </div>
-
-            <div class="form-section">
-                <div class="form-section-title">⏱️ Session Durations</div>
-                <div class="form-hint">
-                    Select all session lengths you want to offer.
-                </div>
-
-                <div class="language-grid">
-                    ${SESSION_DURATIONS.map(dur => html`
-                        <button
-                            key=${dur.value}
-                            type="button"
-                            class=${'language-option ' + (data.session_durations.includes(dur.value) ? 'selected' : '')}
-                            onClick=${() => toggleDuration(dur.value)}
-                        >
-                            <span class="language-flag">⏰</span>
-                            <span class="language-name">${dur.label}</span>
-                        </button>
-                    `)}
-                </div>
-            </div>
-
-            <div class="form-section">
-                <div class="form-section-title">💰 Your Hourly Rate</div>
-                <div class="form-hint">
-                    Set your base hourly rate. You can create packages later.
-                </div>
-
-                <div class="pricing-input-group">
-                    <span class="currency-prefix">€</span>
-                    <input
-                        type="number"
-                        class="premium-input pricing-input"
-                        placeholder="75"
-                        min="0"
-                        value=${data.hourly_rate}
-                        onInput=${(e) => updateData('hourly_rate', e.target.value)}
-                    />
-                    <span class="pricing-suffix">per hour</span>
-                </div>
-
-                ${hourlyRate > 0 && html`
-                    <div class="pricing-breakdown">
-                        <div class="pricing-breakdown-title">Earnings Breakdown</div>
-                        <div class="pricing-row">
-                            <span>Client pays</span>
-                            <span>€${hourlyRate.toFixed(2)}</span>
-                        </div>
-                        <div class="pricing-row">
-                            <span>Platform fee (15%)</span>
-                            <span>-€${platformFee}</span>
-                        </div>
-                        <div class="pricing-row total">
-                            <span>You receive</span>
-                            <span>€${netEarnings}</span>
-                        </div>
-                    </div>
-                `}
+                <p>If you see this, StepServices basic rendering works!</p>
             </div>
         </div>
     `;
@@ -726,208 +538,26 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
 // ============================================================================
 
 const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, languages = [], getLocalizedName }) => {
-    const languageNames = (data.languages || [])
-        .map(code => languages.find(l => l.code === code))
-        .filter(Boolean)
-        .map(l => `${l.icon || '🌐'} ${getLocalizedName(l)}`);
-
-    const FREE_FEATURES = [
-        'Basic profile listing',
-        'Up to 5 client connections/month',
-        'Standard search visibility',
-        'Email support'
-    ];
-
-    const PREMIUM_FEATURES = [
-        'Featured profile listing',
-        'Unlimited client connections',
-        'Priority search visibility',
-        'Verified badge',
-        'Analytics dashboard',
-        'Priority support'
-    ];
+    console.log('StepLaunch: MINIMAL VERSION - Testing basic render');
 
     return html`
         <div class="slide-up">
             <div class="completion-screen">
-                <div class="step-header" style="text-align: center; margin-bottom: 2rem;">
+                <div class="step-header">
                     <div class="step-number">Step 4 of 4</div>
-                    <h2 class="step-title">Choose Your Plan</h2>
-                    <p class="step-description">
-                        Select the plan that works best for you. You can always upgrade later.
-                    </p>
+                    <h2 class="step-title">Launch Your Profile</h2>
+                    <p class="step-description">Testing StepLaunch...</p>
                 </div>
-
-                <div class="plan-selection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-                    <div
-                        class=${'plan-card ' + (data.plan_type === 'free' ? 'selected' : '')}
-                        onClick=${() => updateData('plan_type', 'free')}
-                        style=${{
-                            padding: '1.5rem',
-                            borderRadius: '12px',
-                            border: data.plan_type === 'free' ? '2px solid var(--petrol)' : '2px solid #e0e0e0',
-                            cursor: 'pointer',
-                            background: data.plan_type === 'free' ? 'var(--petrol-50)' : '#fff',
-                            transition: 'all 0.2s ease'
-                        }}
+                <div class="form-section">
+                    <p>If you see this, StepLaunch basic rendering works!</p>
+                    <button
+                        class="btn-primary btn-success"
+                        onClick=${onComplete}
+                        disabled=${loading}
                     >
-                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                            <span style="font-size: 1.5rem;">🆓</span>
-                            <h3 style="margin: 0; font-size: 1.25rem;">Free</h3>
-                        </div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--petrol); margin-bottom: 1rem;">
-                            €0<span style="font-size: 1rem; font-weight: 400;">/month</span>
-                        </div>
-                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem;">
-                            ${FREE_FEATURES.map(feature => html`
-                                <li key=${feature} style="padding: 0.25rem 0; color: #666;">
-                                    ✓ ${feature}
-                                </li>
-                            `)}
-                        </ul>
-                    </div>
-
-                    <div
-                        class=${'plan-card ' + (data.plan_type === 'premium' ? 'selected' : '')}
-                        onClick=${() => updateData('plan_type', 'premium')}
-                        style=${{
-                            padding: '1.5rem',
-                            borderRadius: '12px',
-                            border: data.plan_type === 'premium' ? '2px solid var(--petrol)' : '2px solid #e0e0e0',
-                            cursor: 'pointer',
-                            background: data.plan_type === 'premium' ? 'var(--petrol-50)' : '#fff',
-                            transition: 'all 0.2s ease',
-                            position: 'relative'
-                        }}
-                    >
-                        <div style="position: absolute; top: -10px; right: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
-                            RECOMMENDED
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                            <span style="font-size: 1.5rem;">⭐</span>
-                            <h3 style="margin: 0; font-size: 1.25rem;">Premium</h3>
-                        </div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--petrol); margin-bottom: 1rem;">
-                            ${data.referral_code_valid ? html`
-                                <span style="text-decoration: line-through; color: #999; font-size: 1.5rem;">€29</span>
-                                <span style="color: #10b981;"> €0</span>
-                                <span style="font-size: 1rem; font-weight: 400;">/year</span>
-                            ` : html`
-                                €29<span style="font-size: 1rem; font-weight: 400;">/month</span>
-                            `}
-                        </div>
-                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem;">
-                            ${PREMIUM_FEATURES.map(feature => html`
-                                <li key=${feature} style="padding: 0.25rem 0; color: #666;">
-                                    ✓ ${feature}
-                                </li>
-                            `)}
-                        </ul>
-                    </div>
+                        ${loading ? 'Launching...' : 'Launch My Profile'}
+                    </button>
                 </div>
-
-                <div class="referral-section" style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                        <span style="font-size: 1.25rem;">🎁</span>
-                        <span style="font-weight: 600; color: var(--petrol);">Have a referral code?</span>
-                    </div>
-                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 1rem;">
-                        Enter a valid referral code to get <strong>1 year of Premium for free!</strong>
-                    </p>
-                    <div style="display: flex; gap: 0.75rem; align-items: center;">
-                        <input
-                            type="text"
-                            class="premium-input"
-                            placeholder="Enter referral code"
-                            value=${data.referral_code || ''}
-                            onInput=${(e) => onReferralChange(e.target.value)}
-                            style=${{
-                                flex: 1,
-                                textTransform: 'uppercase',
-                                borderColor: data.referral_code_valid ? '#10b981' : (data.referral_code && !data.referral_code_valid ? '#ef4444' : '#e0e0e0')
-                            }}
-                        />
-                        ${data.referral_code && html`
-                            <span style="font-size: 1.5rem;">
-                                ${data.referral_code_valid ? '✅' : '❌'}
-                            </span>
-                        `}
-                    </div>
-                    ${data.referral_code_valid && html`
-                        <div style="margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 8px; display: flex; align-items: center; gap: 0.75rem;">
-                            <span style="font-size: 1.5rem;">🎉</span>
-                            <div>
-                                <div style="font-weight: 600;">Referral code applied!</div>
-                                <div style="font-size: 0.875rem; opacity: 0.9;">You'll get 1 year of Premium absolutely free.</div>
-                            </div>
-                        </div>
-                    `}
-                    ${data.referral_code && !data.referral_code_valid && data.referral_code.length >= 3 && html`
-                        <div style="margin-top: 0.5rem; color: #ef4444; font-size: 0.875rem;">
-                            Invalid referral code. Please check and try again.
-                        </div>
-                    `}
-                </div>
-
-                <details style="margin-bottom: 2rem;">
-                    <summary style="cursor: pointer; font-weight: 600; color: var(--petrol); padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                        📋 Preview Your Profile
-                    </summary>
-                    <div class="profile-preview" style="margin-top: 1rem;">
-                        <div class="preview-header">
-                            ${data.avatar_url ? html`
-                                <img src=${data.avatar_url} alt="Profile" class="preview-avatar" />
-                            ` : html`
-                                <div class="preview-avatar-placeholder">👤</div>
-                            `}
-                            <div class="preview-info">
-                                <h3 class="preview-name">${data.full_name || 'Your Name'}</h3>
-                                <p class="preview-title">${data.professional_title || 'Your Title'}</p>
-                                <div class="preview-meta">
-                                    ${data.location_city && html`<span>📍 ${data.location_city}${data.location_country ? `, ${data.location_country}` : ''}</span>`}
-                                    ${data.years_experience && html`<span>🏆 ${data.years_experience} years</span>`}
-                                </div>
-                            </div>
-                        </div>
-
-                        ${data.bio && html`
-                            <p class="preview-bio">${data.bio}</p>
-                        `}
-
-                        ${data.specialties.length > 0 && html`
-                            <div class="preview-tags">
-                                ${data.specialties.map(s => html`
-                                    <span key=${s} class="preview-tag">${s}</span>
-                                `)}
-                            </div>
-                        `}
-
-                        ${languageNames.length > 0 && html`
-                            <p style="font-size: 0.9rem; color: var(--petrol-600); margin-bottom: 1rem;">
-                                <strong>Languages:</strong> ${languageNames.join(', ')}
-                            </p>
-                        `}
-
-                        ${data.hourly_rate && html`
-                            <p class="preview-price">€${data.hourly_rate}/hour</p>
-                        `}
-                    </div>
-                </details>
-
-                <button
-                    class="btn-primary btn-success"
-                    style="font-size: 1.25rem; padding: 1.25rem 3rem; width: 100%;"
-                    onClick=${onComplete}
-                    disabled=${loading}
-                >
-                    ${loading ? 'Launching...' : (data.plan_type === 'premium' && !data.referral_code_valid ? '🚀 Launch & Subscribe to Premium' : '🚀 Launch My Profile')}
-                </button>
-
-                ${data.plan_type === 'premium' && !data.referral_code_valid && html`
-                    <p style="text-align: center; font-size: 0.875rem; color: #666; margin-top: 1rem;">
-                        You'll be redirected to complete your Premium subscription after launch.
-                    </p>
-                `}
             </div>
         </div>
     `;
