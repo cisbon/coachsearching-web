@@ -131,19 +131,43 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
         if (savedData) {
             try {
                 const parsed = JSON.parse(savedData);
-                setData(prev => ({ ...prev, ...parsed.data }));
+                // Sanitize loaded data to ensure string fields are strings
+                const sanitizedData = {};
+                if (parsed.data) {
+                    const stringFields = ['full_name', 'professional_title', 'bio', 'avatar_url', 'location_city', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
+                    const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations'];
+
+                    stringFields.forEach(field => {
+                        if (parsed.data[field] !== undefined) {
+                            sanitizedData[field] = typeof parsed.data[field] === 'string' ? parsed.data[field] : String(parsed.data[field] || '');
+                        }
+                    });
+                    arrayFields.forEach(field => {
+                        if (Array.isArray(parsed.data[field])) {
+                            sanitizedData[field] = parsed.data[field];
+                        }
+                    });
+                    // Boolean fields
+                    if (typeof parsed.data.referral_code_valid === 'boolean') {
+                        sanitizedData.referral_code_valid = parsed.data.referral_code_valid;
+                    }
+                }
+                setData(prev => ({ ...prev, ...sanitizedData }));
                 if (parsed.step > 0) {
                     setCurrentStep(parsed.step);
                     setShowWelcome(false);
                 }
             } catch (e) {
-                console.error('Failed to load saved onboarding data');
+                console.error('Failed to load saved onboarding data:', e);
+                // Clear corrupted data
+                localStorage.removeItem(`premium_onboarding_${session?.user?.id}`);
             }
         }
 
         // Pre-fill name from session if available
-        if (session?.user?.user_metadata?.full_name) {
-            setData(prev => ({ ...prev, full_name: session.user.user_metadata.full_name }));
+        const fullName = session?.user?.user_metadata?.full_name;
+        if (fullName && typeof fullName === 'string') {
+            setData(prev => ({ ...prev, full_name: fullName }));
         }
     }, [session]);
 
@@ -560,7 +584,7 @@ const StepProfile = ({ data, updateData, session }) => {
                         type="text"
                         class="premium-input"
                         placeholder="e.g., Sarah Johnson"
-                        value=${data.full_name}
+                        value=${String(data.full_name || '')}
                         onInput=${(e) => updateData('full_name', e.target.value)}
                     />
                 </div>
@@ -576,7 +600,7 @@ const StepProfile = ({ data, updateData, session }) => {
                         type="text"
                         class="premium-input"
                         placeholder="e.g., Certified Life Coach & Leadership Consultant"
-                        value=${data.professional_title}
+                        value=${String(data.professional_title || '')}
                         onInput=${(e) => updateData('professional_title', e.target.value)}
                     />
                 </div>
@@ -592,12 +616,12 @@ const StepProfile = ({ data, updateData, session }) => {
                     <textarea
                         class="premium-input premium-textarea"
                         placeholder="I'm passionate about helping professionals unlock their potential. With over 10 years of experience in executive coaching, I specialize in..."
-                        value=${data.bio}
+                        value=${String(data.bio || '')}
                         onInput=${(e) => updateData('bio', e.target.value)}
                         maxLength="500"
                     ></textarea>
-                    <div class="char-counter ${data.bio?.length > 450 ? 'warning' : ''} ${data.bio?.length > 480 ? 'danger' : ''}">
-                        ${data.bio?.length || 0} / 500
+                    <div class="char-counter ${(data.bio?.length || 0) > 450 ? 'warning' : ''} ${(data.bio?.length || 0) > 480 ? 'danger' : ''}">
+                        ${String(data.bio || '').length} / 500
                     </div>
                 </div>
             </div>
@@ -611,7 +635,7 @@ const StepProfile = ({ data, updateData, session }) => {
                             type="text"
                             class="premium-input"
                             placeholder="e.g., Berlin"
-                            value=${data.location_city}
+                            value=${String(data.location_city || '')}
                             onInput=${(e) => updateData('location_city', e.target.value)}
                         />
                     </div>
@@ -621,7 +645,7 @@ const StepProfile = ({ data, updateData, session }) => {
                             type="text"
                             class="premium-input"
                             placeholder="e.g., Germany"
-                            value=${data.location_country}
+                            value=${String(data.location_country || '')}
                             onInput=${(e) => updateData('location_country', e.target.value)}
                         />
                     </div>
@@ -632,7 +656,7 @@ const StepProfile = ({ data, updateData, session }) => {
                             class="premium-input"
                             placeholder="e.g., 5"
                             min="0"
-                            value=${data.years_experience}
+                            value=${String(data.years_experience || '')}
                             onInput=${(e) => updateData('years_experience', e.target.value)}
                         />
                     </div>
