@@ -702,21 +702,122 @@ const StepProfile = ({ data, updateData, session }) => {
 // ============================================================================
 
 const StepExpertise = ({ data, updateData, specialties = [], languages = [], getLocalizedName }) => {
-    console.log('StepExpertise: MINIMAL VERSION - Testing basic render');
-    console.log('StepExpertise: specialties count:', specialties.length);
-    console.log('StepExpertise: languages count:', languages.length);
+    const toggleSpecialty = (code) => {
+        const current = data.specialties || [];
+        const newSpecialties = current.includes(code)
+            ? current.filter(s => s !== code)
+            : current.length < 10 ? [...current, code] : current;
+        updateData('specialties', newSpecialties);
+    };
+
+    const toggleLanguage = (code) => {
+        const langs = data.languages || [];
+        const newLangs = langs.includes(code)
+            ? langs.filter(l => l !== code)
+            : [...langs, code];
+        updateData('languages', newLangs);
+    };
+
+    const getSpecialtyDisplayName = (code) => {
+        const specialty = specialties.find(s => s.code === code);
+        return specialty ? String(getLocalizedName(specialty)) : String(code);
+    };
+
+    const selectedCount = (data.specialties || []).length;
 
     return html`
         <div class="slide-up">
             <div class="step-header">
                 <div class="step-number">Step 2 of 4</div>
                 <h2 class="step-title">Your Expertise</h2>
-                <p class="step-description">Testing StepExpertise...</p>
+                <p class="step-description">
+                    Help clients understand what you specialize in and how they can work with you.
+                </p>
             </div>
+
             <div class="form-section">
-                <p>If you see this, StepExpertise basic rendering works!</p>
-                <p>Specialties available: ${String(specialties.length)}</p>
-                <p>Languages available: ${String(languages.length)}</p>
+                <div class="form-section-title">🎯 Your Specialties</div>
+                <div class="form-hint">
+                    Select up to 10 areas you specialize in.
+                </div>
+
+                ${selectedCount > 0 ? html`
+                    <div class="selected-specialties" style=${{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        ${(data.specialties || []).map((code, index) => html`
+                            <span key=${index} class="specialty-pill">
+                                ${getSpecialtyDisplayName(code)}
+                                <button
+                                    class="specialty-pill-remove"
+                                    onClick=${() => toggleSpecialty(code)}
+                                >×</button>
+                            </span>
+                        `)}
+                    </div>
+                ` : null}
+
+                <div class="specialty-grid" style=${{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                    ${specialties.map(specialty => {
+                        const isSelected = (data.specialties || []).includes(specialty.code);
+                        const isDisabled = !isSelected && selectedCount >= 10;
+                        const btnClass = 'specialty-option' + (isSelected ? ' selected' : '');
+                        return html`
+                            <button
+                                key=${specialty.code}
+                                type="button"
+                                class=${btnClass}
+                                onClick=${() => toggleSpecialty(specialty.code)}
+                                disabled=${isDisabled}
+                                style=${{
+                                    padding: '0.75rem 1rem',
+                                    borderRadius: '8px',
+                                    border: isSelected ? '2px solid var(--petrol)' : '1px solid #e0e0e0',
+                                    background: isSelected ? 'var(--petrol-50)' : '#fff',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    fontSize: '0.9rem',
+                                    transition: 'all 0.2s ease',
+                                    opacity: isDisabled ? 0.5 : 1
+                                }}
+                            >
+                                <span>${String(specialty.icon || '🎯')}</span>
+                                <span>${String(getLocalizedName(specialty))}</span>
+                            </button>
+                        `;
+                    })}
+                </div>
+
+                ${selectedCount > 0 ? html`
+                    <div style=${{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#666' }}>
+                        ${String(selectedCount)}/10 selected
+                    </div>
+                ` : null}
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">🌍 Languages You Coach In</div>
+                <div class="form-hint">
+                    Select all languages you can conduct coaching sessions in.
+                </div>
+
+                <div class="language-grid">
+                    ${languages.map(lang => {
+                        const isSelected = (data.languages || []).includes(lang.code);
+                        const langClass = 'language-option' + (isSelected ? ' selected' : '');
+                        return html`
+                            <button
+                                key=${lang.code}
+                                type="button"
+                                class=${langClass}
+                                onClick=${() => toggleLanguage(lang.code)}
+                            >
+                                <span class="language-flag">${String(lang.icon || '🌐')}</span>
+                                <span class="language-name">${String(getLocalizedName(lang))}</span>
+                            </button>
+                        `;
+                    })}
+                </div>
             </div>
         </div>
     `;
@@ -727,17 +828,122 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
 // ============================================================================
 
 const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName, getLocalizedDescription }) => {
-    console.log('StepServices: MINIMAL VERSION - Testing basic render');
+    const toggleFormat = (formatCode) => {
+        const formats = data.session_formats || [];
+        const newFormats = formats.includes(formatCode)
+            ? formats.filter(f => f !== formatCode)
+            : [...formats, formatCode];
+        updateData('session_formats', newFormats);
+    };
+
+    const toggleDuration = (duration) => {
+        const durations = data.session_durations || [];
+        const newDurations = durations.includes(duration)
+            ? durations.filter(d => d !== duration)
+            : [...durations, duration];
+        updateData('session_durations', newDurations);
+    };
+
+    const hourlyRate = parseFloat(data.hourly_rate) || 0;
+    const platformFee = (hourlyRate * 0.15).toFixed(2);
+    const netEarnings = (hourlyRate * 0.85).toFixed(2);
 
     return html`
         <div class="slide-up">
             <div class="step-header">
                 <div class="step-number">Step 3 of 4</div>
-                <h2 class="step-title">Services and Pricing</h2>
-                <p class="step-description">Testing StepServices...</p>
+                <h2 class="step-title">Services & Pricing</h2>
+                <p class="step-description">
+                    Define how clients can book sessions with you and set your rates.
+                </p>
             </div>
+
             <div class="form-section">
-                <p>If you see this, StepServices basic rendering works!</p>
+                <div class="form-section-title">💬 Session Formats</div>
+                <div class="form-hint">
+                    Select all formats you offer. Most coaches offer video at minimum.
+                </div>
+
+                <div class="format-grid">
+                    ${sessionFormats.map(format => {
+                        const isSelected = (data.session_formats || []).includes(format.code);
+                        const formatClass = 'format-card' + (isSelected ? ' selected' : '');
+                        return html`
+                            <div
+                                key=${format.code}
+                                class=${formatClass}
+                                onClick=${() => toggleFormat(format.code)}
+                            >
+                                <div class="format-icon">${String(format.icon || '💬')}</div>
+                                <div class="format-title">${String(getLocalizedName(format))}</div>
+                                <div class="format-desc">${String(getLocalizedDescription(format))}</div>
+                            </div>
+                        `;
+                    })}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">⏱️ Session Durations</div>
+                <div class="form-hint">
+                    Select all session lengths you want to offer.
+                </div>
+
+                <div class="language-grid">
+                    ${SESSION_DURATIONS.map(dur => {
+                        const isSelected = (data.session_durations || []).includes(dur.value);
+                        const durClass = 'language-option' + (isSelected ? ' selected' : '');
+                        return html`
+                            <button
+                                key=${dur.value}
+                                type="button"
+                                class=${durClass}
+                                onClick=${() => toggleDuration(dur.value)}
+                            >
+                                <span class="language-flag">⏰</span>
+                                <span class="language-name">${String(dur.label)}</span>
+                            </button>
+                        `;
+                    })}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">💰 Your Hourly Rate</div>
+                <div class="form-hint">
+                    Set your base hourly rate. You can create packages later.
+                </div>
+
+                <div class="pricing-input-group">
+                    <span class="currency-prefix">€</span>
+                    <input
+                        type="number"
+                        class="premium-input pricing-input"
+                        placeholder="75"
+                        min="0"
+                        value=${String(data.hourly_rate || '')}
+                        onInput=${(e) => updateData('hourly_rate', e.target.value)}
+                    />
+                    <span class="pricing-suffix">per hour</span>
+                </div>
+
+                ${hourlyRate > 0 ? html`
+                    <div class="pricing-breakdown">
+                        <div class="pricing-breakdown-title">Earnings Breakdown</div>
+                        <div class="pricing-row">
+                            <span>Client pays</span>
+                            <span>€${String(hourlyRate.toFixed(2))}</span>
+                        </div>
+                        <div class="pricing-row">
+                            <span>Platform fee (15%)</span>
+                            <span>-€${String(platformFee)}</span>
+                        </div>
+                        <div class="pricing-row total">
+                            <span>You receive</span>
+                            <span>€${String(netEarnings)}</span>
+                        </div>
+                    </div>
+                ` : null}
             </div>
         </div>
     `;
@@ -748,26 +954,169 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
 // ============================================================================
 
 const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, languages = [], getLocalizedName }) => {
-    console.log('StepLaunch: MINIMAL VERSION - Testing basic render');
+    const FREE_FEATURES = [
+        'Basic profile listing',
+        'Up to 5 client connections/month',
+        'Standard search visibility',
+        'Email support'
+    ];
+
+    const PREMIUM_FEATURES = [
+        'Featured profile listing',
+        'Unlimited client connections',
+        'Priority search visibility',
+        'Verified badge',
+        'Analytics dashboard',
+        'Priority support'
+    ];
+
+    const isFreeSelected = data.plan_type === 'free';
+    const isPremiumSelected = data.plan_type === 'premium';
+    const freeCardClass = 'plan-card' + (isFreeSelected ? ' selected' : '');
+    const premiumCardClass = 'plan-card' + (isPremiumSelected ? ' selected' : '');
+
+    const referralInputStyle = {
+        flex: 1,
+        textTransform: 'uppercase',
+        borderColor: data.referral_code_valid ? '#10b981' : (data.referral_code && !data.referral_code_valid ? '#ef4444' : '#e0e0e0')
+    };
+
+    const launchButtonText = loading
+        ? 'Launching...'
+        : (isPremiumSelected && !data.referral_code_valid ? '🚀 Launch & Subscribe to Premium' : '🚀 Launch My Profile');
 
     return html`
         <div class="slide-up">
             <div class="completion-screen">
-                <div class="step-header">
+                <div class="step-header" style=${{ textAlign: 'center', marginBottom: '2rem' }}>
                     <div class="step-number">Step 4 of 4</div>
-                    <h2 class="step-title">Launch Your Profile</h2>
-                    <p class="step-description">Testing StepLaunch...</p>
+                    <h2 class="step-title">Choose Your Plan</h2>
+                    <p class="step-description">
+                        Select the plan that works best for you. You can always upgrade later.
+                    </p>
                 </div>
-                <div class="form-section">
-                    <p>If you see this, StepLaunch basic rendering works!</p>
-                    <button
-                        class="btn-primary btn-success"
-                        onClick=${onComplete}
-                        disabled=${loading}
+
+                <div class="plan-selection" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                    <div
+                        class=${freeCardClass}
+                        onClick=${() => updateData('plan_type', 'free')}
+                        style=${{
+                            padding: '1.5rem',
+                            borderRadius: '12px',
+                            border: isFreeSelected ? '2px solid var(--petrol)' : '2px solid #e0e0e0',
+                            cursor: 'pointer',
+                            background: isFreeSelected ? 'var(--petrol-50)' : '#fff',
+                            transition: 'all 0.2s ease'
+                        }}
                     >
-                        ${loading ? 'Launching...' : 'Launch My Profile'}
-                    </button>
+                        <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                            <span style=${{ fontSize: '1.5rem' }}>🆓</span>
+                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>Free</h3>
+                        </div>
+                        <div style=${{ fontSize: '2rem', fontWeight: 700, color: 'var(--petrol)', marginBottom: '1rem' }}>
+                            €0<span style=${{ fontSize: '1rem', fontWeight: 400 }}>/month</span>
+                        </div>
+                        <ul style=${{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem' }}>
+                            ${FREE_FEATURES.map(feature => html`
+                                <li key=${feature} style=${{ padding: '0.25rem 0', color: '#666' }}>
+                                    ✓ ${String(feature)}
+                                </li>
+                            `)}
+                        </ul>
+                    </div>
+
+                    <div
+                        class=${premiumCardClass}
+                        onClick=${() => updateData('plan_type', 'premium')}
+                        style=${{
+                            padding: '1.5rem',
+                            borderRadius: '12px',
+                            border: isPremiumSelected ? '2px solid var(--petrol)' : '2px solid #e0e0e0',
+                            cursor: 'pointer',
+                            background: isPremiumSelected ? 'var(--petrol-50)' : '#fff',
+                            transition: 'all 0.2s ease',
+                            position: 'relative'
+                        }}
+                    >
+                        <div style=${{ position: 'absolute', top: '-10px', right: '10px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
+                            RECOMMENDED
+                        </div>
+                        <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                            <span style=${{ fontSize: '1.5rem' }}>⭐</span>
+                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>Premium</h3>
+                        </div>
+                        <div style=${{ fontSize: '2rem', fontWeight: 700, color: 'var(--petrol)', marginBottom: '1rem' }}>
+                            ${data.referral_code_valid ? html`
+                                <span style=${{ textDecoration: 'line-through', color: '#999', fontSize: '1.5rem' }}>€29</span>
+                                <span style=${{ color: '#10b981' }}> €0</span>
+                                <span style=${{ fontSize: '1rem', fontWeight: 400 }}>/year</span>
+                            ` : html`
+                                €29<span style=${{ fontSize: '1rem', fontWeight: 400 }}>/month</span>
+                            `}
+                        </div>
+                        <ul style=${{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem' }}>
+                            ${PREMIUM_FEATURES.map(feature => html`
+                                <li key=${feature} style=${{ padding: '0.25rem 0', color: '#666' }}>
+                                    ✓ ${String(feature)}
+                                </li>
+                            `)}
+                        </ul>
+                    </div>
                 </div>
+
+                <div class="referral-section" style=${{ background: '#f8f9fa', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem' }}>
+                    <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                        <span style=${{ fontSize: '1.25rem' }}>🎁</span>
+                        <span style=${{ fontWeight: 600, color: 'var(--petrol)' }}>Have a referral code?</span>
+                    </div>
+                    <p style=${{ fontSize: '0.875rem', color: '#666', marginBottom: '1rem' }}>
+                        Enter a valid referral code to get <strong>1 year of Premium for free!</strong>
+                    </p>
+                    <div style=${{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        <input
+                            type="text"
+                            class="premium-input"
+                            placeholder="Enter referral code"
+                            value=${String(data.referral_code || '')}
+                            onInput=${(e) => onReferralChange(e.target.value)}
+                            style=${referralInputStyle}
+                        />
+                        ${data.referral_code ? html`
+                            <span style=${{ fontSize: '1.5rem' }}>
+                                ${data.referral_code_valid ? '✅' : '❌'}
+                            </span>
+                        ` : null}
+                    </div>
+                    ${data.referral_code_valid ? html`
+                        <div style=${{ marginTop: '1rem', padding: '1rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style=${{ fontSize: '1.5rem' }}>🎉</span>
+                            <div>
+                                <div style=${{ fontWeight: 600 }}>Referral code applied!</div>
+                                <div style=${{ fontSize: '0.875rem', opacity: 0.9 }}>You'll get 1 year of Premium absolutely free.</div>
+                            </div>
+                        </div>
+                    ` : null}
+                    ${data.referral_code && !data.referral_code_valid && String(data.referral_code).length >= 3 ? html`
+                        <div style=${{ marginTop: '0.5rem', color: '#ef4444', fontSize: '0.875rem' }}>
+                            Invalid referral code. Please check and try again.
+                        </div>
+                    ` : null}
+                </div>
+
+                <button
+                    class="btn-primary btn-success"
+                    style=${{ fontSize: '1.25rem', padding: '1.25rem 3rem', width: '100%' }}
+                    onClick=${onComplete}
+                    disabled=${loading}
+                >
+                    ${launchButtonText}
+                </button>
+
+                ${isPremiumSelected && !data.referral_code_valid ? html`
+                    <p style=${{ textAlign: 'center', fontSize: '0.875rem', color: '#666', marginTop: '1rem' }}>
+                        You'll be redirected to complete your Premium subscription after launch.
+                    </p>
+                ` : null}
             </div>
         </div>
     `;
