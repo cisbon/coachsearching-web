@@ -470,18 +470,193 @@ const WelcomeScreen = ({ onStart, onSkip }) => {
 // ============================================================================
 
 const StepProfile = ({ data, updateData, session }) => {
-    console.log('StepProfile: MINIMAL VERSION - Testing basic render');
+    const fileInputRef = useRef(null);
+    const [uploading, setUploading] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
 
-    // Minimal test: just static divs, no interpolation
+    const handleFileSelect = async (file) => {
+        if (!file || !file.type.startsWith('image/')) {
+            alert('Please select an image file');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image must be less than 5MB');
+            return;
+        }
+
+        setUploading(true);
+        try {
+            const reader = new FileReader();
+            reader.onload = (e) => updateData('avatar_url', e.target.result);
+            reader.readAsDataURL(file);
+
+            const supabase = window.supabaseClient;
+            if (supabase) {
+                const fileName = `coach_${session.user.id}_${Date.now()}`;
+                const { data: uploadData, error } = await supabase.storage
+                    .from('avatars')
+                    .upload(fileName, file, { upsert: true });
+
+                if (!error && uploadData) {
+                    const { data: publicData } = supabase.storage
+                        .from('avatars')
+                        .getPublicUrl(fileName);
+                    if (publicData?.publicUrl) {
+                        updateData('avatar_url', publicData.publicUrl);
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Upload fallback to base64');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    // Pre-compute values to avoid interpolation issues
+    const bioLength = String(data.bio || '').length;
+    const avatarClass = 'avatar-upload-zone' + (dragOver ? ' dragging' : '') + (data.avatar_url ? ' has-image' : '');
+    const charCounterClass = 'char-counter' + (bioLength > 450 ? ' warning' : '') + (bioLength > 480 ? ' danger' : '');
+
     return html`
         <div class="slide-up">
             <div class="step-header">
                 <div class="step-number">Step 1 of 4</div>
-                <h2 class="step-title">Profile Setup</h2>
-                <p class="step-description">Testing basic rendering...</p>
+                <h2 class="step-title">Let's build your profile</h2>
+                <p class="step-description">
+                    This is how clients will discover and connect with you.
+                    Make a great first impression!
+                </p>
             </div>
+
+            <div class="avatar-upload-section">
+                <div
+                    class=${avatarClass}
+                    onClick=${() => fileInputRef.current?.click()}
+                    onDrop=${(e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files[0]); }}
+                    onDragOver=${(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave=${() => setDragOver(false)}
+                >
+                    ${data.avatar_url ? html`
+                        <img src=${data.avatar_url} alt="Profile" class="avatar-preview" />
+                        <div class="avatar-overlay">
+                            <span class="avatar-overlay-text">Change photo</span>
+                        </div>
+                    ` : html`
+                        <div class="avatar-placeholder">
+                            <div class="avatar-placeholder-icon">📷</div>
+                            <div class="avatar-placeholder-text">Upload Photo</div>
+                        </div>
+                    `}
+                    ${uploading ? html`
+                        <div class="avatar-overlay" style=${{ opacity: 1 }}>
+                            <span class="avatar-overlay-text">Uploading...</span>
+                        </div>
+                    ` : null}
+                </div>
+                <input
+                    ref=${fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style=${{ display: 'none' }}
+                    onChange=${(e) => handleFileSelect(e.target.files[0])}
+                />
+
+                <div class="avatar-tips">
+                    <div class="avatar-tips-title">Photo Tips</div>
+                    <ul class="avatar-tips-list">
+                        <li>Use a professional headshot</li>
+                        <li>Good lighting, neutral background</li>
+                        <li>Smile warmly - clients love it!</li>
+                        <li>Square crop works best</li>
+                    </ul>
+                </div>
+            </div>
+
             <div class="form-section">
-                <p>If you see this message, basic htm rendering works!</p>
+                <div class="form-group">
+                    <label class="form-label">
+                        Full Name <span class="required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        class="premium-input"
+                        placeholder="e.g., Sarah Johnson"
+                        value=${String(data.full_name || '')}
+                        onInput=${(e) => updateData('full_name', e.target.value)}
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Professional Title <span class="required">*</span>
+                    </label>
+                    <div class="form-hint">
+                        A clear title helps clients find you
+                    </div>
+                    <input
+                        type="text"
+                        class="premium-input"
+                        placeholder="e.g., Certified Life Coach"
+                        value=${String(data.professional_title || '')}
+                        onInput=${(e) => updateData('professional_title', e.target.value)}
+                    />
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-group">
+                    <label class="form-label">About You</label>
+                    <div class="form-hint">
+                        Tell potential clients about your background and approach
+                    </div>
+                    <textarea
+                        class="premium-input premium-textarea"
+                        placeholder="I'm passionate about helping professionals unlock their potential..."
+                        value=${String(data.bio || '')}
+                        onInput=${(e) => updateData('bio', e.target.value)}
+                        maxLength="500"
+                    ></textarea>
+                    <div class=${charCounterClass}>
+                        ${String(bioLength)} / 500
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input
+                            type="text"
+                            class="premium-input"
+                            placeholder="e.g., Berlin"
+                            value=${String(data.location_city || '')}
+                            onInput=${(e) => updateData('location_city', e.target.value)}
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Country</label>
+                        <input
+                            type="text"
+                            class="premium-input"
+                            placeholder="e.g., Germany"
+                            value=${String(data.location_country || '')}
+                            onInput=${(e) => updateData('location_country', e.target.value)}
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Years of Experience</label>
+                        <input
+                            type="number"
+                            class="premium-input"
+                            placeholder="e.g., 5"
+                            min="0"
+                            value=${String(data.years_experience || '')}
+                            onInput=${(e) => updateData('years_experience', e.target.value)}
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     `;
