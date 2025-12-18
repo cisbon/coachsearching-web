@@ -478,17 +478,27 @@ const StepProfile = ({ data, updateData, session }) => {
     const [dragOver, setDragOver] = useState(false);
 
     // DEBUG: Log data to console to identify React error #62 cause
-    console.log('StepProfile data:', data);
+    console.log('StepProfile data (stringified):', JSON.stringify(data, null, 2));
     console.log('StepProfile data types:', {
         full_name: typeof data.full_name,
+        full_name_value: data.full_name,
         professional_title: typeof data.professional_title,
+        professional_title_value: data.professional_title,
         bio: typeof data.bio,
         avatar_url: typeof data.avatar_url,
         location_city: typeof data.location_city,
         location_country: typeof data.location_country,
         years_experience: typeof data.years_experience,
+        years_experience_value: data.years_experience,
         specialties: Array.isArray(data.specialties) ? 'array' : typeof data.specialties,
         languages: Array.isArray(data.languages) ? 'array' : typeof data.languages
+    });
+
+    // Check for any object values that would cause React error #62
+    Object.entries(data).forEach(([key, value]) => {
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+            console.error(`StepProfile ERROR: Field "${key}" is an object:`, value);
+        }
     });
 
     const handleFileSelect = async (file) => {
@@ -531,6 +541,8 @@ const StepProfile = ({ data, updateData, session }) => {
             setUploading(false);
         }
     };
+
+    console.log('StepProfile: About to render template');
 
     return html`
         <div class="slide-up">
