@@ -37,6 +37,38 @@ const SESSION_DURATIONS = [
     { value: 120, label: '2 hours' }
 ];
 
+// Countries list for dropdown
+const COUNTRIES = [
+    { code: 'AT', name: 'Austria' },
+    { code: 'AU', name: 'Australia' },
+    { code: 'BE', name: 'Belgium' },
+    { code: 'BR', name: 'Brazil' },
+    { code: 'CA', name: 'Canada' },
+    { code: 'CH', name: 'Switzerland' },
+    { code: 'DE', name: 'Germany' },
+    { code: 'DK', name: 'Denmark' },
+    { code: 'ES', name: 'Spain' },
+    { code: 'FI', name: 'Finland' },
+    { code: 'FR', name: 'France' },
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'IE', name: 'Ireland' },
+    { code: 'IN', name: 'India' },
+    { code: 'IT', name: 'Italy' },
+    { code: 'JP', name: 'Japan' },
+    { code: 'LU', name: 'Luxembourg' },
+    { code: 'MX', name: 'Mexico' },
+    { code: 'NL', name: 'Netherlands' },
+    { code: 'NO', name: 'Norway' },
+    { code: 'NZ', name: 'New Zealand' },
+    { code: 'PL', name: 'Poland' },
+    { code: 'PT', name: 'Portugal' },
+    { code: 'SE', name: 'Sweden' },
+    { code: 'SG', name: 'Singapore' },
+    { code: 'US', name: 'United States' },
+    { code: 'ZA', name: 'South Africa' },
+    { code: 'OTHER', name: 'Other' }
+];
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -637,13 +669,16 @@ const StepProfile = ({ data, updateData, session }) => {
                     </div>
                     <div class="form-group">
                         <label class="form-label">Country</label>
-                        <input
-                            type="text"
+                        <select
                             class="premium-input"
-                            placeholder="e.g., Germany"
                             value=${String(data.location_country || '')}
-                            onInput=${(e) => updateData('location_country', e.target.value)}
-                        />
+                            onChange=${(e) => updateData('location_country', e.target.value)}
+                        >
+                            <option value="">Select country...</option>
+                            ${COUNTRIES.map(country => html`
+                                <option key=${country.code} value=${country.name}>${country.name}</option>
+                            `)}
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Years of Experience</label>
