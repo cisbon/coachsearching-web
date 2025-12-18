@@ -370,7 +370,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                         ${STEPS.map((step, index) => html`
                             <div
                                 key=${step.id}
-                                class="progress-step-indicator ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}"
+                                class=${`progress-step-indicator ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
                             >
                                 <div class="step-dot">
                                     ${index < currentStep ? '✓' : step.icon}
@@ -477,6 +477,20 @@ const StepProfile = ({ data, updateData, session }) => {
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
 
+    // DEBUG: Log data to console to identify React error #62 cause
+    console.log('StepProfile data:', data);
+    console.log('StepProfile data types:', {
+        full_name: typeof data.full_name,
+        professional_title: typeof data.professional_title,
+        bio: typeof data.bio,
+        avatar_url: typeof data.avatar_url,
+        location_city: typeof data.location_city,
+        location_country: typeof data.location_country,
+        years_experience: typeof data.years_experience,
+        specialties: Array.isArray(data.specialties) ? 'array' : typeof data.specialties,
+        languages: Array.isArray(data.languages) ? 'array' : typeof data.languages
+    });
+
     const handleFileSelect = async (file) => {
         if (!file || !file.type.startsWith('image/')) {
             alert('Please select an image file');
@@ -532,7 +546,7 @@ const StepProfile = ({ data, updateData, session }) => {
             <!-- Avatar Upload -->
             <div class="avatar-upload-section">
                 <div
-                    class="avatar-upload-zone ${dragOver ? 'dragging' : ''} ${data.avatar_url ? 'has-image' : ''}"
+                    class=${`avatar-upload-zone ${dragOver ? 'dragging' : ''} ${data.avatar_url ? 'has-image' : ''}`}
                     onClick=${() => fileInputRef.current?.click()}
                     onDrop=${(e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files[0]); }}
                     onDragOver=${(e) => { e.preventDefault(); setDragOver(true); }}
@@ -620,7 +634,7 @@ const StepProfile = ({ data, updateData, session }) => {
                         onInput=${(e) => updateData('bio', e.target.value)}
                         maxLength="500"
                     ></textarea>
-                    <div class="char-counter ${(data.bio?.length || 0) > 450 ? 'warning' : ''} ${(data.bio?.length || 0) > 480 ? 'danger' : ''}">
+                    <div class=${`char-counter ${(data.bio?.length || 0) > 450 ? 'warning' : ''} ${(data.bio?.length || 0) > 480 ? 'danger' : ''}`}>
                         ${String(data.bio || '').length} / 500
                     </div>
                 </div>
