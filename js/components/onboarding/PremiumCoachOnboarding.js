@@ -405,6 +405,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     updateData=${updateData}
                     loading=${loading}
                     onComplete=${completeOnboarding}
+                    onBack=${prevStep}
                     onReferralChange=${handleReferralCodeChange}
                     languages=${lookupOptions.languages}
                     getLocalizedName=${getLocalizedName}
@@ -889,7 +890,7 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                                         style=${{ width: '24px', height: '18px', borderRadius: '2px', objectFit: 'cover' }}
                                         loading="lazy"
                                     />
-                                ` : html`<span class="language-flag">🌐</span>`}
+                                ` : html`<span class="language-flag" style=${{ fontSize: '14px', lineHeight: '18px' }}>🌐</span>`}
                                 <span class="language-name">${String(getLocalizedName(lang))}</span>
                             </button>
                         `;
@@ -1029,7 +1030,7 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
 // STEP 4: LAUNCH
 // ============================================================================
 
-const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, languages = [], getLocalizedName }) => {
+const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralChange, languages = [], getLocalizedName }) => {
     const FREE_FEATURES = [
         'Basic profile listing',
         'Up to 5 client connections/month',
@@ -1178,14 +1179,24 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
                     ` : null}
                 </div>
 
-                <button
-                    class="btn-primary btn-success"
-                    style=${{ fontSize: '1.25rem', padding: '1.25rem 3rem', width: '100%' }}
-                    onClick=${onComplete}
-                    disabled=${loading}
-                >
-                    ${launchButtonText}
-                </button>
+                <div style=${{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <button
+                        class="btn-secondary"
+                        style=${{ fontSize: '1rem', padding: '1.25rem 1.5rem' }}
+                        onClick=${onBack}
+                        disabled=${loading}
+                    >
+                        ← ${t('onboard.premium.back')}
+                    </button>
+                    <button
+                        class="btn-primary btn-success"
+                        style=${{ fontSize: '1.25rem', padding: '1.25rem 3rem', flex: 1 }}
+                        onClick=${onComplete}
+                        disabled=${loading}
+                    >
+                        ${launchButtonText}
+                    </button>
+                </div>
 
                 ${isPremiumSelected && !data.referral_code_valid ? html`
                     <p style=${{ textAlign: 'center', fontSize: '0.875rem', color: '#666', marginTop: '1rem' }}>
