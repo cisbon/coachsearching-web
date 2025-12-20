@@ -275,9 +275,16 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             const userId = session.user.id;
 
             // Prepare coach profile data
+            // Generate slug from full name
+            const fullName = data.full_name || session.user.email.split('@')[0];
+            const baseSlug = fullName.toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '');
+            const slug = `${baseSlug}-${userId.substring(0, 8)}`;
+
             const coachData = {
                 user_id: userId,
-                full_name: data.full_name || session.user.email.split('@')[0],
+                full_name: fullName,
                 title: data.professional_title,
                 bio: data.bio,
                 avatar_url: data.avatar_url,
@@ -286,10 +293,12 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 years_experience: parseInt(data.years_experience) || 0,
                 specialties: data.specialties,
                 languages: data.languages,
-                session_formats: data.session_formats,
+                session_types: data.session_formats, // DB column is session_types
                 hourly_rate: parseFloat(data.hourly_rate) || 0,
                 currency: 'EUR',
-                is_active: true
+                is_active: true,
+                onboarding_completed: true,
+                slug: slug
             };
 
             // Check if coach profile exists
@@ -300,10 +309,11 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 .single();
 
             if (existingCoach) {
-                // Update existing
+                // Update existing - don't update slug
+                const { slug, ...updateData } = coachData;
                 const { error } = await supabase
                     .from('cs_coaches')
-                    .update(coachData)
+                    .update(updateData)
                     .eq('user_id', userId);
                 if (error) throw error;
             } else {
