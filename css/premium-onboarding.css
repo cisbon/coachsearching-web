@@ -288,7 +288,11 @@ html:has(.welcome-fullscreen)::-webkit-scrollbar {
     .welcome-fullscreen {
         overflow-y: auto;
         align-items: flex-start;
-        padding-top: 0;
+    }
+
+    .welcome-content {
+        max-height: none;
+        padding-top: 1rem;
         padding-bottom: 2rem;
     }
 }
