@@ -807,15 +807,17 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                                     background: isSelected ? 'var(--petrol-50)' : '#fff',
                                     cursor: 'pointer',
                                     display: 'flex',
-                                    alignItems: 'center',
+                                    alignItems: 'flex-start',
                                     gap: '0.5rem',
                                     fontSize: '0.9rem',
                                     transition: 'all 0.2s ease',
-                                    opacity: isDisabled ? 0.5 : 1
+                                    opacity: isDisabled ? 0.5 : 1,
+                                    textAlign: 'left',
+                                    wordBreak: 'break-word'
                                 }}
                             >
-                                <span>${String(specialty.icon || '🎯')}</span>
-                                <span>${String(getLocalizedName(specialty))}</span>
+                                <span style=${{ flexShrink: 0 }}>${String(specialty.icon || '🎯')}</span>
+                                <span style=${{ textAlign: 'left' }}>${String(getLocalizedName(specialty))}</span>
                             </button>
                         `;
                     })}
