@@ -29,6 +29,18 @@ const STEPS = [
     { id: 'launch', label: 'Launch', icon: '4' }
 ];
 
+// Flag CDN for SVG flag images
+const FLAG_CDN = 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3';
+
+// Language code to flag country code mapping
+const LANGUAGE_TO_FLAG = {
+    'en': 'gb', 'de': 'de', 'es': 'es', 'fr': 'fr', 'it': 'it',
+    'nl': 'nl', 'pt': 'pt', 'ru': 'ru', 'zh': 'cn', 'ja': 'jp',
+    'ko': 'kr', 'ar': 'sa', 'hi': 'in', 'pl': 'pl', 'sv': 'se',
+    'no': 'no', 'da': 'dk', 'fi': 'fi', 'el': 'gr', 'tr': 'tr',
+    'cs': 'cz', 'ro': 'ro', 'hu': 'hu', 'uk': 'ua'
+};
+
 // Session durations (kept hardcoded as they rarely change)
 const SESSION_DURATIONS = [
     { value: 30, label: '30 min' },
@@ -807,6 +819,7 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                     ${languages.map(lang => {
                         const isSelected = (data.languages || []).includes(lang.code);
                         const langClass = 'language-option' + (isSelected ? ' selected' : '');
+                        const flagCode = LANGUAGE_TO_FLAG[lang.code];
                         return html`
                             <button
                                 key=${lang.code}
@@ -814,7 +827,15 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                                 class=${langClass}
                                 onClick=${() => toggleLanguage(lang.code)}
                             >
-                                <span class="language-flag">${String(lang.icon || '🌐')}</span>
+                                ${flagCode ? html`
+                                    <img
+                                        src="${FLAG_CDN}/${flagCode}.svg"
+                                        alt=${getLocalizedName(lang)}
+                                        class="language-flag-img"
+                                        style=${{ width: '24px', height: '18px', borderRadius: '2px', objectFit: 'cover' }}
+                                        loading="lazy"
+                                    />
+                                ` : html`<span class="language-flag">🌐</span>`}
                                 <span class="language-name">${String(getLocalizedName(lang))}</span>
                             </button>
                         `;
