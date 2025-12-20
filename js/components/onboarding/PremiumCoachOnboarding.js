@@ -120,7 +120,7 @@ const loadSavedProgress = (userId) => {
         return {
             data: sanitizedData,
             step: parsed.step || 0,
-            showWelcome: parsed.step <= 0
+            showWelcome: parsed.showWelcome !== undefined ? parsed.showWelcome : (parsed.step <= 0)
         };
     } catch (e) {
         console.error('Failed to load saved onboarding data:', e);
@@ -211,11 +211,12 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
     }, [session?.user?.user_metadata?.full_name]);
 
     // Auto-save progress
-    const saveProgress = useCallback((stepIndex, formData) => {
+    const saveProgress = useCallback((stepIndex, formData, isWelcomeVisible = false) => {
         if (session?.user?.id) {
             localStorage.setItem(`premium_onboarding_${session.user.id}`, JSON.stringify({
                 step: stepIndex,
                 data: formData,
+                showWelcome: isWelcomeVisible,
                 timestamp: Date.now()
             }));
         }
@@ -233,7 +234,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
     // Navigation
     const goToStep = (step) => {
         setCurrentStep(step);
-        saveProgress(step, data);
+        saveProgress(step, data, false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -251,6 +252,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
 
     const startOnboarding = () => {
         setShowWelcome(false);
+        saveProgress(0, data, false);
     };
 
     // Complete onboarding
