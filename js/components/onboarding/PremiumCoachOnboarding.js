@@ -274,18 +274,6 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             const supabase = window.supabaseClient;
             const userId = session.user.id;
 
-            // Determine premium status
-            const isPremium = data.plan_type === 'premium';
-            const hasValidReferral = data.referral_code_valid && data.referral_code;
-
-            // Calculate premium expiry (1 year from now if valid referral)
-            let premiumExpiresAt = null;
-            if (isPremium && hasValidReferral) {
-                const oneYearFromNow = new Date();
-                oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-                premiumExpiresAt = oneYearFromNow.toISOString();
-            }
-
             // Prepare coach profile data
             const coachData = {
                 user_id: userId,
@@ -301,12 +289,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 session_formats: data.session_formats,
                 hourly_rate: parseFloat(data.hourly_rate) || 0,
                 currency: 'EUR',
-                is_active: true,
-                is_premium: isPremium,
-                premium_expires_at: premiumExpiresAt,
-                referral_code_used: hasValidReferral ? data.referral_code.trim().toUpperCase() : null,
-                onboarding_completed: true,
-                onboarding_completed_at: new Date().toISOString()
+                is_active: true
             };
 
             // Check if coach profile exists
