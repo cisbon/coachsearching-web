@@ -32,7 +32,11 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
     // Fetch live reviews data from database
     useEffect(() => {
         const fetchReviewsData = async () => {
-            if (window.supabaseClient && coach.id) {
+            // Only query if coach.id is a valid UUID (not integer mock IDs)
+            const isValidUUID = typeof coach.id === 'string' &&
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(coach.id);
+
+            if (window.supabaseClient && isValidUUID) {
                 try {
                     const { data, error } = await window.supabaseClient
                         .from('cs_reviews')
@@ -46,13 +50,14 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                             : 0;
                         setLiveReviewsData({ rating: avgRating, count, loaded: true });
                     } else {
-                        // Silently handle missing table or errors
                         setLiveReviewsData({ rating: 0, count: 0, loaded: true });
                     }
                 } catch {
-                    // Silently handle errors (table may not exist)
                     setLiveReviewsData({ rating: 0, count: 0, loaded: true });
                 }
+            } else {
+                // Skip query for non-UUID IDs (mock data)
+                setLiveReviewsData({ rating: 0, count: 0, loaded: true });
             }
         };
         fetchReviewsData();
