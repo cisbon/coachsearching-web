@@ -1106,7 +1106,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                     </button>
                     <button
                         class="btn-primary btn-success"
-                        style=${{ fontSize: '1.25rem', padding: '1.25rem 3rem', flex: 1, textAlign: 'center' }}
+                        style=${{ fontSize: '1.25rem', padding: '1.25rem 3rem', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                         onClick=${onComplete}
                         disabled=${loading}
                     >

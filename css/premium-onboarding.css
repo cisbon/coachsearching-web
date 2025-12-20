@@ -255,7 +255,7 @@
 
 .card-footer {
     padding: 1.5rem 3rem;
-    background: var(--petrol-50);
+    background: white;
     border-top: 1px solid var(--petrol-100);
     display: flex;
     justify-content: space-between;
