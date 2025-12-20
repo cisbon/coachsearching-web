@@ -302,22 +302,28 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             };
 
             // Ensure cs_users record exists (required for foreign key)
-            const { error: userError } = await supabase
+            const { data: existingUser } = await supabase
                 .from('cs_users')
-                .upsert({
-                    id: userId,
-                    email: session.user.email,
-                    full_name: fullName,
-                    user_type: 'coach',
-                    role: 'coach',
-                    avatar_url: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'id' });
+                .select('id')
+                .eq('id', userId)
+                .single();
 
-            if (userError) {
-                console.error('Error ensuring user record:', userError);
-                throw userError; // Fail if we can't create user record
+            if (!existingUser) {
+                // User doesn't exist, create it
+                const { error: userError } = await supabase
+                    .from('cs_users')
+                    .insert({
+                        id: userId,
+                        email: session.user.email,
+                        full_name: fullName,
+                        user_type: 'coach',
+                        avatar_url: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`
+                    });
+
+                if (userError) {
+                    console.error('Error creating user record:', userError);
+                    throw userError;
+                }
             }
 
             // Check if coach profile exists
