@@ -938,8 +938,8 @@
 }
 
 .btn-stepper {
-    width: 48px;
-    height: 48px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     border: 2px solid var(--petrol);
     background: white;
@@ -1107,6 +1107,23 @@
 .pricing-suffix {
     font-size: 1rem;
     color: var(--petrol-500);
+}
+
+.no-fee-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.no-fee-icon {
+    font-size: 1.25rem;
 }
 
 .pricing-breakdown {

@@ -877,18 +877,6 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
         updateData('session_formats', newFormats);
     };
 
-    const toggleDuration = (duration) => {
-        const durations = data.session_durations || [];
-        const newDurations = durations.includes(duration)
-            ? durations.filter(d => d !== duration)
-            : [...durations, duration];
-        updateData('session_durations', newDurations);
-    };
-
-    const hourlyRate = parseFloat(data.hourly_rate) || 0;
-    const platformFee = (hourlyRate * 0.15).toFixed(2);
-    const netEarnings = (hourlyRate * 0.85).toFixed(2);
-
     return html`
         <div class="slide-up">
             <div class="step-header">
@@ -924,31 +912,6 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
             </div>
 
             <div class="form-section">
-                <div class="form-section-title">⏱️ ${t('onboard.premium.sessionDurations')}</div>
-                <div class="form-hint">
-                    ${t('onboard.premium.sessionDurationsHint')}
-                </div>
-
-                <div class="language-grid">
-                    ${SESSION_DURATIONS.map(dur => {
-                        const isSelected = (data.session_durations || []).includes(dur.value);
-                        const durClass = 'language-option' + (isSelected ? ' selected' : '');
-                        return html`
-                            <button
-                                key=${dur.value}
-                                type="button"
-                                class=${durClass}
-                                onClick=${() => toggleDuration(dur.value)}
-                            >
-                                <span class="language-flag">⏰</span>
-                                <span class="language-name">${String(dur.label)}</span>
-                            </button>
-                        `;
-                    })}
-                </div>
-            </div>
-
-            <div class="form-section">
                 <div class="form-section-title">💰 ${t('onboard.premium.hourlyRate')}</div>
                 <div class="form-hint">
                     ${t('onboard.premium.hourlyRateHint')}
@@ -967,23 +930,10 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                     <span class="pricing-suffix">${t('onboard.premium.perHour')}</span>
                 </div>
 
-                ${hourlyRate > 0 ? html`
-                    <div class="pricing-breakdown">
-                        <div class="pricing-breakdown-title">${t('onboard.premium.earningsBreakdown')}</div>
-                        <div class="pricing-row">
-                            <span>${t('onboard.premium.clientPays')}</span>
-                            <span>€${String(hourlyRate.toFixed(2))}</span>
-                        </div>
-                        <div class="pricing-row">
-                            <span>${t('onboard.premium.platformFee')}</span>
-                            <span>-€${String(platformFee)}</span>
-                        </div>
-                        <div class="pricing-row total">
-                            <span>${t('onboard.premium.youReceive')}</span>
-                            <span>€${String(netEarnings)}</span>
-                        </div>
-                    </div>
-                ` : null}
+                <div class="no-fee-notice">
+                    <span class="no-fee-icon">✨</span>
+                    <span>${t('onboard.premium.noFeeNotice')}</span>
+                </div>
             </div>
         </div>
     `;
@@ -1153,7 +1103,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                     </button>
                     <button
                         class="btn-primary btn-success"
-                        style=${{ fontSize: '1.25rem', padding: '1.25rem 3rem', flex: 1 }}
+                        style=${{ fontSize: '1.25rem', padding: '1.25rem 3rem', flex: 1, textAlign: 'center' }}
                         onClick=${onComplete}
                         disabled=${loading}
                     >

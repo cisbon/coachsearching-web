@@ -422,6 +422,7 @@ const translations = {
         "onboard.premium.skipForNow": "Skip for now",
         "onboard.premium.selected": "selected",
         "onboard.premium.perHour": "per hour",
+        "onboard.premium.noFeeNotice": "coachsearching.com does not charge any platform fees — you keep 100% of your earnings",
 
         // Trust Building - Coach Profile
         "trust.excellent": "Excellent",
@@ -2385,6 +2386,7 @@ const translations = {
         "onboard.premium.skipForNow": "Vorerst überspringen",
         "onboard.premium.selected": "ausgewählt",
         "onboard.premium.perHour": "pro Stunde",
+        "onboard.premium.noFeeNotice": "coachsearching.com erhebt keine Plattformgebühren — Sie behalten 100% Ihrer Einnahmen",
 
         // Quiz
         "quiz.back": "Zurück",
@@ -3868,6 +3870,7 @@ const translations = {
         "onboard.premium.skipForNow": "Saltar por ahora",
         "onboard.premium.selected": "seleccionado(s)",
         "onboard.premium.perHour": "por hora",
+        "onboard.premium.noFeeNotice": "coachsearching.com no cobra ninguna comisión — conservas el 100% de tus ganancias",
 
         // Quiz (Spanish)
         "quiz.back": "Atrás",
@@ -5223,6 +5226,7 @@ const translations = {
         "onboard.premium.skipForNow": "Passer pour l'instant",
         "onboard.premium.selected": "sélectionné(s)",
         "onboard.premium.perHour": "par heure",
+        "onboard.premium.noFeeNotice": "coachsearching.com ne prélève aucune commission — vous conservez 100% de vos gains",
 
         // Quiz (French)
         "quiz.back": "Retour",
@@ -6588,6 +6592,7 @@ const translations = {
         "onboard.premium.skipForNow": "Salta per ora",
         "onboard.premium.selected": "selezionato/i",
         "onboard.premium.perHour": "all'ora",
+        "onboard.premium.noFeeNotice": "coachsearching.com non applica commissioni — mantieni il 100% dei tuoi guadagni",
 
         // Quiz (Italian)
         "quiz.back": "Indietro",
