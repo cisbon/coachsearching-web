@@ -301,6 +301,24 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 slug: slug
             };
 
+            // Ensure cs_users record exists (required for foreign key)
+            const { error: userError } = await supabase
+                .from('cs_users')
+                .upsert({
+                    id: userId,
+                    email: session.user.email,
+                    full_name: fullName,
+                    user_type: 'coach',
+                    role: 'coach',
+                    avatar_url: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'id' });
+
+            if (userError) {
+                console.error('Error ensuring user record:', userError);
+                // Continue anyway - the record might already exist
+            }
+
             // Check if coach profile exists
             const { data: existingCoach } = await supabase
                 .from('cs_coaches')
