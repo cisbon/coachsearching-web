@@ -292,8 +292,13 @@ html:has(.welcome-fullscreen)::-webkit-scrollbar {
 
     .welcome-content {
         max-height: none;
-        padding-top: 1rem;
+        padding-top: 0;
         padding-bottom: 2rem;
+        margin-top: 0;
+    }
+
+    .welcome-badge {
+        margin-top: 1rem;
     }
 }
 
