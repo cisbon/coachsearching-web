@@ -54,25 +54,19 @@
     overflow: hidden;
 }
 
-/* Hide scrollbar on body when welcome screen is active */
-body:has(.welcome-fullscreen) {
-    overflow: hidden;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
+/* Hide scrollbar on body when welcome screen is active - only on large screens */
+@media (min-height: 801px) {
+    body:has(.welcome-fullscreen),
+    html:has(.welcome-fullscreen) {
+        overflow: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
 
-body:has(.welcome-fullscreen)::-webkit-scrollbar {
-    display: none;
-}
-
-html:has(.welcome-fullscreen) {
-    overflow: hidden;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-html:has(.welcome-fullscreen)::-webkit-scrollbar {
-    display: none;
+    body:has(.welcome-fullscreen)::-webkit-scrollbar,
+    html:has(.welcome-fullscreen)::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 .premium-onboarding::before {
