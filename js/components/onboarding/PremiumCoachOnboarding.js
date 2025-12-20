@@ -460,7 +460,7 @@ const WelcomeScreen = ({ onStart, onSkip }) => {
                     </div>
 
                     <h1 class="welcome-title">
-                        ${t('onboard.premium.welcomeTitle')} <span>CoachSearching</span>
+                        ${t('onboard.premium.welcomeTitle')} <span class="brand-name">coach<span class="brand-highlight">searching</span>.com</span>
                     </h1>
 
                     <p class="welcome-subtitle">

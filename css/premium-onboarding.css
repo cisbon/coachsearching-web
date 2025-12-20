@@ -51,7 +51,7 @@
     min-height: 100vh;
     background: var(--gradient-premium);
     position: relative;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .premium-onboarding::before {
@@ -243,13 +243,27 @@
 
 .welcome-fullscreen {
     position: fixed;
-    inset: 0;
+    top: 70px; /* Account for navbar height */
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: var(--gradient-premium);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 100;
     overflow: hidden;
+}
+
+/* Hide scrollbar on welcome screen */
+.premium-onboarding .welcome-fullscreen {
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.premium-onboarding .welcome-fullscreen::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Opera */
 }
 
 .welcome-fullscreen::before {
@@ -355,11 +369,15 @@
     animation: fadeSlideUp 0.6s var(--ease-smooth) 0.5s both;
 }
 
-.welcome-title span {
-    background: linear-gradient(135deg, var(--petrol-light), #ffffff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+.welcome-title .brand-name {
+    color: white;
+    -webkit-text-fill-color: white;
+    background: none;
+}
+
+.welcome-title .brand-highlight {
+    color: var(--petrol-light);
+    -webkit-text-fill-color: var(--petrol-light);
 }
 
 @keyframes fadeSlideUp {
