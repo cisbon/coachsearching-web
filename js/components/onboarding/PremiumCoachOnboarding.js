@@ -311,12 +311,13 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     user_type: 'coach',
                     role: 'coach',
                     avatar_url: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                    created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id' });
 
             if (userError) {
                 console.error('Error ensuring user record:', userError);
-                // Continue anyway - the record might already exist
+                throw userError; // Fail if we can't create user record
             }
 
             // Check if coach profile exists
