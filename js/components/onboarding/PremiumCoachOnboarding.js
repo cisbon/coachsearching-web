@@ -549,7 +549,6 @@ const StepProfile = ({ data, updateData, session }) => {
     return html`
         <div class="slide-up">
             <div class="step-header">
-                <div class="step-number">${t('onboard.premium.stepOf').replace('{current}', '1').replace('{total}', '4')}</div>
                 <h2 class="step-title">${t('onboard.premium.step1Title')}</h2>
                 <p class="step-description">
                     ${t('onboard.premium.step1Desc')}
@@ -647,7 +646,7 @@ const StepProfile = ({ data, updateData, session }) => {
             </div>
 
             <div class="form-section">
-                <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div class="form-group">
                         <label class="form-label">${t('onboard.premium.city')}</label>
                         <input
@@ -670,17 +669,6 @@ const StepProfile = ({ data, updateData, session }) => {
                                 <option key=${country.code} value=${country.name}>${country.name}</option>
                             `)}
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">${t('onboard.premium.yearsExperience')}</label>
-                        <input
-                            type="number"
-                            class="premium-input"
-                            placeholder="e.g., 5"
-                            min="0"
-                            value=${String(data.years_experience || '')}
-                            onInput=${(e) => updateData('years_experience', e.target.value)}
-                        />
                     </div>
                 </div>
             </div>
@@ -719,11 +707,25 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
     return html`
         <div class="slide-up">
             <div class="step-header">
-                <div class="step-number">${t('onboard.premium.stepOf').replace('{current}', '2').replace('{total}', '4')}</div>
                 <h2 class="step-title">${t('onboard.premium.step2Title')}</h2>
                 <p class="step-description">
                     ${t('onboard.premium.step2Desc')}
                 </p>
+            </div>
+
+            <div class="form-section">
+                <div class="form-group">
+                    <label class="form-label">${t('onboard.premium.yearsExperience')}</label>
+                    <input
+                        type="number"
+                        class="premium-input"
+                        placeholder="e.g., 5"
+                        min="0"
+                        style=${{ maxWidth: '200px' }}
+                        value=${String(data.years_experience || '')}
+                        onInput=${(e) => updateData('years_experience', e.target.value)}
+                    />
+                </div>
             </div>
 
             <div class="form-section">
@@ -842,7 +844,6 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
     return html`
         <div class="slide-up">
             <div class="step-header">
-                <div class="step-number">${t('onboard.premium.stepOf').replace('{current}', '3').replace('{total}', '4')}</div>
                 <h2 class="step-title">${t('onboard.premium.step3Title')}</h2>
                 <p class="step-description">
                     ${t('onboard.premium.step3Desc')}
@@ -980,7 +981,6 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
         <div class="slide-up">
             <div class="completion-screen">
                 <div class="step-header" style=${{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <div class="step-number">${t('onboard.premium.stepOf').replace('{current}', '4').replace('{total}', '4')}</div>
                     <h2 class="step-title">${t('onboard.premium.step4Title')}</h2>
                     <p class="step-description">
                         ${t('onboard.premium.step4Desc')}
