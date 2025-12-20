@@ -424,15 +424,11 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                                 onClick=${prevStep}
                                 disabled=${currentStep === 0}
                             >
-                                ← Back
-                            </button>
-
-                            <button class="btn-text" onClick=${skipOnboarding}>
-                                Skip for now
+                                ← ${t('onboard.premium.back')}
                             </button>
 
                             <button class="btn-primary" onClick=${nextStep}>
-                                Continue →
+                                ${t('onboard.premium.continue')} →
                             </button>
                         </footer>
                     `}
@@ -553,11 +549,10 @@ const StepProfile = ({ data, updateData, session }) => {
     return html`
         <div class="slide-up">
             <div class="step-header">
-                <div class="step-number">Step 1 of 4</div>
-                <h2 class="step-title">Let's build your profile</h2>
+                <div class="step-number">${t('onboard.premium.stepOf').replace('{current}', '1').replace('{total}', '4')}</div>
+                <h2 class="step-title">${t('onboard.premium.step1Title')}</h2>
                 <p class="step-description">
-                    This is how clients will discover and connect with you.
-                    Make a great first impression!
+                    ${t('onboard.premium.step1Desc')}
                 </p>
             </div>
 
@@ -572,17 +567,17 @@ const StepProfile = ({ data, updateData, session }) => {
                     ${data.avatar_url ? html`
                         <img src=${data.avatar_url} alt="Profile" class="avatar-preview" />
                         <div class="avatar-overlay">
-                            <span class="avatar-overlay-text">Change photo</span>
+                            <span class="avatar-overlay-text">${t('onboard.premium.changePhoto')}</span>
                         </div>
                     ` : html`
                         <div class="avatar-placeholder">
                             <div class="avatar-placeholder-icon">📷</div>
-                            <div class="avatar-placeholder-text">Upload Photo</div>
+                            <div class="avatar-placeholder-text">${t('onboard.premium.uploadPhoto')}</div>
                         </div>
                     `}
                     ${uploading ? html`
                         <div class="avatar-overlay" style=${{ opacity: 1 }}>
-                            <span class="avatar-overlay-text">Uploading...</span>
+                            <span class="avatar-overlay-text">...</span>
                         </div>
                     ` : null}
                 </div>
@@ -595,12 +590,12 @@ const StepProfile = ({ data, updateData, session }) => {
                 />
 
                 <div class="avatar-tips">
-                    <div class="avatar-tips-title">Photo Tips</div>
+                    <div class="avatar-tips-title">${t('onboard.premium.photoTips')}</div>
                     <ul class="avatar-tips-list">
-                        <li>Use a professional headshot</li>
-                        <li>Good lighting, neutral background</li>
-                        <li>Smile warmly - clients love it!</li>
-                        <li>Square crop works best</li>
+                        <li>${t('onboard.premium.photoTip1')}</li>
+                        <li>${t('onboard.premium.photoTip2')}</li>
+                        <li>${t('onboard.premium.photoTip3')}</li>
+                        <li>${t('onboard.premium.photoTip4')}</li>
                     </ul>
                 </div>
             </div>
@@ -608,7 +603,7 @@ const StepProfile = ({ data, updateData, session }) => {
             <div class="form-section">
                 <div class="form-group">
                     <label class="form-label">
-                        Full Name <span class="required">*</span>
+                        ${t('onboard.premium.fullName')} <span class="required">*</span>
                     </label>
                     <input
                         type="text"
@@ -621,11 +616,8 @@ const StepProfile = ({ data, updateData, session }) => {
 
                 <div class="form-group">
                     <label class="form-label">
-                        Professional Title <span class="required">*</span>
+                        ${t('onboard.premium.professionalTitle')} <span class="required">*</span>
                     </label>
-                    <div class="form-hint">
-                        A clear title helps clients find you
-                    </div>
                     <input
                         type="text"
                         class="premium-input"
@@ -638,13 +630,12 @@ const StepProfile = ({ data, updateData, session }) => {
 
             <div class="form-section">
                 <div class="form-group">
-                    <label class="form-label">About You</label>
+                    <label class="form-label">${t('onboard.premium.aboutYou')}</label>
                     <div class="form-hint">
-                        Tell potential clients about your background and approach
+                        ${t('onboard.premium.aboutYouHint')}
                     </div>
                     <textarea
                         class="premium-input premium-textarea"
-                        placeholder="I'm passionate about helping professionals unlock their potential..."
                         value=${String(data.bio || '')}
                         onInput=${(e) => updateData('bio', e.target.value)}
                         maxLength="500"
@@ -658,7 +649,7 @@ const StepProfile = ({ data, updateData, session }) => {
             <div class="form-section">
                 <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                     <div class="form-group">
-                        <label class="form-label">City</label>
+                        <label class="form-label">${t('onboard.premium.city')}</label>
                         <input
                             type="text"
                             class="premium-input"
@@ -668,20 +659,20 @@ const StepProfile = ({ data, updateData, session }) => {
                         />
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Country</label>
+                        <label class="form-label">${t('onboard.premium.country')}</label>
                         <select
                             class="premium-input"
                             value=${String(data.location_country || '')}
                             onChange=${(e) => updateData('location_country', e.target.value)}
                         >
-                            <option value="">Select country...</option>
+                            <option value="">...</option>
                             ${COUNTRIES.map(country => html`
                                 <option key=${country.code} value=${country.name}>${country.name}</option>
                             `)}
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Years of Experience</label>
+                        <label class="form-label">${t('onboard.premium.yearsExperience')}</label>
                         <input
                             type="number"
                             class="premium-input"
@@ -728,17 +719,17 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
     return html`
         <div class="slide-up">
             <div class="step-header">
-                <div class="step-number">Step 2 of 4</div>
-                <h2 class="step-title">Your Expertise</h2>
+                <div class="step-number">${t('onboard.premium.stepOf').replace('{current}', '2').replace('{total}', '4')}</div>
+                <h2 class="step-title">${t('onboard.premium.step2Title')}</h2>
                 <p class="step-description">
-                    Help clients understand what you specialize in and how they can work with you.
+                    ${t('onboard.premium.step2Desc')}
                 </p>
             </div>
 
             <div class="form-section">
-                <div class="form-section-title">🎯 Your Specialties</div>
+                <div class="form-section-title">🎯 ${t('onboard.premium.specialties')}</div>
                 <div class="form-hint">
-                    Select up to 10 areas you specialize in.
+                    ${t('onboard.premium.specialtiesHint')}
                 </div>
 
                 ${selectedCount > 0 ? html`
@@ -796,9 +787,9 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
             </div>
 
             <div class="form-section">
-                <div class="form-section-title">🌍 Languages You Coach In</div>
+                <div class="form-section-title">🌍 ${t('onboard.premium.languages')}</div>
                 <div class="form-hint">
-                    Select all languages you can conduct coaching sessions in.
+                    ${t('onboard.premium.languagesHint')}
                 </div>
 
                 <div class="language-grid">
@@ -851,17 +842,17 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
     return html`
         <div class="slide-up">
             <div class="step-header">
-                <div class="step-number">Step 3 of 4</div>
-                <h2 class="step-title">Services & Pricing</h2>
+                <div class="step-number">${t('onboard.premium.stepOf').replace('{current}', '3').replace('{total}', '4')}</div>
+                <h2 class="step-title">${t('onboard.premium.step3Title')}</h2>
                 <p class="step-description">
-                    Define how clients can book sessions with you and set your rates.
+                    ${t('onboard.premium.step3Desc')}
                 </p>
             </div>
 
             <div class="form-section">
-                <div class="form-section-title">💬 Session Formats</div>
+                <div class="form-section-title">💬 ${t('onboard.premium.sessionFormats')}</div>
                 <div class="form-hint">
-                    Select all formats you offer. Most coaches offer video at minimum.
+                    ${t('onboard.premium.sessionFormatsHint')}
                 </div>
 
                 <div class="format-grid">
@@ -884,9 +875,9 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
             </div>
 
             <div class="form-section">
-                <div class="form-section-title">⏱️ Session Durations</div>
+                <div class="form-section-title">⏱️ ${t('onboard.premium.sessionDurations')}</div>
                 <div class="form-hint">
-                    Select all session lengths you want to offer.
+                    ${t('onboard.premium.sessionDurationsHint')}
                 </div>
 
                 <div class="language-grid">
@@ -909,9 +900,9 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
             </div>
 
             <div class="form-section">
-                <div class="form-section-title">💰 Your Hourly Rate</div>
+                <div class="form-section-title">💰 ${t('onboard.premium.hourlyRate')}</div>
                 <div class="form-hint">
-                    Set your base hourly rate. You can create packages later.
+                    ${t('onboard.premium.hourlyRateHint')}
                 </div>
 
                 <div class="pricing-input-group">
@@ -924,22 +915,22 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                         value=${String(data.hourly_rate || '')}
                         onInput=${(e) => updateData('hourly_rate', e.target.value)}
                     />
-                    <span class="pricing-suffix">per hour</span>
+                    <span class="pricing-suffix">${t('onboard.premium.perHour')}</span>
                 </div>
 
                 ${hourlyRate > 0 ? html`
                     <div class="pricing-breakdown">
-                        <div class="pricing-breakdown-title">Earnings Breakdown</div>
+                        <div class="pricing-breakdown-title">${t('onboard.premium.earningsBreakdown')}</div>
                         <div class="pricing-row">
-                            <span>Client pays</span>
+                            <span>${t('onboard.premium.clientPays')}</span>
                             <span>€${String(hourlyRate.toFixed(2))}</span>
                         </div>
                         <div class="pricing-row">
-                            <span>Platform fee (15%)</span>
+                            <span>${t('onboard.premium.platformFee')}</span>
                             <span>-€${String(platformFee)}</span>
                         </div>
                         <div class="pricing-row total">
-                            <span>You receive</span>
+                            <span>${t('onboard.premium.youReceive')}</span>
                             <span>€${String(netEarnings)}</span>
                         </div>
                     </div>
@@ -982,17 +973,17 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
     };
 
     const launchButtonText = loading
-        ? 'Launching...'
-        : (isPremiumSelected && !data.referral_code_valid ? '🚀 Launch & Subscribe to Premium' : '🚀 Launch My Profile');
+        ? '...'
+        : (isPremiumSelected && !data.referral_code_valid ? '🚀 ' + t('onboard.premium.launchPremium') : '🚀 ' + t('onboard.premium.launchProfile'));
 
     return html`
         <div class="slide-up">
             <div class="completion-screen">
                 <div class="step-header" style=${{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <div class="step-number">Step 4 of 4</div>
-                    <h2 class="step-title">Choose Your Plan</h2>
+                    <div class="step-number">${t('onboard.premium.stepOf').replace('{current}', '4').replace('{total}', '4')}</div>
+                    <h2 class="step-title">${t('onboard.premium.step4Title')}</h2>
                     <p class="step-description">
-                        Select the plan that works best for you. You can always upgrade later.
+                        ${t('onboard.premium.step4Desc')}
                     </p>
                 </div>
 
@@ -1011,7 +1002,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
                     >
                         <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                             <span style=${{ fontSize: '1.5rem' }}>🆓</span>
-                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>Free</h3>
+                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>${t('onboard.premium.freePlan')}</h3>
                         </div>
                         <div style=${{ fontSize: '2rem', fontWeight: 700, color: 'var(--petrol)', marginBottom: '1rem' }}>
                             €0<span style=${{ fontSize: '1rem', fontWeight: 400 }}>/month</span>
@@ -1039,11 +1030,11 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
                         }}
                     >
                         <div style=${{ position: 'absolute', top: '-10px', right: '10px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
-                            RECOMMENDED
+                            ${t('onboard.premium.recommended')}
                         </div>
                         <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                             <span style=${{ fontSize: '1.5rem' }}>⭐</span>
-                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>Premium</h3>
+                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>${t('onboard.premium.premiumPlan')}</h3>
                         </div>
                         <div style=${{ fontSize: '2rem', fontWeight: 700, color: 'var(--petrol)', marginBottom: '1rem' }}>
                             ${data.referral_code_valid ? html`
@@ -1067,10 +1058,10 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
                 <div class="referral-section" style=${{ background: '#f8f9fa', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem' }}>
                     <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         <span style=${{ fontSize: '1.25rem' }}>🎁</span>
-                        <span style=${{ fontWeight: 600, color: 'var(--petrol)' }}>Have a referral code?</span>
+                        <span style=${{ fontWeight: 600, color: 'var(--petrol)' }}>${t('onboard.premium.referralCode')}</span>
                     </div>
                     <p style=${{ fontSize: '0.875rem', color: '#666', marginBottom: '1rem' }}>
-                        Enter a valid referral code to get <strong>1 year of Premium for free!</strong>
+                        ${t('onboard.premium.referralCodeHint')}
                     </p>
                     <div style=${{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                         <input
@@ -1091,14 +1082,14 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
                         <div style=${{ marginTop: '1rem', padding: '1rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <span style=${{ fontSize: '1.5rem' }}>🎉</span>
                             <div>
-                                <div style=${{ fontWeight: 600 }}>Referral code applied!</div>
-                                <div style=${{ fontSize: '0.875rem', opacity: 0.9 }}>You'll get 1 year of Premium absolutely free.</div>
+                                <div style=${{ fontWeight: 600 }}>${t('onboard.premium.referralApplied')}</div>
+                                <div style=${{ fontSize: '0.875rem', opacity: 0.9 }}>${t('onboard.premium.referralAppliedDesc')}</div>
                             </div>
                         </div>
                     ` : null}
                     ${data.referral_code && !data.referral_code_valid && String(data.referral_code).length >= 3 ? html`
                         <div style=${{ marginTop: '0.5rem', color: '#ef4444', fontSize: '0.875rem' }}>
-                            Invalid referral code. Please check and try again.
+                            ${t('onboard.premium.referralInvalid')}
                         </div>
                     ` : null}
                 </div>
@@ -1114,7 +1105,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onReferralChange, l
 
                 ${isPremiumSelected && !data.referral_code_valid ? html`
                     <p style=${{ textAlign: 'center', fontSize: '0.875rem', color: '#666', marginTop: '1rem' }}>
-                        You'll be redirected to complete your Premium subscription after launch.
+                        ${t('onboard.premium.premiumRedirect')}
                     </p>
                 ` : null}
             </div>
