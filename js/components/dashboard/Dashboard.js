@@ -25,8 +25,6 @@ export function Dashboard({ session }) {
     const [activeTab, setActiveTab] = useState('overview');
     const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
-    console.log('Dashboard component rendering, session:', !!session);
-
     const userType = session?.user?.user_metadata?.user_type || 'client';
 
     // Check if coach has completed onboarding - redirect if not
@@ -51,21 +49,18 @@ export function Dashboard({ session }) {
                     .single();
 
                 if (error) {
-                    console.log('Dashboard: Could not fetch coach profile, may not exist yet');
                     // No profile means they need to complete onboarding
                     window.navigateTo('/onboarding');
                     return;
                 }
 
                 if (!coachProfile?.onboarding_completed) {
-                    console.log('Dashboard: Coach onboarding not complete, redirecting...');
                     window.navigateTo('/onboarding');
                     return;
                 }
 
                 setCheckingOnboarding(false);
-            } catch (err) {
-                console.error('Dashboard: Error checking onboarding status:', err);
+            } catch {
                 setCheckingOnboarding(false);
             }
         };
@@ -83,7 +78,6 @@ export function Dashboard({ session }) {
     }, []);
 
     if (!session || checkingOnboarding) {
-        console.log('No session in Dashboard or checking onboarding, waiting...');
         return html`
             <div class="container" style=${{ marginTop: '100px', textAlign: 'center' }}>
                 <div class="spinner"></div>
@@ -91,7 +85,6 @@ export function Dashboard({ session }) {
             </div>
         `;
     }
-    console.log('Dashboard loaded successfully for user:', session.user.email, 'User Type:', userType);
 
     return html`
         <div class="dashboard-container">

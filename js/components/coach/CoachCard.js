@@ -46,10 +46,11 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                             : 0;
                         setLiveReviewsData({ rating: avgRating, count, loaded: true });
                     } else {
+                        // Silently handle missing table or errors
                         setLiveReviewsData({ rating: 0, count: 0, loaded: true });
                     }
-                } catch (err) {
-                    console.error('Error fetching reviews:', err);
+                } catch {
+                    // Silently handle errors (table may not exist)
                     setLiveReviewsData({ rating: 0, count: 0, loaded: true });
                 }
             }

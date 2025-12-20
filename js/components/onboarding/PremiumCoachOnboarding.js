@@ -134,8 +134,7 @@ const loadSavedProgress = (userId) => {
             step: parsed.step || 0,
             showWelcome: parsed.showWelcome !== undefined ? parsed.showWelcome : (parsed.step <= 0)
         };
-    } catch (e) {
-        console.error('Failed to load saved onboarding data:', e);
+    } catch {
         return null;
     }
 };
@@ -192,8 +191,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     plan_type: 'premium' // Auto-select premium when valid code entered
                 }));
             }
-        } catch (err) {
-            console.error('Error validating referral code:', err);
+        } catch {
             setData(prev => ({
                 ...prev,
                 referral_code_valid: false,
@@ -321,7 +319,6 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     });
 
                 if (userError) {
-                    console.error('Error creating user record:', userError);
                     throw userError;
                 }
             }
@@ -357,8 +354,8 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                         used_by_user_id: userId,
                         used_at: new Date().toISOString()
                     });
-                } catch (e) {
-                    console.log('Referral tracking skipped:', e.message);
+                } catch {
+                    // Silently skip referral tracking errors
                 }
             }
 
@@ -375,8 +372,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 window.navigateTo('/dashboard');
             }, 2000);
 
-        } catch (error) {
-            console.error('Onboarding completion error:', error);
+        } catch {
             alert('Failed to save your profile. Please try again.');
         } finally {
             setLoading(false);
@@ -575,8 +571,8 @@ const StepProfile = ({ data, updateData, session }) => {
                     }
                 }
             }
-        } catch (e) {
-            console.log('Upload fallback to base64');
+        } catch {
+            // Silently handle upload errors
         } finally {
             setUploading(false);
         }

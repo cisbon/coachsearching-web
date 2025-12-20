@@ -1,5 +1,6 @@
 // js/app.js - Complete Production Application
-console.log('App.js: Loading...');
+// Debug mode - set to false for production
+const DEBUG_MODE = false;
 
 // UMD Globals
 const React = window.React;
@@ -68,15 +69,12 @@ import { MatchingQuiz, AIMatchPage, getQuizQuestions } from './components/matchi
 // Context Provider
 import { AppProvider } from './context/AppContext.js';
 
-console.log('App.js: React global', React);
-console.log('App.js: ReactDOM global', ReactDOM);
-console.log('App.js: htm imported');
 
 const html = htm.bind(React.createElement);
 
 // Initialize
 initLanguage();
-const debugConsole = initDebugConsole();
+const debugConsole = DEBUG_MODE ? initDebugConsole() : null;
 
 const API_BASE = 'https://clouedo.com/coachsearching/api';
 
@@ -108,7 +106,6 @@ function setCurrency(code) {
     currentCurrency = code;
     localStorage.setItem('currency', code);
     window.dispatchEvent(new Event('currencyChange'));
-    console.log('Currency changed to:', code);
 }
 
 function getCurrentCurrency() {
@@ -184,8 +181,6 @@ const CoachListWithModal = ({ searchFilters, session }) => {
 
 // Pro-bono dashboard stub (future feature)
 const DashboardProBono = ({ session }) => {
-    console.log('Loading pro-bono dashboard');
-
     return html`
         <div>
             <h3>${t('dashboard.probono')}</h3>
@@ -198,7 +193,6 @@ const DashboardProBono = ({ session }) => {
                 <div class="stat-value">0.0 hrs</div>
             </div>
             <button class="btn-primary" onClick=${() => {
-                console.log('Add pro-bono slot clicked');
                 alert('Pro-bono scheduler will be connected to API soon!');
             }}>
                 ${t('probono.add_slot')}
@@ -242,7 +236,6 @@ const handleGitHubPagesRedirect = () => {
     const redirectPath = sessionStorage.getItem('gh-pages-redirect');
     if (redirectPath) {
         sessionStorage.removeItem('gh-pages-redirect');
-        console.log('GitHub Pages redirect detected:', redirectPath);
         // Use replaceState so back button works correctly
         window.history.replaceState(null, '', redirectPath);
         return redirectPath;
@@ -256,7 +249,6 @@ const migrateHashRoute = () => {
     if (hash && hash.startsWith('#')) {
         // Convert #coach/id to /coach/id, #coaches to /coaches, etc.
         const cleanPath = hash.replace('#', '/');
-        console.log('Migrating hash route:', hash, '→', cleanPath);
         window.history.replaceState(null, '', cleanPath);
         return cleanPath;
     }
@@ -269,7 +261,6 @@ window.navigateTo = (path) => {
     if (!path.startsWith('/')) {
         path = '/' + path;
     }
-    console.log('Navigating to:', path);
     window.history.pushState(null, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
     // Scroll to top on navigation
@@ -312,44 +303,28 @@ const App = () => {
     const [languageVersion, setLanguageVersion] = useState(0);
 
     useEffect(() => {
-        console.log('App useEffect: Fetching config...');
-
         fetch('https://clouedo.com/coachsearching/api/env.php')
-            .then(res => {
-                console.log('Config response status:', res.status);
-                return res.json();
-            })
+            .then(res => res.json())
             .then(config => {
-                console.log('Config loaded:', config);
-
                 if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
-                    console.log('Initializing Supabase client...');
                     window.supabaseClient = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
-                    console.log('Supabase client initialized:', window.supabaseClient);
 
                     window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
-                        console.log('Initial session:', session);
                         setSession(session);
                     });
 
-                    const { data: { subscription } } = window.supabaseClient.auth.onAuthStateChange((_event, session) => {
-                        console.log('Auth state changed:', _event, session);
+                    window.supabaseClient.auth.onAuthStateChange((_event, session) => {
                         setSession(session);
                     });
 
                     setConfigLoaded(true);
-                } else {
-                    console.error('Missing Supabase config in response:', config);
                 }
             })
-            .catch(err => {
-                console.error('Failed to load config:', err);
-            });
+            .catch(() => {});
 
         // Handle browser back/forward buttons
         const handlePopState = () => {
             const newRoute = getCurrentRoute();
-            console.log('Route changed to:', newRoute);
             setRoute(newRoute);
         };
 
@@ -362,7 +337,6 @@ const App = () => {
         };
 
         const handleLangChange = () => {
-            console.log('LANG: Language changed event received in App');
             setLanguageVersion(v => v + 1);
         };
 
@@ -385,12 +359,10 @@ const App = () => {
     }, [session]);
 
     const openLegal = (type) => {
-        console.log('Opening legal modal:', type);
         setLegalModal({ isOpen: true, type });
     };
 
     const closeLegal = () => {
-        console.log('Closing legal modal');
         setLegalModal({ isOpen: false, type: null });
     };
 
@@ -475,11 +447,9 @@ const App = () => {
     `;
 };
 
-console.log('App.js: Rendering app...');
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     React.createElement(ErrorBoundary, null,
         html`<${AppProvider}><${App} /></${AppProvider}>`
     )
 );
-console.log('App.js: App rendered successfully');

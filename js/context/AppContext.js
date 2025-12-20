@@ -94,12 +94,10 @@ export function AppProvider({ children }) {
                 }
 
                 if (!window.supabaseClient) {
-                    console.warn('AppContext: Supabase client not available after waiting');
                     lookupFetchRef.current = false; // Allow retry
                     return;
                 }
 
-                console.log('AppContext: Fetching lookup options...');
                 const { data: options, error } = await window.supabaseClient
                     .from('cs_lookup_options')
                     .select('*')
@@ -107,7 +105,6 @@ export function AppProvider({ children }) {
                     .order('sort_order', { ascending: true });
 
                 if (error) {
-                    console.error('AppContext: Error fetching lookup options:', error);
                     lookupFetchRef.current = false; // Allow retry
                     return;
                 }
@@ -120,8 +117,6 @@ export function AppProvider({ children }) {
                     isLoaded: true
                 };
 
-                console.log('AppContext: Loaded', grouped.specialties.length, 'specialties,', grouped.languages.length, 'languages');
-
                 // Update state
                 setLookupOptions(grouped);
 
@@ -131,12 +126,10 @@ export function AppProvider({ children }) {
                         data: grouped,
                         timestamp: Date.now()
                     }));
-                    console.log('AppContext: Lookup options cached');
-                } catch (e) {
-                    console.warn('AppContext: Failed to cache lookup options', e);
+                } catch {
+                    // Silently ignore cache errors
                 }
-            } catch (error) {
-                console.error('AppContext: Failed to fetch lookup options:', error);
+            } catch {
                 lookupFetchRef.current = false; // Allow retry
             }
         };

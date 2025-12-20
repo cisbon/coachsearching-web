@@ -238,7 +238,6 @@ export function CoachList({ searchFilters, session, CoachDetailModal }) {
 
     // Load coaches from Supabase
     const loadCoaches = useCallback(async () => {
-        console.log('CoachList: Loading coaches from database...');
         setLoading(true);
 
         let loadedSuccessfully = false;
@@ -250,22 +249,16 @@ export function CoachList({ searchFilters, session, CoachDetailModal }) {
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (error) {
-                    console.error('CoachList: Error loading coaches:', error);
-                } else if (supabaseCoaches && supabaseCoaches.length > 0) {
-                    console.log('CoachList: Loaded', supabaseCoaches.length, 'coaches');
+                if (!error && supabaseCoaches && supabaseCoaches.length > 0) {
                     setCoaches(supabaseCoaches);
                     loadedSuccessfully = true;
-                } else {
-                    console.log('CoachList: No coaches found in database');
                 }
-            } catch (error) {
-                console.error('CoachList: Failed to load coaches:', error);
+            } catch {
+                // Silently handle errors
             }
         }
 
         if (!loadedSuccessfully) {
-            console.log('CoachList: Using mock data');
             setCoaches(mockCoaches);
         }
 
@@ -278,7 +271,6 @@ export function CoachList({ searchFilters, session, CoachDetailModal }) {
 
     useEffect(() => {
         const handleCurrencyChange = () => {
-            console.log('CoachList: Currency changed, re-rendering');
             forceUpdate({});
         };
         window.addEventListener('currencyChange', handleCurrencyChange);

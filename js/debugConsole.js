@@ -265,7 +265,6 @@ export class DebugConsole {
 export function initDebugConsole() {
     if (!window.debugConsole) {
         window.debugConsole = new DebugConsole();
-        console.log('Debug Console initialized');
     }
     return window.debugConsole;
 }
