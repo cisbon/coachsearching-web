@@ -1082,7 +1082,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                     ${data.referral_code_valid ? html`
                         <div style=${{ marginTop: '1rem', padding: '1rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <span style=${{ fontSize: '1.5rem' }}>🎉</span>
-                            <div>
+                            <div style=${{ textAlign: 'left' }}>
                                 <div style=${{ fontWeight: 600 }}>${t('onboard.premium.referralApplied')}</div>
                                 <div style=${{ fontSize: '0.875rem', opacity: 0.9 }}>${t('onboard.premium.referralAppliedDesc')}</div>
                             </div>
