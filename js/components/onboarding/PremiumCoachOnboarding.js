@@ -424,6 +424,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                             <div
                                 key=${step.id}
                                 class=${`progress-step-indicator ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
+                                onClick=${() => goToStep(index)}
                             >
                                 <div class="step-dot">
                                     ${index < currentStep ? '✓' : step.icon}

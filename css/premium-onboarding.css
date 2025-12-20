@@ -143,6 +143,16 @@
     flex-direction: column;
     align-items: center;
     position: relative;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.progress-step-indicator:hover {
+    opacity: 0.8;
+}
+
+.progress-step-indicator:hover .step-dot {
+    transform: scale(1.05);
 }
 
 .progress-step-indicator:not(:last-child)::after {
