@@ -54,6 +54,27 @@
     overflow: hidden;
 }
 
+/* Hide scrollbar on body when welcome screen is active */
+body:has(.welcome-fullscreen) {
+    overflow: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+body:has(.welcome-fullscreen)::-webkit-scrollbar {
+    display: none;
+}
+
+html:has(.welcome-fullscreen) {
+    overflow: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html:has(.welcome-fullscreen)::-webkit-scrollbar {
+    display: none;
+}
+
 .premium-onboarding::before {
     content: '';
     position: absolute;
@@ -267,7 +288,8 @@
     .welcome-fullscreen {
         overflow-y: auto;
         align-items: flex-start;
-        padding: 2rem 0;
+        padding-top: 0;
+        padding-bottom: 2rem;
     }
 }
 
