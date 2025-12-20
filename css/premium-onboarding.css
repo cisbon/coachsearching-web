@@ -280,7 +280,8 @@
 /* Enable scrolling only on smaller screens */
 @media (max-height: 800px) {
     .welcome-fullscreen {
-        overflow: auto !important;
+        overflow-y: scroll !important;
+        -webkit-overflow-scrolling: touch;
         align-items: flex-start;
     }
 
@@ -289,6 +290,7 @@
         padding-top: 1rem;
         padding-bottom: 2rem;
         flex-shrink: 0;
+        min-height: min-content;
     }
 }
 
