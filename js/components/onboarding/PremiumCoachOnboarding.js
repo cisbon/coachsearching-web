@@ -69,32 +69,77 @@ const COUNTRIES = [
     { code: 'OTHER', name: 'Other' }
 ];
 
+// Default data structure
+const DEFAULT_DATA = {
+    full_name: '',
+    professional_title: '',
+    bio: '',
+    avatar_url: '',
+    location_city: '',
+    location_country: '',
+    years_experience: '',
+    specialties: [],
+    languages: ['en'],
+    session_formats: ['video'],
+    session_durations: [60],
+    hourly_rate: '',
+    plan_type: 'free',
+    referral_code: '',
+    referral_code_valid: false,
+    referrer_id: null
+};
+
+// Helper to load saved progress from localStorage
+const loadSavedProgress = (userId) => {
+    if (!userId) return null;
+    try {
+        const saved = localStorage.getItem(`premium_onboarding_${userId}`);
+        if (!saved) return null;
+
+        const parsed = JSON.parse(saved);
+        if (!parsed.data) return null;
+
+        const sanitizedData = { ...DEFAULT_DATA };
+        const stringFields = ['full_name', 'professional_title', 'bio', 'avatar_url', 'location_city', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
+        const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations'];
+
+        stringFields.forEach(field => {
+            if (parsed.data[field] !== undefined) {
+                sanitizedData[field] = typeof parsed.data[field] === 'string' ? parsed.data[field] : String(parsed.data[field] || '');
+            }
+        });
+        arrayFields.forEach(field => {
+            if (Array.isArray(parsed.data[field])) {
+                sanitizedData[field] = parsed.data[field];
+            }
+        });
+        if (typeof parsed.data.referral_code_valid === 'boolean') {
+            sanitizedData.referral_code_valid = parsed.data.referral_code_valid;
+        }
+
+        return {
+            data: sanitizedData,
+            step: parsed.step || 0,
+            showWelcome: parsed.step <= 0
+        };
+    } catch (e) {
+        console.error('Failed to load saved onboarding data:', e);
+        return null;
+    }
+};
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export const PremiumCoachOnboarding = ({ session, onComplete }) => {
-    const [showWelcome, setShowWelcome] = useState(true);
-    const [currentStep, setCurrentStep] = useState(0);
+    // Load saved state immediately on initialization
+    const savedProgress = loadSavedProgress(session?.user?.id);
+
+    const [showWelcome, setShowWelcome] = useState(savedProgress ? savedProgress.showWelcome : true);
+    const [currentStep, setCurrentStep] = useState(savedProgress ? savedProgress.step : 0);
     const [loading, setLoading] = useState(false);
-    const [data, setData] = useState({
-        full_name: '',
-        professional_title: '',
-        bio: '',
-        avatar_url: '',
-        location_city: '',
-        location_country: '',
-        years_experience: '',
-        specialties: [],
-        languages: ['en'],
-        session_formats: ['video'],
-        session_durations: [60],
-        hourly_rate: '',
-        plan_type: 'free', // 'free' or 'premium'
-        referral_code: '',
-        referral_code_valid: false,
-        referrer_id: null
-    });
+    const [data, setData] = useState(savedProgress ? savedProgress.data : DEFAULT_DATA);
 
     // Get lookup options from global context (cached)
     const { lookupOptions, getLocalizedName, getLocalizedDescription } = useLookupOptions();
@@ -157,51 +202,13 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
         }, 500);
     }, [validateReferralCode]);
 
-    // Load saved progress
+    // Pre-fill name from session if not already set
     useEffect(() => {
-        const savedData = localStorage.getItem(`premium_onboarding_${session?.user?.id}`);
-        if (savedData) {
-            try {
-                const parsed = JSON.parse(savedData);
-                // Sanitize loaded data to ensure string fields are strings
-                const sanitizedData = {};
-                if (parsed.data) {
-                    const stringFields = ['full_name', 'professional_title', 'bio', 'avatar_url', 'location_city', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
-                    const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations'];
-
-                    stringFields.forEach(field => {
-                        if (parsed.data[field] !== undefined) {
-                            sanitizedData[field] = typeof parsed.data[field] === 'string' ? parsed.data[field] : String(parsed.data[field] || '');
-                        }
-                    });
-                    arrayFields.forEach(field => {
-                        if (Array.isArray(parsed.data[field])) {
-                            sanitizedData[field] = parsed.data[field];
-                        }
-                    });
-                    // Boolean fields
-                    if (typeof parsed.data.referral_code_valid === 'boolean') {
-                        sanitizedData.referral_code_valid = parsed.data.referral_code_valid;
-                    }
-                }
-                setData(prev => ({ ...prev, ...sanitizedData }));
-                if (parsed.step > 0) {
-                    setCurrentStep(parsed.step);
-                    setShowWelcome(false);
-                }
-            } catch (e) {
-                console.error('Failed to load saved onboarding data:', e);
-                // Clear corrupted data
-                localStorage.removeItem(`premium_onboarding_${session?.user?.id}`);
-            }
-        }
-
-        // Pre-fill name from session if available
         const fullName = session?.user?.user_metadata?.full_name;
-        if (fullName && typeof fullName === 'string') {
-            setData(prev => ({ ...prev, full_name: fullName }));
+        if (fullName && typeof fullName === 'string' && !data.full_name) {
+            setData(prev => prev.full_name ? prev : { ...prev, full_name: fullName });
         }
-    }, [session]);
+    }, [session?.user?.user_metadata?.full_name]);
 
     // Auto-save progress
     const saveProgress = useCallback((stepIndex, formData) => {
