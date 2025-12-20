@@ -738,25 +738,10 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
             <div class="form-section">
                 <div class="form-group">
                     <label class="form-label">${t('onboard.premium.yearsExperience')}</label>
-                    <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', maxWidth: '280px' }}>
+                    <div class="years-stepper">
                         <button
                             type="button"
                             class="btn-stepper"
-                            style=${{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '50%',
-                                border: '2px solid var(--petrol)',
-                                background: 'white',
-                                color: 'var(--petrol)',
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.2s ease'
-                            }}
                             onClick=${() => {
                                 const current = parseInt(data.years_experience) || 0;
                                 if (current > 0) updateData('years_experience', String(current - 1));
@@ -764,37 +749,15 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                         >−</button>
                         <input
                             type="number"
-                            class="premium-input"
+                            class="premium-input years-input"
                             placeholder="0"
                             min="0"
-                            style=${{
-                                width: '80px',
-                                textAlign: 'center',
-                                fontSize: '1.25rem',
-                                fontWeight: '600',
-                                padding: '0.75rem'
-                            }}
                             value=${String(data.years_experience || '')}
                             onInput=${(e) => updateData('years_experience', e.target.value)}
                         />
                         <button
                             type="button"
                             class="btn-stepper"
-                            style=${{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '50%',
-                                border: '2px solid var(--petrol)',
-                                background: 'white',
-                                color: 'var(--petrol)',
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.2s ease'
-                            }}
                             onClick=${() => {
                                 const current = parseInt(data.years_experience) || 0;
                                 updateData('years_experience', String(current + 1));

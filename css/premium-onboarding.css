@@ -927,6 +927,49 @@
 }
 
 /* ==========================================================================
+   YEARS EXPERIENCE STEPPER
+   ========================================================================== */
+
+.years-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.btn-stepper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--petrol);
+    background: white;
+    color: var(--petrol);
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-stepper:hover {
+    background: var(--petrol-50);
+}
+
+.btn-stepper:active {
+    transform: scale(0.95);
+}
+
+.years-input {
+    width: 80px;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding: 0.75rem;
+}
+
+/* ==========================================================================
    LANGUAGE FLAGS
    ========================================================================== */
 
