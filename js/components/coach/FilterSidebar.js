@@ -10,6 +10,18 @@ import { useLookupOptions } from '../../context/AppContext.js';
 const React = window.React;
 const html = htm.bind(React.createElement);
 
+// Flag CDN for SVG flag images
+const FLAG_CDN = 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3';
+
+// Language code to flag country code mapping
+const LANGUAGE_TO_FLAG = {
+    'en': 'gb', 'de': 'de', 'es': 'es', 'fr': 'fr', 'it': 'it',
+    'nl': 'nl', 'pt': 'pt', 'ru': 'ru', 'zh': 'cn', 'ja': 'jp',
+    'ko': 'kr', 'ar': 'sa', 'hi': 'in', 'pl': 'pl', 'sv': 'se',
+    'no': 'no', 'da': 'dk', 'fi': 'fi', 'el': 'gr', 'tr': 'tr',
+    'cs': 'cz', 'ro': 'ro', 'hu': 'hu', 'uk': 'ua'
+};
+
 /**
  * FilterSidebar Component
  * @param {Object} props
@@ -81,22 +93,35 @@ export function FilterSidebar({ filters, onChange, onReset }) {
             <div class="filter-section">
                 <h4>Languages</h4>
                 <div class="filter-checkboxes">
-                    ${languageOptions.map(lang => html`
-                        <label key=${lang.code} class="filter-checkbox">
-                            <input
-                                type="checkbox"
-                                checked=${filters.languages?.includes(lang.code)}
-                                onChange=${(e) => {
-                                    const current = filters.languages || [];
-                                    const updated = e.target.checked
-                                        ? [...current, lang.code]
-                                        : current.filter(l => l !== lang.code);
-                                    onChange({ ...filters, languages: updated });
-                                }}
-                            />
-                            <span>${lang.icon || ''} ${getLocalizedName(lang)}</span>
-                        </label>
-                    `)}
+                    ${languageOptions.map(lang => {
+                        const flagCode = LANGUAGE_TO_FLAG[lang.code];
+                        return html`
+                            <label key=${lang.code} class="filter-checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked=${filters.languages?.includes(lang.code)}
+                                    onChange=${(e) => {
+                                        const current = filters.languages || [];
+                                        const updated = e.target.checked
+                                            ? [...current, lang.code]
+                                            : current.filter(l => l !== lang.code);
+                                        onChange({ ...filters, languages: updated });
+                                    }}
+                                />
+                                <span style=${{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    ${flagCode ? html`
+                                        <img
+                                            src="${FLAG_CDN}/${flagCode}.svg"
+                                            alt=${getLocalizedName(lang)}
+                                            style=${{ width: '20px', height: '15px', borderRadius: '2px', objectFit: 'cover' }}
+                                            loading="lazy"
+                                        />
+                                    ` : html`<span style=${{ fontSize: '14px' }}>🌐</span>`}
+                                    ${getLocalizedName(lang)}
+                                </span>
+                            </label>
+                        `;
+                    })}
                 </div>
             </div>
 
