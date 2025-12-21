@@ -573,11 +573,6 @@ export function CategoriesIndexPage() {
     return html`
         <div class="categories-index-page">
             <div class="container">
-                <header class="categories-header">
-                    <h1>${t('categoryPage.categories') || 'Coaching Categories'}</h1>
-                    <p>${t('categoryPage.exploreSpecialties') || 'Explore our coaching specialties to find the perfect type of coach for your goals.'}</p>
-                </header>
-
                 <div class="categories-grid">
                     ${Object.entries(COACHING_CATEGORIES).map(([slug, category]) => html`
                         <a href="#coaching/${slug}" class="category-card" key=${slug}>
