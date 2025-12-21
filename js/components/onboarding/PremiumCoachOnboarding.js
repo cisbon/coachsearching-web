@@ -1174,9 +1174,6 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                             position: 'relative'
                         }}
                     >
-                        <div style=${{ position: 'absolute', top: '-10px', right: '10px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
-                            ${t('onboard.premium.recommended')}
-                        </div>
                         <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                             <span style=${{ fontSize: '1.5rem' }}>⭐</span>
                             <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>${t('plan.premium.name') || 'PREMIUM'}</h3>
@@ -1191,7 +1188,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                             `}
                         </div>
                         <div style=${{ fontSize: '0.95rem', color: '#666', fontStyle: 'italic', marginBottom: '1rem' }}>
-                            "${t('plan.premium.tagline') || 'Grow your practice'}"
+                            "${t('plan.premium.tagline') || 'Get clients'}"
                         </div>
                         <ul style=${{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem' }}>
                             ${PREMIUM_FEATURES.map(featureKey => html`
@@ -1215,7 +1212,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                         <input
                             type="text"
                             class="premium-input"
-                            placeholder="Enter referral code"
+                            placeholder=${t('onboard.premium.referralPlaceholder') || 'ENTER REFERRAL CODE'}
                             value=${String(data.referral_code || '')}
                             onInput=${(e) => onReferralChange(e.target.value)}
                             style=${referralInputStyle}
