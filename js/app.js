@@ -17,7 +17,7 @@ import { PromoCodeWidget, PromoCodeBanner, PromoCodeManager } from './promoCode.
 
 // SEO Content Pages
 import { FAQPage } from './pages/FAQPage.js';
-import { CategoryPage, CategoriesIndexPage, CityCategoryPage, COACHING_CATEGORIES, COACHING_CITIES } from './pages/CategoryPage.js';
+import { CategoryPage, CategoriesIndexPage, CityCategoryPage, COACHING_CATEGORIES } from './pages/CategoryPage.js';
 import { LocationsPage, CityLocationPage } from './pages/LocationsPage.js';
 import { CoachProfilePage } from './pages/CoachProfilePage.js';
 import { PricingPage } from './pages/PricingPage.js';

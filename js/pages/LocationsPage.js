@@ -1,14 +1,16 @@
 /**
  * Locations Page Component
  * @fileoverview Displays all coaching locations (cities) organized by country with images
+ * Uses database cities from AppContext for dynamic city data
  */
 
 import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
 import { setPageMeta, generateBreadcrumbSchema, setStructuredData } from '../utils/seo.js';
-import { COACHING_CITIES, COACHING_CATEGORIES } from './CategoryPage.js';
+import { COACHING_CATEGORIES } from './CategoryPage.js';
 import { CoachList } from '../components/coach/CoachList.js';
 import { CoachDetailModal } from '../components/coach/CoachDetailModal.js';
+import { useCities } from '../context/AppContext.js';
 
 const React = window.React;
 const { useEffect, useMemo, useState } = React;
@@ -114,50 +116,62 @@ const CATEGORIES_LIST = Object.entries(COACHING_CATEGORIES).map(([slug, cat]) =>
 }));
 
 /**
- * Get city image URL
+ * Get city image URL - prefers database picture_url, falls back to CITY_IMAGES
+ * @param {Object|string} city - City object from database or city slug string
  */
-function getCityImage(citySlug) {
-    return CITY_IMAGES[citySlug] || DEFAULT_CITY_IMAGE;
+function getCityImage(city) {
+    // If city is an object with picture_url, use it
+    if (city && typeof city === 'object' && city.picture_url) {
+        return city.picture_url;
+    }
+    // If city is a string (slug), look it up in CITY_IMAGES
+    const slug = typeof city === 'string' ? city : city?.code;
+    return CITY_IMAGES[slug] || DEFAULT_CITY_IMAGE;
 }
 
 /**
- * Group cities by country
+ * Group cities by country (for database cities array)
+ * @param {Array} citiesList - Array of city objects from database
  */
-function groupCitiesByCountry(cities) {
+function groupCitiesByCountry(citiesList) {
     const grouped = {};
-    Object.entries(cities).forEach(([slug, city]) => {
-        const country = city.country;
+    (citiesList || []).forEach(city => {
+        const country = city.country_en;
         if (!grouped[country]) {
             grouped[country] = [];
         }
-        grouped[country].push({ slug, ...city });
+        grouped[country].push(city);
     });
     return grouped;
 }
 
 /**
  * City Card Component
+ * @param {Object} props - Component props
+ * @param {Object} props.city - City object from database
+ * @param {function} props.getLocalizedCityName - Function to get localized city name
  */
-function CityCard({ slug, name, country, countryCode }) {
+function CityCard({ city, getLocalizedCityName }) {
+    const cityName = getLocalizedCityName ? getLocalizedCityName(city) : city.name_en;
     return html`
-        <a href="/locations/${slug}" class="city-card">
+        <a href="/locations/${city.code}" class="city-card">
             <div class="city-card-image">
                 <img
-                    src=${getCityImage(slug)}
-                    alt="${name}, ${country}"
+                    src=${getCityImage(city)}
+                    alt="${cityName}, ${city.country_en}"
                     loading="lazy"
                 />
                 <div class="city-card-overlay">
                     <img
-                        src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode.toLowerCase()}.svg"
-                        alt=${country}
+                        src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${city.country_code.toLowerCase()}.svg"
+                        alt=${city.country_en}
                         class="city-flag"
                     />
                 </div>
             </div>
             <div class="city-card-content">
-                <h3>${name}</h3>
-                <p>${country}</p>
+                <h3>${cityName}</h3>
+                <p>${city.country_en}</p>
             </div>
         </a>
     `;
@@ -165,10 +179,14 @@ function CityCard({ slug, name, country, countryCode }) {
 
 /**
  * Main Locations Page Component
+ * Uses database cities from AppContext
  */
 export function LocationsPage() {
+    // Get cities from database context
+    const { cities, getLocalizedCityName } = useCities();
+
     // Group cities by country
-    const citiesByCountry = useMemo(() => groupCitiesByCountry(COACHING_CITIES), []);
+    const citiesByCountry = useMemo(() => groupCitiesByCountry(cities.list), [cities.list]);
 
     // Country display order
     const countryOrder = [
@@ -193,6 +211,18 @@ export function LocationsPage() {
             { name: 'Locations', url: '/locations' }
         ]));
     }, []);
+
+    // Show loading state if cities not loaded
+    if (!cities.isLoaded) {
+        return html`
+            <div class="locations-page">
+                <div class="container" style=${{ textAlign: 'center', padding: '80px 20px' }}>
+                    <div class="loading-spinner"></div>
+                    <p>${t('common.loading') || 'Loading...'}</p>
+                </div>
+            </div>
+        `;
+    }
 
     return html`
         <div class="locations-page">
@@ -228,7 +258,7 @@ export function LocationsPage() {
                         <div key=${country} class="country-section">
                             <h2 class="country-title">
                                 <img
-                                    src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${citiesByCountry[country][0].countryCode.toLowerCase()}.svg"
+                                    src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${citiesByCountry[country][0].country_code.toLowerCase()}.svg"
                                     alt=${country}
                                     class="country-flag"
                                 />
@@ -237,11 +267,9 @@ export function LocationsPage() {
                             <div class="cities-grid">
                                 ${citiesByCountry[country].map(city => html`
                                     <${CityCard}
-                                        key=${city.slug}
-                                        slug=${city.slug}
-                                        name=${city.name}
-                                        country=${city.country}
-                                        countryCode=${city.countryCode}
+                                        key=${city.code}
+                                        city=${city}
+                                        getLocalizedCityName=${getLocalizedCityName}
                                     />
                                 `)}
                             </div>
@@ -267,18 +295,33 @@ export function LocationsPage() {
 
 /**
  * City Location Page Component - Shows all coaching categories for a specific city
+ * Uses database cities from AppContext - looks up city by code (slug)
  */
 export function CityLocationPage({ citySlug, session }) {
-    const city = COACHING_CITIES[citySlug];
-    const [selectedCoach, setSelectedCoach] = useState(null);
+    // Get cities from database context
+    const { cities, getLocalizedCityName, getCityByCode } = useCities();
+
+    // Find city by code (slug)
+    const city = useMemo(() => getCityByCode(citySlug), [citySlug, getCityByCode]);
+
+    // Get localized city name
+    const cityName = city ? getLocalizedCityName(city) : '';
+
+    // Get related cities in same country
+    const relatedCities = useMemo(() => {
+        if (!city || !cities.list) return [];
+        return cities.list
+            .filter(c => c.country_code === city.country_code && c.code !== citySlug)
+            .slice(0, 6);
+    }, [city, cities.list, citySlug]);
 
     // Set page meta
     useEffect(() => {
         if (city) {
             setPageMeta({
-                title: t('locations.cityMetaTitle', { city: city.name }) || `Coaches in ${city.name} | CoachSearching`,
-                description: t('locations.cityMetaDesc', { city: city.name }) || `Find professional coaches in ${city.name}. Executive, life, career, and business coaching - in person or online.`,
-                keywords: `coaches ${city.name}, coaching ${city.name}, ${city.name} coach, local coaching`,
+                title: t('locations.cityMetaTitle', { city: cityName }) || `Coaches in ${cityName} | CoachSearching`,
+                description: t('locations.cityMetaDesc', { city: cityName }) || `Find professional coaches in ${cityName}. Executive, life, career, and business coaching - in person or online.`,
+                keywords: `coaches ${cityName}, coaching ${cityName}, ${cityName} coach, local coaching`,
                 canonical: `${window.location.origin}/locations/${citySlug}`
             });
 
@@ -286,10 +329,22 @@ export function CityLocationPage({ citySlug, session }) {
             setStructuredData(generateBreadcrumbSchema([
                 { name: 'Home', url: '/' },
                 { name: 'Locations', url: '/locations' },
-                { name: city.name, url: `/locations/${citySlug}` }
+                { name: cityName, url: `/locations/${citySlug}` }
             ]));
         }
-    }, [citySlug, city]);
+    }, [citySlug, city, cityName]);
+
+    // Show loading state if cities not loaded yet
+    if (!cities.isLoaded) {
+        return html`
+            <div class="locations-page">
+                <div class="container" style=${{ textAlign: 'center', padding: '80px 20px' }}>
+                    <div class="loading-spinner"></div>
+                    <p>${t('common.loading') || 'Loading...'}</p>
+                </div>
+            </div>
+        `;
+    }
 
     // City not found
     if (!city) {
@@ -314,18 +369,18 @@ export function CityLocationPage({ citySlug, session }) {
     return html`
         <div class="locations-page city-location-page">
             <!-- Hero Section with City Image -->
-            <section class="city-location-hero" style=${{ backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${getCityImage(citySlug)})` }}>
+            <section class="city-location-hero" style=${{ backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${getCityImage(city)})` }}>
                 <div class="container">
                     <div class="city-hero-content">
                         <img
-                            src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${city.countryCode.toLowerCase()}.svg"
-                            alt=${city.country}
+                            src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${city.country_code.toLowerCase()}.svg"
+                            alt=${city.country_en}
                             class="city-hero-flag"
                         />
-                        <h1>${t('locations.coachesIn', { city: city.name }) || `Coaches in ${city.name}`}</h1>
+                        <h1>${t('locations.coachesIn', { city: cityName }) || `Coaches in ${cityName}`}</h1>
                         <p class="hero-description">
-                            ${t('locations.cityHeroDesc', { city: city.name, country: city.country }) ||
-                              `Find professional coaches in ${city.name}, ${city.country}. Connect with local experts for in-person or online coaching sessions.`}
+                            ${t('locations.cityHeroDesc', { city: cityName, country: city.country_en }) ||
+                              `Find professional coaches in ${cityName}, ${city.country_en}. Connect with local experts for in-person or online coaching sessions.`}
                         </p>
                     </div>
                 </div>
@@ -354,12 +409,12 @@ export function CityLocationPage({ citySlug, session }) {
             <section id="city-coaches" class="city-coaches-section" style=${{ padding: '40px 0', background: 'white' }}>
                 <div class="container">
                     <h2 style=${{ textAlign: 'center', marginBottom: '30px', fontSize: '1.75rem' }}>
-                        ${t('locations.coachesIn', { city: city.name }) || `Coaches in ${city.name}`}
+                        ${t('locations.coachesIn', { city: cityName }) || `Coaches in ${cityName}`}
                     </h2>
                     <${CoachList}
                         session=${session}
                         CoachDetailModal=${CoachDetailModalWrapper}
-                        initialCity=${city.name}
+                        initialCity=${cityName}
                     />
                 </div>
             </section>
@@ -367,21 +422,18 @@ export function CityLocationPage({ citySlug, session }) {
             <!-- Other Cities in Same Country -->
             <section class="related-cities-section">
                 <div class="container">
-                    <h2>${t('locations.otherCitiesIn', { country: city.country }) || `Other Cities in ${city.country}`}</h2>
+                    <h2>${t('locations.otherCitiesIn', { country: city.country_en }) || `Other Cities in ${city.country_en}`}</h2>
                     <div class="related-cities-grid">
-                        ${Object.entries(COACHING_CITIES)
-                            .filter(([slug, c]) => c.country === city.country && slug !== citySlug)
-                            .slice(0, 6)
-                            .map(([slug, c]) => html`
-                                <a key=${slug} href="/locations/${slug}" class="related-city-link">
-                                    <img
-                                        src=${getCityImage(slug)}
-                                        alt=${c.name}
-                                        loading="lazy"
-                                    />
-                                    <span>${c.name}</span>
-                                </a>
-                            `)}
+                        ${relatedCities.map(relCity => html`
+                            <a key=${relCity.code} href="/locations/${relCity.code}" class="related-city-link">
+                                <img
+                                    src=${getCityImage(relCity)}
+                                    alt=${getLocalizedCityName(relCity)}
+                                    loading="lazy"
+                                />
+                                <span>${getLocalizedCityName(relCity)}</span>
+                            </a>
+                        `)}
                     </div>
                     <div style=${{ textAlign: 'center', marginTop: '20px' }}>
                         <a href="/locations" class="btn btn-secondary">
