@@ -934,31 +934,6 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
             </div>
 
             <div class="form-section">
-                <div class="form-section-title">💰 ${t('onboard.premium.hourlyRate')}</div>
-                <div class="form-hint">
-                    ${t('onboard.premium.hourlyRateHint')}
-                </div>
-
-                <div class="pricing-input-group">
-                    <span class="currency-prefix">€</span>
-                    <input
-                        type="number"
-                        class="premium-input pricing-input"
-                        placeholder="75"
-                        min="0"
-                        value=${String(data.hourly_rate || '')}
-                        onInput=${(e) => updateData('hourly_rate', e.target.value)}
-                    />
-                    <span class="pricing-suffix">${t('onboard.premium.perHour')}</span>
-                </div>
-
-                <div class="no-fee-notice">
-                    <span class="no-fee-icon">✨</span>
-                    <span>${t('onboard.premium.noFeeNotice')}</span>
-                </div>
-            </div>
-
-            <div class="form-section">
                 <div class="form-section-title">📞 ${t('onboard.premium.discoveryCallTitle')}</div>
                 <div class="form-hint">
                     ${t('onboard.premium.discoveryCallHint')}
@@ -1005,6 +980,31 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                         ${t('onboard.premium.discoveryCallDisabledNotice')}
                     </div>
                 ` : null}
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">💰 ${t('onboard.premium.hourlyRate')}</div>
+                <div class="form-hint">
+                    ${t('onboard.premium.hourlyRateHint')}
+                </div>
+
+                <div class="pricing-input-group">
+                    <span class="currency-prefix">€</span>
+                    <input
+                        type="number"
+                        class="premium-input pricing-input"
+                        placeholder="75"
+                        min="0"
+                        value=${String(data.hourly_rate || '')}
+                        onInput=${(e) => updateData('hourly_rate', e.target.value)}
+                    />
+                    <span class="pricing-suffix">${t('onboard.premium.perHour')}</span>
+                </div>
+
+                <div class="no-fee-notice">
+                    <span class="no-fee-icon">✨</span>
+                    <span>${t('onboard.premium.noFeeNotice')}</span>
+                </div>
             </div>
         </div>
     `;
