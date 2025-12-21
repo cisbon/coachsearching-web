@@ -541,10 +541,34 @@ const WelcomeScreen = ({ onStart, onSkip }) => {
 // STEP 1: PROFILE
 // ============================================================================
 
+// Helper function to validate video URLs
+const isValidVideoUrl = (url) => {
+    if (!url || url.trim() === '') return true; // Empty is valid (optional field)
+    const lowerUrl = url.toLowerCase();
+    return (
+        lowerUrl.includes('youtube.com') ||
+        lowerUrl.includes('youtu.be') ||
+        lowerUrl.includes('vimeo.com') ||
+        lowerUrl.includes('dailymotion.com') ||
+        lowerUrl.includes('dai.ly')
+    );
+};
+
 const StepProfile = ({ data, updateData, session }) => {
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
+    const [videoUrlError, setVideoUrlError] = useState(false);
+
+    // Validate video URL when it changes
+    const handleVideoUrlChange = (url) => {
+        updateData('intro_video_url', url);
+        if (url && url.trim() !== '') {
+            setVideoUrlError(!isValidVideoUrl(url));
+        } else {
+            setVideoUrlError(false);
+        }
+    };
 
     const handleFileSelect = async (file) => {
         if (!file || !file.type.startsWith('image/')) {
@@ -725,8 +749,11 @@ const StepProfile = ({ data, updateData, session }) => {
                             class="premium-input"
                             placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
                             value=${String(data.intro_video_url || '')}
-                            onInput=${(e) => updateData('intro_video_url', e.target.value)}
-                            style=${{ paddingLeft: '44px' }}
+                            onInput=${(e) => handleVideoUrlChange(e.target.value)}
+                            style=${{
+                                paddingLeft: '44px',
+                                borderColor: videoUrlError ? '#ef4444' : undefined
+                            }}
                         />
                         <span style=${{
                             position: 'absolute',
@@ -736,7 +763,24 @@ const StepProfile = ({ data, updateData, session }) => {
                             fontSize: '18px'
                         }}>🔗</span>
                     </div>
-                    ${data.intro_video_url && html`
+                    ${videoUrlError && html`
+                        <div style=${{
+                            marginTop: '12px',
+                            padding: '12px',
+                            background: '#fef2f2',
+                            borderRadius: '8px',
+                            border: '1px solid #fecaca',
+                            fontSize: '0.9rem',
+                            color: '#dc2626',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}>
+                            <span>⚠️</span>
+                            ${t('onboard.premium.videoUrlError') || 'Please use a YouTube, Vimeo, or Dailymotion link. Other video platforms are not supported.'}
+                        </div>
+                    `}
+                    ${data.intro_video_url && !videoUrlError && html`
                         <div style=${{
                             marginTop: '12px',
                             padding: '12px',
