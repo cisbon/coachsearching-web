@@ -290,7 +290,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 full_name: fullName,
                 title: data.professional_title,
                 bio: data.bio,
-                intro_video_url: data.intro_video_url || null,
+                intro_video_url: isValidVideoUrl(data.intro_video_url) ? data.intro_video_url : null,
                 avatar_url: data.avatar_url,
                 location_city: data.location_city,
                 location_country: data.location_country,
@@ -558,7 +558,22 @@ const StepProfile = ({ data, updateData, session }) => {
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
-    const [videoUrlError, setVideoUrlError] = useState(false);
+
+    // Initialize video URL error state based on existing data
+    const [videoUrlError, setVideoUrlError] = useState(() => {
+        const url = data.intro_video_url;
+        return url && url.trim() !== '' && !isValidVideoUrl(url);
+    });
+
+    // Re-validate when component mounts or data changes (e.g., when navigating back)
+    useEffect(() => {
+        const url = data.intro_video_url;
+        if (url && url.trim() !== '') {
+            setVideoUrlError(!isValidVideoUrl(url));
+        } else {
+            setVideoUrlError(false);
+        }
+    }, [data.intro_video_url]);
 
     // Validate video URL when it changes
     const handleVideoUrlChange = (url) => {
