@@ -7,9 +7,11 @@ import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
 import { setPageMeta, generateBreadcrumbSchema, setStructuredData } from '../utils/seo.js';
 import { COACHING_CITIES, COACHING_CATEGORIES } from './CategoryPage.js';
+import { CoachList } from '../components/coach/CoachList.js';
+import { CoachDetailModal } from '../components/coach/CoachDetailModal.js';
 
 const React = window.React;
-const { useEffect, useMemo } = React;
+const { useEffect, useMemo, useState } = React;
 const html = htm.bind(React.createElement);
 
 // City image URLs using Unsplash (curated city photos)
@@ -17,26 +19,26 @@ const CITY_IMAGES = {
     // Germany
     'berlin': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?w=400&h=300&fit=crop',
     'munich': 'https://images.unsplash.com/photo-1595867818082-083862f3d630?w=400&h=300&fit=crop',
-    'hamburg': 'https://images.unsplash.com/photo-1566657817352-c24f7c9bfef4?w=400&h=300&fit=crop',
+    'hamburg': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
     'frankfurt': 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&h=300&fit=crop',
-    'dusseldorf': 'https://images.unsplash.com/photo-1574192324831-a0b85de7e40b?w=400&h=300&fit=crop',
-    'cologne': 'https://images.unsplash.com/photo-1515091943-9d5c0ad475af?w=400&h=300&fit=crop',
-    'stuttgart': 'https://images.unsplash.com/photo-1597993668915-66cf4ecc8fd4?w=400&h=300&fit=crop',
-    'hanover': 'https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=400&h=300&fit=crop',
-    'nuremberg': 'https://images.unsplash.com/photo-1573997073013-c44f35d97236?w=400&h=300&fit=crop',
-    'leipzig': 'https://images.unsplash.com/photo-1567354721844-26a30b380fc4?w=400&h=300&fit=crop',
+    'dusseldorf': 'https://images.unsplash.com/photo-1577538926988-4e9684615a96?w=400&h=300&fit=crop',
+    'cologne': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop',
+    'stuttgart': 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=400&h=300&fit=crop',
+    'hanover': 'https://images.unsplash.com/photo-1599946347371-68eb71b16afc?w=400&h=300&fit=crop',
+    'nuremberg': 'https://images.unsplash.com/photo-1577548093075-b7ae5e7c0b90?w=400&h=300&fit=crop',
+    'leipzig': 'https://images.unsplash.com/photo-1558431382-27e303142255?w=400&h=300&fit=crop',
     'dresden': 'https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=400&h=300&fit=crop',
-    'bonn': 'https://images.unsplash.com/photo-1578322050563-48e87b5d7e70?w=400&h=300&fit=crop',
-    'essen': 'https://images.unsplash.com/photo-1570698473651-b2de99bae12f?w=400&h=300&fit=crop',
-    'dortmund': 'https://images.unsplash.com/photo-1570698473651-b2de99bae12f?w=400&h=300&fit=crop',
-    'bremen': 'https://images.unsplash.com/photo-1600623471616-8c1966c91ff6?w=400&h=300&fit=crop',
-    'duisburg': 'https://images.unsplash.com/photo-1567354721844-26a30b380fc4?w=400&h=300&fit=crop',
-    'munster': 'https://images.unsplash.com/photo-1577174881658-0f30ed549adc?w=400&h=300&fit=crop',
-    'karlsruhe': 'https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=400&h=300&fit=crop',
-    'mannheim': 'https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=400&h=300&fit=crop',
-    'augsburg': 'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=400&h=300&fit=crop',
+    'bonn': 'https://images.unsplash.com/photo-1597989618498-3a82da8be3bb?w=400&h=300&fit=crop',
+    'essen': 'https://images.unsplash.com/photo-1558431382-27e303142255?w=400&h=300&fit=crop',
+    'dortmund': 'https://images.unsplash.com/photo-1578319493707-f8ed7a6d5f7e?w=400&h=300&fit=crop',
+    'bremen': 'https://images.unsplash.com/photo-1567354721844-26a30b380fc4?w=400&h=300&fit=crop',
+    'duisburg': 'https://images.unsplash.com/photo-1558431382-27e303142255?w=400&h=300&fit=crop',
+    'munster': 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=400&h=300&fit=crop',
+    'karlsruhe': 'https://images.unsplash.com/photo-1569930784237-ea65a528f007?w=400&h=300&fit=crop',
+    'mannheim': 'https://images.unsplash.com/photo-1568636029543-ca4fe4148ca2?w=400&h=300&fit=crop',
+    'augsburg': 'https://images.unsplash.com/photo-1549619856-ac562a3ed1a3?w=400&h=300&fit=crop',
     'wiesbaden': 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&h=300&fit=crop',
-    'freiburg': 'https://images.unsplash.com/photo-1597993668915-66cf4ecc8fd4?w=400&h=300&fit=crop',
+    'freiburg': 'https://images.unsplash.com/photo-1570698473651-b2de99bae12f?w=400&h=300&fit=crop',
 
     // Austria
     'vienna': 'https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=400&h=300&fit=crop',
@@ -48,17 +50,17 @@ const CITY_IMAGES = {
 
     // Netherlands
     'amsterdam': 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=400&h=300&fit=crop',
-    'rotterdam': 'https://images.unsplash.com/photo-1543785832-f6ca4fe7aee3?w=400&h=300&fit=crop',
-    'the-hague': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+    'rotterdam': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop',
+    'the-hague': 'https://images.unsplash.com/photo-1582654454409-778c732f8a72?w=400&h=300&fit=crop',
 
     // Belgium
-    'brussels': 'https://images.unsplash.com/photo-1559113513-d5e09c78b9dd?w=400&h=300&fit=crop',
-    'antwerp': 'https://images.unsplash.com/photo-1569317002804-ab77bcf1bce4?w=400&h=300&fit=crop',
+    'brussels': 'https://images.unsplash.com/photo-1559113202-c916b8e44373?w=400&h=300&fit=crop',
+    'antwerp': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
 
     // UK
     'london': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop',
-    'manchester': 'https://images.unsplash.com/photo-1574864845668-8f4c2b31b8bd?w=400&h=300&fit=crop',
-    'birmingham': 'https://images.unsplash.com/photo-1579424469556-cbe8baf32f45?w=400&h=300&fit=crop',
+    'manchester': 'https://images.unsplash.com/photo-1520120322929-60bb06f7f295?w=400&h=300&fit=crop',
+    'birmingham': 'https://images.unsplash.com/photo-1570095035965-2d7e8a6c95e4?w=400&h=300&fit=crop',
     'edinburgh': 'https://images.unsplash.com/photo-1506377585622-bedcbb027afc?w=400&h=300&fit=crop',
 
     // Ireland
@@ -67,19 +69,19 @@ const CITY_IMAGES = {
     // Nordics
     'stockholm': 'https://images.unsplash.com/photo-1509356843151-3e7d96241e11?w=400&h=300&fit=crop',
     'copenhagen': 'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=400&h=300&fit=crop',
-    'oslo': 'https://images.unsplash.com/photo-1533156228664-f55538b99ab3?w=400&h=300&fit=crop',
+    'oslo': 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=300&fit=crop',
     'helsinki': 'https://images.unsplash.com/photo-1538332576228-eb5b4c4de6f5?w=400&h=300&fit=crop',
-    'gothenburg': 'https://images.unsplash.com/photo-1571935441080-230d8698a54e?w=400&h=300&fit=crop',
-    'malmo': 'https://images.unsplash.com/photo-1559310278-18a9192d909a?w=400&h=300&fit=crop',
+    'gothenburg': 'https://images.unsplash.com/photo-1572862031783-db05c67a5107?w=400&h=300&fit=crop',
+    'malmo': 'https://images.unsplash.com/photo-1558431382-27e303142255?w=400&h=300&fit=crop',
 
     // France
     'paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop',
-    'lyon': 'https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=400&h=300&fit=crop',
+    'lyon': 'https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=400&h=300&fit=crop',
 
     // Spain
     'madrid': 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=400&h=300&fit=crop',
     'barcelona': 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&h=300&fit=crop',
-    'valencia': 'https://images.unsplash.com/photo-1580910051074-3eb694886f94?w=400&h=300&fit=crop',
+    'valencia': 'https://images.unsplash.com/photo-1599302592205-d7d683c83eea?w=400&h=300&fit=crop',
 
     // Italy
     'milan': 'https://images.unsplash.com/photo-1520440229-6469a149ac59?w=400&h=300&fit=crop',
@@ -87,8 +89,8 @@ const CITY_IMAGES = {
 
     // Poland
     'warsaw': 'https://images.unsplash.com/photo-1519197924294-4ba991a11128?w=400&h=300&fit=crop',
-    'krakow': 'https://images.unsplash.com/photo-1561102877-3a7e33f8e0fe?w=400&h=300&fit=crop',
-    'wroclaw': 'https://images.unsplash.com/photo-1528669851476-e03395ff1556?w=400&h=300&fit=crop',
+    'krakow': 'https://images.unsplash.com/photo-1574236170880-fae530dfa5c9?w=400&h=300&fit=crop',
+    'wroclaw': 'https://images.unsplash.com/photo-1519197924294-4ba991a11128?w=400&h=300&fit=crop',
 
     // Other European
     'prague': 'https://images.unsplash.com/photo-1541849546-216549ae216d?w=400&h=300&fit=crop',
@@ -97,8 +99,8 @@ const CITY_IMAGES = {
     'budapest': 'https://images.unsplash.com/photo-1541849546-216549ae216d?w=400&h=300&fit=crop',
     'bucharest': 'https://images.unsplash.com/photo-1584646098378-0874589d76b1?w=400&h=300&fit=crop',
     'athens': 'https://images.unsplash.com/photo-1555993539-1732b0258235?w=400&h=300&fit=crop',
-    'luxembourg': 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=400&h=300&fit=crop',
-    'tallinn': 'https://images.unsplash.com/photo-1567067249025-d79f89bdeca9?w=400&h=300&fit=crop',
+    'luxembourg': 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=400&h=300&fit=crop',
+    'tallinn': 'https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=400&h=300&fit=crop',
 };
 
 // Default fallback image for cities without specific images
@@ -266,8 +268,9 @@ export function LocationsPage() {
 /**
  * City Location Page Component - Shows all coaching categories for a specific city
  */
-export function CityLocationPage({ citySlug }) {
+export function CityLocationPage({ citySlug, session }) {
     const city = COACHING_CITIES[citySlug];
+    const [selectedCoach, setSelectedCoach] = useState(null);
 
     // Set page meta
     useEffect(() => {
@@ -302,6 +305,11 @@ export function CityLocationPage({ citySlug }) {
             </div>
         `;
     }
+
+    // Wrapper component to pass CoachDetailModal to CoachList
+    const CoachDetailModalWrapper = (props) => html`
+        <${CoachDetailModal} ...${props} session=${session} />
+    `;
 
     return html`
         <div class="locations-page city-location-page">
@@ -339,6 +347,20 @@ export function CityLocationPage({ citySlug }) {
                             </a>
                         `)}
                     </div>
+                </div>
+            </section>
+
+            <!-- Coaches in City Section -->
+            <section id="city-coaches" class="city-coaches-section" style=${{ padding: '40px 0', background: 'white' }}>
+                <div class="container">
+                    <h2 style=${{ textAlign: 'center', marginBottom: '30px', fontSize: '1.75rem' }}>
+                        ${t('locations.coachesIn', { city: city.name }) || `Coaches in ${city.name}`}
+                    </h2>
+                    <${CoachList}
+                        session=${session}
+                        CoachDetailModal=${CoachDetailModalWrapper}
+                        initialCity=${city.name}
+                    />
                 </div>
             </section>
 

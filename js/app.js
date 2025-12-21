@@ -415,7 +415,7 @@ const App = () => {
         Component = () => html`<${CategoryPage} categorySlug=${routeParam} />`;
     } else if (baseRoute === 'locations' && routeParam) {
         // City location pages like /locations/munich
-        Component = () => html`<${CityLocationPage} citySlug=${routeParam} />`;
+        Component = () => html`<${CityLocationPage} citySlug=${routeParam} session=${session} />`;
     } else if (baseRoute === 'coach' && routeParam) {
         // Coach profile pages - supports both UUID and slug
         // Example: /coach/john-smith-life-coach or /coach/277530d3-627d-4057-b115-985719a1f59c
