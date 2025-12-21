@@ -104,6 +104,7 @@ function generateSitemap() {
         ['loc' => '/coaches', 'priority' => '0.9', 'changefreq' => 'daily', 'hreflang' => true],
         ['loc' => '/quiz', 'priority' => '0.8', 'changefreq' => 'monthly', 'hreflang' => true],
         ['loc' => '/categories', 'priority' => '0.8', 'changefreq' => 'weekly', 'hreflang' => true],
+        ['loc' => '/locations', 'priority' => '0.8', 'changefreq' => 'weekly', 'hreflang' => true],
         ['loc' => '/faq', 'priority' => '0.7', 'changefreq' => 'monthly', 'hreflang' => true],
         ['loc' => '/pricing', 'priority' => '0.7', 'changefreq' => 'monthly', 'hreflang' => true],
     ];
@@ -158,6 +159,16 @@ function generateSitemap() {
             $xml .= "        <priority>0.7</priority>\n";
             $xml .= "    </url>\n";
         }
+    }
+
+    // City location pages (individual city pages showing all categories)
+    foreach ($COACHING_CITIES as $citySlug => $cityData) {
+        $xml .= "    <url>\n";
+        $xml .= "        <loc>" . htmlspecialchars($baseUrl . '/locations/' . $citySlug) . "</loc>\n";
+        $xml .= "        <lastmod>" . $today . "</lastmod>\n";
+        $xml .= "        <changefreq>weekly</changefreq>\n";
+        $xml .= "        <priority>0.7</priority>\n";
+        $xml .= "    </url>\n";
     }
 
     // Legal pages

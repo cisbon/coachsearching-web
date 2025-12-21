@@ -2006,7 +2006,28 @@ const translations = {
         "cityPage.findPerfectCoach": "Find the perfect {category} coach in {city} and take the first step towards your goals.",
         "cityPage.findCoach": "Find Your Coach",
         "cityPage.notFound": "Page Not Found",
-        "cityPage.notFoundDesc": "The coaching category or city you're looking for doesn't exist."
+        "cityPage.notFoundDesc": "The coaching category or city you're looking for doesn't exist.",
+
+        // Locations Pages
+        "footer.locations": "Locations",
+        "locations.title": "Find Coaches by Location",
+        "locations.metaTitle": "Find Coaches by Location | CoachSearching",
+        "locations.metaDesc": "Browse professional coaches in cities across Europe. Find executive, life, career, and business coaches near you.",
+        "locations.subtitle": "Discover professional coaches in major cities across Europe. Connect with local experts who understand your market and can meet you in person or online.",
+        "locations.coachingTypes": "Coaching Categories",
+        "locations.ctaTitle": "Can't find your city?",
+        "locations.ctaDesc": "Many of our coaches offer virtual sessions worldwide. Browse all coaches to find your perfect match.",
+        "locations.browseAll": "Browse All Coaches",
+        "locations.coachesIn": "Coaches in {city}",
+        "locations.cityMetaTitle": "Coaches in {city} | CoachSearching",
+        "locations.cityMetaDesc": "Find professional coaches in {city}. Executive, life, career, and business coaching - in person or online.",
+        "locations.cityHeroDesc": "Find professional coaches in {city}, {country}. Connect with local experts for in-person or online coaching sessions.",
+        "locations.chooseCategory": "Choose a Coaching Category",
+        "locations.viewCoaches": "View Coaches",
+        "locations.otherCitiesIn": "Other Cities in {country}",
+        "locations.viewAll": "View All Locations",
+        "locations.notFound": "Location Not Found",
+        "locations.notFoundDesc": "We couldn't find this location. Please browse our available locations."
     },
     de: {
         // Navigation
@@ -3558,7 +3579,28 @@ const translations = {
         "cityPage.findPerfectCoach": "Finde den perfekten {category}-Coach in {city} und mache den ersten Schritt zu deinen Zielen.",
         "cityPage.findCoach": "Finde deinen Coach",
         "cityPage.notFound": "Seite nicht gefunden",
-        "cityPage.notFoundDesc": "Die gesuchte Coaching-Kategorie oder Stadt existiert nicht."
+        "cityPage.notFoundDesc": "Die gesuchte Coaching-Kategorie oder Stadt existiert nicht.",
+
+        // Locations Pages
+        "footer.locations": "Standorte",
+        "locations.title": "Coaches nach Standort finden",
+        "locations.metaTitle": "Coaches nach Standort finden | CoachSearching",
+        "locations.metaDesc": "Finde professionelle Coaches in Städten in ganz Europa. Finde Executive-, Life-, Karriere- und Business-Coaches in deiner Nähe.",
+        "locations.subtitle": "Entdecke professionelle Coaches in großen Städten Europas. Verbinde dich mit lokalen Experten, die deinen Markt verstehen und dich persönlich oder online treffen können.",
+        "locations.coachingTypes": "Coaching-Kategorien",
+        "locations.ctaTitle": "Deine Stadt nicht gefunden?",
+        "locations.ctaDesc": "Viele unserer Coaches bieten virtuelle Sitzungen weltweit an. Durchsuche alle Coaches, um dein perfektes Match zu finden.",
+        "locations.browseAll": "Alle Coaches durchsuchen",
+        "locations.coachesIn": "Coaches in {city}",
+        "locations.cityMetaTitle": "Coaches in {city} | CoachSearching",
+        "locations.cityMetaDesc": "Finde professionelle Coaches in {city}. Executive-, Life-, Karriere- und Business-Coaching - persönlich oder online.",
+        "locations.cityHeroDesc": "Finde professionelle Coaches in {city}, {country}. Verbinde dich mit lokalen Experten für persönliche oder Online-Coaching-Sitzungen.",
+        "locations.chooseCategory": "Wähle eine Coaching-Kategorie",
+        "locations.viewCoaches": "Coaches ansehen",
+        "locations.otherCitiesIn": "Andere Städte in {country}",
+        "locations.viewAll": "Alle Standorte anzeigen",
+        "locations.notFound": "Standort nicht gefunden",
+        "locations.notFoundDesc": "Wir konnten diesen Standort nicht finden. Bitte durchsuche unsere verfügbaren Standorte."
     },
     es: {
         // Navigation
@@ -4982,7 +5024,28 @@ const translations = {
         "cityPage.findPerfectCoach": "Encuentra el coach de {category} perfecto en {city} y da el primer paso hacia tus objetivos.",
         "cityPage.findCoach": "Encuentra tu Coach",
         "cityPage.notFound": "Página no encontrada",
-        "cityPage.notFoundDesc": "La categoría de coaching o ciudad que buscas no existe."
+        "cityPage.notFoundDesc": "La categoría de coaching o ciudad que buscas no existe.",
+
+        // Locations Pages
+        "footer.locations": "Ubicaciones",
+        "locations.title": "Encuentra Coaches por Ubicación",
+        "locations.metaTitle": "Encuentra Coaches por Ubicación | CoachSearching",
+        "locations.metaDesc": "Explora coaches profesionales en ciudades de toda Europa. Encuentra coaches ejecutivos, de vida, de carrera y de negocios cerca de ti.",
+        "locations.subtitle": "Descubre coaches profesionales en las principales ciudades de Europa. Conecta con expertos locales que entienden tu mercado y pueden reunirse contigo en persona u online.",
+        "locations.coachingTypes": "Categorías de Coaching",
+        "locations.ctaTitle": "¿No encuentras tu ciudad?",
+        "locations.ctaDesc": "Muchos de nuestros coaches ofrecen sesiones virtuales en todo el mundo. Explora todos los coaches para encontrar tu match perfecto.",
+        "locations.browseAll": "Ver Todos los Coaches",
+        "locations.coachesIn": "Coaches en {city}",
+        "locations.cityMetaTitle": "Coaches en {city} | CoachSearching",
+        "locations.cityMetaDesc": "Encuentra coaches profesionales en {city}. Coaching ejecutivo, de vida, de carrera y de negocios - en persona u online.",
+        "locations.cityHeroDesc": "Encuentra coaches profesionales en {city}, {country}. Conecta con expertos locales para sesiones de coaching presenciales u online.",
+        "locations.chooseCategory": "Elige una Categoría de Coaching",
+        "locations.viewCoaches": "Ver Coaches",
+        "locations.otherCitiesIn": "Otras Ciudades en {country}",
+        "locations.viewAll": "Ver Todas las Ubicaciones",
+        "locations.notFound": "Ubicación no Encontrada",
+        "locations.notFoundDesc": "No pudimos encontrar esta ubicación. Por favor explora nuestras ubicaciones disponibles."
     },
     fr: {
         // Navigation
@@ -6416,7 +6479,28 @@ const translations = {
         "cityPage.findPerfectCoach": "Trouvez le coach en {category} parfait à {city} et faites le premier pas vers vos objectifs.",
         "cityPage.findCoach": "Trouvez votre Coach",
         "cityPage.notFound": "Page non trouvée",
-        "cityPage.notFoundDesc": "La catégorie de coaching ou la ville que vous recherchez n'existe pas."
+        "cityPage.notFoundDesc": "La catégorie de coaching ou la ville que vous recherchez n'existe pas.",
+
+        // Locations Pages
+        "footer.locations": "Lieux",
+        "locations.title": "Trouver des Coaches par Lieu",
+        "locations.metaTitle": "Trouver des Coaches par Lieu | CoachSearching",
+        "locations.metaDesc": "Parcourez les coaches professionnels dans les villes d'Europe. Trouvez des coaches exécutifs, de vie, de carrière et d'affaires près de chez vous.",
+        "locations.subtitle": "Découvrez des coaches professionnels dans les grandes villes d'Europe. Connectez-vous avec des experts locaux qui comprennent votre marché et peuvent vous rencontrer en personne ou en ligne.",
+        "locations.coachingTypes": "Catégories de Coaching",
+        "locations.ctaTitle": "Vous ne trouvez pas votre ville ?",
+        "locations.ctaDesc": "Beaucoup de nos coaches proposent des sessions virtuelles dans le monde entier. Parcourez tous les coaches pour trouver votre match parfait.",
+        "locations.browseAll": "Voir Tous les Coaches",
+        "locations.coachesIn": "Coaches à {city}",
+        "locations.cityMetaTitle": "Coaches à {city} | CoachSearching",
+        "locations.cityMetaDesc": "Trouvez des coaches professionnels à {city}. Coaching exécutif, de vie, de carrière et d'affaires - en personne ou en ligne.",
+        "locations.cityHeroDesc": "Trouvez des coaches professionnels à {city}, {country}. Connectez-vous avec des experts locaux pour des sessions de coaching en personne ou en ligne.",
+        "locations.chooseCategory": "Choisissez une Catégorie de Coaching",
+        "locations.viewCoaches": "Voir les Coaches",
+        "locations.otherCitiesIn": "Autres Villes en {country}",
+        "locations.viewAll": "Voir Tous les Lieux",
+        "locations.notFound": "Lieu non Trouvé",
+        "locations.notFoundDesc": "Nous n'avons pas pu trouver ce lieu. Veuillez parcourir nos lieux disponibles."
     },
     it: {
         // Navigation
@@ -7850,7 +7934,28 @@ const translations = {
         "cityPage.findPerfectCoach": "Trova il coach di {category} perfetto a {city} e fai il primo passo verso i tuoi obiettivi.",
         "cityPage.findCoach": "Trova il tuo Coach",
         "cityPage.notFound": "Pagina non trovata",
-        "cityPage.notFoundDesc": "La categoria di coaching o la città che stai cercando non esiste."
+        "cityPage.notFoundDesc": "La categoria di coaching o la città che stai cercando non esiste.",
+
+        // Locations Pages
+        "footer.locations": "Località",
+        "locations.title": "Trova Coach per Località",
+        "locations.metaTitle": "Trova Coach per Località | CoachSearching",
+        "locations.metaDesc": "Sfoglia coach professionisti nelle città di tutta Europa. Trova coach executive, life, career e business vicino a te.",
+        "locations.subtitle": "Scopri coach professionisti nelle principali città europee. Connettiti con esperti locali che comprendono il tuo mercato e possono incontrarti di persona o online.",
+        "locations.coachingTypes": "Categorie di Coaching",
+        "locations.ctaTitle": "Non trovi la tua città?",
+        "locations.ctaDesc": "Molti dei nostri coach offrono sessioni virtuali in tutto il mondo. Sfoglia tutti i coach per trovare il tuo match perfetto.",
+        "locations.browseAll": "Vedi Tutti i Coach",
+        "locations.coachesIn": "Coach a {city}",
+        "locations.cityMetaTitle": "Coach a {city} | CoachSearching",
+        "locations.cityMetaDesc": "Trova coach professionisti a {city}. Coaching executive, life, career e business - di persona o online.",
+        "locations.cityHeroDesc": "Trova coach professionisti a {city}, {country}. Connettiti con esperti locali per sessioni di coaching di persona o online.",
+        "locations.chooseCategory": "Scegli una Categoria di Coaching",
+        "locations.viewCoaches": "Vedi i Coach",
+        "locations.otherCitiesIn": "Altre Città in {country}",
+        "locations.viewAll": "Vedi Tutte le Località",
+        "locations.notFound": "Località non Trovata",
+        "locations.notFoundDesc": "Non siamo riusciti a trovare questa località. Per favore sfoglia le nostre località disponibili."
     }
 };
 

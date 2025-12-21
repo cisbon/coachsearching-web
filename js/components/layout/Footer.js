@@ -58,6 +58,7 @@ export function Footer({ onOpenLegal }) {
                         <ul>
                             <li><a href="/faq">${t('footer.faq') || 'FAQ'}</a></li>
                             <li><a href="/coaches">${t('nav.coaches') || 'Find a Coach'}</a></li>
+                            <li><a href="/locations">${t('footer.locations') || 'Locations'}</a></li>
                             <li><a href="/quiz">${t('category.takeQuiz') || 'Take the Quiz'}</a></li>
                             <li><a href="/pricing">${t('nav.pricing') || 'Pricing'}</a></li>
                         </ul>

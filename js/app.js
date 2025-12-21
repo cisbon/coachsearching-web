@@ -18,6 +18,7 @@ import { PromoCodeWidget, PromoCodeBanner, PromoCodeManager } from './promoCode.
 // SEO Content Pages
 import { FAQPage } from './pages/FAQPage.js';
 import { CategoryPage, CategoriesIndexPage, CityCategoryPage, COACHING_CATEGORIES, COACHING_CITIES } from './pages/CategoryPage.js';
+import { LocationsPage, CityLocationPage } from './pages/LocationsPage.js';
 import { CoachProfilePage } from './pages/CoachProfilePage.js';
 import { PricingPage } from './pages/PricingPage.js';
 import { Hero, CoachingCategoriesSection, HowItWorksSection } from './pages/HomePage.js';
@@ -412,6 +413,9 @@ const App = () => {
     } else if (baseRoute === 'coaching' && routeParam) {
         // Category pages like /coaching/executive-coaching
         Component = () => html`<${CategoryPage} categorySlug=${routeParam} />`;
+    } else if (baseRoute === 'locations' && routeParam) {
+        // City location pages like /locations/munich
+        Component = () => html`<${CityLocationPage} citySlug=${routeParam} />`;
     } else if (baseRoute === 'coach' && routeParam) {
         // Coach profile pages - supports both UUID and slug
         // Example: /coach/john-smith-life-coach or /coach/277530d3-627d-4057-b115-985719a1f59c
@@ -432,6 +436,7 @@ const App = () => {
             // Content pages
             case 'faq': Component = () => html`<${FAQPage} />`; break;
             case 'categories': Component = () => html`<${CategoriesIndexPage} />`; break;
+            case 'locations': Component = () => html`<${LocationsPage} />`; break;
             case 'pricing': Component = () => html`<${PricingPage} />`; break;
             default: Component = () => html`<${Home} session=${session} />`;
         }
