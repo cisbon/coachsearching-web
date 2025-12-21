@@ -349,10 +349,10 @@ function CategoryHero({ category, categorySlug }) {
                 <h1>${title}</h1>
                 <p class="hero-description">${description}</p>
                 <div class="hero-cta">
-                    <a href="#coaches?specialty=${encodeURIComponent(category.title)}" class="btn btn-primary btn-lg">
+                    <a href="/coaches?specialty=${encodeURIComponent(category.title)}" class="btn btn-primary btn-lg">
                         ${t('categoryPage.findCoaches') || 'Find Coaches'}
                     </a>
-                    <a href="#quiz" class="btn btn-secondary btn-lg">${t('category.takeQuiz') || 'Take the Quiz'}</a>
+                    <a href="/quiz" class="btn btn-secondary btn-lg">${t('category.takeQuiz') || 'Take the Quiz'}</a>
                 </div>
             </div>
         </section>
@@ -426,7 +426,7 @@ function RelatedCategories({ categories, currentSlug }) {
                         const cat = COACHING_CATEGORIES[slug];
                         const title = t(`categoryPage.${slug}.title`) || cat.title;
                         return html`
-                            <a href="#coaching/${slug}" class="related-card" key=${slug}>
+                            <a href="/coaching/${slug}" class="related-card" key=${slug}>
                                 <span class="related-icon">${cat.icon}</span>
                                 <span class="related-title">${title}</span>
                             </a>
@@ -468,7 +468,7 @@ export function CategoryPage({ categorySlug }) {
                 <div class="container">
                     <h1>${t('categoryPage.notFound') || 'Category Not Found'}</h1>
                     <p>${t('categoryPage.notFoundDesc') || "Sorry, we couldn't find this coaching category."}</p>
-                    <a href="#coaches" class="btn btn-primary">${t('seo.browseAll') || 'Browse All Coaches'}</a>
+                    <a href="/coaches" class="btn btn-primary">${t('seo.browseAll') || 'Browse All Coaches'}</a>
                 </div>
             </div>
         `;
@@ -552,10 +552,10 @@ export function CategoryPage({ categorySlug }) {
                     <h2>${t('categoryPage.readyToStart') || 'Ready to Start Your Journey?'}</h2>
                     <p>${t('categoryPage.findPerfectCoach') || 'Find your perfect coach and take the first step toward transformation.'}</p>
                     <div class="cta-buttons">
-                        <a href="#coaches?specialty=${encodeURIComponent(category.title)}" class="btn btn-primary btn-lg">
+                        <a href="/coaches?specialty=${encodeURIComponent(category.title)}" class="btn btn-primary btn-lg">
                             ${t('category.findCoach') || 'Find a Coach'}
                         </a>
-                        <a href="#quiz" class="btn btn-secondary btn-lg">
+                        <a href="/quiz" class="btn btn-secondary btn-lg">
                             ${t('categoryPage.getMatched') || 'Get Matched'}
                         </a>
                     </div>
@@ -587,7 +587,7 @@ export function CategoriesIndexPage() {
             <div class="container">
                 <div class="categories-grid">
                     ${Object.entries(COACHING_CATEGORIES).map(([slug, category]) => html`
-                        <a href="#coaching/${slug}" class="category-card" key=${slug}>
+                        <a href="/coaching/${slug}" class="category-card" key=${slug}>
                             <div class="category-icon">${category.icon}</div>
                             <h2 class="category-title">${t(`categoryPage.${slug}.title`) || category.title}</h2>
                             <p class="category-description">${t(`categoryPage.${slug}.description`) || category.description}</p>
@@ -599,7 +599,7 @@ export function CategoriesIndexPage() {
                 <section class="categories-cta">
                     <h2>${t('categoryPage.notSureTitle') || 'Not Sure Which Type You Need?'}</h2>
                     <p>${t('categoryPage.notSureDesc') || 'Take our quick quiz to get personalized coach recommendations.'}</p>
-                    <a href="#quiz" class="btn btn-primary btn-lg">${t('category.takeQuiz') || 'Take the Quiz'}</a>
+                    <a href="/quiz" class="btn btn-primary btn-lg">${t('category.takeQuiz') || 'Take the Quiz'}</a>
                 </section>
             </div>
         </div>
