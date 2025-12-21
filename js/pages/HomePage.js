@@ -96,7 +96,7 @@ export function CoachingCategoriesSection() {
 export function HowItWorksSection() {
     const steps = [
         { number: '1', title: t('home.howItWorks.step1.title') || 'Find Your Coach', description: t('home.howItWorks.step1.desc') || 'Browse verified coaches or take our matching quiz', icon: '🔍' },
-        { number: '2', title: t('home.howItWorks.step2.title') || 'Book a Session', description: t('home.howItWorks.step2.desc') || 'Choose a time and format that works for you', icon: '📅' },
+        { number: '2', title: t('home.howItWorks.step2.title') || 'Book a Free Discovery Call', description: t('home.howItWorks.step2.desc') || 'Connect with your coach for a free intro session', icon: '📅' },
         { number: '3', title: t('home.howItWorks.step3.title') || 'Transform', description: t('home.howItWorks.step3.desc') || 'Work with your coach to achieve your goals', icon: '🚀' },
     ];
 
