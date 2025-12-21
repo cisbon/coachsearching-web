@@ -70,22 +70,30 @@ export function FilterSidebar({ filters, onChange, onReset }) {
             <div class="filter-section">
                 <h4>Specialties</h4>
                 <div class="filter-checkboxes">
-                    ${specialtyOptions.map(specialty => html`
-                        <label key=${specialty.code} class="filter-checkbox">
-                            <input
-                                type="checkbox"
-                                checked=${filters.specialties?.includes(specialty.code)}
-                                onChange=${(e) => {
-                                    const current = filters.specialties || [];
-                                    const updated = e.target.checked
-                                        ? [...current, specialty.code]
-                                        : current.filter(s => s !== specialty.code);
-                                    onChange({ ...filters, specialties: updated });
-                                }}
-                            />
-                            <span>${specialty.icon || ''} ${getLocalizedName(specialty)}</span>
-                        </label>
-                    `)}
+                    ${specialtyOptions.map(specialty => {
+                        // Check if specialty is selected (exact match or partial match for initial filters)
+                        const isChecked = filters.specialties?.some(s =>
+                            s === specialty.code ||
+                            specialty.code.toLowerCase().includes(s.toLowerCase()) ||
+                            s.toLowerCase().includes(specialty.code.toLowerCase())
+                        );
+                        return html`
+                            <label key=${specialty.code} class="filter-checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked=${isChecked}
+                                    onChange=${(e) => {
+                                        const current = filters.specialties || [];
+                                        const updated = e.target.checked
+                                            ? [...current, specialty.code]
+                                            : current.filter(s => s !== specialty.code && !specialty.code.toLowerCase().includes(s.toLowerCase()));
+                                        onChange({ ...filters, specialties: updated });
+                                    }}
+                                />
+                                <span>${specialty.icon || ''} ${getLocalizedName(specialty)}</span>
+                            </label>
+                        `;
+                    })}
                 </div>
             </div>
 

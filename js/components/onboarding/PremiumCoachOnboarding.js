@@ -86,6 +86,7 @@ const DEFAULT_DATA = {
     full_name: '',
     professional_title: '',
     bio: '',
+    intro_video_url: '',
     avatar_url: '',
     location_city: '',
     location_country: '',
@@ -113,7 +114,7 @@ const loadSavedProgress = (userId) => {
         if (!parsed.data) return null;
 
         const sanitizedData = { ...DEFAULT_DATA };
-        const stringFields = ['full_name', 'professional_title', 'bio', 'avatar_url', 'location_city', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
+        const stringFields = ['full_name', 'professional_title', 'bio', 'intro_video_url', 'avatar_url', 'location_city', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
         const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations'];
 
         stringFields.forEach(field => {
@@ -289,6 +290,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 full_name: fullName,
                 title: data.professional_title,
                 bio: data.bio,
+                intro_video_url: data.intro_video_url || null,
                 avatar_url: data.avatar_url,
                 location_city: data.location_city,
                 location_country: data.location_country,
@@ -684,6 +686,73 @@ const StepProfile = ({ data, updateData, session }) => {
                     <div class=${charCounterClass}>
                         ${String(bioLength)} / 500
                     </div>
+                </div>
+            </div>
+
+            <!-- Video Introduction - Highlighted Section -->
+            <div class="form-section" style=${{
+                background: 'linear-gradient(135deg, var(--petrol-50, #e8f4f3) 0%, #f0f9ff 100%)',
+                border: '2px solid var(--petrol, #2d6a6a)',
+                borderRadius: '16px',
+                padding: '24px',
+                position: 'relative'
+            }}>
+                <div style=${{
+                    position: 'absolute',
+                    top: '-12px',
+                    left: '20px',
+                    background: 'var(--petrol, #2d6a6a)',
+                    color: 'white',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                }}>
+                    ⭐ ${t('onboard.premium.recommended') || 'Highly Recommended'}
+                </div>
+                <div class="form-group" style=${{ marginTop: '8px' }}>
+                    <label class="form-label" style=${{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        🎥 ${t('onboard.premium.introVideo') || 'Introduction Video'}
+                    </label>
+                    <div class="form-hint" style=${{ marginBottom: '12px' }}>
+                        ${t('onboard.premium.introVideoHint') || 'Add a short video (1-2 min) to introduce yourself. This is the #1 way to build trust with potential clients before the discovery call. Use YouTube, Vimeo, or Loom links.'}
+                    </div>
+                    <div style=${{ position: 'relative' }}>
+                        <input
+                            type="url"
+                            class="premium-input"
+                            placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                            value=${String(data.intro_video_url || '')}
+                            onInput=${(e) => updateData('intro_video_url', e.target.value)}
+                            style=${{ paddingLeft: '44px' }}
+                        />
+                        <span style=${{
+                            position: 'absolute',
+                            left: '14px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            fontSize: '18px'
+                        }}>🔗</span>
+                    </div>
+                    ${data.intro_video_url && html`
+                        <div style=${{
+                            marginTop: '12px',
+                            padding: '12px',
+                            background: 'white',
+                            borderRadius: '8px',
+                            border: '1px solid #e0e0e0',
+                            fontSize: '0.9rem',
+                            color: '#666',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}>
+                            <span style=${{ color: 'var(--petrol)' }}>✓</span>
+                            ${t('onboard.premium.videoAdded') || 'Video link added! Clients will see this on your profile.'}
+                        </div>
+                    `}
                 </div>
             </div>
 
