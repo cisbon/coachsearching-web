@@ -78,12 +78,15 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         languages: [],
         hasVideo: false,
         freeIntro: false,
-        verified: false,
         topRated: false,
         minRating: null,
         onlineOnly: false,
         inPersonOnly: false,
-        experience: ''
+        experience: '',
+        offersOnsite: false,
+        offersVirtual: false,
+        locationCountry: '',
+        locationCity: ''
     });
 
     const resetFilters = () => {
@@ -95,12 +98,15 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             languages: [],
             hasVideo: false,
             freeIntro: false,
-            verified: false,
             topRated: false,
             minRating: null,
             onlineOnly: false,
             inPersonOnly: false,
-            experience: ''
+            experience: '',
+            offersOnsite: false,
+            offersVirtual: false,
+            locationCountry: '',
+            locationCity: ''
         });
     };
 
@@ -151,10 +157,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             result = result.filter(coach => coach.intro_video_url || coach.video_url || coach.video_intro_url);
         }
         if (filters.freeIntro) {
-            result = result.filter(coach => coach.offers_free_intro || coach.free_discovery_call);
-        }
-        if (filters.verified) {
-            result = result.filter(coach => coach.is_verified || coach.verified);
+            result = result.filter(coach => coach.offers_free_intro || coach.free_discovery_call || coach.offers_free_discovery);
         }
         if (filters.topRated) {
             result = result.filter(coach => (coach.rating_average || coach.rating || 0) >= 4.5);
@@ -166,18 +169,33 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         }
 
         // Session format filters
-        if (filters.onlineOnly) {
+        if (filters.offersVirtual) {
             result = result.filter(coach =>
+                coach.session_types?.includes('video') ||
                 coach.session_formats?.includes('online') ||
-                coach.offers_online ||
-                !coach.session_formats
+                coach.session_formats?.includes('video') ||
+                coach.offers_online
             );
         }
-        if (filters.inPersonOnly) {
+        if (filters.offersOnsite) {
             result = result.filter(coach =>
+                coach.session_types?.includes('in-person') ||
                 coach.session_formats?.includes('in-person') ||
                 coach.offers_in_person ||
-                coach.location
+                coach.location_city
+            );
+        }
+
+        // Location filters (only apply when in-person is selected)
+        if (filters.offersOnsite && filters.locationCountry) {
+            result = result.filter(coach =>
+                coach.location_country?.toLowerCase() === filters.locationCountry.toLowerCase()
+            );
+        }
+        if (filters.offersOnsite && filters.locationCity) {
+            const citySearch = filters.locationCity.toLowerCase().trim();
+            result = result.filter(coach =>
+                coach.location_city?.toLowerCase().includes(citySearch)
             );
         }
 
@@ -285,11 +303,12 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         ...(filters.languages || []),
         filters.hasVideo,
         filters.freeIntro,
-        filters.verified,
         filters.topRated,
         filters.minRating,
-        filters.onlineOnly,
-        filters.inPersonOnly,
+        filters.offersVirtual,
+        filters.offersOnsite,
+        filters.locationCountry,
+        filters.locationCity,
         filters.experience
     ].filter(Boolean).length;
 

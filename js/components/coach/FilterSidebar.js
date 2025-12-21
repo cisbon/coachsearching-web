@@ -22,6 +22,38 @@ const LANGUAGE_TO_FLAG = {
     'cs': 'cz', 'ro': 'ro', 'hu': 'hu', 'uk': 'ua'
 };
 
+// Countries list for location filter
+const COUNTRIES = [
+    { code: 'AT', name: 'Austria' },
+    { code: 'AU', name: 'Australia' },
+    { code: 'BE', name: 'Belgium' },
+    { code: 'BR', name: 'Brazil' },
+    { code: 'CA', name: 'Canada' },
+    { code: 'CH', name: 'Switzerland' },
+    { code: 'DE', name: 'Germany' },
+    { code: 'DK', name: 'Denmark' },
+    { code: 'ES', name: 'Spain' },
+    { code: 'FI', name: 'Finland' },
+    { code: 'FR', name: 'France' },
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'IE', name: 'Ireland' },
+    { code: 'IN', name: 'India' },
+    { code: 'IT', name: 'Italy' },
+    { code: 'JP', name: 'Japan' },
+    { code: 'LU', name: 'Luxembourg' },
+    { code: 'MX', name: 'Mexico' },
+    { code: 'NL', name: 'Netherlands' },
+    { code: 'NO', name: 'Norway' },
+    { code: 'NZ', name: 'New Zealand' },
+    { code: 'PL', name: 'Poland' },
+    { code: 'PT', name: 'Portugal' },
+    { code: 'SE', name: 'Sweden' },
+    { code: 'SG', name: 'Singapore' },
+    { code: 'US', name: 'United States' },
+    { code: 'ZA', name: 'South Africa' },
+    { code: 'OTHER', name: 'Other' }
+];
+
 /**
  * FilterSidebar Component
  * @param {Object} props
@@ -149,11 +181,40 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                         <input
                             type="checkbox"
                             checked=${filters.offersOnsite}
-                            onChange=${(e) => onChange({ ...filters, offersOnsite: e.target.checked })}
+                            onChange=${(e) => onChange({ ...filters, offersOnsite: e.target.checked, locationCountry: e.target.checked ? filters.locationCountry : '', locationCity: e.target.checked ? filters.locationCity : '' })}
                         />
                         <span>In-Person</span>
                     </label>
                 </div>
+                ${filters.offersOnsite && html`
+                    <div class="location-filters" style=${{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e0e0e0' }}>
+                        <div style=${{ marginBottom: '10px' }}>
+                            <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>Country</label>
+                            <select
+                                class="filter-input"
+                                value=${filters.locationCountry || ''}
+                                onChange=${(e) => onChange({ ...filters, locationCountry: e.target.value })}
+                                style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
+                            >
+                                <option value="">All Countries</option>
+                                ${COUNTRIES.map(country => html`
+                                    <option key=${country.code} value=${country.name}>${country.name}</option>
+                                `)}
+                            </select>
+                        </div>
+                        <div>
+                            <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>City</label>
+                            <input
+                                type="text"
+                                class="filter-input"
+                                placeholder="Enter city..."
+                                value=${filters.locationCity || ''}
+                                onChange=${(e) => onChange({ ...filters, locationCity: e.target.value })}
+                                style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
+                            />
+                        </div>
+                    </div>
+                `}
             </div>
 
             <!-- Other Options -->
@@ -175,14 +236,6 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             onChange=${(e) => onChange({ ...filters, freeIntro: e.target.checked })}
                         />
                         <span>Free Discovery Call</span>
-                    </label>
-                    <label class="filter-checkbox">
-                        <input
-                            type="checkbox"
-                            checked=${filters.verified}
-                            onChange=${(e) => onChange({ ...filters, verified: e.target.checked })}
-                        />
-                        <span>Verified Only</span>
                     </label>
                 </div>
             </div>
