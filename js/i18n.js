@@ -423,6 +423,11 @@ const translations = {
         "onboard.premium.selected": "selected",
         "onboard.premium.perHour": "per hour",
         "onboard.premium.noFeeNotice": "coachsearching.com does not charge any platform fees — you keep 100% of your earnings",
+        "onboard.premium.discoveryCallTitle": "Free Discovery Calls",
+        "onboard.premium.discoveryCallHint": "Discovery calls are short, free introductory sessions that help potential clients get to know you.",
+        "onboard.premium.discoveryCallLabel": "Allow Free Discovery Calls",
+        "onboard.premium.discoveryCallDesc": "Offer a free 15-20 minute introductory call so potential clients can learn about your coaching style and see if you're a good fit.",
+        "onboard.premium.discoveryCallDisabledNotice": "Without discovery calls, potential clients may be less likely to book with you. Most successful coaches offer free intro calls to build trust.",
 
         // Trust Building - Coach Profile
         "trust.excellent": "Excellent",
@@ -2387,6 +2392,11 @@ const translations = {
         "onboard.premium.selected": "ausgewählt",
         "onboard.premium.perHour": "pro Stunde",
         "onboard.premium.noFeeNotice": "coachsearching.com erhebt keine Plattformgebühren — Sie behalten 100% Ihrer Einnahmen",
+        "onboard.premium.discoveryCallTitle": "Kostenlose Kennenlerngespräche",
+        "onboard.premium.discoveryCallHint": "Kennenlerngespräche sind kurze, kostenlose Einführungsgespräche, die potenziellen Klienten helfen, Sie kennenzulernen.",
+        "onboard.premium.discoveryCallLabel": "Kostenlose Kennenlerngespräche anbieten",
+        "onboard.premium.discoveryCallDesc": "Bieten Sie ein kostenloses 15-20-minütiges Einführungsgespräch an, damit potenzielle Klienten Ihren Coaching-Stil kennenlernen und sehen können, ob Sie gut zusammenpassen.",
+        "onboard.premium.discoveryCallDisabledNotice": "Ohne Kennenlerngespräche buchen potenzielle Klienten möglicherweise seltener bei Ihnen. Die meisten erfolgreichen Coaches bieten kostenlose Erstgespräche an, um Vertrauen aufzubauen.",
 
         // Quiz
         "quiz.back": "Zurück",
@@ -3871,6 +3881,11 @@ const translations = {
         "onboard.premium.selected": "seleccionado(s)",
         "onboard.premium.perHour": "por hora",
         "onboard.premium.noFeeNotice": "coachsearching.com no cobra ninguna comisión — conservas el 100% de tus ganancias",
+        "onboard.premium.discoveryCallTitle": "Llamadas de Descubrimiento Gratuitas",
+        "onboard.premium.discoveryCallHint": "Las llamadas de descubrimiento son sesiones introductorias cortas y gratuitas que ayudan a los clientes potenciales a conocerte.",
+        "onboard.premium.discoveryCallLabel": "Permitir Llamadas de Descubrimiento Gratuitas",
+        "onboard.premium.discoveryCallDesc": "Ofrece una llamada introductoria gratuita de 15-20 minutos para que los clientes potenciales conozcan tu estilo de coaching y vean si eres compatible.",
+        "onboard.premium.discoveryCallDisabledNotice": "Sin llamadas de descubrimiento, es menos probable que los clientes potenciales reserven contigo. La mayoría de los coaches exitosos ofrecen llamadas introductorias gratuitas para generar confianza.",
 
         // Quiz (Spanish)
         "quiz.back": "Atrás",
@@ -5227,6 +5242,11 @@ const translations = {
         "onboard.premium.selected": "sélectionné(s)",
         "onboard.premium.perHour": "par heure",
         "onboard.premium.noFeeNotice": "coachsearching.com ne prélève aucune commission — vous conservez 100% de vos gains",
+        "onboard.premium.discoveryCallTitle": "Appels Découverte Gratuits",
+        "onboard.premium.discoveryCallHint": "Les appels découverte sont de courtes sessions d'introduction gratuites qui aident les clients potentiels à vous connaître.",
+        "onboard.premium.discoveryCallLabel": "Proposer des Appels Découverte Gratuits",
+        "onboard.premium.discoveryCallDesc": "Offrez un appel d'introduction gratuit de 15-20 minutes pour que les clients potentiels découvrent votre style de coaching et voient si vous êtes compatibles.",
+        "onboard.premium.discoveryCallDisabledNotice": "Sans appels découverte, les clients potentiels seront moins susceptibles de réserver avec vous. La plupart des coachs performants proposent des appels d'introduction gratuits pour établir la confiance.",
 
         // Quiz (French)
         "quiz.back": "Retour",
@@ -6593,6 +6613,11 @@ const translations = {
         "onboard.premium.selected": "selezionato/i",
         "onboard.premium.perHour": "all'ora",
         "onboard.premium.noFeeNotice": "coachsearching.com non applica commissioni — mantieni il 100% dei tuoi guadagni",
+        "onboard.premium.discoveryCallTitle": "Chiamate Conoscitive Gratuite",
+        "onboard.premium.discoveryCallHint": "Le chiamate conoscitive sono brevi sessioni introduttive gratuite che aiutano i potenziali clienti a conoscerti.",
+        "onboard.premium.discoveryCallLabel": "Offri Chiamate Conoscitive Gratuite",
+        "onboard.premium.discoveryCallDesc": "Offri una chiamata introduttiva gratuita di 15-20 minuti così i potenziali clienti possono scoprire il tuo stile di coaching e vedere se siete compatibili.",
+        "onboard.premium.discoveryCallDisabledNotice": "Senza chiamate conoscitive, è meno probabile che i potenziali clienti prenotino con te. La maggior parte dei coach di successo offre chiamate introduttive gratuite per costruire fiducia.",
 
         // Quiz (Italian)
         "quiz.back": "Indietro",

@@ -95,6 +95,7 @@ const DEFAULT_DATA = {
     session_formats: ['video'],
     session_durations: [60],
     hourly_rate: '',
+    offers_free_discovery: true,
     plan_type: 'free',
     referral_code: '',
     referral_code_valid: false,
@@ -127,6 +128,9 @@ const loadSavedProgress = (userId) => {
         });
         if (typeof parsed.data.referral_code_valid === 'boolean') {
             sanitizedData.referral_code_valid = parsed.data.referral_code_valid;
+        }
+        if (typeof parsed.data.offers_free_discovery === 'boolean') {
+            sanitizedData.offers_free_discovery = parsed.data.offers_free_discovery;
         }
 
         return {
@@ -294,6 +298,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 session_types: data.session_formats, // DB column is session_types
                 hourly_rate: parseFloat(data.hourly_rate) || 0,
                 currency: 'EUR',
+                offers_free_discovery: data.offers_free_discovery !== false,
                 is_active: true,
                 onboarding_completed: true,
                 slug: slug
@@ -951,6 +956,55 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                     <span class="no-fee-icon">✨</span>
                     <span>${t('onboard.premium.noFeeNotice')}</span>
                 </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">📞 ${t('onboard.premium.discoveryCallTitle')}</div>
+                <div class="form-hint">
+                    ${t('onboard.premium.discoveryCallHint')}
+                </div>
+
+                <label class="discovery-checkbox-wrapper" style=${{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    padding: '16px',
+                    background: data.offers_free_discovery ? 'var(--petrol-50, #e8f4f3)' : '#f8f9fa',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    border: data.offers_free_discovery ? '2px solid var(--petrol)' : '2px solid #e0e0e0',
+                    transition: 'all 0.2s ease'
+                }}>
+                    <input
+                        type="checkbox"
+                        checked=${data.offers_free_discovery}
+                        onChange=${(e) => updateData('offers_free_discovery', e.target.checked)}
+                        style=${{ width: '20px', height: '20px', marginTop: '2px', accentColor: 'var(--petrol)' }}
+                    />
+                    <div>
+                        <div style=${{ fontWeight: 600, marginBottom: '4px' }}>
+                            ${t('onboard.premium.discoveryCallLabel')}
+                        </div>
+                        <div style=${{ fontSize: '0.9rem', color: '#666' }}>
+                            ${t('onboard.premium.discoveryCallDesc')}
+                        </div>
+                    </div>
+                </label>
+
+                ${!data.offers_free_discovery ? html`
+                    <div class="discovery-disabled-notice" style=${{
+                        marginTop: '12px',
+                        padding: '12px 16px',
+                        background: '#fff3cd',
+                        borderRadius: '8px',
+                        border: '1px solid #ffc107',
+                        fontSize: '0.9rem',
+                        color: '#856404'
+                    }}>
+                        <span style=${{ marginRight: '8px' }}>⚠️</span>
+                        ${t('onboard.premium.discoveryCallDisabledNotice')}
+                    </div>
+                ` : null}
             </div>
         </div>
     `;
