@@ -449,6 +449,24 @@ const translations = {
         "onboard.premium.discoveryCallDesc": "When enabled, potential clients can request a discovery call by submitting their preferred time slots. You'll receive an email notification and can then reach out to them directly at a time that works for both of you.",
         "onboard.premium.discoveryCallDisabledNotice": "Without discovery calls, potential clients may be less likely to book with you. Most successful coaches offer free intro calls to build trust and demonstrate their coaching style.",
 
+        // Certifications
+        "onboard.premium.certifications": "Certifications",
+        "onboard.premium.optional": "Optional",
+        "onboard.premium.certificationsHint": "Add your coaching certifications to build credibility. You can always add more later from your dashboard.",
+        "onboard.premium.addCertification": "Add Certification",
+        "onboard.premium.certName": "Certification Name",
+        "onboard.premium.certNamePlaceholder": "e.g., ICF ACC, PCC, CTI CPCC...",
+        "onboard.premium.certDate": "Date Acquired",
+        "onboard.premium.certProof": "Certificate (PDF upload or URL)",
+        "onboard.premium.certUrlPlaceholder": "https://... (link to certificate)",
+        "onboard.premium.or": "or",
+        "onboard.premium.uploadPdf": "Upload PDF",
+        "onboard.premium.addCert": "Add Certification",
+        "onboard.premium.certAttached": "Certificate attached",
+        "onboard.premium.certLaterHint": "You can always add or update certifications later from your dashboard.",
+        "onboard.premium.certPdfOnly": "Please select a PDF file",
+        "onboard.premium.certFileTooLarge": "File must be less than 10MB",
+
         // Trust Building - Coach Profile
         "trust.excellent": "Excellent",
         "trust.good": "Good",
@@ -2440,6 +2458,24 @@ const translations = {
         "onboard.premium.discoveryCallDesc": "Wenn aktiviert, können potenzielle Klienten ein Kennenlerngespräch anfragen, indem sie ihre bevorzugten Zeitfenster angeben. Sie erhalten eine E-Mail-Benachrichtigung und können sie dann direkt zu einem für beide passenden Zeitpunkt kontaktieren.",
         "onboard.premium.discoveryCallDisabledNotice": "Ohne Kennenlerngespräche buchen potenzielle Klienten möglicherweise seltener bei Ihnen. Die meisten erfolgreichen Coaches bieten kostenlose Erstgespräche an, um Vertrauen aufzubauen und ihren Coaching-Stil zu demonstrieren.",
 
+        // Certifications
+        "onboard.premium.certifications": "Zertifizierungen",
+        "onboard.premium.optional": "Optional",
+        "onboard.premium.certificationsHint": "Fügen Sie Ihre Coaching-Zertifizierungen hinzu, um Glaubwürdigkeit aufzubauen. Sie können später jederzeit weitere hinzufügen.",
+        "onboard.premium.addCertification": "Zertifizierung hinzufügen",
+        "onboard.premium.certName": "Name der Zertifizierung",
+        "onboard.premium.certNamePlaceholder": "z.B. ICF ACC, PCC, CTI CPCC...",
+        "onboard.premium.certDate": "Datum des Erwerbs",
+        "onboard.premium.certProof": "Zertifikat (PDF-Upload oder URL)",
+        "onboard.premium.certUrlPlaceholder": "https://... (Link zum Zertifikat)",
+        "onboard.premium.or": "oder",
+        "onboard.premium.uploadPdf": "PDF hochladen",
+        "onboard.premium.addCert": "Zertifizierung hinzufügen",
+        "onboard.premium.certAttached": "Zertifikat angehängt",
+        "onboard.premium.certLaterHint": "Sie können Zertifizierungen später jederzeit von Ihrem Dashboard aus hinzufügen oder aktualisieren.",
+        "onboard.premium.certPdfOnly": "Bitte wählen Sie eine PDF-Datei",
+        "onboard.premium.certFileTooLarge": "Datei muss kleiner als 10MB sein",
+
         // Quiz
         "quiz.back": "Zurück",
         "quiz.next": "Weiter",
@@ -3951,6 +3987,24 @@ const translations = {
         "onboard.premium.discoveryCallDesc": "Cuando está habilitado, los clientes potenciales pueden solicitar una llamada de descubrimiento enviando sus horarios preferidos. Recibirás una notificación por correo electrónico y podrás contactarlos directamente en un momento conveniente para ambos.",
         "onboard.premium.discoveryCallDisabledNotice": "Sin llamadas de descubrimiento, es menos probable que los clientes potenciales reserven contigo. La mayoría de los coaches exitosos ofrecen llamadas introductorias gratuitas para generar confianza y demostrar su estilo de coaching.",
 
+        // Certifications
+        "onboard.premium.certifications": "Certificaciones",
+        "onboard.premium.optional": "Opcional",
+        "onboard.premium.certificationsHint": "Añade tus certificaciones de coaching para generar credibilidad. Siempre puedes añadir más después desde tu panel de control.",
+        "onboard.premium.addCertification": "Añadir Certificación",
+        "onboard.premium.certName": "Nombre de la Certificación",
+        "onboard.premium.certNamePlaceholder": "ej., ICF ACC, PCC, CTI CPCC...",
+        "onboard.premium.certDate": "Fecha de Obtención",
+        "onboard.premium.certProof": "Certificado (subir PDF o URL)",
+        "onboard.premium.certUrlPlaceholder": "https://... (enlace al certificado)",
+        "onboard.premium.or": "o",
+        "onboard.premium.uploadPdf": "Subir PDF",
+        "onboard.premium.addCert": "Añadir Certificación",
+        "onboard.premium.certAttached": "Certificado adjunto",
+        "onboard.premium.certLaterHint": "Siempre puedes añadir o actualizar certificaciones más tarde desde tu panel de control.",
+        "onboard.premium.certPdfOnly": "Por favor selecciona un archivo PDF",
+        "onboard.premium.certFileTooLarge": "El archivo debe ser menor de 10MB",
+
         // Quiz (Spanish)
         "quiz.back": "Atrás",
         "quiz.next": "Siguiente",
@@ -5333,6 +5387,24 @@ const translations = {
         "onboard.premium.discoveryCallLabel": "Proposer des Appels Découverte Gratuits",
         "onboard.premium.discoveryCallDesc": "Lorsque cette option est activée, les clients potentiels peuvent demander un appel découverte en soumettant leurs créneaux horaires préférés. Vous recevrez une notification par email et pourrez ensuite les contacter directement à un moment qui convient à tous les deux.",
         "onboard.premium.discoveryCallDisabledNotice": "Sans appels découverte, les clients potentiels seront moins susceptibles de réserver avec vous. La plupart des coachs performants proposent des appels d'introduction gratuits pour établir la confiance et démontrer leur style de coaching.",
+
+        // Certifications
+        "onboard.premium.certifications": "Certifications",
+        "onboard.premium.optional": "Optionnel",
+        "onboard.premium.certificationsHint": "Ajoutez vos certifications de coaching pour renforcer votre crédibilité. Vous pourrez toujours en ajouter d'autres plus tard depuis votre tableau de bord.",
+        "onboard.premium.addCertification": "Ajouter une Certification",
+        "onboard.premium.certName": "Nom de la Certification",
+        "onboard.premium.certNamePlaceholder": "ex., ICF ACC, PCC, CTI CPCC...",
+        "onboard.premium.certDate": "Date d'Obtention",
+        "onboard.premium.certProof": "Certificat (télécharger PDF ou URL)",
+        "onboard.premium.certUrlPlaceholder": "https://... (lien vers le certificat)",
+        "onboard.premium.or": "ou",
+        "onboard.premium.uploadPdf": "Télécharger PDF",
+        "onboard.premium.addCert": "Ajouter la Certification",
+        "onboard.premium.certAttached": "Certificat joint",
+        "onboard.premium.certLaterHint": "Vous pouvez toujours ajouter ou mettre à jour vos certifications plus tard depuis votre tableau de bord.",
+        "onboard.premium.certPdfOnly": "Veuillez sélectionner un fichier PDF",
+        "onboard.premium.certFileTooLarge": "Le fichier doit être inférieur à 10Mo",
 
         // Quiz (French)
         "quiz.back": "Retour",
@@ -6726,6 +6798,24 @@ const translations = {
         "onboard.premium.discoveryCallLabel": "Offri Chiamate Conoscitive Gratuite",
         "onboard.premium.discoveryCallDesc": "Quando abilitato, i potenziali clienti possono richiedere una chiamata conoscitiva inviando le loro fasce orarie preferite. Riceverai una notifica via email e potrai contattarli direttamente in un momento conveniente per entrambi.",
         "onboard.premium.discoveryCallDisabledNotice": "Senza chiamate conoscitive, è meno probabile che i potenziali clienti prenotino con te. La maggior parte dei coach di successo offre chiamate introduttive gratuite per costruire fiducia e dimostrare il proprio stile di coaching.",
+
+        // Certifications
+        "onboard.premium.certifications": "Certificazioni",
+        "onboard.premium.optional": "Opzionale",
+        "onboard.premium.certificationsHint": "Aggiungi le tue certificazioni di coaching per costruire credibilità. Puoi sempre aggiungerne altre in seguito dalla tua dashboard.",
+        "onboard.premium.addCertification": "Aggiungi Certificazione",
+        "onboard.premium.certName": "Nome della Certificazione",
+        "onboard.premium.certNamePlaceholder": "es., ICF ACC, PCC, CTI CPCC...",
+        "onboard.premium.certDate": "Data di Conseguimento",
+        "onboard.premium.certProof": "Certificato (carica PDF o URL)",
+        "onboard.premium.certUrlPlaceholder": "https://... (link al certificato)",
+        "onboard.premium.or": "o",
+        "onboard.premium.uploadPdf": "Carica PDF",
+        "onboard.premium.addCert": "Aggiungi Certificazione",
+        "onboard.premium.certAttached": "Certificato allegato",
+        "onboard.premium.certLaterHint": "Puoi sempre aggiungere o aggiornare le certificazioni più tardi dalla tua dashboard.",
+        "onboard.premium.certPdfOnly": "Per favore seleziona un file PDF",
+        "onboard.premium.certFileTooLarge": "Il file deve essere inferiore a 10MB",
 
         // Quiz (Italian)
         "quiz.back": "Indietro",

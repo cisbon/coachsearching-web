@@ -100,7 +100,8 @@ const DEFAULT_DATA = {
     plan_type: 'free',
     referral_code: '',
     referral_code_valid: false,
-    referrer_id: null
+    referrer_id: null,
+    certifications: [] // Array of { id, name, date_acquired, certificate_url, certificate_file }
 };
 
 // Helper to load saved progress from localStorage
@@ -115,7 +116,7 @@ const loadSavedProgress = (userId) => {
 
         const sanitizedData = { ...DEFAULT_DATA };
         const stringFields = ['full_name', 'professional_title', 'bio', 'intro_video_url', 'avatar_url', 'location_city', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
-        const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations'];
+        const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations', 'certifications'];
 
         stringFields.forEach(field => {
             if (parsed.data[field] !== undefined) {
@@ -366,6 +367,36 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 }
             }
 
+            // Save certifications if any
+            if (data.certifications && data.certifications.length > 0) {
+                try {
+                    // Get the coach id
+                    const { data: coachRecord } = await supabase
+                        .from('cs_coaches')
+                        .select('id')
+                        .eq('user_id', userId)
+                        .single();
+
+                    if (coachRecord) {
+                        // Insert each certification
+                        const certificationsToInsert = data.certifications.map(cert => ({
+                            coach_id: coachRecord.id,
+                            name: cert.name,
+                            date_acquired: cert.date_acquired || null,
+                            certificate_url: cert.certificate_url || null,
+                            certificate_file_path: cert.certificate_file_path || null
+                        }));
+
+                        await supabase
+                            .from('cs_coach_certifications')
+                            .insert(certificationsToInsert);
+                    }
+                } catch (certError) {
+                    console.error('Failed to save certifications:', certError);
+                    // Don't block onboarding completion for certification errors
+                }
+            }
+
             // Clear saved progress
             localStorage.removeItem(`premium_onboarding_${userId}`);
 
@@ -552,6 +583,298 @@ const isValidVideoUrl = (url) => {
         lowerUrl.includes('dailymotion.com') ||
         lowerUrl.includes('dai.ly')
     );
+};
+
+// ============================================================================
+// CERTIFICATIONS SECTION COMPONENT
+// ============================================================================
+
+const CertificationsSection = ({ data, updateData, session }) => {
+    const [isAdding, setIsAdding] = useState(false);
+    const [newCert, setNewCert] = useState({ name: '', date_acquired: '', certificate_url: '', certificate_file: null });
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const certifications = data.certifications || [];
+
+    const handleAddCertification = async () => {
+        if (!newCert.name.trim()) return;
+
+        let certificateFilePath = null;
+
+        // Upload file if provided
+        if (newCert.certificate_file) {
+            setUploading(true);
+            try {
+                const supabase = window.supabaseClient;
+                const fileName = `cert_${session.user.id}_${Date.now()}.pdf`;
+                const { data: uploadData, error } = await supabase.storage
+                    .from('certificates')
+                    .upload(fileName, newCert.certificate_file, { upsert: true });
+
+                if (!error && uploadData) {
+                    const { data: publicData } = supabase.storage
+                        .from('certificates')
+                        .getPublicUrl(fileName);
+                    certificateFilePath = publicData?.publicUrl || fileName;
+                }
+            } catch (err) {
+                console.error('Certificate upload failed:', err);
+            } finally {
+                setUploading(false);
+            }
+        }
+
+        const certification = {
+            id: `temp_${Date.now()}`,
+            name: newCert.name.trim(),
+            date_acquired: newCert.date_acquired || null,
+            certificate_url: newCert.certificate_url.trim() || null,
+            certificate_file_path: certificateFilePath
+        };
+
+        updateData('certifications', [...certifications, certification]);
+        setNewCert({ name: '', date_acquired: '', certificate_url: '', certificate_file: null });
+        setIsAdding(false);
+    };
+
+    const handleRemoveCertification = (certId) => {
+        updateData('certifications', certifications.filter(c => c.id !== certId));
+    };
+
+    const handleFileSelect = (file) => {
+        if (!file) return;
+        if (file.type !== 'application/pdf') {
+            alert(t('onboard.premium.certPdfOnly') || 'Please select a PDF file');
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            alert(t('onboard.premium.certFileTooLarge') || 'File must be less than 10MB');
+            return;
+        }
+        setNewCert(prev => ({ ...prev, certificate_file: file }));
+    };
+
+    return html`
+        <div class="form-section" style=${{
+            background: '#f8fafc',
+            border: '1px dashed #cbd5e1',
+            borderRadius: '16px',
+            padding: '24px'
+        }}>
+            <div class="form-group">
+                <label class="form-label" style=${{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    🏆 ${t('onboard.premium.certifications') || 'Certifications'}
+                    <span style=${{
+                        fontSize: '0.75rem',
+                        color: '#64748b',
+                        fontWeight: 'normal',
+                        background: '#e2e8f0',
+                        padding: '2px 8px',
+                        borderRadius: '10px'
+                    }}>${t('onboard.premium.optional') || 'Optional'}</span>
+                </label>
+                <div class="form-hint" style=${{ marginBottom: '16px' }}>
+                    ${t('onboard.premium.certificationsHint') || 'Add your coaching certifications to build credibility. You can always add more later from your dashboard.'}
+                </div>
+
+                <!-- Existing certifications list -->
+                ${certifications.length > 0 && html`
+                    <div style=${{ marginBottom: '16px' }}>
+                        ${certifications.map(cert => html`
+                            <div key=${cert.id} style=${{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '12px 16px',
+                                background: 'white',
+                                borderRadius: '10px',
+                                marginBottom: '8px',
+                                border: '1px solid #e2e8f0'
+                            }}>
+                                <div style=${{ flex: 1 }}>
+                                    <div style=${{ fontWeight: 600, color: '#1e293b' }}>${cert.name}</div>
+                                    <div style=${{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>
+                                        ${cert.date_acquired ? new Date(cert.date_acquired).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : ''}
+                                        ${(cert.certificate_url || cert.certificate_file_path) && html`
+                                            <span style=${{ marginLeft: '8px', color: 'var(--petrol)' }}>📎 ${t('onboard.premium.certAttached') || 'Certificate attached'}</span>
+                                        `}
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick=${() => handleRemoveCertification(cert.id)}
+                                    style=${{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#ef4444',
+                                        cursor: 'pointer',
+                                        fontSize: '1.25rem',
+                                        padding: '4px 8px'
+                                    }}
+                                >×</button>
+                            </div>
+                        `)}
+                    </div>
+                `}
+
+                <!-- Add certification form -->
+                ${isAdding ? html`
+                    <div style=${{
+                        background: 'white',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        border: '1px solid #e2e8f0'
+                    }}>
+                        <div style=${{ marginBottom: '16px' }}>
+                            <label style=${{ display: 'block', fontSize: '0.85rem', color: '#475569', marginBottom: '6px' }}>
+                                ${t('onboard.premium.certName') || 'Certification Name'} <span style=${{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <input
+                                type="text"
+                                class="premium-input"
+                                placeholder=${t('onboard.premium.certNamePlaceholder') || 'e.g., ICF ACC, PCC, CTI CPCC...'}
+                                value=${newCert.name}
+                                onInput=${(e) => setNewCert(prev => ({ ...prev, name: e.target.value }))}
+                            />
+                        </div>
+
+                        <div style=${{ marginBottom: '16px' }}>
+                            <label style=${{ display: 'block', fontSize: '0.85rem', color: '#475569', marginBottom: '6px' }}>
+                                ${t('onboard.premium.certDate') || 'Date Acquired'}
+                            </label>
+                            <input
+                                type="month"
+                                class="premium-input"
+                                value=${newCert.date_acquired}
+                                onInput=${(e) => setNewCert(prev => ({ ...prev, date_acquired: e.target.value }))}
+                                style=${{ maxWidth: '200px' }}
+                            />
+                        </div>
+
+                        <div style=${{ marginBottom: '16px' }}>
+                            <label style=${{ display: 'block', fontSize: '0.85rem', color: '#475569', marginBottom: '6px' }}>
+                                ${t('onboard.premium.certProof') || 'Certificate (PDF upload or URL)'}
+                            </label>
+                            <div style=${{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                <div style=${{ flex: 1, minWidth: '200px' }}>
+                                    <input
+                                        type="url"
+                                        class="premium-input"
+                                        placeholder=${t('onboard.premium.certUrlPlaceholder') || 'https://... (link to certificate)'}
+                                        value=${newCert.certificate_url}
+                                        onInput=${(e) => setNewCert(prev => ({ ...prev, certificate_url: e.target.value }))}
+                                        disabled=${!!newCert.certificate_file}
+                                    />
+                                </div>
+                                <div style=${{ display: 'flex', alignItems: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                                    ${t('onboard.premium.or') || 'or'}
+                                </div>
+                                <div>
+                                    <input
+                                        ref=${fileInputRef}
+                                        type="file"
+                                        accept=".pdf"
+                                        style=${{ display: 'none' }}
+                                        onChange=${(e) => handleFileSelect(e.target.files[0])}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick=${() => fileInputRef.current?.click()}
+                                        disabled=${!!newCert.certificate_url}
+                                        style=${{
+                                            padding: '10px 16px',
+                                            background: newCert.certificate_file ? 'var(--petrol-50)' : '#f1f5f9',
+                                            border: newCert.certificate_file ? '1px solid var(--petrol)' : '1px solid #e2e8f0',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            fontSize: '0.9rem'
+                                        }}
+                                    >
+                                        📄 ${newCert.certificate_file ? newCert.certificate_file.name.slice(0, 20) + '...' : (t('onboard.premium.uploadPdf') || 'Upload PDF')}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style=${{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button
+                                type="button"
+                                onClick=${() => { setIsAdding(false); setNewCert({ name: '', date_acquired: '', certificate_url: '', certificate_file: null }); }}
+                                style=${{
+                                    padding: '10px 20px',
+                                    background: '#f1f5f9',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                ${t('common.cancel') || 'Cancel'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick=${handleAddCertification}
+                                disabled=${!newCert.name.trim() || uploading}
+                                style=${{
+                                    padding: '10px 20px',
+                                    background: newCert.name.trim() ? 'var(--petrol)' : '#cbd5e1',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    cursor: newCert.name.trim() ? 'pointer' : 'not-allowed'
+                                }}
+                            >
+                                ${uploading ? '...' : (t('onboard.premium.addCert') || 'Add Certification')}
+                            </button>
+                        </div>
+                    </div>
+                ` : html`
+                    <button
+                        type="button"
+                        onClick=${() => setIsAdding(true)}
+                        style=${{
+                            width: '100%',
+                            padding: '14px 20px',
+                            background: 'white',
+                            border: '2px dashed #cbd5e1',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            color: '#64748b',
+                            fontSize: '0.95rem',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver=${(e) => { e.currentTarget.style.borderColor = 'var(--petrol)'; e.currentTarget.style.color = 'var(--petrol)'; }}
+                        onMouseOut=${(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = '#64748b'; }}
+                    >
+                        <span style=${{ fontSize: '1.25rem' }}>+</span>
+                        ${t('onboard.premium.addCertification') || 'Add Certification'}
+                    </button>
+                `}
+
+                <div style=${{
+                    marginTop: '12px',
+                    padding: '10px 14px',
+                    background: '#eff6ff',
+                    borderRadius: '8px',
+                    fontSize: '0.85rem',
+                    color: '#3b82f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <span>💡</span>
+                    ${t('onboard.premium.certLaterHint') || 'You can always add or update certifications later from your dashboard.'}
+                </div>
+            </div>
+        </div>
+    `;
 };
 
 const StepProfile = ({ data, updateData, session }) => {
@@ -814,6 +1137,9 @@ const StepProfile = ({ data, updateData, session }) => {
                     `}
                 </div>
             </div>
+
+            <!-- Certifications Section -->
+            <${CertificationsSection} data=${data} updateData=${updateData} session=${session} />
 
             <div class="form-section">
                 <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
