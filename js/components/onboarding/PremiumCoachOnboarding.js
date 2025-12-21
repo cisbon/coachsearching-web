@@ -745,40 +745,73 @@ const CertificationsSection = ({ data, updateData, session, certifications = { l
                 <!-- Existing certifications list -->
                 ${userCertifications.length > 0 && html`
                     <div style=${{ marginBottom: '16px' }}>
-                        ${userCertifications.map(cert => html`
-                            <div key=${cert.id} style=${{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '12px 16px',
-                                background: 'white',
-                                borderRadius: '10px',
-                                marginBottom: '8px',
-                                border: '1px solid #e2e8f0'
-                            }}>
-                                <div style=${{ flex: 1 }}>
-                                    <div style=${{ fontWeight: 600, color: '#1e293b' }}>${cert.name}</div>
-                                    <div style=${{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>
-                                        ${cert.date_acquired ? new Date(cert.date_acquired).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : ''}
-                                        ${(cert.certificate_url || cert.certificate_file_path) && html`
-                                            <span style=${{ marginLeft: '8px', color: 'var(--petrol)' }}>📎 ${t('onboard.premium.certAttached') || 'Certificate attached'}</span>
-                                        `}
+                        ${userCertifications.map(cert => {
+                            // Get full certification data to access badge_url
+                            const fullCert = getCertificationById ? getCertificationById(cert.certification_id) : null;
+                            const badgeUrl = fullCert?.badge_url;
+
+                            return html`
+                                <div key=${cert.id} style=${{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '12px 16px',
+                                    background: 'white',
+                                    borderRadius: '10px',
+                                    marginBottom: '8px',
+                                    border: '1px solid #e2e8f0'
+                                }}>
+                                    <!-- Badge image -->
+                                    ${badgeUrl ? html`
+                                        <img
+                                            src=${badgeUrl}
+                                            alt=${cert.name}
+                                            style=${{
+                                                width: '40px',
+                                                height: '40px',
+                                                objectFit: 'contain',
+                                                marginRight: '12px',
+                                                flexShrink: 0
+                                            }}
+                                        />
+                                    ` : html`
+                                        <div style=${{
+                                            width: '40px',
+                                            height: '40px',
+                                            background: '#f1f5f9',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginRight: '12px',
+                                            flexShrink: 0,
+                                            fontSize: '1.25rem'
+                                        }}>🏆</div>
+                                    `}
+                                    <div style=${{ flex: 1 }}>
+                                        <div style=${{ fontWeight: 600, color: '#1e293b' }}>${cert.name}</div>
+                                        <div style=${{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>
+                                            ${cert.date_acquired ? new Date(cert.date_acquired).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : ''}
+                                            ${(cert.certificate_url || cert.certificate_file_path) && html`
+                                                <span style=${{ marginLeft: '8px', color: 'var(--petrol)' }}>📎 ${t('onboard.premium.certAttached') || 'Certificate attached'}</span>
+                                            `}
+                                        </div>
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick=${() => handleRemoveCertification(cert.id)}
+                                        style=${{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#ef4444',
+                                            cursor: 'pointer',
+                                            fontSize: '1.25rem',
+                                            padding: '4px 8px'
+                                        }}
+                                    >×</button>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick=${() => handleRemoveCertification(cert.id)}
-                                    style=${{
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#ef4444',
-                                        cursor: 'pointer',
-                                        fontSize: '1.25rem',
-                                        padding: '4px 8px'
-                                    }}
-                                >×</button>
-                            </div>
-                        `)}
+                            `;
+                        })}
                     </div>
                 `}
 
