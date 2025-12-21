@@ -1089,19 +1089,19 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
 
 const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralChange, languages = [], getLocalizedName }) => {
     const FREE_FEATURES = [
-        'Basic profile listing',
-        'Up to 5 client connections/month',
-        'Standard search visibility',
-        'Email support'
+        'plan.free.feature1',
+        'plan.free.feature2',
+        'plan.free.feature3',
+        'plan.free.feature4'
     ];
 
     const PREMIUM_FEATURES = [
-        'Featured profile listing',
-        'Unlimited client connections',
-        'Priority search visibility',
-        'Verified badge',
-        'Analytics dashboard',
-        'Priority support'
+        'plan.premium.feature1',
+        'plan.premium.feature2',
+        'plan.premium.feature3',
+        'plan.premium.feature4',
+        'plan.premium.feature5',
+        'plan.premium.feature6'
     ];
 
     const isFreeSelected = data.plan_type === 'free';
@@ -1142,17 +1142,20 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                             transition: 'all 0.2s ease'
                         }}
                     >
-                        <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                             <span style=${{ fontSize: '1.5rem' }}>🆓</span>
-                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>${t('onboard.premium.freePlan')}</h3>
+                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>${t('plan.free.name') || 'FREE'}</h3>
                         </div>
-                        <div style=${{ fontSize: '2rem', fontWeight: 700, color: 'var(--petrol)', marginBottom: '1rem' }}>
+                        <div style=${{ fontSize: '2rem', fontWeight: 700, color: 'var(--petrol)', marginBottom: '0.5rem' }}>
                             €0<span style=${{ fontSize: '1rem', fontWeight: 400 }}>/month</span>
                         </div>
+                        <div style=${{ fontSize: '0.95rem', color: '#666', fontStyle: 'italic', marginBottom: '1rem' }}>
+                            "${t('plan.free.tagline') || 'Get discovered'}"
+                        </div>
                         <ul style=${{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem' }}>
-                            ${FREE_FEATURES.map(feature => html`
-                                <li key=${feature} style=${{ padding: '0.25rem 0', color: '#666' }}>
-                                    ✓ ${String(feature)}
+                            ${FREE_FEATURES.map(featureKey => html`
+                                <li key=${featureKey} style=${{ padding: '0.25rem 0', color: '#666' }}>
+                                    ✓ ${t(featureKey) || featureKey}
                                 </li>
                             `)}
                         </ul>
@@ -1174,23 +1177,26 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                         <div style=${{ position: 'absolute', top: '-10px', right: '10px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
                             ${t('onboard.premium.recommended')}
                         </div>
-                        <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                             <span style=${{ fontSize: '1.5rem' }}>⭐</span>
-                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>${t('onboard.premium.premiumPlan')}</h3>
+                            <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>${t('plan.premium.name') || 'PREMIUM'}</h3>
                         </div>
-                        <div style=${{ fontSize: '2rem', fontWeight: 700, color: 'var(--petrol)', marginBottom: '1rem' }}>
+                        <div style=${{ fontSize: '2rem', fontWeight: 700, color: 'var(--petrol)', marginBottom: '0.5rem' }}>
                             ${data.referral_code_valid ? html`
-                                <span style=${{ textDecoration: 'line-through', color: '#999', fontSize: '1.5rem' }}>€29</span>
+                                <span style=${{ textDecoration: 'line-through', color: '#999', fontSize: '1.5rem' }}>€19</span>
                                 <span style=${{ color: '#10b981' }}> €0</span>
                                 <span style=${{ fontSize: '1rem', fontWeight: 400 }}>/year</span>
                             ` : html`
-                                €29<span style=${{ fontSize: '1rem', fontWeight: 400 }}>/month</span>
+                                €19<span style=${{ fontSize: '1rem', fontWeight: 400 }}>/month</span>
                             `}
                         </div>
+                        <div style=${{ fontSize: '0.95rem', color: '#666', fontStyle: 'italic', marginBottom: '1rem' }}>
+                            "${t('plan.premium.tagline') || 'Grow your practice'}"
+                        </div>
                         <ul style=${{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem' }}>
-                            ${PREMIUM_FEATURES.map(feature => html`
-                                <li key=${feature} style=${{ padding: '0.25rem 0', color: '#666' }}>
-                                    ✓ ${String(feature)}
+                            ${PREMIUM_FEATURES.map(featureKey => html`
+                                <li key=${featureKey} style=${{ padding: '0.25rem 0', color: '#666' }}>
+                                    ✓ ${t(featureKey) || featureKey}
                                 </li>
                             `)}
                         </ul>
