@@ -10,7 +10,9 @@
 CREATE TABLE IF NOT EXISTS public.cs_coach_certifications (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
     coach_id uuid NOT NULL,
-    name text NOT NULL,
+    certification_code text NOT NULL,  -- Predefined code (e.g., 'ICF_ACC', 'EMCC_EIA_MASTER')
+    name text NOT NULL,                -- Display name (e.g., 'ICF ACC (Associate Certified Coach)')
+    issuing_organization text,         -- Organization code (e.g., 'ICF', 'EMCC', 'AC')
     date_acquired date,
     certificate_url text,
     certificate_file_path text,
@@ -19,7 +21,8 @@ CREATE TABLE IF NOT EXISTS public.cs_coach_certifications (
     updated_at timestamp with time zone DEFAULT now(),
     CONSTRAINT cs_coach_certifications_pkey PRIMARY KEY (id),
     CONSTRAINT cs_coach_certifications_coach_id_fkey FOREIGN KEY (coach_id)
-        REFERENCES public.cs_coaches(id) ON DELETE CASCADE
+        REFERENCES public.cs_coaches(id) ON DELETE CASCADE,
+    CONSTRAINT cs_coach_certifications_unique_cert UNIQUE (coach_id, certification_code)
 );
 
 -- ============================================================================
@@ -28,6 +31,12 @@ CREATE TABLE IF NOT EXISTS public.cs_coach_certifications (
 
 CREATE INDEX IF NOT EXISTS idx_cs_coach_certifications_coach_id
     ON public.cs_coach_certifications(coach_id);
+
+CREATE INDEX IF NOT EXISTS idx_cs_coach_certifications_code
+    ON public.cs_coach_certifications(certification_code);
+
+CREATE INDEX IF NOT EXISTS idx_cs_coach_certifications_org
+    ON public.cs_coach_certifications(issuing_organization);
 
 CREATE INDEX IF NOT EXISTS idx_cs_coach_certifications_created_at
     ON public.cs_coach_certifications(created_at DESC);
@@ -127,9 +136,11 @@ USING (
 -- 6. COMMENTS FOR DOCUMENTATION
 -- ============================================================================
 
-COMMENT ON TABLE public.cs_coach_certifications IS 'Stores coach certifications and credentials';
+COMMENT ON TABLE public.cs_coach_certifications IS 'Stores coach certifications and credentials from predefined list';
 COMMENT ON COLUMN public.cs_coach_certifications.coach_id IS 'Reference to the coach who owns this certification';
-COMMENT ON COLUMN public.cs_coach_certifications.name IS 'Name of the certification (e.g., ICF ACC, PCC, MCC)';
+COMMENT ON COLUMN public.cs_coach_certifications.certification_code IS 'Predefined certification code (e.g., ICF_ACC, EMCC_EIA_MASTER, AC_PROFESSIONAL)';
+COMMENT ON COLUMN public.cs_coach_certifications.name IS 'Display name of the certification (e.g., ICF ACC (Associate Certified Coach))';
+COMMENT ON COLUMN public.cs_coach_certifications.issuing_organization IS 'Organization that issued the certification (e.g., ICF, EMCC, AC)';
 COMMENT ON COLUMN public.cs_coach_certifications.date_acquired IS 'Date when the certification was acquired';
 COMMENT ON COLUMN public.cs_coach_certifications.certificate_url IS 'External URL to verify the certificate';
 COMMENT ON COLUMN public.cs_coach_certifications.certificate_file_path IS 'Storage path for uploaded PDF certificate';

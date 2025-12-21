@@ -410,7 +410,9 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                         // Insert each certification
                         const certificationsToInsert = data.certifications.map(cert => ({
                             coach_id: coachRecord.id,
+                            certification_code: cert.code,
                             name: cert.name,
+                            issuing_organization: cert.org || null,
                             date_acquired: cert.date_acquired || null,
                             certificate_url: cert.certificate_url || null,
                             certificate_file_path: cert.certificate_file_path || null
@@ -625,16 +627,80 @@ const isValidVideoUrl = (url) => {
 // CERTIFICATIONS SECTION COMPONENT
 // ============================================================================
 
+// Predefined list of recognized coaching certifications
+const COACHING_CERTIFICATIONS = [
+    // ICF - International Coaching Federation
+    { code: 'ICF_ACC', name: 'ICF ACC (Associate Certified Coach)', org: 'ICF' },
+    { code: 'ICF_PCC', name: 'ICF PCC (Professional Certified Coach)', org: 'ICF' },
+    { code: 'ICF_MCC', name: 'ICF MCC (Master Certified Coach)', org: 'ICF' },
+    { code: 'ICF_ACTC', name: 'ICF ACTC (Advanced Certification in Team Coaching)', org: 'ICF' },
+    // EMCC - European Mentoring and Coaching Council
+    { code: 'EMCC_EIA_FOUNDATION', name: 'EMCC EIA Foundation', org: 'EMCC' },
+    { code: 'EMCC_EIA_PRACTITIONER', name: 'EMCC EIA Practitioner', org: 'EMCC' },
+    { code: 'EMCC_EIA_SENIOR', name: 'EMCC EIA Senior Practitioner', org: 'EMCC' },
+    { code: 'EMCC_EIA_MASTER', name: 'EMCC EIA Master Practitioner', org: 'EMCC' },
+    { code: 'EMCC_ESIA', name: 'EMCC ESIA (Supervisor)', org: 'EMCC' },
+    // AC - Association for Coaching
+    { code: 'AC_FOUNDATION', name: 'AC Foundation Coach', org: 'AC' },
+    { code: 'AC_COACH', name: 'AC Coach', org: 'AC' },
+    { code: 'AC_PROFESSIONAL', name: 'AC Professional Coach', org: 'AC' },
+    { code: 'AC_MASTER', name: 'AC Master Coach', org: 'AC' },
+    { code: 'AC_EXEC_FOUNDATION', name: 'AC Foundation Executive Coach', org: 'AC' },
+    { code: 'AC_EXEC', name: 'AC Executive Coach', org: 'AC' },
+    { code: 'AC_EXEC_PROFESSIONAL', name: 'AC Professional Executive Coach', org: 'AC' },
+    { code: 'AC_EXEC_MASTER', name: 'AC Master Executive Coach', org: 'AC' },
+    // Health & Wellness
+    { code: 'NBC_HWC', name: 'NBC-HWC (National Board Certified Health & Wellness Coach)', org: 'NBHWC' },
+    { code: 'BCC', name: 'BCC (Board Certified Coach)', org: 'CCE' },
+    // APECS - Association for Professional Executive Coaching and Supervision
+    { code: 'APECS_ASSOCIATE', name: 'APECS Associate', org: 'APECS' },
+    { code: 'APECS_CERTIFIED', name: 'APECS Certified Professional', org: 'APECS' },
+    { code: 'APECS_MASTER', name: 'APECS Master', org: 'APECS' },
+    // WABC - Worldwide Association of Business Coaches
+    { code: 'WABC_RCC', name: 'WABC RCC (Registered Corporate Coach)', org: 'WABC' },
+    { code: 'WABC_CBC', name: 'WABC CBC (Certified Business Coach)', org: 'WABC' },
+    { code: 'WABC_CMBC', name: 'WABC CMBC (Certified Master Business Coach)', org: 'WABC' },
+    { code: 'WABC_CHBC', name: 'WABC ChBC (Chartered Business Coach)', org: 'WABC' },
+    // ECA - European Coaching Association
+    { code: 'ECA_BASIC', name: 'ECA Basic License', org: 'ECA' },
+    { code: 'ECA_ADVANCED', name: 'ECA Advanced License', org: 'ECA' },
+    { code: 'ECA_EXPERT', name: 'ECA Expert License', org: 'ECA' },
+    // EASC - European Association for Supervision and Coaching
+    { code: 'EASC_CERTIFIED', name: 'EASC Certified', org: 'EASC' },
+    // ILM - Institute of Leadership & Management
+    { code: 'ILM_LEVEL_5', name: 'ILM Level 5', org: 'ILM' },
+    { code: 'ILM_LEVEL_7', name: 'ILM Level 7', org: 'ILM' },
+    // CMI - Chartered Management Institute
+    { code: 'CMI_LEVEL_5', name: 'CMI Level 5', org: 'CMI' },
+    { code: 'CMI_LEVEL_7', name: 'CMI Level 7', org: 'CMI' },
+    // NLP
+    { code: 'NLP_PRACTITIONER', name: 'NLP Practitioner', org: 'NLP' },
+    { code: 'NLP_MASTER', name: 'NLP Master Practitioner', org: 'NLP' },
+];
+
 const CertificationsSection = ({ data, updateData, session }) => {
     const [isAdding, setIsAdding] = useState(false);
-    const [newCert, setNewCert] = useState({ name: '', date_acquired: '', certificate_url: '', certificate_file: null });
+    const [newCert, setNewCert] = useState({ code: '', date_acquired: '', certificate_url: '', certificate_file: null });
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef(null);
 
     const certifications = data.certifications || [];
 
+    // Get list of already added certification codes to filter them out
+    const addedCertCodes = certifications.map(c => c.code);
+    const availableCertifications = COACHING_CERTIFICATIONS.filter(c => !addedCertCodes.includes(c.code));
+
+    // Get certification name from code
+    const getCertName = (code) => {
+        const cert = COACHING_CERTIFICATIONS.find(c => c.code === code);
+        return cert ? cert.name : code;
+    };
+
     const handleAddCertification = async () => {
-        if (!newCert.name.trim()) return;
+        if (!newCert.code) return;
+
+        const selectedCert = COACHING_CERTIFICATIONS.find(c => c.code === newCert.code);
+        if (!selectedCert) return;
 
         let certificateFilePath = null;
 
@@ -667,14 +733,16 @@ const CertificationsSection = ({ data, updateData, session }) => {
 
         const certification = {
             id: `temp_${Date.now()}`,
-            name: newCert.name.trim(),
+            code: selectedCert.code,
+            name: selectedCert.name,
+            org: selectedCert.org,
             date_acquired: newCert.date_acquired || null,
             certificate_url: newCert.certificate_url.trim() || null,
             certificate_file_path: certificateFilePath
         };
 
         updateData('certifications', [...certifications, certification]);
-        setNewCert({ name: '', date_acquired: '', certificate_url: '', certificate_file: null });
+        setNewCert({ code: '', date_acquired: '', certificate_url: '', certificate_file: null });
         setIsAdding(false);
     };
 
@@ -768,15 +836,22 @@ const CertificationsSection = ({ data, updateData, session }) => {
                     }}>
                         <div style=${{ marginBottom: '16px' }}>
                             <label style=${{ display: 'block', fontSize: '0.85rem', color: '#475569', marginBottom: '6px' }}>
-                                ${t('onboard.premium.certName') || 'Certification Name'} <span style=${{ color: '#ef4444' }}>*</span>
+                                ${t('onboard.premium.certName') || 'Certification'} <span style=${{ color: '#ef4444' }}>*</span>
                             </label>
-                            <input
-                                type="text"
+                            <select
                                 class="premium-input"
-                                placeholder=${t('onboard.premium.certNamePlaceholder') || 'e.g., ICF ACC, PCC, CTI CPCC...'}
-                                value=${newCert.name}
-                                onInput=${(e) => setNewCert(prev => ({ ...prev, name: e.target.value }))}
-                            />
+                                value=${newCert.code}
+                                onChange=${(e) => setNewCert(prev => ({ ...prev, code: e.target.value }))}
+                                style=${{ cursor: 'pointer' }}
+                            >
+                                <option value="">${t('onboard.premium.selectCertification') || '-- Select a certification --'}</option>
+                                ${availableCertifications.length === 0 ? html`
+                                    <option value="" disabled>${t('onboard.premium.allCertsAdded') || 'All certifications already added'}</option>
+                                ` : null}
+                                ${availableCertifications.map(cert => html`
+                                    <option key=${cert.code} value=${cert.code}>${cert.name}</option>
+                                `)}
+                            </select>
                         </div>
 
                         <div style=${{ marginBottom: '16px' }}>
@@ -843,7 +918,7 @@ const CertificationsSection = ({ data, updateData, session }) => {
                         <div style=${{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                             <button
                                 type="button"
-                                onClick=${() => { setIsAdding(false); setNewCert({ name: '', date_acquired: '', certificate_url: '', certificate_file: null }); }}
+                                onClick=${() => { setIsAdding(false); setNewCert({ code: '', date_acquired: '', certificate_url: '', certificate_file: null }); }}
                                 style=${{
                                     padding: '10px 20px',
                                     background: '#f1f5f9',
@@ -857,14 +932,14 @@ const CertificationsSection = ({ data, updateData, session }) => {
                             <button
                                 type="button"
                                 onClick=${handleAddCertification}
-                                disabled=${!newCert.name.trim() || uploading}
+                                disabled=${!newCert.code || uploading}
                                 style=${{
                                     padding: '10px 20px',
-                                    background: newCert.name.trim() ? 'var(--petrol)' : '#cbd5e1',
+                                    background: newCert.code ? 'var(--petrol)' : '#cbd5e1',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: '8px',
-                                    cursor: newCert.name.trim() ? 'pointer' : 'not-allowed'
+                                    cursor: newCert.code ? 'pointer' : 'not-allowed'
                                 }}
                             >
                                 ${uploading ? '...' : (t('onboard.premium.addCert') || 'Add Certification')}
