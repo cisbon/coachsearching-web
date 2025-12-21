@@ -162,7 +162,6 @@ export function HomePage({ session, CoachList }) {
     return html`
         <div class="home-page">
             <${Hero} />
-            <${TrustBadgesSection} />
             <${CoachingCategoriesSection} />
             <${HowItWorksSection} />
             ${CoachList && html`<${CoachList} session=${session} />`}
