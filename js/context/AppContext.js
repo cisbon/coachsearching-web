@@ -14,6 +14,7 @@ const html = htm.bind(React.createElement);
 // Cache configuration
 const LOOKUP_CACHE_KEY = 'cs_lookup_options';
 const CITIES_CACHE_KEY = 'cs_cities';
+const CERTIFICATIONS_CACHE_KEY = 'cs_certifications';
 const LOOKUP_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 // Create context
@@ -78,6 +79,24 @@ export function AppProvider({ children }) {
         return { list: [], isLoaded: false };
     });
     const citiesFetchRef = useRef(false); // Prevent duplicate fetches
+
+    // Certifications state (coaching certifications lookup table)
+    const [certifications, setCertifications] = useState(() => {
+        // Try to load from cache on initial render
+        try {
+            const cached = localStorage.getItem(CERTIFICATIONS_CACHE_KEY);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < LOOKUP_CACHE_TTL) {
+                    return { list: data, isLoaded: true };
+                }
+            }
+        } catch (e) {
+            console.warn('AppContext: Failed to load certifications cache', e);
+        }
+        return { list: [], isLoaded: false };
+    });
+    const certificationsFetchRef = useRef(false); // Prevent duplicate fetches
 
     // Current route
     const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#home');
@@ -213,6 +232,63 @@ export function AppProvider({ children }) {
         fetchCities();
     }, [cities.isLoaded]);
 
+    // Fetch certifications on mount (if not cached)
+    useEffect(() => {
+        const fetchCertifications = async () => {
+            // Prevent duplicate fetches
+            if (certificationsFetchRef.current) return;
+
+            // Skip if already loaded from cache
+            if (certifications.isLoaded) return;
+
+            certificationsFetchRef.current = true;
+
+            try {
+                // Wait for supabase client to be available
+                let attempts = 0;
+                while (!window.supabaseClient && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+
+                if (!window.supabaseClient) {
+                    certificationsFetchRef.current = false; // Allow retry
+                    return;
+                }
+
+                const { data: certList, error } = await window.supabaseClient
+                    .from('cs_certifications')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('sort_order', { ascending: true });
+
+                if (error) {
+                    console.warn('AppContext: Failed to fetch certifications', error);
+                    certificationsFetchRef.current = false; // Allow retry
+                    return;
+                }
+
+                // Update state
+                setCertifications({ list: certList || [], isLoaded: true });
+
+                // Save to localStorage cache
+                try {
+                    localStorage.setItem(CERTIFICATIONS_CACHE_KEY, JSON.stringify({
+                        data: certList || [],
+                        timestamp: Date.now()
+                    }));
+                } catch {
+                    // Silently ignore cache errors
+                }
+            } catch (err) {
+                console.warn('AppContext: Certifications fetch error', err);
+                certificationsFetchRef.current = false; // Allow retry
+            }
+        };
+
+        fetchCertifications();
+    }, [certifications.isLoaded]);
+
     // Helper to get localized name from lookup option
     const getLocalizedName = useCallback((option, lang = null) => {
         const currentLang = lang || getCurrentLang() || language || 'en';
@@ -243,6 +319,40 @@ export function AppProvider({ children }) {
         citiesFetchRef.current = false;
         setCities({ list: [], isLoaded: false });
     }, []);
+
+    // Force refresh certifications (clears cache)
+    const refreshCertifications = useCallback(() => {
+        localStorage.removeItem(CERTIFICATIONS_CACHE_KEY);
+        certificationsFetchRef.current = false;
+        setCertifications({ list: [], isLoaded: false });
+    }, []);
+
+    // Helper to find certification by id
+    const getCertificationById = useCallback((id) => {
+        return certifications.list.find(c => c.id === id);
+    }, [certifications.list]);
+
+    // Helper to find certification by code
+    const getCertificationByCode = useCallback((code) => {
+        return certifications.list.find(c => c.code === code);
+    }, [certifications.list]);
+
+    // Helper to get certifications grouped by organization
+    const getCertificationsByOrg = useCallback(() => {
+        const grouped = {};
+        certifications.list.forEach(cert => {
+            const orgKey = cert.issuing_organization;
+            if (!grouped[orgKey]) {
+                grouped[orgKey] = {
+                    code: cert.issuing_organization,
+                    name: cert.organization_full_name || cert.issuing_organization,
+                    certifications: []
+                };
+            }
+            grouped[orgKey].certifications.push(cert);
+        });
+        return grouped;
+    }, [certifications.list]);
 
     // Helper to get localized city name
     const getLocalizedCityName = useCallback((city, lang = null) => {
@@ -384,6 +494,13 @@ export function AppProvider({ children }) {
         getCityByCode,
         refreshCities,
 
+        // Certifications
+        certifications,
+        getCertificationById,
+        getCertificationByCode,
+        getCertificationsByOrg,
+        refreshCertifications,
+
         // Config
         config: CONFIG
     };
@@ -444,6 +561,14 @@ export function useLookupOptions() {
 export function useCities() {
     const { cities, getLocalizedCityName, getCitiesByCountry, getCityByCode, refreshCities } = useApp();
     return { cities, getLocalizedCityName, getCitiesByCountry, getCityByCode, refreshCities };
+}
+
+/**
+ * Hook for certifications (coaching certifications lookup)
+ */
+export function useCertifications() {
+    const { certifications, getCertificationById, getCertificationByCode, getCertificationsByOrg, refreshCertifications } = useApp();
+    return { certifications, getCertificationById, getCertificationByCode, getCertificationsByOrg, refreshCertifications };
 }
 
 export default AppContext;

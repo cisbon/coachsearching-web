@@ -12,7 +12,7 @@
 
 import htm from '../../vendor/htm.js';
 import { t, getCurrentLang } from '../../i18n.js';
-import { useLookupOptions, useCities } from '../../context/AppContext.js';
+import { useLookupOptions, useCities, useCertifications } from '../../context/AppContext.js';
 
 const React = window.React;
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
@@ -163,6 +163,9 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
 
     // Get cities from global context (cached)
     const { cities, getLocalizedCityName } = useCities();
+
+    // Get certifications from global context (cached)
+    const { certifications, getCertificationById, getCertificationByCode } = useCertifications();
 
     // Get unique countries from cities list
     const countriesFromCities = useMemo(() => {
@@ -407,12 +410,10 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                         .single();
 
                     if (coachRecord) {
-                        // Insert each certification
+                        // Insert each certification using certification_id foreign key
                         const certificationsToInsert = data.certifications.map(cert => ({
                             coach_id: coachRecord.id,
-                            certification_code: cert.code,
-                            name: cert.name,
-                            issuing_organization: cert.org || null,
+                            certification_id: cert.certification_id,
                             date_acquired: cert.date_acquired || null,
                             certificate_url: cert.certificate_url || null,
                             certificate_file_path: cert.certificate_file_path || null
@@ -472,6 +473,8 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     cities=${filteredCities}
                     countries=${countriesFromCities.length > 0 ? countriesFromCities : COUNTRIES}
                     getLocalizedCityName=${getLocalizedCityName}
+                    certifications=${certifications}
+                    getCertificationById=${getCertificationById}
                 />`;
             case 1:
                 return html`<${StepExpertise}
@@ -627,79 +630,32 @@ const isValidVideoUrl = (url) => {
 // CERTIFICATIONS SECTION COMPONENT
 // ============================================================================
 
-// Predefined list of recognized coaching certifications
-const COACHING_CERTIFICATIONS = [
-    // ICF - International Coaching Federation
-    { code: 'ICF_ACC', name: 'ICF ACC (Associate Certified Coach)', org: 'ICF' },
-    { code: 'ICF_PCC', name: 'ICF PCC (Professional Certified Coach)', org: 'ICF' },
-    { code: 'ICF_MCC', name: 'ICF MCC (Master Certified Coach)', org: 'ICF' },
-    { code: 'ICF_ACTC', name: 'ICF ACTC (Advanced Certification in Team Coaching)', org: 'ICF' },
-    // EMCC - European Mentoring and Coaching Council
-    { code: 'EMCC_EIA_FOUNDATION', name: 'EMCC EIA Foundation', org: 'EMCC' },
-    { code: 'EMCC_EIA_PRACTITIONER', name: 'EMCC EIA Practitioner', org: 'EMCC' },
-    { code: 'EMCC_EIA_SENIOR', name: 'EMCC EIA Senior Practitioner', org: 'EMCC' },
-    { code: 'EMCC_EIA_MASTER', name: 'EMCC EIA Master Practitioner', org: 'EMCC' },
-    { code: 'EMCC_ESIA', name: 'EMCC ESIA (Supervisor)', org: 'EMCC' },
-    // AC - Association for Coaching
-    { code: 'AC_FOUNDATION', name: 'AC Foundation Coach', org: 'AC' },
-    { code: 'AC_COACH', name: 'AC Coach', org: 'AC' },
-    { code: 'AC_PROFESSIONAL', name: 'AC Professional Coach', org: 'AC' },
-    { code: 'AC_MASTER', name: 'AC Master Coach', org: 'AC' },
-    { code: 'AC_EXEC_FOUNDATION', name: 'AC Foundation Executive Coach', org: 'AC' },
-    { code: 'AC_EXEC', name: 'AC Executive Coach', org: 'AC' },
-    { code: 'AC_EXEC_PROFESSIONAL', name: 'AC Professional Executive Coach', org: 'AC' },
-    { code: 'AC_EXEC_MASTER', name: 'AC Master Executive Coach', org: 'AC' },
-    // Health & Wellness
-    { code: 'NBC_HWC', name: 'NBC-HWC (National Board Certified Health & Wellness Coach)', org: 'NBHWC' },
-    { code: 'BCC', name: 'BCC (Board Certified Coach)', org: 'CCE' },
-    // APECS - Association for Professional Executive Coaching and Supervision
-    { code: 'APECS_ASSOCIATE', name: 'APECS Associate', org: 'APECS' },
-    { code: 'APECS_CERTIFIED', name: 'APECS Certified Professional', org: 'APECS' },
-    { code: 'APECS_MASTER', name: 'APECS Master', org: 'APECS' },
-    // WABC - Worldwide Association of Business Coaches
-    { code: 'WABC_RCC', name: 'WABC RCC (Registered Corporate Coach)', org: 'WABC' },
-    { code: 'WABC_CBC', name: 'WABC CBC (Certified Business Coach)', org: 'WABC' },
-    { code: 'WABC_CMBC', name: 'WABC CMBC (Certified Master Business Coach)', org: 'WABC' },
-    { code: 'WABC_CHBC', name: 'WABC ChBC (Chartered Business Coach)', org: 'WABC' },
-    // ECA - European Coaching Association
-    { code: 'ECA_BASIC', name: 'ECA Basic License', org: 'ECA' },
-    { code: 'ECA_ADVANCED', name: 'ECA Advanced License', org: 'ECA' },
-    { code: 'ECA_EXPERT', name: 'ECA Expert License', org: 'ECA' },
-    // EASC - European Association for Supervision and Coaching
-    { code: 'EASC_CERTIFIED', name: 'EASC Certified', org: 'EASC' },
-    // ILM - Institute of Leadership & Management
-    { code: 'ILM_LEVEL_5', name: 'ILM Level 5', org: 'ILM' },
-    { code: 'ILM_LEVEL_7', name: 'ILM Level 7', org: 'ILM' },
-    // CMI - Chartered Management Institute
-    { code: 'CMI_LEVEL_5', name: 'CMI Level 5', org: 'CMI' },
-    { code: 'CMI_LEVEL_7', name: 'CMI Level 7', org: 'CMI' },
-    // NLP
-    { code: 'NLP_PRACTITIONER', name: 'NLP Practitioner', org: 'NLP' },
-    { code: 'NLP_MASTER', name: 'NLP Master Practitioner', org: 'NLP' },
-];
-
-const CertificationsSection = ({ data, updateData, session }) => {
+const CertificationsSection = ({ data, updateData, session, certifications = { list: [] }, getCertificationById }) => {
+    // Use certifications from database (passed via props from context)
+    const certificationsList = certifications.list || [];
     const [isAdding, setIsAdding] = useState(false);
     const [newCert, setNewCert] = useState({ code: '', date_acquired: '', certificate_url: '', certificate_file: null });
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef(null);
 
-    const certifications = data.certifications || [];
+    const userCertifications = data.certifications || [];
 
-    // Get list of already added certification codes to filter them out
-    const addedCertCodes = certifications.map(c => c.code);
-    const availableCertifications = COACHING_CERTIFICATIONS.filter(c => !addedCertCodes.includes(c.code));
+    // Get list of already added certification IDs to filter them out
+    const addedCertIds = userCertifications.map(c => c.certification_id);
+    const availableCertifications = certificationsList.filter(c => !addedCertIds.includes(c.id));
 
-    // Get certification name from code
-    const getCertName = (code) => {
-        const cert = COACHING_CERTIFICATIONS.find(c => c.code === code);
-        return cert ? cert.name : code;
+    // Get certification name from id
+    const getCertName = (certificationId) => {
+        const cert = getCertificationById ? getCertificationById(certificationId) : null;
+        return cert ? cert.name : `Certification #${certificationId}`;
     };
 
     const handleAddCertification = async () => {
         if (!newCert.code) return;
 
-        const selectedCert = COACHING_CERTIFICATIONS.find(c => c.code === newCert.code);
+        // newCert.code now contains the certification_id (integer)
+        const certificationId = parseInt(newCert.code, 10);
+        const selectedCert = certificationsList.find(c => c.id === certificationId);
         if (!selectedCert) return;
 
         let certificateFilePath = null;
@@ -731,23 +687,23 @@ const CertificationsSection = ({ data, updateData, session }) => {
             }
         }
 
+        // Store certification_id (foreign key) instead of code/name/org
         const certification = {
             id: `temp_${Date.now()}`,
-            code: selectedCert.code,
-            name: selectedCert.name,
-            org: selectedCert.org,
+            certification_id: selectedCert.id,
+            name: selectedCert.name, // Keep name for display purposes in the UI
             date_acquired: newCert.date_acquired || null,
             certificate_url: newCert.certificate_url.trim() || null,
             certificate_file_path: certificateFilePath
         };
 
-        updateData('certifications', [...certifications, certification]);
+        updateData('certifications', [...userCertifications, certification]);
         setNewCert({ code: '', date_acquired: '', certificate_url: '', certificate_file: null });
         setIsAdding(false);
     };
 
     const handleRemoveCertification = (certId) => {
-        updateData('certifications', certifications.filter(c => c.id !== certId));
+        updateData('certifications', userCertifications.filter(c => c.id !== certId));
     };
 
     const handleFileSelect = (file) => {
@@ -787,9 +743,9 @@ const CertificationsSection = ({ data, updateData, session }) => {
                 </div>
 
                 <!-- Existing certifications list -->
-                ${certifications.length > 0 && html`
+                ${userCertifications.length > 0 && html`
                     <div style=${{ marginBottom: '16px' }}>
-                        ${certifications.map(cert => html`
+                        ${userCertifications.map(cert => html`
                             <div key=${cert.id} style=${{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -849,7 +805,7 @@ const CertificationsSection = ({ data, updateData, session }) => {
                                     <option value="" disabled>${t('onboard.premium.allCertsAdded') || 'All certifications already added'}</option>
                                 ` : null}
                                 ${availableCertifications.map(cert => html`
-                                    <option key=${cert.code} value=${cert.code}>${cert.name}</option>
+                                    <option key=${cert.id} value=${cert.id}>${cert.name}</option>
                                 `)}
                             </select>
                         </div>
@@ -992,7 +948,7 @@ const CertificationsSection = ({ data, updateData, session }) => {
     `;
 };
 
-const StepProfile = ({ data, updateData, session, cities = [], countries = COUNTRIES, getLocalizedCityName }) => {
+const StepProfile = ({ data, updateData, session, cities = [], countries = COUNTRIES, getLocalizedCityName, certifications, getCertificationById }) => {
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
@@ -1254,7 +1210,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
             </div>
 
             <!-- Certifications Section -->
-            <${CertificationsSection} data=${data} updateData=${updateData} session=${session} />
+            <${CertificationsSection} data=${data} updateData=${updateData} session=${session} certifications=${certifications} getCertificationById=${getCertificationById} />
 
             <div class="form-section">
                 <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
