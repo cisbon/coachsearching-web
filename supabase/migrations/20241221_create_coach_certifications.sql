@@ -67,16 +67,64 @@ CREATE POLICY "Coaches can delete own certifications" ON public.cs_coach_certifi
     );
 
 -- ============================================================================
--- 4. CREATE STORAGE BUCKET FOR CERTIFICATES (if not exists)
+-- 4. CREATE STORAGE BUCKET FOR CERTIFICATES
 -- ============================================================================
 
--- Note: This needs to be run via Supabase dashboard or API
--- INSERT INTO storage.buckets (id, name, public)
--- VALUES ('certificates', 'certificates', true)
--- ON CONFLICT (id) DO NOTHING;
+-- Create the storage bucket for coach certificates (PDFs only)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+    'coach-certifications',
+    'coach-certifications',
+    true,  -- Public so certificates can be viewed on profiles
+    10485760,  -- 10MB max file size
+    ARRAY['application/pdf']::text[]  -- Only PDF files allowed
+)
+ON CONFLICT (id) DO UPDATE SET
+    file_size_limit = EXCLUDED.file_size_limit,
+    allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- ============================================================================
--- 5. COMMENTS FOR DOCUMENTATION
+-- 5. STORAGE BUCKET RLS POLICIES
+-- ============================================================================
+
+-- Enable RLS on storage.objects for this bucket
+-- Note: storage.objects RLS is enabled by default in Supabase
+
+-- Policy: Anyone can view/download certificates (public bucket)
+CREATE POLICY "Anyone can view certificates"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'coach-certifications');
+
+-- Policy: Authenticated coaches can upload their own certificates
+-- File path must start with 'cert_{user_id}_' to ensure ownership
+CREATE POLICY "Coaches can upload own certificates"
+ON storage.objects FOR INSERT
+WITH CHECK (
+    bucket_id = 'coach-certifications'
+    AND auth.role() = 'authenticated'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Policy: Coaches can update their own certificates
+CREATE POLICY "Coaches can update own certificates"
+ON storage.objects FOR UPDATE
+USING (
+    bucket_id = 'coach-certifications'
+    AND auth.role() = 'authenticated'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Policy: Coaches can delete their own certificates
+CREATE POLICY "Coaches can delete own certificates"
+ON storage.objects FOR DELETE
+USING (
+    bucket_id = 'coach-certifications'
+    AND auth.role() = 'authenticated'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- ============================================================================
+-- 6. COMMENTS FOR DOCUMENTATION
 -- ============================================================================
 
 COMMENT ON TABLE public.cs_coach_certifications IS 'Stores coach certifications and credentials';

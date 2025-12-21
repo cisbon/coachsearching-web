@@ -643,16 +643,20 @@ const CertificationsSection = ({ data, updateData, session }) => {
             setUploading(true);
             try {
                 const supabase = window.supabaseClient;
-                const fileName = `cert_${session.user.id}_${Date.now()}.pdf`;
+                // Use folder structure: {user_id}/cert_{timestamp}.pdf for RLS policy compliance
+                const filePath = `${session.user.id}/cert_${Date.now()}.pdf`;
                 const { data: uploadData, error } = await supabase.storage
-                    .from('certificates')
-                    .upload(fileName, newCert.certificate_file, { upsert: true });
+                    .from('coach-certifications')
+                    .upload(filePath, newCert.certificate_file, {
+                        upsert: true,
+                        contentType: 'application/pdf'
+                    });
 
                 if (!error && uploadData) {
                     const { data: publicData } = supabase.storage
-                        .from('certificates')
-                        .getPublicUrl(fileName);
-                    certificateFilePath = publicData?.publicUrl || fileName;
+                        .from('coach-certifications')
+                        .getPublicUrl(filePath);
+                    certificateFilePath = publicData?.publicUrl || filePath;
                 }
             } catch (err) {
                 console.error('Certificate upload failed:', err);
