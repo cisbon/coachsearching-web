@@ -891,8 +891,8 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
 // ============================================================================
 
 const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName, getLocalizedDescription }) => {
-    // Filter out chat and hybrid formats - only show video, phone, in-person
-    const EXCLUDED_FORMATS = ['chat', 'hybrid'];
+    // Filter out chat, hybrid, and phone formats - only show video and in-person
+    const EXCLUDED_FORMATS = ['chat', 'hybrid', 'phone'];
     const filteredFormats = sessionFormats.filter(f => !EXCLUDED_FORMATS.includes(f.code));
 
     const toggleFormat = (formatCode) => {
