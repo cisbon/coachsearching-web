@@ -1,13 +1,14 @@
 /**
  * FilterSidebar Component
  * Sidebar for filtering coach list by price, specialty, language, etc.
- * Uses dynamic lookup options from AppContext
+ * Uses dynamic lookup options and cities from AppContext
  */
 
 import htm from '../../vendor/htm.js';
-import { useLookupOptions } from '../../context/AppContext.js';
+import { useLookupOptions, useCities } from '../../context/AppContext.js';
 
 const React = window.React;
+const { useMemo } = React;
 const html = htm.bind(React.createElement);
 
 // Flag CDN for SVG flag images
@@ -65,9 +66,38 @@ export function FilterSidebar({ filters, onChange, onReset }) {
     // Get lookup options from global context (cached)
     const { lookupOptions, getLocalizedName } = useLookupOptions();
 
+    // Get cities from global context (cached)
+    const { cities, getLocalizedCityName } = useCities();
+
     // Extract specialties and languages from lookup options
     const specialtyOptions = lookupOptions.specialties || [];
     const languageOptions = lookupOptions.languages || [];
+
+    // Get unique countries from cities list
+    const countriesFromCities = useMemo(() => {
+        const countryMap = new Map();
+        (cities.list || []).forEach(city => {
+            if (!countryMap.has(city.country_code)) {
+                countryMap.set(city.country_code, city.country_en);
+            }
+        });
+        return Array.from(countryMap.entries())
+            .map(([code, name]) => ({ code, name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [cities.list]);
+
+    // Filter cities by selected country
+    const filteredCities = useMemo(() => {
+        if (!cities.list || cities.list.length === 0) return [];
+
+        // If no country selected, show all cities
+        if (!filters.locationCountry) {
+            return cities.list;
+        }
+
+        // Filter cities by the selected country name
+        return cities.list.filter(city => city.country_en === filters.locationCountry);
+    }, [cities.list, filters.locationCountry]);
 
     return html`
         <div class="filter-sidebar">
@@ -107,25 +137,31 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                         <select
                             class="filter-input"
                             value=${filters.locationCountry || ''}
-                            onChange=${(e) => onChange({ ...filters, locationCountry: e.target.value })}
+                            onChange=${(e) => {
+                                // When country changes, clear the city selection
+                                onChange({ ...filters, locationCountry: e.target.value, locationCity: '' });
+                            }}
                             style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
                         >
                             <option value="">All Countries</option>
-                            ${COUNTRIES.map(country => html`
+                            ${(countriesFromCities.length > 0 ? countriesFromCities : COUNTRIES).map(country => html`
                                 <option key=${country.code} value=${country.name}>${country.name}</option>
                             `)}
                         </select>
                     </div>
                     <div>
                         <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>City</label>
-                        <input
-                            type="text"
+                        <select
                             class="filter-input"
-                            placeholder="Enter city..."
                             value=${filters.locationCity || ''}
                             onChange=${(e) => onChange({ ...filters, locationCity: e.target.value })}
                             style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
-                        />
+                        >
+                            <option value="">All Cities</option>
+                            ${filteredCities.map(city => html`
+                                <option key=${city.code} value=${getLocalizedCityName(city)}>${getLocalizedCityName(city)}</option>
+                            `)}
+                        </select>
                     </div>
                 </div>
             </div>

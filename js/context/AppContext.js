@@ -1,6 +1,6 @@
 /**
  * App Context
- * Manages global application state (currency, language, UI state, lookup options)
+ * Manages global application state (currency, language, UI state, lookup options, cities)
  */
 
 import htm from '../vendor/htm.js';
@@ -13,6 +13,7 @@ const html = htm.bind(React.createElement);
 
 // Cache configuration
 const LOOKUP_CACHE_KEY = 'cs_lookup_options';
+const CITIES_CACHE_KEY = 'cs_cities';
 const LOOKUP_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 // Create context
@@ -59,6 +60,24 @@ export function AppProvider({ children }) {
         };
     });
     const lookupFetchRef = useRef(false); // Prevent duplicate fetches
+
+    // Cities state (coaching locations)
+    const [cities, setCities] = useState(() => {
+        // Try to load from cache on initial render
+        try {
+            const cached = localStorage.getItem(CITIES_CACHE_KEY);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < LOOKUP_CACHE_TTL) {
+                    return { list: data, isLoaded: true };
+                }
+            }
+        } catch (e) {
+            console.warn('AppContext: Failed to load cities cache', e);
+        }
+        return { list: [], isLoaded: false };
+    });
+    const citiesFetchRef = useRef(false); // Prevent duplicate fetches
 
     // Current route
     const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#home');
@@ -137,6 +156,63 @@ export function AppProvider({ children }) {
         fetchLookupOptions();
     }, [lookupOptions.isLoaded]);
 
+    // Fetch cities on mount (if not cached)
+    useEffect(() => {
+        const fetchCities = async () => {
+            // Prevent duplicate fetches
+            if (citiesFetchRef.current) return;
+
+            // Skip if already loaded from cache
+            if (cities.isLoaded) return;
+
+            citiesFetchRef.current = true;
+
+            try {
+                // Wait for supabase client to be available
+                let attempts = 0;
+                while (!window.supabaseClient && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+
+                if (!window.supabaseClient) {
+                    citiesFetchRef.current = false; // Allow retry
+                    return;
+                }
+
+                const { data: cityList, error } = await window.supabaseClient
+                    .from('cs_cities')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('sort_order', { ascending: true });
+
+                if (error) {
+                    console.warn('AppContext: Failed to fetch cities', error);
+                    citiesFetchRef.current = false; // Allow retry
+                    return;
+                }
+
+                // Update state
+                setCities({ list: cityList || [], isLoaded: true });
+
+                // Save to localStorage cache
+                try {
+                    localStorage.setItem(CITIES_CACHE_KEY, JSON.stringify({
+                        data: cityList || [],
+                        timestamp: Date.now()
+                    }));
+                } catch {
+                    // Silently ignore cache errors
+                }
+            } catch (err) {
+                console.warn('AppContext: Cities fetch error', err);
+                citiesFetchRef.current = false; // Allow retry
+            }
+        };
+
+        fetchCities();
+    }, [cities.isLoaded]);
+
     // Helper to get localized name from lookup option
     const getLocalizedName = useCallback((option, lang = null) => {
         const currentLang = lang || getCurrentLang() || language || 'en';
@@ -160,6 +236,47 @@ export function AppProvider({ children }) {
             isLoaded: false
         });
     }, []);
+
+    // Force refresh cities (clears cache)
+    const refreshCities = useCallback(() => {
+        localStorage.removeItem(CITIES_CACHE_KEY);
+        citiesFetchRef.current = false;
+        setCities({ list: [], isLoaded: false });
+    }, []);
+
+    // Helper to get localized city name
+    const getLocalizedCityName = useCallback((city, lang = null) => {
+        const currentLang = lang || getCurrentLang() || language || 'en';
+        return city?.[`name_${currentLang}`] || city?.name_en || city?.code || '';
+    }, [language]);
+
+    // Helper to get cities grouped by country
+    const getCitiesByCountry = useCallback(() => {
+        const grouped = {};
+        const currentLang = getCurrentLang() || language || 'en';
+
+        cities.list.forEach(city => {
+            const countryKey = city.country_code;
+            if (!grouped[countryKey]) {
+                grouped[countryKey] = {
+                    code: city.country_code,
+                    name: city.country_en,
+                    cities: []
+                };
+            }
+            grouped[countryKey].cities.push({
+                ...city,
+                localizedName: city[`name_${currentLang}`] || city.name_en
+            });
+        });
+
+        return grouped;
+    }, [cities.list, language]);
+
+    // Helper to find city by code
+    const getCityByCode = useCallback((code) => {
+        return cities.list.find(c => c.code === code);
+    }, [cities.list]);
 
     // Currency methods
     const setCurrency = useCallback((newCurrency) => {
@@ -260,6 +377,13 @@ export function AppProvider({ children }) {
         getLocalizedDescription,
         refreshLookupOptions,
 
+        // Cities
+        cities,
+        getLocalizedCityName,
+        getCitiesByCountry,
+        getCityByCode,
+        refreshCities,
+
         // Config
         config: CONFIG
     };
@@ -312,6 +436,14 @@ export function useNotification() {
 export function useLookupOptions() {
     const { lookupOptions, getLocalizedName, getLocalizedDescription, refreshLookupOptions } = useApp();
     return { lookupOptions, getLocalizedName, getLocalizedDescription, refreshLookupOptions };
+}
+
+/**
+ * Hook for cities (coaching locations)
+ */
+export function useCities() {
+    const { cities, getLocalizedCityName, getCitiesByCountry, getCityByCode, refreshCities } = useApp();
+    return { cities, getLocalizedCityName, getCitiesByCountry, getCityByCode, refreshCities };
 }
 
 export default AppContext;

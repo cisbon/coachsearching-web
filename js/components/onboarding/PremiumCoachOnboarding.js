@@ -12,10 +12,10 @@
 
 import htm from '../../vendor/htm.js';
 import { t, getCurrentLang } from '../../i18n.js';
-import { useLookupOptions } from '../../context/AppContext.js';
+import { useLookupOptions, useCities } from '../../context/AppContext.js';
 
 const React = window.React;
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const html = htm.bind(React.createElement);
 
 // ============================================================================
@@ -160,6 +160,35 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
 
     // Get lookup options from global context (cached)
     const { lookupOptions, getLocalizedName, getLocalizedDescription } = useLookupOptions();
+
+    // Get cities from global context (cached)
+    const { cities, getLocalizedCityName } = useCities();
+
+    // Get unique countries from cities list
+    const countriesFromCities = useMemo(() => {
+        const countryMap = new Map();
+        (cities.list || []).forEach(city => {
+            if (!countryMap.has(city.country_code)) {
+                countryMap.set(city.country_code, city.country_en);
+            }
+        });
+        return Array.from(countryMap.entries())
+            .map(([code, name]) => ({ code, name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [cities.list]);
+
+    // Filter cities by selected country
+    const filteredCities = useMemo(() => {
+        if (!cities.list || cities.list.length === 0) return [];
+
+        // If no country selected, show all cities
+        if (!data.location_country) {
+            return cities.list;
+        }
+
+        // Filter cities by the selected country name
+        return cities.list.filter(city => city.country_en === data.location_country);
+    }, [cities.list, data.location_country]);
 
     // Referral code validation
     const referralDebounceRef = useRef(null);
@@ -434,7 +463,14 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
     const renderStep = () => {
         switch (currentStep) {
             case 0:
-                return html`<${StepProfile} data=${data} updateData=${updateData} session=${session} />`;
+                return html`<${StepProfile}
+                    data=${data}
+                    updateData=${updateData}
+                    session=${session}
+                    cities=${filteredCities}
+                    countries=${countriesFromCities.length > 0 ? countriesFromCities : COUNTRIES}
+                    getLocalizedCityName=${getLocalizedCityName}
+                />`;
             case 1:
                 return html`<${StepExpertise}
                     data=${data}
@@ -877,7 +913,7 @@ const CertificationsSection = ({ data, updateData, session }) => {
     `;
 };
 
-const StepProfile = ({ data, updateData, session }) => {
+const StepProfile = ({ data, updateData, session, cities = [], countries = COUNTRIES, getLocalizedCityName }) => {
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
@@ -1144,28 +1180,53 @@ const StepProfile = ({ data, updateData, session }) => {
             <div class="form-section">
                 <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div class="form-group">
-                        <label class="form-label">${t('onboard.premium.city')}</label>
-                        <input
-                            type="text"
-                            class="premium-input"
-                            placeholder="e.g., Berlin"
-                            value=${String(data.location_city || '')}
-                            onInput=${(e) => updateData('location_city', e.target.value)}
-                        />
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">${t('onboard.premium.country')}</label>
                         <select
                             class="premium-input"
                             value=${String(data.location_country || '')}
-                            onChange=${(e) => updateData('location_country', e.target.value)}
+                            onChange=${(e) => {
+                                // Clear city when country changes
+                                updateData('location_country', e.target.value);
+                                updateData('location_city', '');
+                            }}
                         >
                             <option value="">...</option>
-                            ${COUNTRIES.map(country => html`
+                            ${countries.map(country => html`
                                 <option key=${country.code} value=${country.name}>${country.name}</option>
                             `)}
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">${t('onboard.premium.city')}</label>
+                        <select
+                            class="premium-input"
+                            value=${String(data.location_city || '')}
+                            onChange=${(e) => updateData('location_city', e.target.value)}
+                            disabled=${!data.location_country}
+                        >
+                            <option value="">${data.location_country ? (t('onboard.premium.selectCity') || 'Select city...') : (t('onboard.premium.selectCountryFirst') || 'Select country first')}</option>
+                            ${cities.map(city => html`
+                                <option key=${city.code} value=${getLocalizedCityName ? getLocalizedCityName(city) : city.name_en}>
+                                    ${getLocalizedCityName ? getLocalizedCityName(city) : city.name_en}
+                                </option>
+                            `)}
+                        </select>
+                    </div>
+                </div>
+                <div style=${{
+                    marginTop: '12px',
+                    padding: '12px',
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    fontSize: '0.85rem',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px'
+                }}>
+                    <span style=${{ flexShrink: 0 }}>💡</span>
+                    <span>${t('onboard.premium.cityNotice') || 'If your city is not listed, please select the closest available city. This helps clients find you based on location.'}</span>
                 </div>
             </div>
         </div>
