@@ -62,8 +62,9 @@ const mockCoaches = [
  * @param {Object} props.searchFilters - Search filters from parent
  * @param {Object} props.session - User session
  * @param {React.Component} props.CoachDetailModal - Modal component for coach details
+ * @param {Array} props.initialSpecialties - Pre-selected specialty filters
  */
-export function CoachList({ searchFilters, session, CoachDetailModal }) {
+export function CoachList({ searchFilters, session, CoachDetailModal, initialSpecialties }) {
     const [coaches, setCoaches] = useState(mockCoaches);
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -73,7 +74,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal }) {
         sortBy: 'relevance',
         minPrice: '',
         maxPrice: '',
-        specialties: [],
+        specialties: initialSpecialties || [],
         languages: [],
         hasVideo: false,
         freeIntro: false,

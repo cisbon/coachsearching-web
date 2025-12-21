@@ -12,8 +12,8 @@ import {
     generateFAQSchema,
     slugify,
 } from '../utils/seo.js';
-import { CoachCard } from '../components/coach/CoachCard.js';
-import { CoachCardSkeleton } from '../components/coach/CoachCardSkeleton.js';
+import { CoachList } from '../components/coach/CoachList.js';
+import { CoachDetailModal } from '../components/coach/CoachDetailModal.js';
 
 const React = window.React;
 const { useEffect, useState, useMemo, useCallback } = React;
@@ -439,98 +439,17 @@ function RelatedCategories({ categories, currentSlug }) {
 }
 
 function CoachPreview({ categorySlug, category }) {
-    const [coaches, setCoaches] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    // Load coaches filtered by category specialty
-    useEffect(() => {
-        const loadCoaches = async () => {
-            setLoading(true);
-
-            if (!window.supabaseClient) {
-                setLoading(false);
-                return;
-            }
-
-            try {
-                const { data: allCoaches, error } = await window.supabaseClient
-                    .from('cs_coaches')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('created_at', { ascending: false });
-
-                if (error || !allCoaches) {
-                    setLoading(false);
-                    return;
-                }
-
-                // Filter coaches by specialty keywords
-                const specialtyTerms = CATEGORY_TO_SPECIALTY[categorySlug] || [categorySlug.replace(/-/g, ' ')];
-
-                const filteredCoaches = allCoaches.filter(coach => {
-                    if (!coach.specialties || !Array.isArray(coach.specialties)) return false;
-
-                    return coach.specialties.some(specialty => {
-                        const specLower = specialty.toLowerCase();
-                        return specialtyTerms.some(term => specLower.includes(term.toLowerCase()));
-                    });
-                });
-
-                // Sort by rating and limit to 6 coaches
-                const sortedCoaches = filteredCoaches
-                    .sort((a, b) => (b.rating_average || 0) - (a.rating_average || 0))
-                    .slice(0, 6);
-
-                setCoaches(sortedCoaches);
-            } catch {
-                // Silently handle errors
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadCoaches();
-    }, [categorySlug]);
-
-    const specialtyParam = encodeURIComponent(category?.title || categorySlug);
+    // Get specialty terms for preselected filter
+    const specialtyTerms = CATEGORY_TO_SPECIALTY[categorySlug] || [categorySlug.replace(/-/g, ' ')];
+    // Use the first specialty term as the preselected filter
+    const initialSpecialties = [specialtyTerms[0]];
 
     return html`
         <section class="category-coaches-preview">
-            <div class="container">
-                <h2>${t('home.featuredCoaches.title') || 'Featured Coaches'}</h2>
-                <p class="section-subtitle">${t('categoryPage.topRatedCoaches') || 'Top-rated coaches in this specialty'}</p>
-
-                ${loading ? html`
-                    <div class="coaches-grid category-coaches-grid">
-                        ${[1, 2, 3].map(i => html`<${CoachCardSkeleton} key=${i} />`)}
-                    </div>
-                ` : coaches.length > 0 ? html`
-                    <div class="coaches-grid category-coaches-grid">
-                        ${coaches.map(coach => html`
-                            <${CoachCard}
-                                key=${coach.id}
-                                coach=${coach}
-                                onViewDetails=${() => {
-                                    if (coach.slug) {
-                                        window.navigateTo('/coach/' + coach.slug);
-                                    }
-                                }}
-                            />
-                        `)}
-                    </div>
-                ` : html`
-                    <div class="no-coaches-message" style=${{ textAlign: 'center', padding: '40px 20px', color: '#666' }}>
-                        <p>${t('categoryPage.noCoachesYet') || 'No coaches available in this specialty yet.'}</p>
-                        <p>${t('categoryPage.checkBackSoon') || 'Check back soon as we are constantly adding new coaches!'}</p>
-                    </div>
-                `}
-
-                <div class="view-all-link" style=${{ textAlign: 'center', marginTop: '32px' }}>
-                    <a href="#coaches?specialty=${specialtyParam}" class="btn btn-primary">
-                        ${t('categoryPage.viewAllCoaches') || 'View All Coaches'} →
-                    </a>
-                </div>
-            </div>
+            <${CoachList}
+                initialSpecialties=${initialSpecialties}
+                CoachDetailModal=${CoachDetailModal}
+            />
         </section>
     `;
 }

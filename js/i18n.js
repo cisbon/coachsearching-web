@@ -1514,6 +1514,8 @@ const translations = {
         "categoryPage.notSureDesc": "Take our quick quiz to get personalized coach recommendations.",
         "categoryPage.indexTitle": "Coaching Categories | Find Your Specialty",
         "categoryPage.indexDescription": "Explore all coaching categories on CoachSearching. From executive coaching to life coaching, find the right type of coach for your needs.",
+        "categoryPage.noCoachesYet": "No coaches available in this specialty yet.",
+        "categoryPage.checkBackSoon": "Check back soon as we are constantly adding new coaches!",
 
         // Executive Coaching
         "categoryPage.executive-coaching.title": "Executive Coaching",
@@ -3017,6 +3019,8 @@ const translations = {
         "categoryPage.notSureDesc": "Machen Sie unser Quiz für personalisierte Coach-Empfehlungen.",
         "categoryPage.indexTitle": "Coaching-Kategorien | Finden Sie Ihre Spezialisierung",
         "categoryPage.indexDescription": "Entdecken Sie alle Coaching-Kategorien auf CoachSearching. Von Executive Coaching bis Life Coaching - finden Sie den richtigen Coach für Ihre Bedürfnisse.",
+        "categoryPage.noCoachesYet": "Noch keine Coaches in dieser Spezialisierung verfügbar.",
+        "categoryPage.checkBackSoon": "Schauen Sie bald wieder vorbei, wir fügen ständig neue Coaches hinzu!",
 
         // Executive Coaching - German
         "categoryPage.executive-coaching.title": "Executive Coaching",
@@ -4486,6 +4490,8 @@ const translations = {
         "categoryPage.notSureDesc": "Haz nuestro quiz para obtener recomendaciones de coaches personalizadas.",
         "categoryPage.indexTitle": "Categorías de Coaching | Encuentra Tu Especialidad",
         "categoryPage.indexDescription": "Explora todas las categorías de coaching en CoachSearching. Desde coaching ejecutivo hasta coaching de vida, encuentra el tipo adecuado de coach para tus necesidades.",
+        "categoryPage.noCoachesYet": "Aún no hay coaches disponibles en esta especialidad.",
+        "categoryPage.checkBackSoon": "¡Vuelve pronto, estamos agregando nuevos coaches constantemente!",
 
         // Executive Coaching - Spanish
         "categoryPage.executive-coaching.title": "Coaching Ejecutivo",
@@ -5857,6 +5863,8 @@ const translations = {
         "categoryPage.notSureDesc": "Faites notre quiz pour obtenir des recommandations de coachs personnalisées.",
         "categoryPage.indexTitle": "Catégories de Coaching | Trouvez Votre Spécialité",
         "categoryPage.indexDescription": "Explorez toutes les catégories de coaching sur CoachSearching. Du coaching exécutif au coaching de vie, trouvez le bon type de coach pour vos besoins.",
+        "categoryPage.noCoachesYet": "Pas encore de coachs disponibles dans cette spécialité.",
+        "categoryPage.checkBackSoon": "Revenez bientôt, nous ajoutons constamment de nouveaux coachs !",
 
         // Executive Coaching - French
         "categoryPage.executive-coaching.title": "Coaching Exécutif",
@@ -7228,6 +7236,8 @@ const translations = {
         "categoryPage.notSureDesc": "Fai il nostro quiz per ricevere raccomandazioni di coach personalizzate.",
         "categoryPage.indexTitle": "Categorie di Coaching | Trova la Tua Specialità",
         "categoryPage.indexDescription": "Esplora tutte le categorie di coaching su CoachSearching. Dal coaching esecutivo al coaching di vita, trova il tipo giusto di coach per le tue esigenze.",
+        "categoryPage.noCoachesYet": "Ancora nessun coach disponibile in questa specialità.",
+        "categoryPage.checkBackSoon": "Torna presto, stiamo aggiungendo costantemente nuovi coach!",
 
         // Executive Coaching - Italian
         "categoryPage.executive-coaching.title": "Coaching Esecutivo",
