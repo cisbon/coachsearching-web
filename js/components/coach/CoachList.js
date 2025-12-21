@@ -63,8 +63,9 @@ const mockCoaches = [
  * @param {Object} props.session - User session
  * @param {React.Component} props.CoachDetailModal - Modal component for coach details
  * @param {Array} props.initialSpecialties - Pre-selected specialty filters
+ * @param {string} props.initialCity - Pre-selected city filter for location-based pages
  */
-export function CoachList({ searchFilters, session, CoachDetailModal, initialSpecialties }) {
+export function CoachList({ searchFilters, session, CoachDetailModal, initialSpecialties, initialCity }) {
     const [coaches, setCoaches] = useState(mockCoaches);
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -83,10 +84,10 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         onlineOnly: false,
         inPersonOnly: false,
         experience: '',
-        offersOnsite: false,
+        offersOnsite: !!initialCity, // Enable onsite filter when city is provided
         offersVirtual: false,
         locationCountry: '',
-        locationCity: ''
+        locationCity: initialCity || ''
     });
 
     const resetFilters = () => {

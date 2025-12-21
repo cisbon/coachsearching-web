@@ -606,4 +606,344 @@ export function CategoriesIndexPage() {
     `;
 }
 
+// ============================================================================
+// City Definitions for City-Specialty Landing Pages
+// ============================================================================
+
+export const COACHING_CITIES = {
+    // Tier 1 - DACH + Netherlands (18 cities)
+    'berlin': { name: 'Berlin', country: 'Germany', countryCode: 'DE' },
+    'munich': { name: 'Munich', country: 'Germany', countryCode: 'DE' },
+    'hamburg': { name: 'Hamburg', country: 'Germany', countryCode: 'DE' },
+    'frankfurt': { name: 'Frankfurt', country: 'Germany', countryCode: 'DE' },
+    'dusseldorf': { name: 'Düsseldorf', country: 'Germany', countryCode: 'DE' },
+    'cologne': { name: 'Cologne', country: 'Germany', countryCode: 'DE' },
+    'stuttgart': { name: 'Stuttgart', country: 'Germany', countryCode: 'DE' },
+    'hanover': { name: 'Hanover', country: 'Germany', countryCode: 'DE' },
+    'nuremberg': { name: 'Nuremberg', country: 'Germany', countryCode: 'DE' },
+    'leipzig': { name: 'Leipzig', country: 'Germany', countryCode: 'DE' },
+    'vienna': { name: 'Vienna', country: 'Austria', countryCode: 'AT' },
+    'zurich': { name: 'Zurich', country: 'Switzerland', countryCode: 'CH' },
+    'geneva': { name: 'Geneva', country: 'Switzerland', countryCode: 'CH' },
+    'basel': { name: 'Basel', country: 'Switzerland', countryCode: 'CH' },
+    'amsterdam': { name: 'Amsterdam', country: 'Netherlands', countryCode: 'NL' },
+    'rotterdam': { name: 'Rotterdam', country: 'Netherlands', countryCode: 'NL' },
+    'the-hague': { name: 'The Hague', country: 'Netherlands', countryCode: 'NL' },
+    'brussels': { name: 'Brussels', country: 'Belgium', countryCode: 'BE' },
+
+    // Tier 2 - UK, Ireland, Nordics, Belgium (12 cities)
+    'london': { name: 'London', country: 'United Kingdom', countryCode: 'GB' },
+    'manchester': { name: 'Manchester', country: 'United Kingdom', countryCode: 'GB' },
+    'birmingham': { name: 'Birmingham', country: 'United Kingdom', countryCode: 'GB' },
+    'edinburgh': { name: 'Edinburgh', country: 'United Kingdom', countryCode: 'GB' },
+    'dublin': { name: 'Dublin', country: 'Ireland', countryCode: 'IE' },
+    'stockholm': { name: 'Stockholm', country: 'Sweden', countryCode: 'SE' },
+    'copenhagen': { name: 'Copenhagen', country: 'Denmark', countryCode: 'DK' },
+    'oslo': { name: 'Oslo', country: 'Norway', countryCode: 'NO' },
+    'helsinki': { name: 'Helsinki', country: 'Finland', countryCode: 'FI' },
+    'antwerp': { name: 'Antwerp', country: 'Belgium', countryCode: 'BE' },
+    'gothenburg': { name: 'Gothenburg', country: 'Sweden', countryCode: 'SE' },
+    'malmo': { name: 'Malmö', country: 'Sweden', countryCode: 'SE' },
+
+    // Tier 3 - Southern & Eastern Europe (18 cities)
+    'paris': { name: 'Paris', country: 'France', countryCode: 'FR' },
+    'lyon': { name: 'Lyon', country: 'France', countryCode: 'FR' },
+    'madrid': { name: 'Madrid', country: 'Spain', countryCode: 'ES' },
+    'barcelona': { name: 'Barcelona', country: 'Spain', countryCode: 'ES' },
+    'valencia': { name: 'Valencia', country: 'Spain', countryCode: 'ES' },
+    'milan': { name: 'Milan', country: 'Italy', countryCode: 'IT' },
+    'rome': { name: 'Rome', country: 'Italy', countryCode: 'IT' },
+    'warsaw': { name: 'Warsaw', country: 'Poland', countryCode: 'PL' },
+    'krakow': { name: 'Krakow', country: 'Poland', countryCode: 'PL' },
+    'wroclaw': { name: 'Wrocław', country: 'Poland', countryCode: 'PL' },
+    'prague': { name: 'Prague', country: 'Czech Republic', countryCode: 'CZ' },
+    'lisbon': { name: 'Lisbon', country: 'Portugal', countryCode: 'PT' },
+    'porto': { name: 'Porto', country: 'Portugal', countryCode: 'PT' },
+    'budapest': { name: 'Budapest', country: 'Hungary', countryCode: 'HU' },
+    'bucharest': { name: 'Bucharest', country: 'Romania', countryCode: 'RO' },
+    'athens': { name: 'Athens', country: 'Greece', countryCode: 'GR' },
+    'luxembourg': { name: 'Luxembourg', country: 'Luxembourg', countryCode: 'LU' },
+    'tallinn': { name: 'Tallinn', country: 'Estonia', countryCode: 'EE' },
+
+    // Tier 4 - German secondary (12 cities)
+    'dresden': { name: 'Dresden', country: 'Germany', countryCode: 'DE' },
+    'bonn': { name: 'Bonn', country: 'Germany', countryCode: 'DE' },
+    'essen': { name: 'Essen', country: 'Germany', countryCode: 'DE' },
+    'dortmund': { name: 'Dortmund', country: 'Germany', countryCode: 'DE' },
+    'bremen': { name: 'Bremen', country: 'Germany', countryCode: 'DE' },
+    'duisburg': { name: 'Duisburg', country: 'Germany', countryCode: 'DE' },
+    'munster': { name: 'Münster', country: 'Germany', countryCode: 'DE' },
+    'karlsruhe': { name: 'Karlsruhe', country: 'Germany', countryCode: 'DE' },
+    'mannheim': { name: 'Mannheim', country: 'Germany', countryCode: 'DE' },
+    'augsburg': { name: 'Augsburg', country: 'Germany', countryCode: 'DE' },
+    'wiesbaden': { name: 'Wiesbaden', country: 'Germany', countryCode: 'DE' },
+    'freiburg': { name: 'Freiburg', country: 'Germany', countryCode: 'DE' },
+};
+
+// ============================================================================
+// City-Specialty Landing Page Component
+// ============================================================================
+
+function CityCategoryHero({ category, city, categorySlug, citySlug }) {
+    const categoryTitle = t(`categoryPage.${categorySlug}.title`) || category.title;
+    const cityName = city.name;
+
+    return html`
+        <section class="category-hero city-category-hero">
+            <div class="container">
+                <div class="category-icon-large">${category.icon}</div>
+                <h1>${categoryTitle} ${t('cityPage.in') || 'in'} ${cityName}</h1>
+                <p class="hero-description">
+                    ${t('cityPage.heroDesc', { category: categoryTitle, city: cityName }) ||
+                      `Find the best ${categoryTitle.toLowerCase()} professionals in ${cityName}. Connect with experienced coaches who understand the local business culture and can meet you in person or online.`}
+                </p>
+                <div class="hero-cta">
+                    <a href="#city-coaches" class="btn btn-primary btn-lg">
+                        ${t('cityPage.viewCoaches') || 'View Coaches'} →
+                    </a>
+                    <a href="/quiz" class="btn btn-secondary btn-lg">${t('category.takeQuiz') || 'Take the Quiz'}</a>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function CityBenefits({ category, city, categorySlug }) {
+    const categoryTitle = t(`categoryPage.${categorySlug}.title`) || category.title;
+
+    const benefits = [
+        {
+            icon: '📍',
+            title: t('cityPage.benefit1Title') || 'Local Expertise',
+            desc: t('cityPage.benefit1Desc', { city: city.name }) ||
+                  `Coaches who understand ${city.name}'s business culture and professional landscape.`
+        },
+        {
+            icon: '🤝',
+            title: t('cityPage.benefit2Title') || 'In-Person Sessions',
+            desc: t('cityPage.benefit2Desc', { city: city.name }) ||
+                  `Meet your coach face-to-face in ${city.name} for more impactful sessions.`
+        },
+        {
+            icon: '🌐',
+            title: t('cityPage.benefit3Title') || 'Flexible Options',
+            desc: t('cityPage.benefit3Desc') ||
+                  'Choose between in-person meetings, video calls, or a hybrid approach.'
+        },
+        {
+            icon: '⭐',
+            title: t('cityPage.benefit4Title') || 'Verified Coaches',
+            desc: t('cityPage.benefit4Desc') ||
+                  'All coaches are vetted for credentials, experience, and client satisfaction.'
+        }
+    ];
+
+    return html`
+        <section class="city-benefits">
+            <div class="container">
+                <h2>${t('cityPage.whyChoose', { category: categoryTitle, city: city.name }) ||
+                      `Why Choose ${categoryTitle} in ${city.name}?`}</h2>
+                <div class="benefits-grid city-benefits-grid">
+                    ${benefits.map((benefit, i) => html`
+                        <div class="benefit-card" key=${i}>
+                            <div class="benefit-icon">${benefit.icon}</div>
+                            <h3>${benefit.title}</h3>
+                            <p>${benefit.desc}</p>
+                        </div>
+                    `)}
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function CityCoachPreview({ categorySlug, category, city, citySlug }) {
+    // Get specialty terms for preselected filter
+    const specialtyTerms = CATEGORY_TO_SPECIALTY[categorySlug] || [categorySlug.replace(/-/g, ' ')];
+    const initialSpecialties = [specialtyTerms[0]];
+
+    return html`
+        <section class="category-coaches-preview city-coaches-preview" id="city-coaches">
+            <div class="container">
+                <h2 style=${{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                    ${t('cityPage.coachesTitle', { category: category.title, city: city.name }) ||
+                      `${category.title} Coaches in ${city.name}`}
+                </h2>
+            </div>
+            <${CoachList}
+                initialSpecialties=${initialSpecialties}
+                initialCity=${city.name}
+                CoachDetailModal=${CoachDetailModal}
+            />
+        </section>
+    `;
+}
+
+function CityRelatedLinks({ categorySlug, category, citySlug, city }) {
+    // Get other cities in the same country
+    const sameCityCities = Object.entries(COACHING_CITIES)
+        .filter(([slug, c]) => c.countryCode === city.countryCode && slug !== citySlug)
+        .slice(0, 4);
+
+    // Get other categories for this city
+    const otherCategories = Object.entries(COACHING_CATEGORIES)
+        .filter(([slug]) => slug !== categorySlug)
+        .slice(0, 4);
+
+    return html`
+        <section class="city-related-links">
+            <div class="container">
+                ${sameCityCities.length > 0 && html`
+                    <div class="related-section">
+                        <h3>${t('cityPage.otherCities', { category: category.title }) ||
+                              `${category.title} in Other Cities`}</h3>
+                        <div class="related-grid">
+                            ${sameCityCities.map(([slug, c]) => html`
+                                <a href="/coaching/${categorySlug}/${slug}" class="related-card" key=${slug}>
+                                    <span class="related-icon">📍</span>
+                                    <span class="related-title">${c.name}</span>
+                                </a>
+                            `)}
+                        </div>
+                    </div>
+                `}
+
+                <div class="related-section" style=${{ marginTop: '2rem' }}>
+                    <h3>${t('cityPage.otherCategories', { city: city.name }) ||
+                          `Other Coaching Types in ${city.name}`}</h3>
+                    <div class="related-grid">
+                        ${otherCategories.map(([slug, cat]) => html`
+                            <a href="/coaching/${slug}/${citySlug}" class="related-card" key=${slug}>
+                                <span class="related-icon">${cat.icon}</span>
+                                <span class="related-title">${t(`categoryPage.${slug}.title`) || cat.title}</span>
+                            </a>
+                        `)}
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+/**
+ * City-Specialty Landing Page Component
+ * @param {Object} props
+ * @param {string} props.categorySlug - The coaching category slug (e.g., 'executive-coaching')
+ * @param {string} props.citySlug - The city slug (e.g., 'munich')
+ */
+export function CityCategoryPage({ categorySlug, citySlug }) {
+    const category = COACHING_CATEGORIES[categorySlug];
+    const city = COACHING_CITIES[citySlug];
+
+    // If category or city doesn't exist, show 404-like message
+    if (!category || !city) {
+        return html`
+            <div class="category-not-found">
+                <div class="container">
+                    <h1>${t('cityPage.notFound') || 'Page Not Found'}</h1>
+                    <p>${t('cityPage.notFoundDesc') || "Sorry, we couldn't find this coaching category or city."}</p>
+                    <div style=${{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1.5rem' }}>
+                        <a href="/categories" class="btn btn-secondary">${t('categoryPage.categories') || 'Browse Categories'}</a>
+                        <a href="/coaches" class="btn btn-primary">${t('seo.browseAll') || 'Browse All Coaches'}</a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    const categoryTitle = t(`categoryPage.${categorySlug}.title`) || category.title;
+
+    // Set SEO meta tags
+    useEffect(() => {
+        setPageMeta({
+            title: `${categoryTitle} in ${city.name} | Find Local Coaches`,
+            description: `Find the best ${categoryTitle.toLowerCase()} professionals in ${city.name}, ${city.country}. Connect with experienced coaches for in-person or online sessions.`,
+            url: `https://coachsearching.com/coaching/${categorySlug}/${citySlug}`,
+            type: 'website',
+        });
+
+        // Breadcrumb schema
+        setStructuredData('breadcrumb-schema', generateBreadcrumbSchema([
+            { name: 'Home', url: 'https://coachsearching.com' },
+            { name: 'Coaching Categories', url: 'https://coachsearching.com/categories' },
+            { name: categoryTitle, url: `https://coachsearching.com/coaching/${categorySlug}` },
+            { name: city.name, url: `https://coachsearching.com/coaching/${categorySlug}/${citySlug}` },
+        ]));
+
+        // LocalBusiness schema for SEO
+        setStructuredData('local-business-schema', {
+            '@context': 'https://schema.org',
+            '@type': 'ProfessionalService',
+            'name': `${categoryTitle} in ${city.name}`,
+            'description': `Professional ${categoryTitle.toLowerCase()} services in ${city.name}, ${city.country}`,
+            'areaServed': {
+                '@type': 'City',
+                'name': city.name,
+                'containedInPlace': {
+                    '@type': 'Country',
+                    'name': city.country
+                }
+            },
+            'provider': {
+                '@type': 'Organization',
+                'name': 'CoachSearching',
+                'url': 'https://coachsearching.com'
+            }
+        });
+    }, [categorySlug, citySlug, category, city, categoryTitle]);
+
+    return html`
+        <div class="category-page city-category-page">
+            <!-- Hero -->
+            <${CityCategoryHero}
+                category=${category}
+                city=${city}
+                categorySlug=${categorySlug}
+                citySlug=${citySlug}
+            />
+
+            <!-- Benefits -->
+            <${CityBenefits}
+                category=${category}
+                city=${city}
+                categorySlug=${categorySlug}
+            />
+
+            <!-- Coaches Preview with City Filter -->
+            <${CityCoachPreview}
+                categorySlug=${categorySlug}
+                category=${category}
+                city=${city}
+                citySlug=${citySlug}
+            />
+
+            <!-- Related Links -->
+            <${CityRelatedLinks}
+                categorySlug=${categorySlug}
+                category=${category}
+                citySlug=${citySlug}
+                city=${city}
+            />
+
+            <!-- CTA -->
+            <section class="category-cta">
+                <div class="container">
+                    <h2>${t('cityPage.readyToStart', { city: city.name }) ||
+                          `Ready to Start Your Coaching Journey in ${city.name}?`}</h2>
+                    <p>${t('cityPage.findPerfectCoach') ||
+                          'Connect with a local coach who understands your needs and can help you achieve your goals.'}</p>
+                    <div class="cta-buttons">
+                        <a href="#city-coaches" class="btn btn-primary btn-lg">
+                            ${t('cityPage.findCoach') || 'Find a Coach'}
+                        </a>
+                        <a href="/quiz" class="btn btn-secondary btn-lg">
+                            ${t('categoryPage.getMatched') || 'Get Matched'}
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    `;
+}
+
 export default CategoryPage;

@@ -17,7 +17,7 @@ import { PromoCodeWidget, PromoCodeBanner, PromoCodeManager } from './promoCode.
 
 // SEO Content Pages
 import { FAQPage } from './pages/FAQPage.js';
-import { CategoryPage, CategoriesIndexPage, COACHING_CATEGORIES } from './pages/CategoryPage.js';
+import { CategoryPage, CategoriesIndexPage, CityCategoryPage, COACHING_CATEGORIES, COACHING_CITIES } from './pages/CategoryPage.js';
 import { CoachProfilePage } from './pages/CoachProfilePage.js';
 import { PricingPage } from './pages/PricingPage.js';
 import { Hero, CoachingCategoriesSection, HowItWorksSection } from './pages/HomePage.js';
@@ -403,9 +403,13 @@ const App = () => {
     const routeParts = cleanPath.split('/');
     const baseRoute = routeParts[0] || 'home';
     const routeParam = routeParts[1] || null;
+    const routeParam2 = routeParts[2] || null;
 
     // Handle dynamic routes first
-    if (baseRoute === 'coaching' && routeParam) {
+    if (baseRoute === 'coaching' && routeParam && routeParam2) {
+        // City-Specialty pages like /coaching/executive-coaching/munich
+        Component = () => html`<${CityCategoryPage} categorySlug=${routeParam} citySlug=${routeParam2} />`;
+    } else if (baseRoute === 'coaching' && routeParam) {
         // Category pages like /coaching/executive-coaching
         Component = () => html`<${CategoryPage} categorySlug=${routeParam} />`;
     } else if (baseRoute === 'coach' && routeParam) {
