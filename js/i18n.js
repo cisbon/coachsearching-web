@@ -1557,6 +1557,7 @@ const translations = {
 
         // Executive Coaching
         "categoryPage.executive-coaching.title": "Executive Coaching",
+        "categoryPage.executive-coaching.shortDesc": "Transform your leadership capabilities with expert executive coaches for C-suite and senior leaders.",
         "categoryPage.executive-coaching.description": "Transform your leadership with expert executive coaches. Develop strategic thinking, enhance decision-making, and lead with confidence.",
         "categoryPage.executive-coaching.longDescription": "Executive coaching is designed for C-suite leaders, senior managers, and high-potential executives who want to maximize their leadership impact. Our verified executive coaches bring decades of corporate experience and proven methodologies to help you navigate complex business challenges, build high-performing teams, and achieve breakthrough results.",
         "categoryPage.executive-coaching.benefit1": "Enhanced strategic decision-making",
@@ -1578,6 +1579,7 @@ const translations = {
 
         // Life Coaching
         "categoryPage.life-coaching.title": "Life Coaching",
+        "categoryPage.life-coaching.shortDesc": "Find your purpose and create lasting positive change with certified life coaches.",
         "categoryPage.life-coaching.description": "Find your purpose and create a fulfilling life with certified life coaches. Overcome challenges, set meaningful goals, and unlock your full potential.",
         "categoryPage.life-coaching.longDescription": "Life coaching empowers you to create positive, lasting change in all areas of your life. Whether you're seeking clarity on your purpose, navigating a life transition, or wanting to improve your relationships and well-being, our certified life coaches provide the support and accountability you need to transform your life.",
         "categoryPage.life-coaching.benefit1": "Discover your true purpose and values",
@@ -1599,6 +1601,7 @@ const translations = {
 
         // Career Coaching
         "categoryPage.career-coaching.title": "Career Coaching",
+        "categoryPage.career-coaching.shortDesc": "Advance your career with expert guidance on job search, transitions, and professional growth.",
         "categoryPage.career-coaching.description": "Advance your career with expert career coaches. Get help with job search, career transitions, salary negotiation, and professional development.",
         "categoryPage.career-coaching.longDescription": "Career coaching helps professionals at all stages navigate their career journey with confidence. Whether you're seeking a promotion, changing industries, returning to work, or launching a new career entirely, our career coaches provide expert guidance on resume optimization, interview preparation, salary negotiation, and strategic career planning.",
         "categoryPage.career-coaching.benefit1": "Clarity on career direction and goals",
@@ -1620,6 +1623,7 @@ const translations = {
 
         // Business Coaching
         "categoryPage.business-coaching.title": "Business Coaching",
+        "categoryPage.business-coaching.shortDesc": "Grow your business with expert guidance on strategy, operations, and scaling.",
         "categoryPage.business-coaching.description": "Grow your business with expert business coaches. Get guidance on strategy, operations, marketing, and scaling your company.",
         "categoryPage.business-coaching.longDescription": "Business coaching provides entrepreneurs and business owners with the strategic guidance, accountability, and expertise needed to build and scale successful companies. Our business coaches have real-world experience growing businesses and can help you overcome challenges, optimize operations, increase revenue, and achieve your business goals faster.",
         "categoryPage.business-coaching.benefit1": "Clear business strategy and vision",
@@ -1641,6 +1645,7 @@ const translations = {
 
         // Leadership Coaching
         "categoryPage.leadership.title": "Leadership Coaching",
+        "categoryPage.leadership.shortDesc": "Develop essential leadership skills including influence, communication, and team management.",
         "categoryPage.leadership.description": "Become a more effective leader with leadership coaching. Develop influence, communication, and team management skills.",
         "categoryPage.leadership.longDescription": "Leadership coaching develops the essential skills needed to inspire and guide teams effectively. Whether you're a new manager or experienced leader, our leadership coaches help you build self-awareness, improve communication, resolve conflicts, motivate teams, and create a positive organizational culture.",
         "categoryPage.leadership.benefit1": "Stronger leadership presence",
@@ -1662,6 +1667,7 @@ const translations = {
 
         // Health & Wellness Coaching
         "categoryPage.health-wellness.title": "Health & Wellness Coaching",
+        "categoryPage.health-wellness.shortDesc": "Achieve optimal health with support for nutrition, fitness, and sustainable lifestyle changes.",
         "categoryPage.health-wellness.description": "Achieve optimal health with wellness coaches. Get support for nutrition, fitness, stress management, and healthy lifestyle changes.",
         "categoryPage.health-wellness.longDescription": "Health and wellness coaching takes a holistic approach to help you achieve your health goals. Our certified wellness coaches work with you on nutrition, exercise, stress management, sleep, and lifestyle habits to create sustainable changes that improve your overall well-being and quality of life.",
         "categoryPage.health-wellness.benefit1": "Sustainable healthy habits",
@@ -1683,6 +1689,7 @@ const translations = {
 
         // Mindfulness & Stress Coaching
         "categoryPage.mindfulness.title": "Mindfulness & Stress Coaching",
+        "categoryPage.mindfulness.shortDesc": "Find inner peace with meditation, stress reduction, and mental clarity techniques.",
         "categoryPage.mindfulness.description": "Find inner peace with mindfulness coaches. Learn meditation, stress reduction, and mental clarity techniques.",
         "categoryPage.mindfulness.longDescription": "Mindfulness coaching helps you develop greater awareness, reduce stress, and cultivate inner peace in your daily life. Our mindfulness coaches teach meditation techniques, stress management strategies, and mindful living practices that enhance your mental clarity, emotional regulation, and overall well-being.",
         "categoryPage.mindfulness.benefit1": "Reduced stress and anxiety",
@@ -1704,6 +1711,7 @@ const translations = {
 
         // Relationship Coaching
         "categoryPage.relationship-coaching.title": "Relationship Coaching",
+        "categoryPage.relationship-coaching.shortDesc": "Build stronger connections with expert guidance on communication, dating, and conflict resolution.",
         "categoryPage.relationship-coaching.description": "Improve your relationships with expert relationship coaches. Get help with dating, communication, conflict resolution, and connection.",
         "categoryPage.relationship-coaching.longDescription": "Relationship coaching helps individuals and couples build stronger, more fulfilling connections. Whether you're navigating dating, improving communication with your partner, resolving conflicts, or seeking to deepen intimacy, our relationship coaches provide guidance and tools for healthier, happier relationships.",
         "categoryPage.relationship-coaching.benefit1": "Improved communication skills",
@@ -3144,6 +3152,7 @@ const translations = {
 
         // Executive Coaching - German
         "categoryPage.executive-coaching.title": "Executive Coaching",
+        "categoryPage.executive-coaching.shortDesc": "Transformieren Sie Ihre Führungskompetenzen mit erfahrenen Executive Coaches für C-Suite und Senior-Führungskräfte.",
         "categoryPage.executive-coaching.description": "Transformieren Sie Ihre Führungskompetenz mit erfahrenen Executive Coaches. Entwickeln Sie strategisches Denken, verbessern Sie Entscheidungsfindung und führen Sie mit Selbstvertrauen.",
         "categoryPage.executive-coaching.longDescription": "Executive Coaching richtet sich an C-Suite-Führungskräfte, Senior Manager und High-Potential-Executives, die ihre Führungswirkung maximieren möchten. Unsere verifizierten Executive Coaches bringen jahrzehntelange Unternehmenserfahrung und bewährte Methoden mit, um Ihnen bei komplexen geschäftlichen Herausforderungen zu helfen, leistungsstarke Teams aufzubauen und bahnbrechende Ergebnisse zu erzielen.",
         "categoryPage.executive-coaching.benefit1": "Verbesserte strategische Entscheidungsfindung",
@@ -3165,6 +3174,7 @@ const translations = {
 
         // Life Coaching - German
         "categoryPage.life-coaching.title": "Life Coaching",
+        "categoryPage.life-coaching.shortDesc": "Finden Sie Ihren Lebenssinn und schaffen Sie dauerhafte positive Veränderungen mit zertifizierten Life Coaches.",
         "categoryPage.life-coaching.description": "Finden Sie Ihren Lebenssinn und gestalten Sie ein erfülltes Leben mit zertifizierten Life Coaches. Überwinden Sie Herausforderungen, setzen Sie bedeutungsvolle Ziele und entfalten Sie Ihr volles Potenzial.",
         "categoryPage.life-coaching.longDescription": "Life Coaching befähigt Sie, positive, dauerhafte Veränderungen in allen Lebensbereichen zu schaffen. Ob Sie Klarheit über Ihren Lebenssinn suchen, eine Lebensveränderung durchleben oder Ihre Beziehungen und Ihr Wohlbefinden verbessern möchten - unsere zertifizierten Life Coaches bieten die Unterstützung und Verantwortlichkeit, die Sie zur Transformation Ihres Lebens brauchen.",
         "categoryPage.life-coaching.benefit1": "Entdecken Sie Ihren wahren Lebenssinn und Ihre Werte",
@@ -3186,6 +3196,7 @@ const translations = {
 
         // Career Coaching - German
         "categoryPage.career-coaching.title": "Karriere-Coaching",
+        "categoryPage.career-coaching.shortDesc": "Bringen Sie Ihre Karriere voran mit fachkundiger Beratung zu Jobsuche, Wechseln und beruflichem Wachstum.",
         "categoryPage.career-coaching.description": "Bringen Sie Ihre Karriere voran mit erfahrenen Karriere-Coaches. Erhalten Sie Hilfe bei Jobsuche, Karrierewechsel, Gehaltsverhandlungen und beruflicher Entwicklung.",
         "categoryPage.career-coaching.longDescription": "Karriere-Coaching hilft Fachkräften in allen Karrierephasen, ihren beruflichen Weg selbstbewusst zu gestalten. Ob Sie eine Beförderung anstreben, die Branche wechseln, nach einer Pause zurückkehren oder eine völlig neue Karriere starten - unsere Karriere-Coaches bieten fachkundige Beratung zu Lebenslaufoptimierung, Interviewvorbereitung, Gehaltsverhandlung und strategischer Karriereplanung.",
         "categoryPage.career-coaching.benefit1": "Klarheit über Karriererichtung und Ziele",
@@ -3207,6 +3218,7 @@ const translations = {
 
         // Business Coaching - German
         "categoryPage.business-coaching.title": "Business Coaching",
+        "categoryPage.business-coaching.shortDesc": "Wachsen Sie Ihr Unternehmen mit fachkundiger Beratung zu Strategie, Betrieb und Skalierung.",
         "categoryPage.business-coaching.description": "Wachsen Sie Ihr Unternehmen mit erfahrenen Business Coaches. Erhalten Sie Beratung zu Strategie, Betrieb, Marketing und Skalierung Ihres Unternehmens.",
         "categoryPage.business-coaching.longDescription": "Business Coaching bietet Unternehmern und Geschäftsinhabern die strategische Anleitung, Verantwortlichkeit und Expertise, die zum Aufbau und zur Skalierung erfolgreicher Unternehmen benötigt werden. Unsere Business Coaches haben praktische Erfahrung im Geschäftsaufbau und können Ihnen helfen, Herausforderungen zu überwinden, Abläufe zu optimieren, Umsatz zu steigern und Ihre Geschäftsziele schneller zu erreichen.",
         "categoryPage.business-coaching.benefit1": "Klare Geschäftsstrategie und Vision",
@@ -3228,6 +3240,7 @@ const translations = {
 
         // Leadership Coaching - German
         "categoryPage.leadership.title": "Leadership Coaching",
+        "categoryPage.leadership.shortDesc": "Entwickeln Sie wesentliche Führungsfähigkeiten wie Einfluss, Kommunikation und Teammanagement.",
         "categoryPage.leadership.description": "Werden Sie eine effektivere Führungskraft mit Leadership Coaching. Entwickeln Sie Einfluss, Kommunikation und Teammanagement-Fähigkeiten.",
         "categoryPage.leadership.longDescription": "Leadership Coaching entwickelt die wesentlichen Fähigkeiten, die benötigt werden, um Teams effektiv zu inspirieren und zu führen. Ob Sie ein neuer Manager oder erfahrene Führungskraft sind - unsere Leadership Coaches helfen Ihnen, Selbstbewusstsein aufzubauen, Kommunikation zu verbessern, Konflikte zu lösen, Teams zu motivieren und eine positive Unternehmenskultur zu schaffen.",
         "categoryPage.leadership.benefit1": "Stärkere Führungspräsenz",
@@ -3249,6 +3262,7 @@ const translations = {
 
         // Health & Wellness Coaching - German
         "categoryPage.health-wellness.title": "Gesundheits- & Wellness-Coaching",
+        "categoryPage.health-wellness.shortDesc": "Erreichen Sie optimale Gesundheit mit Unterstützung bei Ernährung, Fitness und nachhaltigen Lebensstiländerungen.",
         "categoryPage.health-wellness.description": "Erreichen Sie optimale Gesundheit mit Wellness-Coaches. Erhalten Sie Unterstützung bei Ernährung, Fitness, Stressmanagement und gesunden Lebensstiländerungen.",
         "categoryPage.health-wellness.longDescription": "Gesundheits- und Wellness-Coaching verfolgt einen ganzheitlichen Ansatz, um Ihnen bei der Erreichung Ihrer Gesundheitsziele zu helfen. Unsere zertifizierten Wellness-Coaches arbeiten mit Ihnen an Ernährung, Bewegung, Stressmanagement, Schlaf und Lebensgewohnheiten, um nachhaltige Veränderungen zu schaffen, die Ihr allgemeines Wohlbefinden und Ihre Lebensqualität verbessern.",
         "categoryPage.health-wellness.benefit1": "Nachhaltige gesunde Gewohnheiten",
@@ -3270,6 +3284,7 @@ const translations = {
 
         // Mindfulness & Stress Coaching - German
         "categoryPage.mindfulness.title": "Achtsamkeits- & Stress-Coaching",
+        "categoryPage.mindfulness.shortDesc": "Finden Sie inneren Frieden mit Meditation, Stressreduktion und Techniken für mentale Klarheit.",
         "categoryPage.mindfulness.description": "Finden Sie inneren Frieden mit Achtsamkeits-Coaches. Lernen Sie Meditation, Stressreduktion und Techniken für mentale Klarheit.",
         "categoryPage.mindfulness.longDescription": "Achtsamkeits-Coaching hilft Ihnen, größeres Bewusstsein zu entwickeln, Stress zu reduzieren und inneren Frieden in Ihrem täglichen Leben zu kultivieren. Unsere Achtsamkeits-Coaches lehren Meditationstechniken, Stressmanagement-Strategien und achtsame Lebenspraktiken, die Ihre mentale Klarheit, emotionale Regulierung und Ihr allgemeines Wohlbefinden verbessern.",
         "categoryPage.mindfulness.benefit1": "Reduzierter Stress und Angst",
@@ -3291,6 +3306,7 @@ const translations = {
 
         // Relationship Coaching - German
         "categoryPage.relationship-coaching.title": "Beziehungs-Coaching",
+        "categoryPage.relationship-coaching.shortDesc": "Bauen Sie stärkere Verbindungen auf mit fachkundiger Beratung zu Kommunikation, Dating und Konfliktlösung.",
         "categoryPage.relationship-coaching.description": "Verbessern Sie Ihre Beziehungen mit erfahrenen Beziehungs-Coaches. Erhalten Sie Hilfe bei Dating, Kommunikation, Konfliktlösung und Verbindung.",
         "categoryPage.relationship-coaching.longDescription": "Beziehungs-Coaching hilft Einzelpersonen und Paaren, stärkere, erfüllendere Verbindungen aufzubauen. Ob Sie Dating navigieren, die Kommunikation mit Ihrem Partner verbessern, Konflikte lösen oder die Intimität vertiefen möchten - unsere Beziehungs-Coaches bieten Anleitung und Werkzeuge für gesündere, glücklichere Beziehungen.",
         "categoryPage.relationship-coaching.benefit1": "Verbesserte Kommunikationsfähigkeiten",
@@ -4697,6 +4713,7 @@ const translations = {
 
         // Executive Coaching - Spanish
         "categoryPage.executive-coaching.title": "Coaching Ejecutivo",
+        "categoryPage.executive-coaching.shortDesc": "Transforma tus capacidades de liderazgo con coaches ejecutivos expertos para C-suite y líderes senior.",
         "categoryPage.executive-coaching.description": "Transforma tu liderazgo con coaches ejecutivos expertos. Desarrolla pensamiento estratégico, mejora la toma de decisiones y lidera con confianza.",
         "categoryPage.executive-coaching.longDescription": "El coaching ejecutivo está diseñado para líderes C-suite, gerentes senior y ejecutivos de alto potencial que desean maximizar su impacto de liderazgo. Nuestros coaches ejecutivos verificados aportan décadas de experiencia corporativa y metodologías probadas para ayudarte a navegar desafíos empresariales complejos, construir equipos de alto rendimiento y lograr resultados extraordinarios.",
         "categoryPage.executive-coaching.benefit1": "Mejora en la toma de decisiones estratégicas",
@@ -4718,6 +4735,7 @@ const translations = {
 
         // Life Coaching - Spanish
         "categoryPage.life-coaching.title": "Coaching de Vida",
+        "categoryPage.life-coaching.shortDesc": "Encuentra tu propósito y crea cambios positivos duraderos con coaches de vida certificados.",
         "categoryPage.life-coaching.description": "Encuentra tu propósito y crea una vida plena con coaches de vida certificados. Supera desafíos, establece metas significativas y desbloquea tu máximo potencial.",
         "categoryPage.life-coaching.longDescription": "El coaching de vida te empodera para crear cambios positivos y duraderos en todas las áreas de tu vida. Ya sea que busques claridad sobre tu propósito, navegues una transición de vida, o quieras mejorar tus relaciones y bienestar, nuestros coaches de vida certificados proporcionan el apoyo y la responsabilidad que necesitas para transformar tu vida.",
         "categoryPage.life-coaching.benefit1": "Descubre tu verdadero propósito y valores",
@@ -4739,6 +4757,7 @@ const translations = {
 
         // Career Coaching - Spanish
         "categoryPage.career-coaching.title": "Coaching de Carrera",
+        "categoryPage.career-coaching.shortDesc": "Avanza en tu carrera con guía experta en búsqueda de empleo, transiciones y crecimiento profesional.",
         "categoryPage.career-coaching.description": "Avanza en tu carrera con coaches de carrera expertos. Obtén ayuda con búsqueda de empleo, transiciones de carrera, negociación salarial y desarrollo profesional.",
         "categoryPage.career-coaching.longDescription": "El coaching de carrera ayuda a profesionales en todas las etapas a navegar su camino profesional con confianza. Ya sea que busques un ascenso, cambies de industria, regreses al trabajo, o lances una carrera completamente nueva, nuestros coaches de carrera proporcionan guía experta en optimización de currículum, preparación de entrevistas, negociación salarial y planificación estratégica de carrera.",
         "categoryPage.career-coaching.benefit1": "Claridad en dirección y metas de carrera",
@@ -4760,6 +4779,7 @@ const translations = {
 
         // Business Coaching - Spanish
         "categoryPage.business-coaching.title": "Coaching de Negocios",
+        "categoryPage.business-coaching.shortDesc": "Haz crecer tu negocio con guía experta en estrategia, operaciones y escalamiento.",
         "categoryPage.business-coaching.description": "Haz crecer tu negocio con coaches de negocios expertos. Obtén guía en estrategia, operaciones, marketing y escalamiento de tu empresa.",
         "categoryPage.business-coaching.longDescription": "El coaching de negocios proporciona a emprendedores y dueños de negocios la guía estratégica, responsabilidad y expertise necesarios para construir y escalar empresas exitosas. Nuestros coaches de negocios tienen experiencia real en el crecimiento de negocios y pueden ayudarte a superar desafíos, optimizar operaciones, aumentar ingresos y alcanzar tus metas de negocio más rápido.",
         "categoryPage.business-coaching.benefit1": "Estrategia y visión de negocio claras",
@@ -4781,6 +4801,7 @@ const translations = {
 
         // Leadership Coaching - Spanish
         "categoryPage.leadership.title": "Coaching de Liderazgo",
+        "categoryPage.leadership.shortDesc": "Desarrolla habilidades esenciales de liderazgo como influencia, comunicación y gestión de equipos.",
         "categoryPage.leadership.description": "Conviértete en un líder más efectivo con coaching de liderazgo. Desarrolla influencia, comunicación y habilidades de gestión de equipos.",
         "categoryPage.leadership.longDescription": "El coaching de liderazgo desarrolla las habilidades esenciales necesarias para inspirar y guiar equipos efectivamente. Ya seas un nuevo gerente o un líder experimentado, nuestros coaches de liderazgo te ayudan a construir autoconciencia, mejorar la comunicación, resolver conflictos, motivar equipos y crear una cultura organizacional positiva.",
         "categoryPage.leadership.benefit1": "Presencia de liderazgo más fuerte",
@@ -4802,6 +4823,7 @@ const translations = {
 
         // Health & Wellness Coaching - Spanish
         "categoryPage.health-wellness.title": "Coaching de Salud y Bienestar",
+        "categoryPage.health-wellness.shortDesc": "Alcanza una salud óptima con apoyo en nutrición, fitness y cambios de estilo de vida sostenibles.",
         "categoryPage.health-wellness.description": "Alcanza una salud óptima con coaches de bienestar. Obtén apoyo para nutrición, fitness, gestión del estrés y cambios de estilo de vida saludables.",
         "categoryPage.health-wellness.longDescription": "El coaching de salud y bienestar adopta un enfoque holístico para ayudarte a alcanzar tus metas de salud. Nuestros coaches de bienestar certificados trabajan contigo en nutrición, ejercicio, gestión del estrés, sueño y hábitos de estilo de vida para crear cambios sostenibles que mejoren tu bienestar general y calidad de vida.",
         "categoryPage.health-wellness.benefit1": "Hábitos saludables sostenibles",
@@ -4823,6 +4845,7 @@ const translations = {
 
         // Mindfulness & Stress Coaching - Spanish
         "categoryPage.mindfulness.title": "Coaching de Mindfulness y Estrés",
+        "categoryPage.mindfulness.shortDesc": "Encuentra paz interior con meditación, reducción del estrés y técnicas de claridad mental.",
         "categoryPage.mindfulness.description": "Encuentra paz interior con coaches de mindfulness. Aprende meditación, reducción del estrés y técnicas de claridad mental.",
         "categoryPage.mindfulness.longDescription": "El coaching de mindfulness te ayuda a desarrollar mayor conciencia, reducir el estrés y cultivar paz interior en tu vida diaria. Nuestros coaches de mindfulness enseñan técnicas de meditación, estrategias de gestión del estrés y prácticas de vida consciente que mejoran tu claridad mental, regulación emocional y bienestar general.",
         "categoryPage.mindfulness.benefit1": "Reducción del estrés y la ansiedad",
@@ -4844,6 +4867,7 @@ const translations = {
 
         // Relationship Coaching - Spanish
         "categoryPage.relationship-coaching.title": "Coaching de Relaciones",
+        "categoryPage.relationship-coaching.shortDesc": "Construye conexiones más fuertes con guía experta en comunicación, citas y resolución de conflictos.",
         "categoryPage.relationship-coaching.description": "Mejora tus relaciones con coaches de relaciones expertos. Obtén ayuda con citas, comunicación, resolución de conflictos y conexión.",
         "categoryPage.relationship-coaching.longDescription": "El coaching de relaciones ayuda a individuos y parejas a construir conexiones más fuertes y satisfactorias. Ya sea que estés navegando citas, mejorando la comunicación con tu pareja, resolviendo conflictos, o buscando profundizar la intimidad, nuestros coaches de relaciones proporcionan guía y herramientas para relaciones más sanas y felices.",
         "categoryPage.relationship-coaching.benefit1": "Habilidades de comunicación mejoradas",
@@ -6152,6 +6176,7 @@ const translations = {
 
         // Executive Coaching - French
         "categoryPage.executive-coaching.title": "Coaching Exécutif",
+        "categoryPage.executive-coaching.shortDesc": "Transformez vos capacités de leadership avec des coachs exécutifs experts pour les C-suite et leaders seniors.",
         "categoryPage.executive-coaching.description": "Transformez votre leadership avec des coachs exécutifs experts. Développez la pensée stratégique, améliorez la prise de décision et dirigez avec confiance.",
         "categoryPage.executive-coaching.longDescription": "Le coaching exécutif est conçu pour les dirigeants C-suite, les managers seniors et les cadres à haut potentiel qui souhaitent maximiser leur impact de leadership. Nos coachs exécutifs vérifiés apportent des décennies d'expérience en entreprise et des méthodologies éprouvées pour vous aider à naviguer les défis commerciaux complexes, construire des équipes performantes et obtenir des résultats exceptionnels.",
         "categoryPage.executive-coaching.benefit1": "Amélioration de la prise de décision stratégique",
@@ -6173,6 +6198,7 @@ const translations = {
 
         // Life Coaching - French
         "categoryPage.life-coaching.title": "Coaching de Vie",
+        "categoryPage.life-coaching.shortDesc": "Trouvez votre but et créez des changements positifs durables avec des coachs de vie certifiés.",
         "categoryPage.life-coaching.description": "Trouvez votre but et créez une vie épanouissante avec des coachs de vie certifiés. Surmontez les défis, fixez des objectifs significatifs et libérez votre plein potentiel.",
         "categoryPage.life-coaching.longDescription": "Le coaching de vie vous permet de créer des changements positifs et durables dans tous les domaines de votre vie. Que vous cherchiez de la clarté sur votre but, que vous traversiez une transition de vie, ou que vous souhaitiez améliorer vos relations et votre bien-être, nos coachs de vie certifiés fournissent le soutien et la responsabilisation dont vous avez besoin pour transformer votre vie.",
         "categoryPage.life-coaching.benefit1": "Découvrez votre vrai but et vos valeurs",
@@ -6194,6 +6220,7 @@ const translations = {
 
         // Career Coaching - French
         "categoryPage.career-coaching.title": "Coaching de Carrière",
+        "categoryPage.career-coaching.shortDesc": "Faites avancer votre carrière avec des conseils experts sur la recherche d'emploi, les transitions et la croissance professionnelle.",
         "categoryPage.career-coaching.description": "Faites avancer votre carrière avec des coachs de carrière experts. Obtenez de l'aide pour la recherche d'emploi, les transitions de carrière, la négociation salariale et le développement professionnel.",
         "categoryPage.career-coaching.longDescription": "Le coaching de carrière aide les professionnels à toutes les étapes à naviguer leur parcours professionnel avec confiance. Que vous cherchiez une promotion, changiez d'industrie, reveniez au travail, ou lanciez une carrière entièrement nouvelle, nos coachs de carrière fournissent des conseils experts sur l'optimisation du CV, la préparation aux entretiens, la négociation salariale et la planification stratégique de carrière.",
         "categoryPage.career-coaching.benefit1": "Clarté sur la direction et les objectifs de carrière",
@@ -6215,6 +6242,7 @@ const translations = {
 
         // Business Coaching - French
         "categoryPage.business-coaching.title": "Coaching d'Entreprise",
+        "categoryPage.business-coaching.shortDesc": "Développez votre entreprise avec des conseils experts sur la stratégie, les opérations et la mise à l'échelle.",
         "categoryPage.business-coaching.description": "Développez votre entreprise avec des coachs d'affaires experts. Obtenez des conseils sur la stratégie, les opérations, le marketing et la croissance de votre entreprise.",
         "categoryPage.business-coaching.longDescription": "Le coaching d'entreprise fournit aux entrepreneurs et propriétaires d'entreprise l'orientation stratégique, la responsabilisation et l'expertise nécessaires pour construire et faire évoluer des entreprises prospères. Nos coachs d'affaires ont une expérience réelle dans la croissance d'entreprises et peuvent vous aider à surmonter les défis, optimiser les opérations, augmenter les revenus et atteindre vos objectifs d'affaires plus rapidement.",
         "categoryPage.business-coaching.benefit1": "Stratégie et vision d'entreprise claires",
@@ -6236,6 +6264,7 @@ const translations = {
 
         // Leadership Coaching - French
         "categoryPage.leadership.title": "Coaching de Leadership",
+        "categoryPage.leadership.shortDesc": "Développez des compétences de leadership essentielles comme l'influence, la communication et la gestion d'équipe.",
         "categoryPage.leadership.description": "Devenez un leader plus efficace avec le coaching de leadership. Développez l'influence, la communication et les compétences de gestion d'équipe.",
         "categoryPage.leadership.longDescription": "Le coaching de leadership développe les compétences essentielles nécessaires pour inspirer et guider les équipes efficacement. Que vous soyez un nouveau manager ou un leader expérimenté, nos coachs de leadership vous aident à développer la conscience de soi, améliorer la communication, résoudre les conflits, motiver les équipes et créer une culture organisationnelle positive.",
         "categoryPage.leadership.benefit1": "Présence de leadership plus forte",
@@ -6257,6 +6286,7 @@ const translations = {
 
         // Health & Wellness Coaching - French
         "categoryPage.health-wellness.title": "Coaching Santé et Bien-être",
+        "categoryPage.health-wellness.shortDesc": "Atteignez une santé optimale avec du soutien pour la nutrition, le fitness et des changements de mode de vie durables.",
         "categoryPage.health-wellness.description": "Atteignez une santé optimale avec des coachs de bien-être. Obtenez du soutien pour la nutrition, le fitness, la gestion du stress et les changements de mode de vie sains.",
         "categoryPage.health-wellness.longDescription": "Le coaching santé et bien-être adopte une approche holistique pour vous aider à atteindre vos objectifs de santé. Nos coachs de bien-être certifiés travaillent avec vous sur la nutrition, l'exercice, la gestion du stress, le sommeil et les habitudes de vie pour créer des changements durables qui améliorent votre bien-être général et votre qualité de vie.",
         "categoryPage.health-wellness.benefit1": "Habitudes saines durables",
@@ -6278,6 +6308,7 @@ const translations = {
 
         // Mindfulness & Stress Coaching - French
         "categoryPage.mindfulness.title": "Coaching Pleine Conscience et Stress",
+        "categoryPage.mindfulness.shortDesc": "Trouvez la paix intérieure avec la méditation, la réduction du stress et les techniques de clarté mentale.",
         "categoryPage.mindfulness.description": "Trouvez la paix intérieure avec des coachs de pleine conscience. Apprenez la méditation, la réduction du stress et les techniques de clarté mentale.",
         "categoryPage.mindfulness.longDescription": "Le coaching de pleine conscience vous aide à développer une plus grande conscience, réduire le stress et cultiver la paix intérieure dans votre vie quotidienne. Nos coachs de pleine conscience enseignent les techniques de méditation, les stratégies de gestion du stress et les pratiques de vie consciente qui améliorent votre clarté mentale, votre régulation émotionnelle et votre bien-être général.",
         "categoryPage.mindfulness.benefit1": "Réduction du stress et de l'anxiété",
@@ -6299,6 +6330,7 @@ const translations = {
 
         // Relationship Coaching - French
         "categoryPage.relationship-coaching.title": "Coaching Relationnel",
+        "categoryPage.relationship-coaching.shortDesc": "Construisez des connexions plus fortes avec des conseils experts sur la communication, les rencontres et la résolution des conflits.",
         "categoryPage.relationship-coaching.description": "Améliorez vos relations avec des coachs relationnels experts. Obtenez de l'aide pour les rencontres, la communication, la résolution des conflits et la connexion.",
         "categoryPage.relationship-coaching.longDescription": "Le coaching relationnel aide les individus et les couples à construire des connexions plus fortes et plus épanouissantes. Que vous naviguiez dans les rencontres, amélioriez la communication avec votre partenaire, résolviez des conflits, ou cherchiez à approfondir l'intimité, nos coachs relationnels fournissent des conseils et des outils pour des relations plus saines et plus heureuses.",
         "categoryPage.relationship-coaching.benefit1": "Compétences de communication améliorées",
@@ -7607,6 +7639,7 @@ const translations = {
 
         // Executive Coaching - Italian
         "categoryPage.executive-coaching.title": "Coaching Esecutivo",
+        "categoryPage.executive-coaching.shortDesc": "Trasforma le tue capacità di leadership con coach esecutivi esperti per C-suite e leader senior.",
         "categoryPage.executive-coaching.description": "Trasforma la tua leadership con coach esecutivi esperti. Sviluppa il pensiero strategico, migliora il processo decisionale e guida con fiducia.",
         "categoryPage.executive-coaching.longDescription": "Il coaching esecutivo è progettato per leader C-suite, senior manager ed executive ad alto potenziale che vogliono massimizzare il loro impatto di leadership. I nostri coach esecutivi verificati portano decenni di esperienza aziendale e metodologie comprovate per aiutarti a navigare sfide aziendali complesse, costruire team ad alte prestazioni e ottenere risultati straordinari.",
         "categoryPage.executive-coaching.benefit1": "Miglioramento del processo decisionale strategico",
@@ -7628,6 +7661,7 @@ const translations = {
 
         // Life Coaching - Italian
         "categoryPage.life-coaching.title": "Coaching di Vita",
+        "categoryPage.life-coaching.shortDesc": "Trova il tuo scopo e crea cambiamenti positivi duraturi con coach di vita certificati.",
         "categoryPage.life-coaching.description": "Trova il tuo scopo e crea una vita appagante con coach di vita certificati. Supera le sfide, stabilisci obiettivi significativi e sblocca il tuo pieno potenziale.",
         "categoryPage.life-coaching.longDescription": "Il coaching di vita ti permette di creare cambiamenti positivi e duraturi in tutte le aree della tua vita. Che tu stia cercando chiarezza sul tuo scopo, navigando una transizione di vita, o desideri migliorare le tue relazioni e il benessere, i nostri coach di vita certificati forniscono il supporto e la responsabilità di cui hai bisogno per trasformare la tua vita.",
         "categoryPage.life-coaching.benefit1": "Scopri il tuo vero scopo e i tuoi valori",
@@ -7649,6 +7683,7 @@ const translations = {
 
         // Career Coaching - Italian
         "categoryPage.career-coaching.title": "Coaching di Carriera",
+        "categoryPage.career-coaching.shortDesc": "Fai avanzare la tua carriera con guida esperta su ricerca di lavoro, transizioni e crescita professionale.",
         "categoryPage.career-coaching.description": "Fai avanzare la tua carriera con coach di carriera esperti. Ottieni aiuto per la ricerca di lavoro, transizioni di carriera, negoziazione salariale e sviluppo professionale.",
         "categoryPage.career-coaching.longDescription": "Il coaching di carriera aiuta i professionisti in tutte le fasi a navigare il loro percorso professionale con fiducia. Che tu stia cercando una promozione, cambiando settore, tornando al lavoro, o lanciando una carriera completamente nuova, i nostri coach di carriera forniscono guida esperta su ottimizzazione del curriculum, preparazione ai colloqui, negoziazione salariale e pianificazione strategica della carriera.",
         "categoryPage.career-coaching.benefit1": "Chiarezza sulla direzione e gli obiettivi di carriera",
@@ -7670,6 +7705,7 @@ const translations = {
 
         // Business Coaching - Italian
         "categoryPage.business-coaching.title": "Business Coaching",
+        "categoryPage.business-coaching.shortDesc": "Fai crescere la tua attività con guida esperta su strategia, operazioni e scalabilità.",
         "categoryPage.business-coaching.description": "Fai crescere la tua attività con business coach esperti. Ottieni guida su strategia, operazioni, marketing e scalabilità della tua azienda.",
         "categoryPage.business-coaching.longDescription": "Il business coaching fornisce a imprenditori e titolari d'azienda la guida strategica, la responsabilità e l'expertise necessarie per costruire e scalare aziende di successo. I nostri business coach hanno esperienza reale nella crescita di aziende e possono aiutarti a superare sfide, ottimizzare le operazioni, aumentare i ricavi e raggiungere i tuoi obiettivi aziendali più velocemente.",
         "categoryPage.business-coaching.benefit1": "Strategia e visione aziendale chiare",
@@ -7691,6 +7727,7 @@ const translations = {
 
         // Leadership Coaching - Italian
         "categoryPage.leadership.title": "Coaching di Leadership",
+        "categoryPage.leadership.shortDesc": "Sviluppa competenze di leadership essenziali come influenza, comunicazione e gestione del team.",
         "categoryPage.leadership.description": "Diventa un leader più efficace con il coaching di leadership. Sviluppa influenza, comunicazione e competenze di gestione del team.",
         "categoryPage.leadership.longDescription": "Il coaching di leadership sviluppa le competenze essenziali necessarie per ispirare e guidare i team efficacemente. Che tu sia un nuovo manager o un leader esperto, i nostri coach di leadership ti aiutano a costruire consapevolezza di sé, migliorare la comunicazione, risolvere conflitti, motivare i team e creare una cultura organizzativa positiva.",
         "categoryPage.leadership.benefit1": "Presenza di leadership più forte",
@@ -7712,6 +7749,7 @@ const translations = {
 
         // Health & Wellness Coaching - Italian
         "categoryPage.health-wellness.title": "Coaching Salute e Benessere",
+        "categoryPage.health-wellness.shortDesc": "Raggiungi una salute ottimale con supporto per nutrizione, fitness e cambiamenti di stile di vita sostenibili.",
         "categoryPage.health-wellness.description": "Raggiungi una salute ottimale con coach del benessere. Ottieni supporto per nutrizione, fitness, gestione dello stress e cambiamenti di stile di vita sani.",
         "categoryPage.health-wellness.longDescription": "Il coaching salute e benessere adotta un approccio olistico per aiutarti a raggiungere i tuoi obiettivi di salute. I nostri coach del benessere certificati lavorano con te su nutrizione, esercizio, gestione dello stress, sonno e abitudini di vita per creare cambiamenti sostenibili che migliorano il tuo benessere generale e la qualità della vita.",
         "categoryPage.health-wellness.benefit1": "Abitudini sane sostenibili",
@@ -7733,6 +7771,7 @@ const translations = {
 
         // Mindfulness & Stress Coaching - Italian
         "categoryPage.mindfulness.title": "Coaching di Mindfulness e Stress",
+        "categoryPage.mindfulness.shortDesc": "Trova la pace interiore con meditazione, riduzione dello stress e tecniche di chiarezza mentale.",
         "categoryPage.mindfulness.description": "Trova la pace interiore con coach di mindfulness. Impara meditazione, riduzione dello stress e tecniche di chiarezza mentale.",
         "categoryPage.mindfulness.longDescription": "Il coaching di mindfulness ti aiuta a sviluppare maggiore consapevolezza, ridurre lo stress e coltivare la pace interiore nella tua vita quotidiana. I nostri coach di mindfulness insegnano tecniche di meditazione, strategie di gestione dello stress e pratiche di vita consapevole che migliorano la tua chiarezza mentale, regolazione emotiva e benessere generale.",
         "categoryPage.mindfulness.benefit1": "Riduzione di stress e ansia",
@@ -7754,6 +7793,7 @@ const translations = {
 
         // Relationship Coaching - Italian
         "categoryPage.relationship-coaching.title": "Coaching Relazionale",
+        "categoryPage.relationship-coaching.shortDesc": "Costruisci connessioni più forti con guida esperta su comunicazione, appuntamenti e risoluzione dei conflitti.",
         "categoryPage.relationship-coaching.description": "Migliora le tue relazioni con coach relazionali esperti. Ottieni aiuto per appuntamenti, comunicazione, risoluzione dei conflitti e connessione.",
         "categoryPage.relationship-coaching.longDescription": "Il coaching relazionale aiuta individui e coppie a costruire connessioni più forti e appaganti. Che tu stia navigando gli appuntamenti, migliorando la comunicazione con il tuo partner, risolvendo conflitti, o cercando di approfondire l'intimità, i nostri coach relazionali forniscono guida e strumenti per relazioni più sane e felici.",
         "categoryPage.relationship-coaching.benefit1": "Competenze di comunicazione migliorate",
