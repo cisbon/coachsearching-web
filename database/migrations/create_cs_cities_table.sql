@@ -41,7 +41,7 @@ CREATE POLICY "Allow admin full access to cities"
     ON cs_cities FOR ALL
     USING (
         auth.uid() IN (
-            SELECT user_id FROM cs_user_profiles WHERE role = 'admin'
+            SELECT id FROM public.users WHERE role = 'admin'
         )
     );
 
