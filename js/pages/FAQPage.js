@@ -385,13 +385,6 @@ export function FAQPage() {
                             activeCategory=${activeCategory}
                             onSelect=${handleCategorySelect}
                         />
-
-                        <!-- Quick Contact -->
-                        <div class="faq-contact">
-                            <h3>${t('faqPage.stillHaveQuestions')}</h3>
-                            <p>${t('faqPage.cantFindAnswer')}</p>
-                            <a href="#contact" class="btn btn-primary">${t('faqPage.contactSupport')}</a>
-                        </div>
                     </aside>
 
                     <!-- FAQ Categories -->

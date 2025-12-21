@@ -20,7 +20,7 @@ import { FAQPage } from './pages/FAQPage.js';
 import { CategoryPage, CategoriesIndexPage, COACHING_CATEGORIES } from './pages/CategoryPage.js';
 import { CoachProfilePage } from './pages/CoachProfilePage.js';
 import { PricingPage } from './pages/PricingPage.js';
-import { Hero, CoachingCategoriesSection, HowItWorksSection, TrustBadgesSection } from './pages/HomePage.js';
+import { Hero, CoachingCategoriesSection, HowItWorksSection } from './pages/HomePage.js';
 
 // Conversion Optimization Components
 import {
@@ -212,7 +212,6 @@ const Home = ({ session }) => {
     return html`
         <div>
             <${Hero} />
-            <${TrustBadgesSection} />
             <${CoachingCategoriesSection} />
             <${HowItWorksSection} />
 
