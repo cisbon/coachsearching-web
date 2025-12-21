@@ -1983,7 +1983,30 @@ const translations = {
         "pricing.faq.upgradeDowngradeQ": "Can I upgrade or downgrade anytime?",
         "pricing.faq.upgradeDowngradeA": "Yes. Upgrades take effect immediately. Downgrades take effect at the end of your current billing period.",
         "pricing.faq.launchOfferQ": "What's the Launch Offer?",
-        "pricing.faq.launchOfferA": "Early supporters get Premium for €19/month (instead of €29/month) for their entire first year. This offer is limited to the first 100 coaches."
+        "pricing.faq.launchOfferA": "Early supporters get Premium for €19/month (instead of €29/month) for their entire first year. This offer is limited to the first 100 coaches.",
+
+        // City Landing Pages
+        "cityPage.in": "in",
+        "cityPage.whyChoose": "Why Choose",
+        "cityPage.coachingIn": "Coaching in",
+        "cityPage.viewCoaches": "View Coaches",
+        "cityPage.heroDesc": "Connect with top-rated {category} coaches in {city}. Find professionals who understand local business culture and can meet you in person or online.",
+        "cityPage.benefit1Title": "Local Expertise",
+        "cityPage.benefit1Desc": "Coaches who understand {city}'s unique business environment and culture.",
+        "cityPage.benefit2Title": "Flexible Sessions",
+        "cityPage.benefit2Desc": "Choose between in-person meetings in {city} or convenient online sessions.",
+        "cityPage.benefit3Title": "Verified Professionals",
+        "cityPage.benefit3Desc": "All coaches are vetted and reviewed by real clients.",
+        "cityPage.benefit4Title": "Easy Booking",
+        "cityPage.benefit4Desc": "Book a free discovery call and find your perfect coaching match.",
+        "cityPage.coachesTitle": "{category} Coaches in {city}",
+        "cityPage.otherCities": "Other Cities for {category}",
+        "cityPage.otherCategories": "Other Coaching Types in {city}",
+        "cityPage.readyToStart": "Ready to Start Your Coaching Journey?",
+        "cityPage.findPerfectCoach": "Find the perfect {category} coach in {city} and take the first step towards your goals.",
+        "cityPage.findCoach": "Find Your Coach",
+        "cityPage.notFound": "Page Not Found",
+        "cityPage.notFoundDesc": "The coaching category or city you're looking for doesn't exist."
     },
     de: {
         // Navigation
@@ -3512,7 +3535,30 @@ const translations = {
         "pricing.faq.upgradeDowngradeQ": "Kann ich jederzeit upgraden oder downgraden?",
         "pricing.faq.upgradeDowngradeA": "Ja. Upgrades werden sofort wirksam. Downgrades werden am Ende Ihres aktuellen Abrechnungszeitraums wirksam.",
         "pricing.faq.launchOfferQ": "Was ist das Einführungsangebot?",
-        "pricing.faq.launchOfferA": "Frühe Unterstützer erhalten Premium für €19/Monat (statt €29/Monat) für ihr gesamtes erstes Jahr. Dieses Angebot ist auf die ersten 100 Coaches begrenzt."
+        "pricing.faq.launchOfferA": "Frühe Unterstützer erhalten Premium für €19/Monat (statt €29/Monat) für ihr gesamtes erstes Jahr. Dieses Angebot ist auf die ersten 100 Coaches begrenzt.",
+
+        // City Landing Pages
+        "cityPage.in": "in",
+        "cityPage.whyChoose": "Warum",
+        "cityPage.coachingIn": "Coaching in",
+        "cityPage.viewCoaches": "Coaches ansehen",
+        "cityPage.heroDesc": "Verbinde dich mit Top-bewerteten {category}-Coaches in {city}. Finde Profis, die die lokale Geschäftskultur verstehen und dich persönlich oder online treffen können.",
+        "cityPage.benefit1Title": "Lokale Expertise",
+        "cityPage.benefit1Desc": "Coaches, die das einzigartige Geschäftsumfeld und die Kultur von {city} verstehen.",
+        "cityPage.benefit2Title": "Flexible Sitzungen",
+        "cityPage.benefit2Desc": "Wähle zwischen persönlichen Treffen in {city} oder bequemen Online-Sitzungen.",
+        "cityPage.benefit3Title": "Verifizierte Profis",
+        "cityPage.benefit3Desc": "Alle Coaches sind geprüft und von echten Kunden bewertet.",
+        "cityPage.benefit4Title": "Einfache Buchung",
+        "cityPage.benefit4Desc": "Buche ein kostenloses Kennenlerngespräch und finde deinen perfekten Coaching-Match.",
+        "cityPage.coachesTitle": "{category}-Coaches in {city}",
+        "cityPage.otherCities": "Andere Städte für {category}",
+        "cityPage.otherCategories": "Andere Coaching-Typen in {city}",
+        "cityPage.readyToStart": "Bereit, deine Coaching-Reise zu beginnen?",
+        "cityPage.findPerfectCoach": "Finde den perfekten {category}-Coach in {city} und mache den ersten Schritt zu deinen Zielen.",
+        "cityPage.findCoach": "Finde deinen Coach",
+        "cityPage.notFound": "Seite nicht gefunden",
+        "cityPage.notFoundDesc": "Die gesuchte Coaching-Kategorie oder Stadt existiert nicht."
     },
     es: {
         // Navigation
@@ -4913,7 +4959,30 @@ const translations = {
         "review.errorTitle": "Error",
         "review.errorGeneric": "No se pudo enviar la reseña. Por favor, inténtalo de nuevo.",
         "review.errorAlreadyReviewed": "Ya has reseñado a este coach.",
-        "review.close": "Cerrar"
+        "review.close": "Cerrar",
+
+        // City Landing Pages
+        "cityPage.in": "en",
+        "cityPage.whyChoose": "Por qué elegir",
+        "cityPage.coachingIn": "Coaching en",
+        "cityPage.viewCoaches": "Ver Coaches",
+        "cityPage.heroDesc": "Conecta con coaches de {category} mejor calificados en {city}. Encuentra profesionales que entienden la cultura empresarial local y pueden reunirse contigo en persona u online.",
+        "cityPage.benefit1Title": "Experiencia Local",
+        "cityPage.benefit1Desc": "Coaches que entienden el entorno empresarial y la cultura únicos de {city}.",
+        "cityPage.benefit2Title": "Sesiones Flexibles",
+        "cityPage.benefit2Desc": "Elige entre reuniones presenciales en {city} o cómodas sesiones online.",
+        "cityPage.benefit3Title": "Profesionales Verificados",
+        "cityPage.benefit3Desc": "Todos los coaches están verificados y evaluados por clientes reales.",
+        "cityPage.benefit4Title": "Reserva Fácil",
+        "cityPage.benefit4Desc": "Reserva una llamada de descubrimiento gratuita y encuentra tu coach perfecto.",
+        "cityPage.coachesTitle": "Coaches de {category} en {city}",
+        "cityPage.otherCities": "Otras ciudades para {category}",
+        "cityPage.otherCategories": "Otros tipos de coaching en {city}",
+        "cityPage.readyToStart": "¿Listo para comenzar tu viaje de coaching?",
+        "cityPage.findPerfectCoach": "Encuentra el coach de {category} perfecto en {city} y da el primer paso hacia tus objetivos.",
+        "cityPage.findCoach": "Encuentra tu Coach",
+        "cityPage.notFound": "Página no encontrada",
+        "cityPage.notFoundDesc": "La categoría de coaching o ciudad que buscas no existe."
     },
     fr: {
         // Navigation
@@ -6324,7 +6393,30 @@ const translations = {
         "review.errorTitle": "Erreur",
         "review.errorGeneric": "Échec de l'envoi de l'avis. Veuillez réessayer.",
         "review.errorAlreadyReviewed": "Vous avez déjà donné votre avis sur ce coach.",
-        "review.close": "Fermer"
+        "review.close": "Fermer",
+
+        // City Landing Pages
+        "cityPage.in": "à",
+        "cityPage.whyChoose": "Pourquoi choisir",
+        "cityPage.coachingIn": "Coaching à",
+        "cityPage.viewCoaches": "Voir les Coaches",
+        "cityPage.heroDesc": "Connectez-vous avec les meilleurs coaches en {category} à {city}. Trouvez des professionnels qui comprennent la culture d'entreprise locale et peuvent vous rencontrer en personne ou en ligne.",
+        "cityPage.benefit1Title": "Expertise Locale",
+        "cityPage.benefit1Desc": "Des coaches qui comprennent l'environnement et la culture d'affaires uniques de {city}.",
+        "cityPage.benefit2Title": "Sessions Flexibles",
+        "cityPage.benefit2Desc": "Choisissez entre des rencontres en personne à {city} ou des sessions en ligne pratiques.",
+        "cityPage.benefit3Title": "Professionnels Vérifiés",
+        "cityPage.benefit3Desc": "Tous les coaches sont vérifiés et évalués par de vrais clients.",
+        "cityPage.benefit4Title": "Réservation Facile",
+        "cityPage.benefit4Desc": "Réservez un appel découverte gratuit et trouvez votre coach parfait.",
+        "cityPage.coachesTitle": "Coaches en {category} à {city}",
+        "cityPage.otherCities": "Autres villes pour {category}",
+        "cityPage.otherCategories": "Autres types de coaching à {city}",
+        "cityPage.readyToStart": "Prêt à commencer votre parcours de coaching ?",
+        "cityPage.findPerfectCoach": "Trouvez le coach en {category} parfait à {city} et faites le premier pas vers vos objectifs.",
+        "cityPage.findCoach": "Trouvez votre Coach",
+        "cityPage.notFound": "Page non trouvée",
+        "cityPage.notFoundDesc": "La catégorie de coaching ou la ville que vous recherchez n'existe pas."
     },
     it: {
         // Navigation
@@ -7735,7 +7827,30 @@ const translations = {
         "review.errorTitle": "Errore",
         "review.errorGeneric": "Invio della recensione fallito. Riprova.",
         "review.errorAlreadyReviewed": "Hai già recensito questo coach.",
-        "review.close": "Chiudi"
+        "review.close": "Chiudi",
+
+        // City Landing Pages
+        "cityPage.in": "a",
+        "cityPage.whyChoose": "Perché scegliere",
+        "cityPage.coachingIn": "Coaching a",
+        "cityPage.viewCoaches": "Vedi i Coach",
+        "cityPage.heroDesc": "Connettiti con i migliori coach di {category} a {city}. Trova professionisti che comprendono la cultura aziendale locale e possono incontrarti di persona o online.",
+        "cityPage.benefit1Title": "Competenza Locale",
+        "cityPage.benefit1Desc": "Coach che comprendono l'ambiente aziendale e la cultura unici di {city}.",
+        "cityPage.benefit2Title": "Sessioni Flessibili",
+        "cityPage.benefit2Desc": "Scegli tra incontri di persona a {city} o comode sessioni online.",
+        "cityPage.benefit3Title": "Professionisti Verificati",
+        "cityPage.benefit3Desc": "Tutti i coach sono verificati e valutati da clienti reali.",
+        "cityPage.benefit4Title": "Prenotazione Facile",
+        "cityPage.benefit4Desc": "Prenota una chiamata conoscitiva gratuita e trova il tuo coach perfetto.",
+        "cityPage.coachesTitle": "Coach di {category} a {city}",
+        "cityPage.otherCities": "Altre città per {category}",
+        "cityPage.otherCategories": "Altri tipi di coaching a {city}",
+        "cityPage.readyToStart": "Pronto a iniziare il tuo percorso di coaching?",
+        "cityPage.findPerfectCoach": "Trova il coach di {category} perfetto a {city} e fai il primo passo verso i tuoi obiettivi.",
+        "cityPage.findCoach": "Trova il tuo Coach",
+        "cityPage.notFound": "Pagina non trovata",
+        "cityPage.notFoundDesc": "La categoria di coaching o la città che stai cercando non esiste."
     }
 };
 
@@ -7749,8 +7864,15 @@ export function setLanguage(lang) {
     }
 }
 
-export function t(key) {
-    return translations[currentLang][key] || translations['en'][key] || key;
+export function t(key, params = {}) {
+    let text = translations[currentLang][key] || translations['en'][key] || key;
+    // Replace placeholders like {city}, {category} with actual values
+    if (params && typeof text === 'string') {
+        Object.keys(params).forEach(param => {
+            text = text.replace(new RegExp(`\\{${param}\\}`, 'g'), params[param]);
+        });
+    }
+    return text;
 }
 
 export function getCurrentLang() {

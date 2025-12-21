@@ -98,6 +98,38 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                 </div>
             </div>
 
+            <!-- Location (Country & City) -->
+            <div class="filter-section">
+                <h4>Location</h4>
+                <div class="location-filters">
+                    <div style=${{ marginBottom: '10px' }}>
+                        <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>Country</label>
+                        <select
+                            class="filter-input"
+                            value=${filters.locationCountry || ''}
+                            onChange=${(e) => onChange({ ...filters, locationCountry: e.target.value })}
+                            style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
+                        >
+                            <option value="">All Countries</option>
+                            ${COUNTRIES.map(country => html`
+                                <option key=${country.code} value=${country.name}>${country.name}</option>
+                            `)}
+                        </select>
+                    </div>
+                    <div>
+                        <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>City</label>
+                        <input
+                            type="text"
+                            class="filter-input"
+                            placeholder="Enter city..."
+                            value=${filters.locationCity || ''}
+                            onChange=${(e) => onChange({ ...filters, locationCity: e.target.value })}
+                            style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
+                        />
+                    </div>
+                </div>
+            </div>
+
             <!-- Specialties -->
             <div class="filter-section">
                 <h4>Specialties</h4>
@@ -181,40 +213,11 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                         <input
                             type="checkbox"
                             checked=${filters.offersOnsite}
-                            onChange=${(e) => onChange({ ...filters, offersOnsite: e.target.checked, locationCountry: e.target.checked ? filters.locationCountry : '', locationCity: e.target.checked ? filters.locationCity : '' })}
+                            onChange=${(e) => onChange({ ...filters, offersOnsite: e.target.checked })}
                         />
                         <span>In-Person</span>
                     </label>
                 </div>
-                ${filters.offersOnsite && html`
-                    <div class="location-filters" style=${{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e0e0e0' }}>
-                        <div style=${{ marginBottom: '10px' }}>
-                            <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>Country</label>
-                            <select
-                                class="filter-input"
-                                value=${filters.locationCountry || ''}
-                                onChange=${(e) => onChange({ ...filters, locationCountry: e.target.value })}
-                                style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
-                            >
-                                <option value="">All Countries</option>
-                                ${COUNTRIES.map(country => html`
-                                    <option key=${country.code} value=${country.name}>${country.name}</option>
-                                `)}
-                            </select>
-                        </div>
-                        <div>
-                            <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>City</label>
-                            <input
-                                type="text"
-                                class="filter-input"
-                                placeholder="Enter city..."
-                                value=${filters.locationCity || ''}
-                                onChange=${(e) => onChange({ ...filters, locationCity: e.target.value })}
-                                style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
-                            />
-                        </div>
-                    </div>
-                `}
             </div>
 
             <!-- Other Options -->
