@@ -1,25 +1,39 @@
 /**
  * DashboardArticles Component
  * Article management for coaches with WYSIWYG editor
+ * Supports multilingual articles with unique URLs per language
  */
 
 import htm from '../../vendor/htm.js';
-import { t } from '../../i18n.js';
+import { t, getCurrentLang } from '../../i18n.js';
 
 const React = window.React;
 const { useState, useEffect, useRef } = React;
 const html = htm.bind(React.createElement);
 
+// Supported languages for articles
+const ARTICLE_LANGUAGES = [
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+    { code: 'it', name: 'Italiano', flag: '🇮🇹' }
+];
+
 /**
  * ArticleEditor Component
  * WYSIWYG editor for creating and editing articles
  */
-const ArticleEditor = ({ session, article, onClose }) => {
+const ArticleEditor = ({ session, article, onClose, existingArticleGroupId = null }) => {
     const [title, setTitle] = useState(article?.title || '');
     const [excerpt, setExcerpt] = useState(article?.excerpt || '');
+    const [language, setLanguage] = useState(article?.language || getCurrentLang() || 'en');
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
     const editorRef = useRef(null);
+
+    // Check if this is a translation (has existingArticleGroupId but no article.id)
+    const isTranslation = existingArticleGroupId && !article?.id;
 
     // Initialize WYSIWYG editor content
     useEffect(() => {
@@ -116,7 +130,13 @@ const ArticleEditor = ({ session, article, onClose }) => {
                 content_html: contentHTML,
                 excerpt: excerpt.trim() || plainText.substring(0, 200),
                 status: publishNow ? 'published' : 'draft',
+                language: language,
             };
+
+            // If creating a translation, use the existing article_group_id
+            if (isTranslation && existingArticleGroupId) {
+                articleData.article_group_id = existingArticleGroupId;
+            }
 
             console.log('Article data prepared:', { ...articleData, content_html: contentHTML.substring(0, 100) + '...' });
 
@@ -167,11 +187,55 @@ const ArticleEditor = ({ session, article, onClose }) => {
             `}
 
             <div class="editor-container">
+                <!-- Language Selector -->
+                <div class="editor-language-selector" style=${{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '16px',
+                    padding: '12px 16px',
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0'
+                }}>
+                    <label style=${{ fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}>
+                        ${t('article.language') || 'Article Language'}:
+                    </label>
+                    <select
+                        class="premium-input"
+                        value=${language}
+                        onChange=${(e) => setLanguage(e.target.value)}
+                        disabled=${!!article?.id}
+                        style=${{
+                            width: 'auto',
+                            minWidth: '180px',
+                            padding: '8px 12px',
+                            cursor: article?.id ? 'not-allowed' : 'pointer'
+                        }}
+                    >
+                        ${ARTICLE_LANGUAGES.map(lang => html`
+                            <option key=${lang.code} value=${lang.code}>
+                                ${lang.flag} ${lang.name}
+                            </option>
+                        `)}
+                    </select>
+                    ${isTranslation && html`
+                        <span style=${{ color: 'var(--petrol)', fontSize: '0.85rem' }}>
+                            ${t('article.creatingTranslation') || 'Creating translation'}
+                        </span>
+                    `}
+                    ${article?.id && html`
+                        <span style=${{ color: '#64748b', fontSize: '0.85rem' }}>
+                            ${t('article.languageLocked') || 'Language cannot be changed after creation'}
+                        </span>
+                    `}
+                </div>
+
                 <!-- Title Input -->
                 <input
                     type="text"
                     class="editor-title-input"
-                    placeholder="Article Title"
+                    placeholder=${t('article.titlePlaceholder') || 'Article Title'}
                     value=${title}
                     onChange=${(e) => setTitle(e.target.value)}
                 />
@@ -180,7 +244,7 @@ const ArticleEditor = ({ session, article, onClose }) => {
                 <input
                     type="text"
                     class="editor-excerpt-input"
-                    placeholder="Short excerpt (optional - will auto-generate from content)"
+                    placeholder=${t('article.excerptPlaceholder') || 'Short excerpt (optional - will auto-generate from content)'}
                     value=${excerpt}
                     onChange=${(e) => setExcerpt(e.target.value)}
                 />
@@ -296,6 +360,11 @@ const ArticleEditor = ({ session, article, onClose }) => {
     `;
 };
 
+// Helper to get language info
+const getLanguageInfo = (code) => {
+    return ARTICLE_LANGUAGES.find(l => l.code === code) || { code, name: code, flag: '🌐' };
+};
+
 /**
  * DashboardArticles Component
  * @param {Object} props
@@ -306,6 +375,7 @@ export const DashboardArticles = ({ session }) => {
     const [loading, setLoading] = useState(true);
     const [showEditor, setShowEditor] = useState(false);
     const [editingArticle, setEditingArticle] = useState(null);
+    const [translationGroupId, setTranslationGroupId] = useState(null);
 
     useEffect(() => {
         loadArticles();
@@ -385,7 +455,28 @@ export const DashboardArticles = ({ session }) => {
     const handleCloseEditor = () => {
         setShowEditor(false);
         setEditingArticle(null);
+        setTranslationGroupId(null);
         loadArticles();
+    };
+
+    const handleAddTranslation = (article) => {
+        // Open editor for new translation with the same article_group_id
+        setEditingArticle(null);
+        setTranslationGroupId(article.article_group_id);
+        setShowEditor(true);
+    };
+
+    // Get existing translations for an article
+    const getExistingLanguages = (articleGroupId) => {
+        return articles
+            .filter(a => a.article_group_id === articleGroupId)
+            .map(a => a.language);
+    };
+
+    // Get missing translations for an article
+    const getMissingLanguages = (articleGroupId) => {
+        const existing = getExistingLanguages(articleGroupId);
+        return ARTICLE_LANGUAGES.filter(l => !existing.includes(l.code));
     };
 
     if (loading) {
@@ -419,6 +510,7 @@ export const DashboardArticles = ({ session }) => {
                     session=${session}
                     article=${editingArticle}
                     onClose=${handleCloseEditor}
+                    existingArticleGroupId=${translationGroupId}
                 />
             `}
 
@@ -435,43 +527,101 @@ export const DashboardArticles = ({ session }) => {
 
             ${!showEditor && articles.length > 0 && html`
                 <div class="articles-list">
-                    ${articles.map(article => html`
-                        <div key=${article.id} class="article-card">
-                            <div class="article-card-header">
-                                <div class="article-card-title">
-                                    <h4>${article.title}</h4>
-                                    <span class="status-badge ${article.status === 'published' ? 'status-confirmed' : 'status-pending'}">
-                                        ${article.status === 'published' ? 'Published' : 'Draft'}
-                                    </span>
+                    ${articles.map(article => {
+                        const langInfo = getLanguageInfo(article.language);
+                        const missingLangs = getMissingLanguages(article.article_group_id);
+                        const existingLangs = getExistingLanguages(article.article_group_id);
+
+                        return html`
+                            <div key=${article.id} class="article-card">
+                                <div class="article-card-header">
+                                    <div class="article-card-title">
+                                        <h4>${article.title}</h4>
+                                        <div style=${{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                            <!-- Language Badge -->
+                                            <span class="language-badge" style=${{
+                                                background: '#e0f2fe',
+                                                color: '#0369a1',
+                                                padding: '2px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 600
+                                            }}>
+                                                ${langInfo.flag} ${langInfo.code.toUpperCase()}
+                                            </span>
+                                            <!-- Status Badge -->
+                                            <span class="status-badge ${article.status === 'published' ? 'status-confirmed' : 'status-pending'}">
+                                                ${article.status === 'published' ? 'Published' : 'Draft'}
+                                            </span>
+                                            <!-- Translation indicators -->
+                                            ${existingLangs.length > 1 && html`
+                                                <span style=${{
+                                                    background: '#f0fdf4',
+                                                    color: '#166534',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.75rem'
+                                                }}>
+                                                    ${existingLangs.length} ${t('article.languages') || 'languages'}
+                                                </span>
+                                            `}
+                                        </div>
+                                    </div>
+                                    <div class="article-card-meta">
+                                        <span>${new Date(article.created_at).toLocaleDateString()}</span>
+                                        ${article.view_count > 0 && html`
+                                            <span>${article.view_count} ${t('article.views') || 'views'}</span>
+                                        `}
+                                    </div>
                                 </div>
-                                <div class="article-card-meta">
-                                    <span>${new Date(article.created_at).toLocaleDateString()}</span>
-                                    ${article.view_count > 0 && html`
-                                        <span>${article.view_count} views</span>
+
+                                <div class="article-card-excerpt">
+                                    ${article.excerpt || (article.content_html ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : '')}
+                                </div>
+
+                                <!-- Article URL Preview -->
+                                <div style=${{
+                                    fontSize: '0.8rem',
+                                    color: '#64748b',
+                                    marginBottom: '12px',
+                                    fontFamily: 'monospace',
+                                    background: '#f8fafc',
+                                    padding: '6px 10px',
+                                    borderRadius: '4px'
+                                }}>
+                                    /blog/${article.language}/${article.slug}
+                                </div>
+
+                                <div class="article-card-actions" style=${{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    <button class="btn-small btn-secondary" onClick=${() => handleEdit(article)}>
+                                        ${t('common.edit') || 'Edit'}
+                                    </button>
+                                    <button
+                                        class="btn-small ${article.status === 'published' ? 'btn-secondary' : 'btn-primary'}"
+                                        onClick=${() => handleTogglePublish(article)}
+                                    >
+                                        ${article.status === 'published' ? (t('article.unpublish') || 'Unpublish') : (t('article.publish') || 'Publish')}
+                                    </button>
+                                    ${missingLangs.length > 0 && html`
+                                        <button
+                                            class="btn-small"
+                                            style=${{
+                                                background: '#f0f9ff',
+                                                color: '#0369a1',
+                                                border: '1px solid #bae6fd'
+                                            }}
+                                            onClick=${() => handleAddTranslation(article)}
+                                        >
+                                            + ${t('article.addTranslation') || 'Add Translation'}
+                                        </button>
                                     `}
+                                    <button class="btn-small btn-danger" onClick=${() => handleDelete(article.id)}>
+                                        ${t('common.delete') || 'Delete'}
+                                    </button>
                                 </div>
                             </div>
-
-                            <div class="article-card-excerpt">
-                                ${article.excerpt || (article.content_html ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : '')}
-                            </div>
-
-                            <div class="article-card-actions">
-                                <button class="btn-small btn-secondary" onClick=${() => handleEdit(article)}>
-                                    Edit
-                                </button>
-                                <button
-                                    class="btn-small ${article.status === 'published' ? 'btn-secondary' : 'btn-primary'}"
-                                    onClick=${() => handleTogglePublish(article)}
-                                >
-                                    ${article.status === 'published' ? 'Unpublish' : 'Publish'}
-                                </button>
-                                <button class="btn-small btn-danger" onClick=${() => handleDelete(article.id)}>
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    `)}
+                        `;
+                    })}
                 </div>
             `}
         </div>

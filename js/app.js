@@ -22,6 +22,7 @@ import { LocationsPage, CityLocationPage } from './pages/LocationsPage.js';
 import { CoachProfilePage } from './pages/CoachProfilePage.js';
 import { PricingPage } from './pages/PricingPage.js';
 import { Hero, CoachingCategoriesSection, HowItWorksSection } from './pages/HomePage.js';
+import { BlogPage } from './pages/BlogPage.js';
 
 // Conversion Optimization Components
 import {
@@ -407,7 +408,10 @@ const App = () => {
     const routeParam2 = routeParts[2] || null;
 
     // Handle dynamic routes first
-    if (baseRoute === 'coaching' && routeParam && routeParam2) {
+    // Blog routes: /blog, /blog/{lang}, /blog/{lang}/{slug}
+    if (baseRoute === 'blog') {
+        Component = () => html`<${BlogPage} />`;
+    } else if (baseRoute === 'coaching' && routeParam && routeParam2) {
         // City-Specialty pages like /coaching/executive-coaching/munich
         Component = () => html`<${CityCategoryPage} categorySlug=${routeParam} citySlug=${routeParam2} />`;
     } else if (baseRoute === 'coaching' && routeParam) {
