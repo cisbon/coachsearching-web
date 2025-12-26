@@ -356,16 +356,15 @@ const BlogListPage = ({ language }) => {
         <div class="blog-page" style=${{ background: '#f8fafc', minHeight: '100vh' }}>
             <!-- Hero Header -->
             <div style=${{
-                background: 'linear-gradient(135deg, var(--petrol) 0%, #134e4a 100%)',
-                color: 'white',
+                background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)',
                 padding: '64px 16px',
                 textAlign: 'center'
             }}>
                 <div style=${{ maxWidth: '800px', margin: '0 auto' }}>
-                    <h1 style=${{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '16px' }}>
+                    <h1 style=${{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '16px', color: '#ffffff' }}>
                         ${t('blog.title') || 'Coaching Insights & Articles'}
                     </h1>
-                    <p style=${{ fontSize: '1.2rem', opacity: 0.9, marginBottom: '32px' }}>
+                    <p style=${{ fontSize: '1.2rem', marginBottom: '32px', color: 'rgba(255,255,255,0.9)' }}>
                         ${t('blog.subtitle') || 'Expert perspectives and practical advice from professional coaches'}
                     </p>
 
@@ -381,8 +380,9 @@ const BlogListPage = ({ language }) => {
                                     textDecoration: 'none',
                                     fontSize: '0.95rem',
                                     fontWeight: language === lang.code ? 600 : 400,
-                                    background: language === lang.code ? 'white' : 'rgba(255,255,255,0.15)',
-                                    color: language === lang.code ? 'var(--petrol)' : 'white',
+                                    background: language === lang.code ? '#ffffff' : 'rgba(255,255,255,0.2)',
+                                    color: language === lang.code ? '#0f766e' : '#ffffff',
+                                    border: language === lang.code ? 'none' : '1px solid rgba(255,255,255,0.3)',
                                     transition: 'all 0.2s ease'
                                 }}
                             >
