@@ -7,7 +7,6 @@
 
 import htm from '../vendor/htm.js';
 import { t, getCurrentLang } from '../i18n.js';
-import { useRouter } from '../components/Router.js';
 
 const React = window.React;
 const { useState, useEffect, useMemo } = React;
@@ -862,36 +861,22 @@ const BlogPostPage = ({ language, slug }) => {
 
 /**
  * Main BlogPage Component
- * Routes to list or detail based on URL
+ * Routes to list or detail based on props from app.js
+ * @param {Object} props
+ * @param {string} props.language - Language code (en, de, etc.)
+ * @param {string} props.slug - Blog post slug (optional, for detail view)
  */
-export const BlogPage = () => {
-    const { route } = useRouter();
-    const segments = route.segments;
-
-    // Parse route: blog, blog/{lang}, blog/{lang}/{slug}
+export const BlogPage = ({ language, slug }) => {
     const defaultLang = getCurrentLang() || 'en';
+    const validLang = BLOG_LANGUAGES.find(l => l.code === language) ? language : defaultLang;
 
-    // blog (index)
-    if (segments.length === 1) {
-        return html`<${BlogListPage} language=${defaultLang} />`;
-    }
-
-    // blog/{lang}
-    if (segments.length === 2) {
-        const lang = segments[1];
-        const validLang = BLOG_LANGUAGES.find(l => l.code === lang) ? lang : defaultLang;
-        return html`<${BlogListPage} language=${validLang} />`;
-    }
-
-    // blog/{lang}/{slug}
-    if (segments.length >= 3) {
-        const lang = segments[1];
-        const slug = segments.slice(2).join('/');
-        const validLang = BLOG_LANGUAGES.find(l => l.code === lang) ? lang : defaultLang;
+    // If slug is provided, show detail view
+    if (slug) {
         return html`<${BlogPostPage} language=${validLang} slug=${slug} />`;
     }
 
-    return html`<${BlogListPage} language=${defaultLang} />`;
+    // Otherwise show list view
+    return html`<${BlogListPage} language=${validLang} />`;
 };
 
 export default BlogPage;

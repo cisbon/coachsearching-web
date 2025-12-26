@@ -410,7 +410,9 @@ const App = () => {
     // Handle dynamic routes first
     // Blog routes: /blog, /blog/{lang}, /blog/{lang}/{slug}
     if (baseRoute === 'blog') {
-        Component = () => html`<${BlogPage} />`;
+        const blogLang = routeParam || null;
+        const blogSlug = routeParam2 ? routeParts.slice(2).join('/') : null;
+        Component = () => html`<${BlogPage} language=${blogLang} slug=${blogSlug} />`;
     } else if (baseRoute === 'coaching' && routeParam && routeParam2) {
         // City-Specialty pages like /coaching/executive-coaching/munich
         Component = () => html`<${CityCategoryPage} categorySlug=${routeParam} citySlug=${routeParam2} />`;
