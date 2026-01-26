@@ -94,7 +94,9 @@ export function AICouncilPage({ session }) {
                 throw new Error(errorData.message || 'Failed to generate questions');
             }
 
-            const data = await response.json();
+            const result = await response.json();
+            // API wraps response in 'data' property via Response::success()
+            const data = result.data || result;
             setCurrentQuestions(data.newQuestions || []);
             setPhase('questions');
         } catch (err) {
