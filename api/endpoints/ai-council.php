@@ -64,8 +64,7 @@ const AI_COUNCIL_DOMAINS = [
 function handleAICouncil(string $method, ?string $action, ?string $subAction, array $input): void
 {
     // All AI Council endpoints require authentication
-    $auth = new Auth();
-    $user = $auth->requireAuth();
+    Auth::required();
 
     if ($method !== 'POST') {
         Response::error('Method not allowed', 405, 'METHOD_NOT_ALLOWED');
