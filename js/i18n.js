@@ -2074,7 +2074,28 @@ const translations = {
         "locations.otherCitiesIn": "Other Cities in {country}",
         "locations.viewAll": "View All Locations",
         "locations.notFound": "Location Not Found",
-        "locations.notFoundDesc": "We couldn't find this location. Please browse our available locations."
+        "locations.notFoundDesc": "We couldn't find this location. Please browse our available locations.",
+
+        // AI Council
+        "footer.aiCouncil": "AI Council",
+        "aiCouncil.authRequired": "Authentication Required",
+        "aiCouncil.authMessage": "Please sign in to access the AI Council feature.",
+        "aiCouncil.welcomeTitle": "Welcome to the AI Council",
+        "aiCouncil.welcomeDesc": "Share a topic, problem, or goal you want to explore. Our council of 8 experts will ask you thought-provoking questions from different perspectives to help you gain deeper insights.",
+        "aiCouncil.placeholder": "e.g., \"I want to become an entrepreneur\" or \"I'm considering a career change\" or \"I want to improve my work-life balance\"",
+        "aiCouncil.startBtn": "Start Council Session",
+        "aiCouncil.thinking": "The Council is deliberating...",
+        "aiCouncil.thinkingDesc": "Our 8 experts are crafting thoughtful questions for you",
+        "aiCouncil.backToQuestions": "Back to Questions",
+        "aiCouncil.yourReflection": "Your reflection",
+        "aiCouncil.answerPlaceholder": "Take your time to reflect and share your thoughts...",
+        "aiCouncil.submitAnswer": "Submit",
+        "aiCouncil.selectQuestion": "Select the question that resonates most with you",
+        "aiCouncil.yourJourney": "Your Journey",
+        "aiCouncil.startNew": "New Session",
+        "aiCouncil.yourTopic": "Your Topic",
+        "aiCouncil.yourAnswer": "Your answer",
+        "aiCouncil.historyEmpty": "Select and answer questions to build your conversation history."
     },
     de: {
         // Navigation

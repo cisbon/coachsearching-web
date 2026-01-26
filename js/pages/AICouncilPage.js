@@ -102,10 +102,10 @@ export function AICouncilPage({ session }) {
                 <div class="container">
                     <div class="ai-council-auth-required">
                         <div class="auth-icon">🔒</div>
-                        <h2>${t('aiCouncil.authRequired') || 'Authentication Required'}</h2>
-                        <p>${t('aiCouncil.authMessage') || 'Please sign in to access the AI Council feature.'}</p>
+                        <h2>${t('aiCouncil.authRequired')}</h2>
+                        <p>${t('aiCouncil.authMessage')}</p>
                         <button class="btn-primary" onClick=${() => window.navigateTo('/login')}>
-                            ${t('nav.login') || 'Sign In'}
+                            ${t('nav.login')}
                         </button>
                     </div>
                 </div>
@@ -241,11 +241,6 @@ export function AICouncilPage({ session }) {
         return html`
             <div class="ai-council-page">
                 <div class="container">
-                    <div class="ai-council-header">
-                        <h1>🎯 ${t('aiCouncil.title') || 'AI Council'}</h1>
-                        <p class="subtitle">${t('aiCouncil.subtitle') || 'Get perspectives from 8 different life domains'}</p>
-                    </div>
-
                     ${error && html`
                         <div class="ai-council-error">
                             <span>⚠️</span> ${error}
@@ -254,8 +249,8 @@ export function AICouncilPage({ session }) {
 
                     <div class="ai-council-intro">
                         <div class="intro-card">
-                            <h2>${t('aiCouncil.welcomeTitle') || 'Welcome to the AI Council'}</h2>
-                            <p>${t('aiCouncil.welcomeDesc') || 'Share a topic, problem, or goal you want to explore. Our council of 8 experts will ask you thought-provoking questions from different perspectives to help you gain deeper insights.'}</p>
+                            <h2>${t('aiCouncil.welcomeTitle')}</h2>
+                            <p>${t('aiCouncil.welcomeDesc')}</p>
 
                             <div class="domains-preview">
                                 ${Object.entries(DOMAINS).map(([key, domain]) => html`
@@ -269,13 +264,13 @@ export function AICouncilPage({ session }) {
                             <form class="initial-form" onSubmit=${handleInitialSubmit}>
                                 <textarea
                                     class="council-input"
-                                    placeholder=${t('aiCouncil.placeholder') || 'e.g., "I want to become an entrepreneur" or "I\'m considering a career change" or "I want to improve my work-life balance"'}
+                                    placeholder=${t('aiCouncil.placeholder')}
                                     value=${initialMessage}
                                     onInput=${(e) => setInitialMessage(e.target.value)}
                                     rows="4"
                                 ></textarea>
                                 <button type="submit" class="btn-council-primary" disabled=${!initialMessage.trim()}>
-                                    ${t('aiCouncil.startBtn') || 'Start Council Session'} →
+                                    ${t('aiCouncil.startBtn')} →
                                 </button>
                             </form>
                         </div>
@@ -303,8 +298,8 @@ export function AICouncilPage({ session }) {
                             `)}
                         </div>
                     </div>
-                    <h2>${t('aiCouncil.thinking') || 'The Council is deliberating...'}</h2>
-                    <p>${t('aiCouncil.thinkingDesc') || 'Our 8 experts are crafting thoughtful questions for you'}</p>
+                    <h2>${t('aiCouncil.thinking')}</h2>
+                    <p>${t('aiCouncil.thinkingDesc')}</p>
                 </div>
             `;
         }
@@ -315,7 +310,7 @@ export function AICouncilPage({ session }) {
             return html`
                 <div class="council-left-answer">
                     <button class="back-btn" onClick=${handleBackToQuestions}>
-                        ← ${t('aiCouncil.backToQuestions') || 'Back to Questions'}
+                        ← ${t('aiCouncil.backToQuestions')}
                     </button>
 
                     <div class="selected-question-card" style=${{ borderColor: domain?.color || '#666' }}>
@@ -329,21 +324,21 @@ export function AICouncilPage({ session }) {
                     </div>
 
                     <form class="answer-form" onSubmit=${handleAnswerSubmit}>
-                        <label>${t('aiCouncil.yourReflection') || 'Your reflection'}:</label>
+                        <label>${t('aiCouncil.yourReflection')}:</label>
                         <textarea
                             ref=${answerInputRef}
                             class="answer-input"
-                            placeholder=${t('aiCouncil.answerPlaceholder') || 'Take your time to reflect and share your thoughts...'}
+                            placeholder=${t('aiCouncil.answerPlaceholder')}
                             value=${answerText}
                             onInput=${(e) => setAnswerText(e.target.value)}
                             rows="6"
                         ></textarea>
                         <div class="answer-actions">
                             <button type="button" class="btn-secondary" onClick=${handleBackToQuestions}>
-                                ${t('common.cancel') || 'Cancel'}
+                                ${t('common.cancel')}
                             </button>
                             <button type="submit" class="btn-council-primary" disabled=${!answerText.trim()}>
-                                ${t('aiCouncil.submitAnswer') || 'Submit'} →
+                                ${t('aiCouncil.submitAnswer')} →
                             </button>
                         </div>
                     </form>
@@ -355,7 +350,7 @@ export function AICouncilPage({ session }) {
         if (phase === 'questions') {
             return html`
                 <div class="council-left-questions">
-                    <h3 class="questions-prompt">${t('aiCouncil.selectQuestion') || 'Select the next question'}:</h3>
+                    <h3 class="questions-prompt">${t('aiCouncil.selectQuestion')}:</h3>
                     <div class="questions-grid">
                         ${currentQuestions.map(question => {
                             const domain = DOMAINS[question.domain];
@@ -391,15 +386,15 @@ export function AICouncilPage({ session }) {
         return html`
             <div class="council-right-history">
                 <div class="history-header">
-                    <h3>${t('aiCouncil.yourJourney') || 'Your Journey'}</h3>
+                    <h3>${t('aiCouncil.yourJourney')}</h3>
                     <button class="btn-new-session" onClick=${handleStartNew}>
-                        ${t('aiCouncil.startNew') || 'New Session'}
+                        ${t('aiCouncil.startNew')}
                     </button>
                 </div>
 
                 <!-- Initial Topic -->
                 <div class="history-topic">
-                    <div class="history-topic-label">${t('aiCouncil.yourTopic') || 'Your Topic'}:</div>
+                    <div class="history-topic-label">${t('aiCouncil.yourTopic')}:</div>
                     <div class="history-topic-text">"${submittedInitialMessage}"</div>
                 </div>
 
@@ -417,7 +412,7 @@ export function AICouncilPage({ session }) {
                                         <p class="history-q-text">${exchange.q.q}</p>
                                     </div>
                                     <div class="history-answer">
-                                        <span class="history-answer-label">${t('aiCouncil.yourAnswer') || 'Your answer'}:</span>
+                                        <span class="history-answer-label">${t('aiCouncil.yourAnswer')}:</span>
                                         <p class="history-a-text">${exchange.a}</p>
                                     </div>
                                 </div>
@@ -428,7 +423,7 @@ export function AICouncilPage({ session }) {
 
                 ${conversation.length === 0 && phase !== 'loading' && html`
                     <div class="history-empty">
-                        <p>${t('aiCouncil.historyEmpty') || 'Select and answer questions to build your conversation history.'}</p>
+                        <p>${t('aiCouncil.historyEmpty')}</p>
                     </div>
                 `}
             </div>
@@ -438,11 +433,6 @@ export function AICouncilPage({ session }) {
     return html`
         <div class="ai-council-page">
             <div class="container">
-                <div class="ai-council-header">
-                    <h1>🎯 ${t('aiCouncil.title') || 'AI Council'}</h1>
-                    <p class="subtitle">${t('aiCouncil.subtitle') || 'Get perspectives from 8 different life domains'}</p>
-                </div>
-
                 ${error && html`
                     <div class="ai-council-error">
                         <span>⚠️</span> ${error}
