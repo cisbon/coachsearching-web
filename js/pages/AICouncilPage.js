@@ -8,8 +8,10 @@ import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
 
 const React = window.React;
-const { useState, useRef } = React;
+const { useState, useRef, useEffect } = React;
 const html = htm.bind(React.createElement);
+
+const STORAGE_KEY = 'ai_council_session';
 
 const API_BASE = 'https://clouedo.com/coachsearching/api';
 
@@ -48,6 +50,50 @@ export function AICouncilPage({ session }) {
     const [error, setError] = useState('');
     const answerInputRef = useRef(null);
     const lang = window.getCurrentLang ? window.getCurrentLang() : 'en';
+
+    // Restore state from sessionStorage on mount
+    useEffect(() => {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const state = JSON.parse(saved);
+                console.log('[AI Council] Restoring saved session:', state);
+                if (state.submittedInitialMessage) {
+                    setSubmittedInitialMessage(state.submittedInitialMessage);
+                    setInitialMessage(state.submittedInitialMessage);
+                }
+                if (state.conversation) setConversation(state.conversation);
+                if (state.currentQuestions) setCurrentQuestions(state.currentQuestions);
+                if (state.selectedQuestion) setSelectedQuestion(state.selectedQuestion);
+                if (state.answerText) setAnswerText(state.answerText);
+                // Only restore to these phases, not loading
+                if (state.phase && ['questions', 'answer'].includes(state.phase)) {
+                    setPhase(state.phase);
+                } else if (state.submittedInitialMessage && state.currentQuestions?.length > 0) {
+                    setPhase('questions');
+                }
+            }
+        } catch (e) {
+            console.error('[AI Council] Failed to restore session:', e);
+        }
+    }, []);
+
+    // Save state to sessionStorage whenever it changes
+    useEffect(() => {
+        // Only save if we have an active session
+        if (submittedInitialMessage) {
+            const stateToSave = {
+                phase,
+                submittedInitialMessage,
+                conversation,
+                currentQuestions,
+                selectedQuestion,
+                answerText
+            };
+            console.log('[AI Council] Saving session state:', stateToSave);
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+        }
+    }, [phase, submittedInitialMessage, conversation, currentQuestions, selectedQuestion, answerText]);
 
     // Require authentication
     if (!session?.user) {
@@ -165,6 +211,10 @@ export function AICouncilPage({ session }) {
      * Start new session
      */
     const handleStartNew = () => {
+        // Clear saved session
+        sessionStorage.removeItem(STORAGE_KEY);
+        console.log('[AI Council] Session cleared');
+
         setPhase('input');
         setInitialMessage('');
         setSubmittedInitialMessage('');
