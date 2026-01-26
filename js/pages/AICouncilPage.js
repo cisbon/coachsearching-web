@@ -76,31 +76,46 @@ export function AICouncilPage({ session }) {
 
         try {
             const token = session?.access_token;
+            const requestPayload = {
+                initialUserMessage: initialMessage,
+                conversation: conversation,
+                language: lang
+            };
+
+            console.log('[AI Council] REQUEST payload:', JSON.stringify(requestPayload, null, 2));
+            console.log('[AI Council] Token present:', !!token);
+
             const response = await fetch(`${API_BASE}/ai-council/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    initialUserMessage: initialMessage,
-                    conversation: conversation,
-                    language: lang
-                })
+                body: JSON.stringify(requestPayload)
             });
+
+            console.log('[AI Council] Response status:', response.status, response.statusText);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Failed to generate questions');
+                console.log('[AI Council] Error response:', errorData);
+                throw new Error(errorData.message || errorData.error?.message || 'Failed to generate questions');
             }
 
             const result = await response.json();
+            console.log('[AI Council] RAW response:', JSON.stringify(result, null, 2));
+
             // API wraps response in 'data' property via Response::success()
             const data = result.data || result;
+            console.log('[AI Council] Unwrapped data:', JSON.stringify(data, null, 2));
+            console.log('[AI Council] newQuestions:', data.newQuestions);
+            console.log('[AI Council] newQuestions length:', data.newQuestions?.length);
+
             setCurrentQuestions(data.newQuestions || []);
             setPhase('questions');
         } catch (err) {
-            console.error('AI Council error:', err);
+            console.error('[AI Council] ERROR:', err);
+            console.error('[AI Council] Error message:', err.message);
             setError(err.message || 'An error occurred. Please try again.');
             setPhase(conversation.length > 0 ? 'questions' : 'input');
         } finally {
