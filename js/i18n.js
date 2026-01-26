@@ -2095,7 +2095,9 @@ const translations = {
         "aiCouncil.startNew": "New Session",
         "aiCouncil.yourTopic": "Your Topic",
         "aiCouncil.yourAnswer": "Your answer",
-        "aiCouncil.historyEmpty": "Select and answer questions to build your conversation history."
+        "aiCouncil.historyEmpty": "Select and answer questions to build your conversation history.",
+        "aiCouncil.promoSignIn": "Sign in and try our AI Council for free",
+        "aiCouncil.promoTry": "Try our AI Council for free"
     },
     de: {
         // Navigation

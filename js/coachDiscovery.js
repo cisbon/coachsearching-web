@@ -588,6 +588,11 @@ export const CoachSearchResults = ({
                 <span class="empty-icon">🔍</span>
                 <h3>${t('search.noResults') || 'No coaches found'}</h3>
                 <p>${emptyMessage || t('search.noResultsHint') || 'Try adjusting your search criteria'}</p>
+                <div class="empty-promo" style=${{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
+                    <a href="/ai-council" style=${{ color: '#8B5CF6', fontWeight: '500', textDecoration: 'none' }}>
+                        🎯 ${t('aiCouncil.promoSignIn')}
+                    </a>
+                </div>
             </div>
         `;
     }

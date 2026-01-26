@@ -375,6 +375,11 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                                     Clear All Filters
                                 </button>
                             `}
+                            <div class="empty-state-promo" style=${{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
+                                <a href=${session?.user ? '/ai-council' : '/login'} class="ai-council-promo-link" style=${{ color: '#8B5CF6', fontWeight: '500', textDecoration: 'none' }}>
+                                    🎯 ${session?.user ? t('aiCouncil.promoTry') : t('aiCouncil.promoSignIn')}
+                                </a>
+                            </div>
                         </div>
                     `}
                     ${!loading && filteredCoaches.length > 0 && html`
