@@ -70,7 +70,13 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [loading, setLoading] = useState(false);
     const [, forceUpdate] = useState({});
-    const [showFilters, setShowFilters] = useState(true);
+    // Hide filters by default on mobile screens (< 768px), show on larger screens
+    const [showFilters, setShowFilters] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.innerWidth >= 768;
+        }
+        return true; // Default to true for SSR
+    });
     const [filters, setFilters] = useState({
         sortBy: 'relevance',
         minPrice: '',
