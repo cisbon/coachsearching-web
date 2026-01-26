@@ -13,8 +13,9 @@ const html = htm.bind(React.createElement);
  * Footer Component
  * @param {Object} props
  * @param {function} props.onOpenLegal - Handler for opening legal modals
+ * @param {Object} [props.session] - User session for conditional links
  */
-export function Footer({ onOpenLegal }) {
+export function Footer({ onOpenLegal, session }) {
     return html`
         <footer class="site-footer">
             <div class="container">
@@ -62,6 +63,9 @@ export function Footer({ onOpenLegal }) {
                             <li><a href="/quiz">${t('category.takeQuiz') || 'Take the Quiz'}</a></li>
                             <li><a href="/pricing">${t('nav.pricing') || 'Pricing'}</a></li>
                             <li><a href="/blog">${t('footer.blog') || 'Blog'}</a></li>
+                            ${session?.user && html`
+                                <li><a href="/ai-council">${t('footer.aiCouncil') || 'AI Council'}</a></li>
+                            `}
                         </ul>
                     </div>
 

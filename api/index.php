@@ -153,6 +153,11 @@ try {
             handleLookup($method, $id, $action, $input);
             break;
 
+        case 'ai-council':
+            require_once __DIR__ . '/endpoints/ai-council.php';
+            handleAICouncil($method, $id, $action, $input);
+            break;
+
         case '':
             Response::success([
                 'name' => 'CoachSearching API',

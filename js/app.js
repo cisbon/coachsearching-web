@@ -23,6 +23,7 @@ import { CoachProfilePage } from './pages/CoachProfilePage.js';
 import { PricingPage } from './pages/PricingPage.js';
 import { Hero, CoachingCategoriesSection, HowItWorksSection } from './pages/HomePage.js';
 import { BlogPage } from './pages/BlogPage.js';
+import { AICouncilPage } from './pages/AICouncilPage.js';
 
 // Conversion Optimization Components
 import {
@@ -438,6 +439,7 @@ const App = () => {
             case 'dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
             case 'quiz': Component = () => html`<${MatchingQuiz} session=${session} />`; break;
             case 'ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;
+            case 'ai-council': Component = () => html`<${AICouncilPage} session=${session} />`; break;
             case 'signout': Component = SignOut; break;
             // Content pages
             case 'faq': Component = () => html`<${FAQPage} />`; break;
@@ -455,7 +457,7 @@ const App = () => {
             <div style=${{ flex: 1 }}>
                 <${Component} />
             </div>
-            <${Footer} onOpenLegal=${openLegal} />
+            <${Footer} onOpenLegal=${openLegal} session=${session} />
             <${LegalModal} isOpen=${legalModal.isOpen} onClose=${closeLegal} type=${legalModal.type} />
         </div>
     `;
