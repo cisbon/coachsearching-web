@@ -298,6 +298,32 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
         }
     };
 
+    // Validation for each step
+    const isStepValid = (stepIndex) => {
+        switch (stepIndex) {
+            case 0: // Profile step
+                return !!(
+                    data.full_name?.trim() &&
+                    data.professional_title?.trim() &&
+                    data.location_country?.trim() &&
+                    data.location_city?.trim()
+                );
+            case 1: // Expertise step
+                return (
+                    (data.specialties?.length || 0) >= 1 &&
+                    (data.languages?.length || 0) >= 1
+                );
+            case 2: // Services step
+                return (data.session_formats?.length || 0) >= 1;
+            case 3: // Launch step - always valid
+                return true;
+            default:
+                return true;
+        }
+    };
+
+    const canContinue = isStepValid(currentStep);
+
     const startOnboarding = () => {
         setShowWelcome(false);
         saveProgress(0, data, false);
@@ -558,7 +584,12 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                                 ← ${t('onboard.premium.back')}
                             </button>
 
-                            <button class="btn-primary" onClick=${nextStep}>
+                            <button
+                                class="btn-primary"
+                                onClick=${nextStep}
+                                disabled=${!canContinue}
+                                style=${{ opacity: canContinue ? 1 : 0.5, cursor: canContinue ? 'pointer' : 'not-allowed' }}
+                            >
                                 ${t('onboard.premium.continue')} →
                             </button>
                         </footer>
@@ -1263,7 +1294,9 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
             <div class="form-section">
                 <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div class="form-group">
-                        <label class="form-label">${t('onboard.premium.country')}</label>
+                        <label class="form-label">
+                            ${t('onboard.premium.country')} <span class="required">*</span>
+                        </label>
                         <select
                             class="premium-input"
                             value=${String(data.location_country || '')}
@@ -1280,7 +1313,9 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">${t('onboard.premium.city')}</label>
+                        <label class="form-label">
+                            ${t('onboard.premium.city')} <span class="required">*</span>
+                        </label>
                         <select
                             class="premium-input"
                             value=${String(data.location_city || '')}

@@ -70,12 +70,17 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
     const reviewsCount = liveReviewsData.loaded
         ? liveReviewsData.count
         : (coach.rating_count || coach.reviews_count || 0);
-    const location = coach.location || 'Remote';
+    const location = coach.location_city || coach.location || '';
     const languages = coach.languages || [];
     const specialties = coach.specialties || [];
     const bio = coach.bio || '';
     const videoUrl = coach.intro_video_url || coach.video_url;
     const hasVideo = !!videoUrl;
+
+    // Session formats
+    const sessionTypes = coach.session_types || [];
+    const offersVideo = sessionTypes.includes('video') || coach.offers_virtual;
+    const offersInPerson = sessionTypes.includes('in-person') || coach.offers_onsite;
 
     const handleImageClick = (e) => {
         if (hasVideo) {
@@ -162,9 +167,17 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
 
                 <!-- Location and Languages Row -->
                 <div class="coach-meta-row">
-                    <span class="meta-location">📍 ${location}</span>
+                    ${location && html`<span class="meta-location">📍 ${location}</span>`}
                     <${LanguageFlags} languages=${languages} />
                 </div>
+
+                <!-- Session Formats Row -->
+                ${(offersVideo || offersInPerson) && html`
+                    <div class="coach-session-formats" style=${{ display: 'flex', gap: '12px', marginTop: '6px', fontSize: '0.85rem', color: '#64748b' }}>
+                        ${offersVideo && html`<span>💻 Video Call</span>`}
+                        ${offersInPerson && html`<span>🤝 In-Person</span>`}
+                    </div>
+                `}
 
                 <!-- Bio -->
                 <div class="coach-bio">

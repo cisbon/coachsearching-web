@@ -243,7 +243,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             checked=${filters.offersVirtual}
                             onChange=${(e) => onChange({ ...filters, offersVirtual: e.target.checked })}
                         />
-                        <span>Virtual Sessions</span>
+                        <span>💻 Video Call</span>
                     </label>
                     <label class="filter-checkbox">
                         <input
@@ -251,7 +251,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             checked=${filters.offersOnsite}
                             onChange=${(e) => onChange({ ...filters, offersOnsite: e.target.checked })}
                         />
-                        <span>In-Person</span>
+                        <span>🤝 In-Person</span>
                     </label>
                 </div>
             </div>
