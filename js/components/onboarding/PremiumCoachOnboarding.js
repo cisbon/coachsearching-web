@@ -318,6 +318,17 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 .replace(/^-|-$/g, '');
             const slug = `${baseSlug}-${userId.substring(0, 8)}`;
 
+            // Prepare certifications jsonb for cs_coaches table
+            const certificationsJsonb = data.certifications && data.certifications.length > 0
+                ? data.certifications.map(cert => ({
+                    certification_id: cert.certification_id,
+                    name: cert.name,
+                    date_acquired: cert.date_acquired || null,
+                    certificate_url: cert.certificate_url || null,
+                    certificate_file_path: cert.certificate_file_path || null
+                }))
+                : [];
+
             const coachData = {
                 user_id: userId,
                 full_name: fullName,
@@ -336,7 +347,8 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 offers_free_discovery: data.offers_free_discovery !== false,
                 is_active: true,
                 onboarding_completed: true,
-                slug: slug
+                slug: slug,
+                certifications: certificationsJsonb
             };
 
             // Ensure cs_users record exists (required for foreign key)
