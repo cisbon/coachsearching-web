@@ -169,9 +169,9 @@ export function generateCoachSchema(coach) {
             'addressLocality': coach.location,
         } : undefined,
         'knowsLanguage': coach.languages || [],
-        'hasCredential': coach.certifications?.map(cert => ({
+        'hasCredential': coach.cs_coach_certifications?.map(cert => ({
             '@type': 'EducationalOccupationalCredential',
-            'name': cert,
+            'name': cert.cs_certifications?.name || cert.name || 'Coaching Certification',
         })) || [],
         'makesOffer': {
             '@type': 'Offer',

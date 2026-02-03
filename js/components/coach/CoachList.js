@@ -169,7 +169,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             result = result.filter(coach => coach.offers_free_intro || coach.free_discovery_call || coach.offers_free_discovery);
         }
         if (filters.hasCertification) {
-            result = result.filter(coach => coach.certifications?.length > 0 || coach.credentials?.length > 0);
+            result = result.filter(coach => coach.cs_coach_certifications?.length > 0);
         }
         if (filters.topRated) {
             result = result.filter(coach => (coach.rating_average || coach.rating || 0) >= 4.5);
@@ -277,7 +277,24 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             try {
                 const { data: supabaseCoaches, error } = await window.supabaseClient
                     .from('cs_coaches')
-                    .select('*')
+                    .select(`
+                        *,
+                        cs_coach_certifications (
+                            id,
+                            certification_id,
+                            date_acquired,
+                            certificate_url,
+                            certificate_file_path,
+                            is_verified,
+                            cs_certifications (
+                                id,
+                                code,
+                                name,
+                                short_name,
+                                badge_url
+                            )
+                        )
+                    `)
                     .order('created_at', { ascending: false });
 
                 if (!error && supabaseCoaches && supabaseCoaches.length > 0) {

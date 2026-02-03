@@ -776,7 +776,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const loadCredentials = async (id) => {
         try {
             const { data } = await window.supabaseClient
-                .from('cs_credentials')
+                .from('v_coach_certifications')
                 .select('*')
                 .eq('coach_id', id)
                 .order('is_verified', { ascending: false });

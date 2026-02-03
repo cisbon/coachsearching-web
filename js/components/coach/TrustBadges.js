@@ -25,7 +25,7 @@ export function TrustBadges({ coach }) {
     if (coach.offers_free_intro || coach.free_discovery_call) {
         badges.push({ icon: '🎁', label: 'Free Intro', class: 'badge-free' });
     }
-    if (coach.certifications?.length > 0 || coach.credentials?.length > 0) {
+    if (coach.cs_coach_certifications?.length > 0) {
         badges.push({ icon: '🎓', label: 'Certified', class: 'badge-certified' });
     }
     if ((coach.rating_count || coach.reviews_count || 0) >= 10) {
