@@ -85,6 +85,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         languages: [],
         hasVideo: false,
         freeIntro: false,
+        hasCertification: false,
         topRated: false,
         minRating: null,
         onlineOnly: false,
@@ -105,6 +106,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             languages: [],
             hasVideo: false,
             freeIntro: false,
+            hasCertification: false,
             topRated: false,
             minRating: null,
             onlineOnly: false,
@@ -165,6 +167,9 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         }
         if (filters.freeIntro) {
             result = result.filter(coach => coach.offers_free_intro || coach.free_discovery_call || coach.offers_free_discovery);
+        }
+        if (filters.hasCertification) {
+            result = result.filter(coach => coach.certifications?.length > 0 || coach.credentials?.length > 0);
         }
         if (filters.topRated) {
             result = result.filter(coach => (coach.rating_average || coach.rating || 0) >= 4.5);
@@ -310,6 +315,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         ...(filters.languages || []),
         filters.hasVideo,
         filters.freeIntro,
+        filters.hasCertification,
         filters.topRated,
         filters.minRating,
         filters.offersVirtual,

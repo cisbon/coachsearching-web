@@ -991,6 +991,16 @@
     vertical-align: middle;
 }
 
+.certification-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    margin-left: 4px;
+    vertical-align: middle;
+    cursor: help;
+}
+
 /* Video Indicator */
 .video-indicator {
     position: absolute;

@@ -276,6 +276,14 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                         />
                         <span>Free Discovery Call</span>
                     </label>
+                    <label class="filter-checkbox">
+                        <input
+                            type="checkbox"
+                            checked=${filters.hasCertification}
+                            onChange=${(e) => onChange({ ...filters, hasCertification: e.target.checked })}
+                        />
+                        <span>Has Certification</span>
+                    </label>
                 </div>
             </div>
         </div>

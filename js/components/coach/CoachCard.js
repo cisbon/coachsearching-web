@@ -140,6 +140,7 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                 <h3 class="coach-name">
                     ${coach.full_name}
                     ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
+                    ${(coach.certifications?.length > 0 || coach.credentials?.length > 0) && html`<span class="certification-badge" title="Certified Coach">🎓</span>`}
                 </h3>
                 <div class="coach-title">${coach.title}</div>
 
