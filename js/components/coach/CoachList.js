@@ -8,6 +8,7 @@ import { t } from '../../i18n.js';
 import { CoachCard } from './CoachCard.js';
 import { CoachCardSkeleton } from './CoachCardSkeleton.js';
 import { FilterSidebar } from './FilterSidebar.js';
+import { useCities } from '../../context/AppContext.js';
 
 const React = window.React;
 const { useState, useEffect, useCallback, useMemo } = React;
@@ -70,6 +71,9 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [loading, setLoading] = useState(false);
     const [, forceUpdate] = useState({});
+
+    // Get cities list to look up state info for coaches
+    const { cities } = useCities();
     // Hide filters by default on mobile screens (< 768px), show on larger screens
     const [showFilters, setShowFilters] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -94,7 +98,8 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         offersOnsite: !!initialCity, // Enable onsite filter when city is provided
         offersVirtual: false,
         locationCountry: '',
-        locationCity: initialCity || ''
+        locationCity: initialCity || '',
+        locationState: '' // State code for regional filtering (e.g., DE-BW for Baden-Württemberg)
     });
 
     const resetFilters = () => {
@@ -115,7 +120,8 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             offersOnsite: false,
             offersVirtual: false,
             locationCountry: '',
-            locationCity: ''
+            locationCity: '',
+            locationState: ''
         });
     };
 
@@ -198,17 +204,51 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             );
         }
 
-        // Location filters (only apply when in-person is selected)
-        if (filters.offersOnsite && filters.locationCountry) {
+        // Helper function to get state code for a coach's city
+        const getCoachState = (coach) => {
+            if (!coach.location_city || !cities.list) return null;
+            const coachCityLower = coach.location_city.toLowerCase().trim();
+            const matchingCity = cities.list.find(city =>
+                city.name_en?.toLowerCase() === coachCityLower ||
+                city.name_de?.toLowerCase() === coachCityLower ||
+                city.name_fr?.toLowerCase() === coachCityLower ||
+                city.name_es?.toLowerCase() === coachCityLower ||
+                city.name_it?.toLowerCase() === coachCityLower
+            );
+            return matchingCity?.state || null;
+        };
+
+        // Location filters - work independently of session type filters
+        // Country filter
+        if (filters.locationCountry) {
             result = result.filter(coach =>
                 coach.location_country?.toLowerCase() === filters.locationCountry.toLowerCase()
             );
         }
-        if (filters.offersOnsite && filters.locationCity) {
+
+        // City/State filter - when a city is selected, include coaches from the same state
+        if (filters.locationCity) {
             const citySearch = filters.locationCity.toLowerCase().trim();
-            result = result.filter(coach =>
-                coach.location_city?.toLowerCase().includes(citySearch)
-            );
+            const selectedState = filters.locationState;
+
+            if (selectedState) {
+                // Include coaches from the exact city OR the same state
+                result = result.filter(coach => {
+                    const coachCityLower = coach.location_city?.toLowerCase().trim() || '';
+                    const exactCityMatch = coachCityLower.includes(citySearch) || citySearch.includes(coachCityLower);
+
+                    if (exactCityMatch) return true;
+
+                    // Check if coach is in the same state
+                    const coachState = getCoachState(coach);
+                    return coachState === selectedState;
+                });
+            } else {
+                // No state info available, just filter by city
+                result = result.filter(coach =>
+                    coach.location_city?.toLowerCase().includes(citySearch)
+                );
+            }
         }
 
         // Experience filter
@@ -220,10 +260,36 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         // Helper to check if coach has video
         const hasVideo = (coach) => !!(coach.intro_video_url || coach.video_url || coach.video_intro_url);
 
-        // Sorting - always prioritize coaches with videos first
+        // Helper to get location priority (0 = exact city match, 1 = same state, 2 = other)
+        const getLocationPriority = (coach) => {
+            if (!filters.locationCity) return 2; // No city filter, all equal
+
+            const citySearch = filters.locationCity.toLowerCase().trim();
+            const coachCityLower = coach.location_city?.toLowerCase().trim() || '';
+
+            // Check for exact city match
+            if (coachCityLower.includes(citySearch) || citySearch.includes(coachCityLower)) {
+                return 0; // Highest priority - exact city match
+            }
+
+            // Check for same state match
+            if (filters.locationState) {
+                const coachState = getCoachState(coach);
+                if (coachState === filters.locationState) {
+                    return 1; // Medium priority - same state
+                }
+            }
+
+            return 2; // Lowest priority - other locations
+        };
+
+        // Sorting - prioritize: 1) location match, 2) has video, 3) sort criteria
         switch (filters.sortBy) {
             case 'rating':
                 result.sort((a, b) => {
+                    const aLoc = getLocationPriority(a);
+                    const bLoc = getLocationPriority(b);
+                    if (aLoc !== bLoc) return aLoc - bLoc;
                     const aVideo = hasVideo(a) ? 1 : 0;
                     const bVideo = hasVideo(b) ? 1 : 0;
                     if (bVideo !== aVideo) return bVideo - aVideo;
@@ -232,6 +298,9 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                 break;
             case 'price_low':
                 result.sort((a, b) => {
+                    const aLoc = getLocationPriority(a);
+                    const bLoc = getLocationPriority(b);
+                    if (aLoc !== bLoc) return aLoc - bLoc;
                     const aVideo = hasVideo(a) ? 1 : 0;
                     const bVideo = hasVideo(b) ? 1 : 0;
                     if (bVideo !== aVideo) return bVideo - aVideo;
@@ -240,6 +309,9 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                 break;
             case 'price_high':
                 result.sort((a, b) => {
+                    const aLoc = getLocationPriority(a);
+                    const bLoc = getLocationPriority(b);
+                    if (aLoc !== bLoc) return aLoc - bLoc;
                     const aVideo = hasVideo(a) ? 1 : 0;
                     const bVideo = hasVideo(b) ? 1 : 0;
                     if (bVideo !== aVideo) return bVideo - aVideo;
@@ -248,6 +320,9 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                 break;
             case 'reviews':
                 result.sort((a, b) => {
+                    const aLoc = getLocationPriority(a);
+                    const bLoc = getLocationPriority(b);
+                    if (aLoc !== bLoc) return aLoc - bLoc;
                     const aVideo = hasVideo(a) ? 1 : 0;
                     const bVideo = hasVideo(b) ? 1 : 0;
                     if (bVideo !== aVideo) return bVideo - aVideo;
@@ -256,6 +331,9 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                 break;
             default:
                 result.sort((a, b) => {
+                    const aLoc = getLocationPriority(a);
+                    const bLoc = getLocationPriority(b);
+                    if (aLoc !== bLoc) return aLoc - bLoc;
                     const aVideo = hasVideo(a) ? 1 : 0;
                     const bVideo = hasVideo(b) ? 1 : 0;
                     if (bVideo !== aVideo) return bVideo - aVideo;
@@ -265,7 +343,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         }
 
         return result;
-    }, [searchFilters, coaches, filters]);
+    }, [searchFilters, coaches, filters, cities.list]);
 
     // Load coaches from Supabase
     const loadCoaches = useCallback(async () => {

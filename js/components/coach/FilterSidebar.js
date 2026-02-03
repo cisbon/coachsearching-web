@@ -154,7 +154,16 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                         <select
                             class="filter-input"
                             value=${filters.locationCity || ''}
-                            onChange=${(e) => onChange({ ...filters, locationCity: e.target.value })}
+                            onChange=${(e) => {
+                                const selectedCityName = e.target.value;
+                                // Find the selected city to get its state
+                                const selectedCity = filteredCities.find(city => getLocalizedCityName(city) === selectedCityName);
+                                onChange({
+                                    ...filters,
+                                    locationCity: selectedCityName,
+                                    locationState: selectedCity?.state || ''
+                                });
+                            }}
                             style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
                         >
                             <option value="">All Cities</option>
