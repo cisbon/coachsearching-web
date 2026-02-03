@@ -370,8 +370,11 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 .eq('user_id', userId)
                 .single();
 
+            let coachId = null;
+
             if (existingCoach) {
                 // Update existing - don't update slug
+                coachId = existingCoach.id;
                 const { slug, ...updateData } = coachData;
                 const { error } = await supabase
                     .from('cs_coaches')
@@ -379,11 +382,14 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     .eq('user_id', userId);
                 if (error) throw error;
             } else {
-                // Insert new
-                const { error } = await supabase
+                // Insert new and get the returned id
+                const { data: newCoach, error } = await supabase
                     .from('cs_coaches')
-                    .insert(coachData);
+                    .insert(coachData)
+                    .select('id')
+                    .single();
                 if (error) throw error;
+                coachId = newCoach?.id;
             }
 
             // Handle referral code if valid
@@ -400,28 +406,23 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             }
 
             // Save certifications if any
-            if (data.certifications && data.certifications.length > 0) {
+            if (data.certifications && data.certifications.length > 0 && coachId) {
                 try {
-                    // Get the coach id
-                    const { data: coachRecord } = await supabase
-                        .from('cs_coaches')
-                        .select('id')
-                        .eq('user_id', userId)
-                        .single();
+                    // Insert each certification using certification_id foreign key
+                    const certificationsToInsert = data.certifications.map(cert => ({
+                        coach_id: coachId,
+                        certification_id: cert.certification_id,
+                        date_acquired: cert.date_acquired || null,
+                        certificate_url: cert.certificate_url || null,
+                        certificate_file_path: cert.certificate_file_path || null
+                    }));
 
-                    if (coachRecord) {
-                        // Insert each certification using certification_id foreign key
-                        const certificationsToInsert = data.certifications.map(cert => ({
-                            coach_id: coachRecord.id,
-                            certification_id: cert.certification_id,
-                            date_acquired: cert.date_acquired || null,
-                            certificate_url: cert.certificate_url || null,
-                            certificate_file_path: cert.certificate_file_path || null
-                        }));
+                    const { error: certInsertError } = await supabase
+                        .from('cs_coach_certifications')
+                        .insert(certificationsToInsert);
 
-                        await supabase
-                            .from('cs_coach_certifications')
-                            .insert(certificationsToInsert);
+                    if (certInsertError) {
+                        console.error('Failed to insert certifications:', certInsertError);
                     }
                 } catch (certError) {
                     console.error('Failed to save certifications:', certError);
