@@ -230,7 +230,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
 
         // Helper function to get city object for a coach (by city_id)
         const getCoachCity = (coach) => {
-            if (!coach.city_id || !cities.list) return null;
+            if (!coach.city_id || !cities.list || cities.list.length === 0) return null;
             return cities.list.find(city => city.id === coach.city_id);
         };
 
@@ -250,21 +250,24 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         }
 
         // City filter - when a city is selected, include coaches from the exact city OR the same state
+        // This enables showing coaches from the same region (e.g., Munich + Nuremberg in Bavaria/DE-BY)
         if (filters.locationCityId) {
             const selectedState = filters.locationState;
 
-            if (selectedState) {
-                // Include coaches from the exact city OR the same state
+            if (selectedState && cities.list && cities.list.length > 0) {
+                // Include coaches from the exact city OR any city in the same state
                 result = result.filter(coach => {
-                    // Exact city match by city_id
+                    // Exact city match by city_id - always include
                     if (coach.city_id === filters.locationCityId) return true;
 
-                    // Check if coach is in the same state
+                    // Check if coach is in the same state (e.g., both Munich and Nuremberg are in DE-BY)
                     const coachState = getCoachState(coach);
-                    return coachState === selectedState;
+                    if (coachState && coachState === selectedState) return true;
+
+                    return false;
                 });
             } else {
-                // No state info available, just filter by exact city_id match
+                // No state info available or cities not loaded, just filter by exact city_id match
                 result = result.filter(coach => coach.city_id === filters.locationCityId);
             }
         }
@@ -279,6 +282,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         const hasVideo = (coach) => !!(coach.intro_video_url || coach.video_url || coach.video_intro_url);
 
         // Helper to get location priority (0 = exact city match, 1 = same state, 2 = other)
+        // This ensures coaches are sorted: exact city first, then same state, then others
         const getLocationPriority = (coach) => {
             if (!filters.locationCityId) return 2; // No city filter, all equal
 
@@ -287,10 +291,10 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                 return 0; // Highest priority - exact city match
             }
 
-            // Check for same state match
-            if (filters.locationState) {
+            // Check for same state match (e.g., Nuremberg when Munich is selected, both in DE-BY)
+            if (filters.locationState && cities.list && cities.list.length > 0) {
                 const coachState = getCoachState(coach);
-                if (coachState === filters.locationState) {
+                if (coachState && coachState === filters.locationState) {
                     return 1; // Medium priority - same state
                 }
             }

@@ -11,9 +11,10 @@ import { TrustBadges } from './TrustBadges.js';
 import { VideoPopup } from './VideoPopup.js';
 import { ReviewsPopup } from './ReviewsPopup.js';
 import { DiscoveryCallModal } from './DiscoveryCallModal.js';
+import { useCities } from '../../context/AppContext.js';
 
 const React = window.React;
-const { useState, useEffect, memo } = React;
+const { useState, useEffect, memo, useMemo } = React;
 const html = htm.bind(React.createElement);
 
 /**
@@ -28,6 +29,9 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
     const [showReviewsPopup, setShowReviewsPopup] = useState(false);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
+
+    // Get cities for location lookup with localized names
+    const { cities, getLocalizedCityName } = useCities();
 
     // Fetch live reviews data from database
     useEffect(() => {
@@ -70,7 +74,20 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
     const reviewsCount = liveReviewsData.loaded
         ? liveReviewsData.count
         : (coach.rating_count || coach.reviews_count || 0);
-    const location = coach.location_city || coach.location || '';
+
+    // Get localized city name from city_id lookup
+    const location = useMemo(() => {
+        // If coach has city_id, look up the city and get localized name
+        if (coach.city_id && cities.list?.length > 0) {
+            const city = cities.list.find(c => c.id === coach.city_id);
+            if (city) {
+                return getLocalizedCityName(city);
+            }
+        }
+        // Fallback to legacy location fields
+        return coach.location_city || coach.location || '';
+    }, [coach.city_id, coach.location_city, coach.location, cities.list, getLocalizedCityName]);
+
     const languages = coach.languages || [];
     const specialties = coach.specialties || [];
     const bio = coach.bio || '';
