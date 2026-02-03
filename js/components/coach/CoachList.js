@@ -291,7 +291,8 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                                 code,
                                 name,
                                 short_name,
-                                badge_url
+                                badge_url,
+                                sort_order
                             )
                         )
                     `)

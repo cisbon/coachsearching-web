@@ -1001,6 +1001,46 @@
     cursor: help;
 }
 
+/* Certification Badge with Image (in trust badges overlay) */
+.trust-badge.certification-image-badge {
+    width: 32px;
+    height: 32px;
+    padding: 2px;
+    background: white;
+    overflow: hidden;
+}
+
+.trust-badge.certification-image-badge .certification-badge-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+/* Certification Badges Inline (next to coach name) */
+.certification-badges-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.certification-badge-inline {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: help;
+    transition: transform 0.2s ease;
+}
+
+.certification-badge-inline:hover {
+    transform: scale(1.15);
+}
+
 /* Video Indicator */
 .video-indicator {
     position: absolute;

@@ -140,7 +140,23 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                 <h3 class="coach-name">
                     ${coach.full_name}
                     ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
-                    ${coach.cs_coach_certifications?.length > 0 && html`<span class="certification-badge" title="Certified Coach">🎓</span>`}
+                    ${coach.cs_coach_certifications?.length > 0 && html`
+                        <span class="certification-badges-inline">
+                            ${coach.cs_coach_certifications
+                                .filter(cert => cert.cs_certifications?.badge_url)
+                                .sort((a, b) => (b.cs_certifications?.sort_order || 0) - (a.cs_certifications?.sort_order || 0))
+                                .map(cert => html`
+                                    <img
+                                        key=${cert.id}
+                                        src=${cert.cs_certifications?.badge_url}
+                                        alt=${cert.cs_certifications?.short_name || cert.cs_certifications?.name || 'Certification'}
+                                        title=${cert.cs_certifications?.name || 'Certification'}
+                                        class="certification-badge-inline"
+                                    />
+                                `)
+                            }
+                        </span>
+                    `}
                 </h3>
                 <div class="coach-title">${coach.title}</div>
 
