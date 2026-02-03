@@ -88,8 +88,8 @@ const DEFAULT_DATA = {
     bio: '',
     intro_video_url: '',
     avatar_url: '',
-    location_city: '',
-    location_country: '',
+    city_id: null,           // Reference to cs_cities.id
+    location_country: '',    // Used for filtering cities dropdown
     years_experience: '',
     specialties: [],
     languages: ['en'],
@@ -115,12 +115,18 @@ const loadSavedProgress = (userId) => {
         if (!parsed.data) return null;
 
         const sanitizedData = { ...DEFAULT_DATA };
-        const stringFields = ['full_name', 'professional_title', 'bio', 'intro_video_url', 'avatar_url', 'location_city', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
+        const stringFields = ['full_name', 'professional_title', 'bio', 'intro_video_url', 'avatar_url', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
+        const numberFields = ['city_id']; // city_id is a reference to cs_cities.id
         const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations', 'certifications'];
 
         stringFields.forEach(field => {
             if (parsed.data[field] !== undefined) {
                 sanitizedData[field] = typeof parsed.data[field] === 'string' ? parsed.data[field] : String(parsed.data[field] || '');
+            }
+        });
+        numberFields.forEach(field => {
+            if (parsed.data[field] !== undefined && parsed.data[field] !== null) {
+                sanitizedData[field] = typeof parsed.data[field] === 'number' ? parsed.data[field] : parseInt(parsed.data[field], 10) || null;
             }
         });
         arrayFields.forEach(field => {
@@ -301,12 +307,11 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
     // Validation for each step
     const isStepValid = (stepIndex) => {
         switch (stepIndex) {
-            case 0: // Profile step
+            case 0: // Profile step - require city_id (which includes country info from cs_cities)
                 return !!(
                     data.full_name?.trim() &&
                     data.professional_title?.trim() &&
-                    data.location_country?.trim() &&
-                    data.location_city?.trim()
+                    data.city_id
                 );
             case 1: // Expertise step
                 return (
@@ -351,8 +356,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 bio: data.bio,
                 intro_video_url: isValidVideoUrl(data.intro_video_url) ? data.intro_video_url : null,
                 avatar_url: data.avatar_url,
-                location_city: data.location_city,
-                location_country: data.location_country,
+                city_id: data.city_id,  // Reference to cs_cities.id
                 years_experience: parseInt(data.years_experience) || 0,
                 specialties: data.specialties,
                 languages: data.languages,
@@ -1301,9 +1305,9 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                             class="premium-input"
                             value=${String(data.location_country || '')}
                             onChange=${(e) => {
-                                // Clear city when country changes
+                                // Clear city_id when country changes
                                 updateData('location_country', e.target.value);
-                                updateData('location_city', '');
+                                updateData('city_id', null);
                             }}
                         >
                             <option value="">...</option>
@@ -1318,13 +1322,16 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                         </label>
                         <select
                             class="premium-input"
-                            value=${String(data.location_city || '')}
-                            onChange=${(e) => updateData('location_city', e.target.value)}
+                            value=${String(data.city_id || '')}
+                            onChange=${(e) => {
+                                const cityId = e.target.value ? parseInt(e.target.value, 10) : null;
+                                updateData('city_id', cityId);
+                            }}
                             disabled=${!data.location_country}
                         >
                             <option value="">${data.location_country ? (t('onboard.premium.selectCity') || 'Select city...') : (t('onboard.premium.selectCountryFirst') || 'Select country first')}</option>
                             ${cities.map(city => html`
-                                <option key=${city.code} value=${getLocalizedCityName ? getLocalizedCityName(city) : city.name_en}>
+                                <option key=${city.id} value=${city.id}>
                                     ${getLocalizedCityName ? getLocalizedCityName(city) : city.name_en}
                                 </option>
                             `)}

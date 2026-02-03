@@ -73,7 +73,31 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
     const [, forceUpdate] = useState({});
 
     // Get cities list to look up state info for coaches
-    const { cities } = useCities();
+    const { cities, getLocalizedCityName } = useCities();
+
+    // Convert initialCity (name) to city_id when cities are loaded
+    useEffect(() => {
+        if (initialCity && cities.list?.length > 0) {
+            const cityNameLower = initialCity.toLowerCase().trim();
+            const matchingCity = cities.list.find(city =>
+                city.name_en?.toLowerCase() === cityNameLower ||
+                city.name_de?.toLowerCase() === cityNameLower ||
+                city.name_fr?.toLowerCase() === cityNameLower ||
+                city.name_es?.toLowerCase() === cityNameLower ||
+                city.name_it?.toLowerCase() === cityNameLower ||
+                city.code?.toLowerCase() === cityNameLower
+            );
+            if (matchingCity) {
+                setFilters(prev => ({
+                    ...prev,
+                    locationCityId: matchingCity.id,
+                    locationCountry: matchingCity.country_en,
+                    locationState: matchingCity.state || ''
+                }));
+            }
+        }
+    }, [initialCity, cities.list]);
+
     // Hide filters by default on mobile screens (< 768px), show on larger screens
     const [showFilters, setShowFilters] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -98,8 +122,8 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         offersOnsite: !!initialCity, // Enable onsite filter when city is provided
         offersVirtual: false,
         locationCountry: '',
-        locationCity: initialCity || '',
-        locationState: '' // State code for regional filtering (e.g., DE-BW for Baden-Württemberg)
+        locationCityId: null,    // Reference to cs_cities.id for filtering
+        locationState: ''        // State code for regional filtering (e.g., DE-BW for Baden-Württemberg)
     });
 
     const resetFilters = () => {
@@ -120,7 +144,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             offersOnsite: false,
             offersVirtual: false,
             locationCountry: '',
-            locationCity: '',
+            locationCityId: null,
             locationState: ''
         });
     };
@@ -204,50 +228,44 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             );
         }
 
-        // Helper function to get state code for a coach's city
+        // Helper function to get city object for a coach (by city_id)
+        const getCoachCity = (coach) => {
+            if (!coach.city_id || !cities.list) return null;
+            return cities.list.find(city => city.id === coach.city_id);
+        };
+
+        // Helper function to get state code for a coach
         const getCoachState = (coach) => {
-            if (!coach.location_city || !cities.list) return null;
-            const coachCityLower = coach.location_city.toLowerCase().trim();
-            const matchingCity = cities.list.find(city =>
-                city.name_en?.toLowerCase() === coachCityLower ||
-                city.name_de?.toLowerCase() === coachCityLower ||
-                city.name_fr?.toLowerCase() === coachCityLower ||
-                city.name_es?.toLowerCase() === coachCityLower ||
-                city.name_it?.toLowerCase() === coachCityLower
-            );
-            return matchingCity?.state || null;
+            const city = getCoachCity(coach);
+            return city?.state || null;
         };
 
         // Location filters - work independently of session type filters
-        // Country filter
+        // Country filter - filter by the country of the coach's city
         if (filters.locationCountry) {
-            result = result.filter(coach =>
-                coach.location_country?.toLowerCase() === filters.locationCountry.toLowerCase()
-            );
+            result = result.filter(coach => {
+                const city = getCoachCity(coach);
+                return city?.country_en?.toLowerCase() === filters.locationCountry.toLowerCase();
+            });
         }
 
-        // City/State filter - when a city is selected, include coaches from the same state
-        if (filters.locationCity) {
-            const citySearch = filters.locationCity.toLowerCase().trim();
+        // City filter - when a city is selected, include coaches from the exact city OR the same state
+        if (filters.locationCityId) {
             const selectedState = filters.locationState;
 
             if (selectedState) {
                 // Include coaches from the exact city OR the same state
                 result = result.filter(coach => {
-                    const coachCityLower = coach.location_city?.toLowerCase().trim() || '';
-                    const exactCityMatch = coachCityLower.includes(citySearch) || citySearch.includes(coachCityLower);
-
-                    if (exactCityMatch) return true;
+                    // Exact city match by city_id
+                    if (coach.city_id === filters.locationCityId) return true;
 
                     // Check if coach is in the same state
                     const coachState = getCoachState(coach);
                     return coachState === selectedState;
                 });
             } else {
-                // No state info available, just filter by city
-                result = result.filter(coach =>
-                    coach.location_city?.toLowerCase().includes(citySearch)
-                );
+                // No state info available, just filter by exact city_id match
+                result = result.filter(coach => coach.city_id === filters.locationCityId);
             }
         }
 
@@ -262,13 +280,10 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
 
         // Helper to get location priority (0 = exact city match, 1 = same state, 2 = other)
         const getLocationPriority = (coach) => {
-            if (!filters.locationCity) return 2; // No city filter, all equal
+            if (!filters.locationCityId) return 2; // No city filter, all equal
 
-            const citySearch = filters.locationCity.toLowerCase().trim();
-            const coachCityLower = coach.location_city?.toLowerCase().trim() || '';
-
-            // Check for exact city match
-            if (coachCityLower.includes(citySearch) || citySearch.includes(coachCityLower)) {
+            // Check for exact city match by city_id
+            if (coach.city_id === filters.locationCityId) {
                 return 0; // Highest priority - exact city match
             }
 
@@ -417,7 +432,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         filters.offersVirtual,
         filters.offersOnsite,
         filters.locationCountry,
-        filters.locationCity,
+        filters.locationCityId,
         filters.experience
     ].filter(Boolean).length;
 

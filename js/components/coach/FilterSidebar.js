@@ -139,7 +139,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             value=${filters.locationCountry || ''}
                             onChange=${(e) => {
                                 // When country changes, clear the city selection
-                                onChange({ ...filters, locationCountry: e.target.value, locationCity: '' });
+                                onChange({ ...filters, locationCountry: e.target.value, locationCityId: null, locationState: '' });
                             }}
                             style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
                         >
@@ -153,14 +153,14 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                         <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>City</label>
                         <select
                             class="filter-input"
-                            value=${filters.locationCity || ''}
+                            value=${filters.locationCityId || ''}
                             onChange=${(e) => {
-                                const selectedCityName = e.target.value;
+                                const cityId = e.target.value ? parseInt(e.target.value, 10) : null;
                                 // Find the selected city to get its state
-                                const selectedCity = filteredCities.find(city => getLocalizedCityName(city) === selectedCityName);
+                                const selectedCity = filteredCities.find(city => city.id === cityId);
                                 onChange({
                                     ...filters,
-                                    locationCity: selectedCityName,
+                                    locationCityId: cityId,
                                     locationState: selectedCity?.state || ''
                                 });
                             }}
@@ -168,7 +168,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                         >
                             <option value="">All Cities</option>
                             ${filteredCities.map(city => html`
-                                <option key=${city.code} value=${getLocalizedCityName(city)}>${getLocalizedCityName(city)}</option>
+                                <option key=${city.id} value=${city.id}>${getLocalizedCityName(city)}</option>
                             `)}
                         </select>
                     </div>

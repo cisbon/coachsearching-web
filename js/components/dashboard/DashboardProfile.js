@@ -4,9 +4,10 @@
  */
 
 import htm from '../../vendor/htm.js';
+import { useCities } from '../../context/AppContext.js';
 
 const React = window.React;
-const { useState, useEffect } = React;
+const { useState, useEffect, useMemo } = React;
 const html = htm.bind(React.createElement);
 
 /**
@@ -27,8 +28,8 @@ export const DashboardProfile = ({ session, userType }) => {
         banner_url: '',
         title: '',
         bio: '',
-        location_city: '',
-        location_country: '',
+        city_id: null,          // Reference to cs_cities.id
+        location_country: '',   // Used for filtering cities dropdown
         hourly_rate: '',
         currency: 'EUR',
         specialties: [],
@@ -40,6 +41,35 @@ export const DashboardProfile = ({ session, userType }) => {
         linkedin_url: '',
         intro_video_url: ''
     });
+
+    // Get cities from global context (cached)
+    const { cities, getLocalizedCityName, getCityById } = useCities();
+
+    // Get unique countries from cities list
+    const countriesFromCities = useMemo(() => {
+        const countryMap = new Map();
+        (cities.list || []).forEach(city => {
+            if (!countryMap.has(city.country_code)) {
+                countryMap.set(city.country_code, city.country_en);
+            }
+        });
+        return Array.from(countryMap.entries())
+            .map(([code, name]) => ({ code, name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [cities.list]);
+
+    // Filter cities by selected country
+    const filteredCities = useMemo(() => {
+        if (!cities.list || cities.list.length === 0) return [];
+        if (!formData.location_country) return cities.list;
+        return cities.list.filter(city => city.country_en === formData.location_country);
+    }, [cities.list, formData.location_country]);
+
+    // Get the selected city object for display
+    const selectedCity = useMemo(() => {
+        if (!formData.city_id || !cities.list) return null;
+        return cities.list.find(c => c.id === formData.city_id);
+    }, [formData.city_id, cities.list]);
 
     // Predefined options matching filters exactly - using SVG flags for Windows compatibility
     const languageOptions = [
@@ -59,10 +89,10 @@ export const DashboardProfile = ({ session, userType }) => {
     ];
 
     useEffect(() => {
-        if (userType === 'coach') {
+        if (userType === 'coach' && cities.list?.length > 0) {
             loadCoachProfile();
         }
-    }, [userType]);
+    }, [userType, cities.list]);
 
     const loadCoachProfile = async () => {
         try {
@@ -82,26 +112,26 @@ export const DashboardProfile = ({ session, userType }) => {
                 // Handle both old field names (offers_virtual/offers_onsite) and new (offers_online/offers_in_person)
                 const offersOnline = coach.offers_online ?? coach.offers_virtual ?? true;
                 const offersInPerson = coach.offers_in_person ?? coach.offers_onsite ?? false;
-                // Handle location - support both single 'location' field and split city/country
-                let locationCity = coach.location_city || '';
-                let locationCountry = coach.location_country || '';
-                if (!locationCity && !locationCountry && coach.location) {
-                    // Parse legacy single location field
-                    const parts = coach.location.split(',').map(p => p.trim());
-                    if (parts.length >= 2) {
-                        locationCity = parts[0];
-                        locationCountry = parts[1];
-                    } else {
-                        locationCity = coach.location;
+
+                // Get city_id - either directly from coach or lookup from city name
+                let cityId = coach.city_id || null;
+                let locationCountry = '';
+
+                // If we have a city_id, get the country from the city
+                if (cityId && cities.list) {
+                    const city = cities.list.find(c => c.id === cityId);
+                    if (city) {
+                        locationCountry = city.country_en;
                     }
                 }
+
                 setFormData({
                     full_name: coach.full_name || '',
                     avatar_url: coach.avatar_url || '',
                     banner_url: coach.banner_url || '',
                     title: coach.title || '',
                     bio: coach.bio || '',
-                    location_city: locationCity,
+                    city_id: cityId,
                     location_country: locationCountry,
                     hourly_rate: coach.hourly_rate || '',
                     currency: coach.currency || 'EUR',
@@ -190,8 +220,7 @@ export const DashboardProfile = ({ session, userType }) => {
                 banner_url: formData.banner_url,
                 title: formData.title,
                 bio: formData.bio,
-                location_city: formData.location_city,
-                location_country: formData.location_country,
+                city_id: formData.city_id,  // Reference to cs_cities.id
                 hourly_rate: parseFloat(formData.hourly_rate) || 0,
                 currency: formData.currency,
                 specialties: formData.specialties,
@@ -234,9 +263,14 @@ export const DashboardProfile = ({ session, userType }) => {
         return lang ? `${lang.flag} ${lang.name}` : String(langName);
     };
 
-    const locationText = formData.location_city
-        ? formData.location_city + (formData.location_country ? ', ' + formData.location_country : '')
-        : formData.location_country || 'Location not set';
+    // Get location display text from city_id
+    const locationText = useMemo(() => {
+        if (selectedCity) {
+            const cityName = getLocalizedCityName ? getLocalizedCityName(selectedCity) : selectedCity.name_en;
+            return `${cityName}, ${selectedCity.country_en}`;
+        }
+        return 'Location not set';
+    }, [selectedCity, getLocalizedCityName]);
 
     // Inject CSS once
     useEffect(() => {
@@ -521,12 +555,37 @@ export const DashboardProfile = ({ session, userType }) => {
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>City</label>
-                                    <input type="text" value=${formData.location_city} onChange=${(e) => setFormData({...formData, location_city: e.target.value})} />
+                                    <label>Country</label>
+                                    <select
+                                        value=${formData.location_country || ''}
+                                        onChange=${(e) => {
+                                            // Clear city when country changes
+                                            setFormData({...formData, location_country: e.target.value, city_id: null});
+                                        }}
+                                    >
+                                        <option value="">Select country...</option>
+                                        ${countriesFromCities.map(country => html`
+                                            <option key=${country.code} value=${country.name}>${country.name}</option>
+                                        `)}
+                                    </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Country</label>
-                                    <input type="text" value=${formData.location_country} onChange=${(e) => setFormData({...formData, location_country: e.target.value})} />
+                                    <label>City</label>
+                                    <select
+                                        value=${formData.city_id || ''}
+                                        onChange=${(e) => {
+                                            const cityId = e.target.value ? parseInt(e.target.value, 10) : null;
+                                            setFormData({...formData, city_id: cityId});
+                                        }}
+                                        disabled=${!formData.location_country}
+                                    >
+                                        <option value="">${formData.location_country ? 'Select city...' : 'Select country first'}</option>
+                                        ${filteredCities.map(city => html`
+                                            <option key=${city.id} value=${city.id}>
+                                                ${getLocalizedCityName ? getLocalizedCityName(city) : city.name_en}
+                                            </option>
+                                        `)}
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-group">
