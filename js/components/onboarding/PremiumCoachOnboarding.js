@@ -408,24 +408,38 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             // Save certifications if any
             if (data.certifications && data.certifications.length > 0 && coachId) {
                 try {
+                    // Helper function to convert YYYY-MM format to YYYY-MM-01 for PostgreSQL date type
+                    const formatDateForDB = (dateStr) => {
+                        if (!dateStr) return null;
+                        // If already in YYYY-MM-DD format, return as is
+                        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+                        // If in YYYY-MM format (from month input), add -01
+                        if (/^\d{4}-\d{2}$/.test(dateStr)) return `${dateStr}-01`;
+                        return null;
+                    };
+
                     // Insert each certification using certification_id foreign key
                     const certificationsToInsert = data.certifications.map(cert => ({
                         coach_id: coachId,
                         certification_id: cert.certification_id,
-                        date_acquired: cert.date_acquired || null,
+                        date_acquired: formatDateForDB(cert.date_acquired),
                         certificate_url: cert.certificate_url || null,
                         certificate_file_path: cert.certificate_file_path || null
                     }));
+
+                    console.log('[Onboarding] Saving certifications:', certificationsToInsert);
 
                     const { error: certInsertError } = await supabase
                         .from('cs_coach_certifications')
                         .insert(certificationsToInsert);
 
                     if (certInsertError) {
-                        console.error('Failed to insert certifications:', certInsertError);
+                        console.error('[Onboarding] Failed to insert certifications:', certInsertError);
+                    } else {
+                        console.log('[Onboarding] Certifications saved successfully');
                     }
                 } catch (certError) {
-                    console.error('Failed to save certifications:', certError);
+                    console.error('[Onboarding] Failed to save certifications:', certError);
                     // Don't block onboarding completion for certification errors
                 }
             }
