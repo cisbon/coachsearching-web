@@ -75,6 +75,83 @@ export function Navbar({ session }) {
             .hamburger-btn.open span:nth-child(2) { opacity: 0; }
             .hamburger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
 
+            /* Mobile selector styles - inline expandable */
+            .mobile-selector {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .mobile-selector-btn {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                width: 100% !important;
+                background: rgba(255,255,255,0.1) !important;
+                border: none !important;
+                color: white !important;
+                padding: 14px 16px !important;
+                border-radius: 8px !important;
+                cursor: pointer !important;
+                font-size: 1rem !important;
+            }
+
+            .mobile-selector-btn .selector-label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .mobile-selector-btn .selector-arrow {
+                font-size: 0.7rem;
+                transition: transform 0.2s ease;
+            }
+
+            .mobile-selector-btn .selector-arrow.open {
+                transform: rotate(180deg);
+            }
+
+            .mobile-selector-options {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                margin-top: 8px;
+                padding: 8px;
+                background: rgba(255,255,255,0.05);
+                border-radius: 8px;
+            }
+
+            .mobile-selector-option {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 14px;
+                color: white;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+
+            .mobile-selector-option:hover {
+                background: rgba(255,255,255,0.15);
+            }
+
+            .mobile-selector-option.active {
+                background: rgba(255,255,255,0.2);
+            }
+
+            .mobile-selector-option .checkmark {
+                margin-left: auto;
+                color: #4ade80;
+            }
+
+            .mobile-selector-option .flag-icon {
+                width: 24px;
+                height: 18px;
+                border-radius: 2px;
+                object-fit: cover;
+            }
+
             /* Mobile styles */
             @media (max-width: 768px) {
                 .hamburger-btn { display: flex !important; }
@@ -97,7 +174,8 @@ export function Navbar({ session }) {
                 }
 
                 header[role="banner"] .nav-links.open {
-                    max-height: 400px;
+                    max-height: calc(100vh - 60px);
+                    overflow-y: auto;
                     opacity: 1;
                     padding: 16px 20px;
                 }

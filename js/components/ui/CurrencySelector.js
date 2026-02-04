@@ -1,6 +1,7 @@
 /**
  * Currency Selector Component
  * Dropdown to select display currency
+ * Mobile-friendly: shows inline options in mobile menu
  */
 
 import htm from '../../vendor/htm.js';
@@ -28,7 +29,18 @@ function setCurrencyValue(code) {
 export function CurrencySelector() {
     const [isOpen, setIsOpen] = useState(false);
     const [currency, setCurrencyState] = useState(getCurrentCurrency());
+    const [isMobile, setIsMobile] = useState(false);
     const dropdownRef = useRef(null);
+
+    // Detect mobile viewport
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Listen for currency changes
     useEffect(() => {
@@ -39,8 +51,10 @@ export function CurrencySelector() {
         return () => window.removeEventListener('currencyChange', handleCurrencyChange);
     }, []);
 
-    // Close dropdown when clicking outside
+    // Close dropdown when clicking outside (desktop only)
     useEffect(() => {
+        if (isMobile) return; // Don't use click-outside on mobile
+
         function handleClickOutside(event) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
@@ -48,7 +62,7 @@ export function CurrencySelector() {
         }
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [isMobile]);
 
     const handleSelect = (code) => {
         setCurrencyValue(code);
@@ -57,6 +71,42 @@ export function CurrencySelector() {
 
     const current = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
 
+    // Mobile: inline expandable list
+    if (isMobile) {
+        return html`
+            <div class="currency-selector mobile-selector" ref=${dropdownRef}>
+                <button
+                    class="currency-btn mobile-selector-btn"
+                    onClick=${() => setIsOpen(!isOpen)}
+                    aria-label="Select currency"
+                    aria-expanded=${isOpen}
+                >
+                    <span class="selector-label">
+                        <span>${current.symbol}</span>
+                        <span>${current.code}</span>
+                    </span>
+                    <span class="selector-arrow ${isOpen ? 'open' : ''}">▼</span>
+                </button>
+                ${isOpen && html`
+                    <div class="mobile-selector-options">
+                        ${CURRENCIES.map(curr => html`
+                            <div
+                                key=${curr.code}
+                                class="mobile-selector-option ${curr.code === currency ? 'active' : ''}"
+                                onClick=${() => handleSelect(curr.code)}
+                            >
+                                <span>${curr.symbol}</span>
+                                <span>${curr.label}</span>
+                                ${curr.code === currency && html`<span class="checkmark">✓</span>`}
+                            </div>
+                        `)}
+                    </div>
+                `}
+            </div>
+        `;
+    }
+
+    // Desktop: traditional dropdown
     return html`
         <div class="currency-selector" ref=${dropdownRef}>
             <button
