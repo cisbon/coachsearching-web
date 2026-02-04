@@ -84,27 +84,33 @@ export function Navbar({ session }) {
 
             .mobile-selector-btn {
                 display: flex !important;
-                justify-content: space-between !important;
+                justify-content: center !important;
                 align-items: center !important;
                 width: 100% !important;
                 background: rgba(255,255,255,0.1) !important;
-                border: none !important;
+                border: 1px solid rgba(255,255,255,0.2) !important;
                 color: white !important;
                 padding: 14px 16px !important;
                 border-radius: 8px !important;
                 cursor: pointer !important;
                 font-size: 1rem !important;
+                text-align: center !important;
+                min-height: 48px !important;
+                box-sizing: border-box !important;
             }
 
             .mobile-selector-btn .selector-label {
                 display: flex;
                 align-items: center;
+                justify-content: center;
                 gap: 8px;
+                flex: 1;
             }
 
             .mobile-selector-btn .selector-arrow {
                 font-size: 0.7rem;
                 transition: transform 0.2s ease;
+                margin-left: 12px;
             }
 
             .mobile-selector-btn .selector-arrow.open {
@@ -114,42 +120,52 @@ export function Navbar({ session }) {
             .mobile-selector-options {
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
-                margin-top: 8px;
-                padding: 8px;
-                background: rgba(255,255,255,0.05);
-                border-radius: 8px;
+                gap: 10px;
+                margin-top: 12px;
+                padding: 12px;
+                background: rgba(0,0,0,0.15);
+                border-radius: 10px;
+                border: 1px solid rgba(255,255,255,0.1);
             }
 
             .mobile-selector-option {
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                padding: 12px 14px;
+                justify-content: center;
+                gap: 12px;
+                padding: 14px 16px;
                 color: white;
-                border-radius: 6px;
+                border-radius: 8px;
                 cursor: pointer;
-                transition: background 0.2s;
+                transition: all 0.2s ease;
+                border: 1px solid rgba(255,255,255,0.15);
+                background: rgba(255,255,255,0.05);
+                min-height: 48px;
+                box-sizing: border-box;
             }
 
             .mobile-selector-option:hover {
                 background: rgba(255,255,255,0.15);
+                border-color: rgba(255,255,255,0.3);
             }
 
             .mobile-selector-option.active {
                 background: rgba(255,255,255,0.2);
+                border-color: rgba(255,255,255,0.4);
             }
 
             .mobile-selector-option .checkmark {
                 margin-left: auto;
                 color: #4ade80;
+                font-weight: bold;
             }
 
             .mobile-selector-option .flag-icon {
-                width: 24px;
-                height: 18px;
-                border-radius: 2px;
+                width: 28px;
+                height: 21px;
+                border-radius: 3px;
                 object-fit: cover;
+                border: 1px solid rgba(255,255,255,0.2);
             }
 
             /* Mobile styles */
