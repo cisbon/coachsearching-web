@@ -265,13 +265,13 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
 
             <!-- Bottom Row: Specialties + Actions (Desktop Only) -->
             <div class="coach-card-bottom">
-                <!-- Specialties - Desktop -->
+                <!-- Specialties - Desktop (show up to 8, max 3 rows) -->
                 ${localizedSpecialties.length > 0 ? html`
                     <div class="specialty-tags specialty-tags-desktop">
-                        ${localizedSpecialties.slice(0, 4).map(s => html`
+                        ${localizedSpecialties.slice(0, 8).map(s => html`
                             <span key=${s.code} class="specialty-tag">${s.name}</span>
                         `)}
-                        ${localizedSpecialties.length > 4 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 4}</span>` : ''}
+                        ${localizedSpecialties.length > 8 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 8}</span>` : ''}
                     </div>
                 ` : html`<div class="specialty-tags-placeholder"></div>`}
 

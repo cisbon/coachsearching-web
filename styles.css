@@ -3937,7 +3937,10 @@ footer, .site-footer {
         flex-wrap: wrap;
         gap: 6px;
         align-items: flex-start;
+        align-content: flex-start;
         margin: 0;
+        max-height: 84px; /* Limit to ~3 rows */
+        overflow: hidden;
     }
 
     .specialty-tags-placeholder {
@@ -4714,6 +4717,30 @@ footer, .site-footer {
     .reviews-popup-container {
         max-width: 100%;
         margin: 10px;
+    }
+
+    /* Reviews popup header - mobile fix for close button alignment */
+    .reviews-popup-header {
+        position: relative;
+        padding-right: 48px; /* Make room for close button */
+    }
+
+    .reviews-popup-header .reviews-header-info {
+        flex: 1;
+        min-width: 0; /* Allow text to shrink */
+    }
+
+    .reviews-popup-header .reviews-header-info h3 {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        padding-right: 8px;
+    }
+
+    .reviews-popup-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        flex-shrink: 0;
     }
 }
 
