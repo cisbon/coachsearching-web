@@ -531,7 +531,7 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
  * Reviews Popup Component
  * Shows all reviews with ability to write a new review
  */
-const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasReviewed, onClose, onWriteReview, getReviewBreakdown }) => {
+const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasReviewed, isOwnProfile, onClose, onWriteReview, getReviewBreakdown }) => {
     useEffect(() => {
         const handleEscape = (e) => {
             if (e.key === 'Escape') onClose();
@@ -594,16 +594,18 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
                     <!-- Write Review Button -->
                     <div class="popup-write-review">
                         ${session?.user ? (
-                            userHasReviewed ? html`
-                                <div class="already-reviewed">
-                                    <span class="check-icon">✓</span>
-                                    ${t('review.alreadyReviewedShort') || 'You reviewed this coach'}
-                                </div>
-                            ` : html`
-                                <button class="btn-write-review-popup" onClick=${onWriteReview}>
-                                    ✏️ ${t('review.writeReview') || 'Write a Review'}
-                                </button>
-                            `
+                            isOwnProfile ? null : (
+                                userHasReviewed ? html`
+                                    <div class="already-reviewed">
+                                        <span class="check-icon">✓</span>
+                                        ${t('review.alreadyReviewedShort') || 'You reviewed this coach'}
+                                    </div>
+                                ` : html`
+                                    <button class="btn-write-review-popup" onClick=${onWriteReview}>
+                                        ✏️ ${t('review.writeReview') || 'Write a Review'}
+                                    </button>
+                                `
+                            )
                         ) : html`
                             <button class="btn-write-review-popup btn-login" onClick=${() => { onClose(); window.navigateTo('/login'); }}>
                                 ${t('review.loginToReview') || 'Log in to write a review'}
@@ -872,6 +874,11 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const handleSubmitReview = async (reviewData) => {
         if (!session?.user?.id || !coach?.id) {
             return { success: false, error: 'Not authenticated' };
+        }
+
+        // Prevent self-reviews
+        if (session.user.id === coach.user_id) {
+            return { success: false, error: t('review.cannotReviewSelf') || 'You cannot review yourself' };
         }
 
         try {
@@ -1531,6 +1538,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     reviewsCount=${reviewsCount}
                     session=${session}
                     userHasReviewed=${userHasReviewed}
+                    isOwnProfile=${session?.user?.id === coach.user_id}
                     onClose=${() => setShowReviewsPopup(false)}
                     onWriteReview=${() => { setShowReviewsPopup(false); setShowReviewModal(true); }}
                     getReviewBreakdown=${getReviewBreakdown}
