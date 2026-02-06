@@ -4137,9 +4137,9 @@ footer, .site-footer {
 .verified-check {
     background: #10b981;
     color: white;
-    font-size: 0.7rem;
-    width: 18px;
-    height: 18px;
+    font-size: 0.8rem;
+    width: 25px;
+    height: 25px;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
