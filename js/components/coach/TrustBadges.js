@@ -17,9 +17,10 @@ const html = htm.bind(React.createElement);
 export function TrustBadges({ coach }) {
     const badges = [];
 
+    /*commented out intentionally (only uncomment, if requested)
     if (coach.is_verified || coach.verified) {
         badges.push({ icon: '✓', label: 'Verified', class: 'badge-verified' });
-    }
+    }*/
     if (coach.intro_video_url || coach.video_url) {
         badges.push({ icon: '🎬', label: 'Video', class: 'badge-video' });
     }
