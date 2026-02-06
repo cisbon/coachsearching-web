@@ -11,7 +11,7 @@ import { TrustBadges } from './TrustBadges.js';
 import { VideoPopup } from './VideoPopup.js';
 import { ReviewsPopup } from './ReviewsPopup.js';
 import { DiscoveryCallModal } from './DiscoveryCallModal.js';
-import { useCities } from '../../context/AppContext.js';
+import { useCities, useLookupOptions } from '../../context/AppContext.js';
 
 const React = window.React;
 const { useState, useEffect, memo, useMemo } = React;
@@ -32,6 +32,9 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
 
     // Get cities for location lookup with localized names
     const { cities, getLocalizedCityName } = useCities();
+
+    // Get lookup options for specialties with localized names
+    const { lookupOptions, getLocalizedName } = useLookupOptions();
 
     // Fetch live reviews data from database
     useEffect(() => {
@@ -89,7 +92,24 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
     }, [coach.city_id, coach.location_city, coach.location, cities.list, getLocalizedCityName]);
 
     const languages = coach.languages || [];
-    const specialties = coach.specialties || [];
+    const specialtyCodes = coach.specialties || [];
+
+    // Get localized specialty names from lookup options
+    const localizedSpecialties = useMemo(() => {
+        if (!specialtyCodes.length || !lookupOptions.specialties?.length) {
+            // Fallback to codes if lookup options not loaded yet
+            return specialtyCodes.map(code => ({ code, name: code }));
+        }
+
+        return specialtyCodes.map(code => {
+            const specialtyOption = lookupOptions.specialties.find(s => s.code === code);
+            if (specialtyOption) {
+                return { code, name: getLocalizedName(specialtyOption) };
+            }
+            // Fallback to code if not found in lookup options
+            return { code, name: code };
+        });
+    }, [specialtyCodes, lookupOptions.specialties, getLocalizedName]);
     const bio = coach.bio || '';
     const videoUrl = coach.intro_video_url || coach.video_url;
     const hasVideo = !!videoUrl;
@@ -202,12 +222,12 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                 </div>
 
                 <!-- Specialties -->
-                ${specialties.length > 0 ? html`
+                ${localizedSpecialties.length > 0 ? html`
                     <div class="specialty-tags">
-                        ${specialties.slice(0, 4).map(s => html`
-                            <span key=${s} class="specialty-tag">${s}</span>
+                        ${localizedSpecialties.slice(0, 4).map(s => html`
+                            <span key=${s.code} class="specialty-tag">${s.name}</span>
                         `)}
-                        ${specialties.length > 4 ? html`<span class="specialty-tag more">+${specialties.length - 4}</span>` : ''}
+                        ${localizedSpecialties.length > 4 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 4}</span>` : ''}
                     </div>
                 ` : ''}
             </div>
