@@ -1567,8 +1567,16 @@
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    margin-bottom: 10px;
+    margin-bottom: 0;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-discovery .calendar-icon {
+    flex-shrink: 0;
 }
 
 .btn-discovery:hover {
