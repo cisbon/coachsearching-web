@@ -3939,7 +3939,7 @@ footer, .site-footer {
         align-items: flex-start;
         align-content: flex-start;
         margin: 0;
-        max-height: 84px; /* Limit to ~3 rows */
+        max-height: 100px; /* Limit to ~3 rows */
         overflow: hidden;
     }
 
@@ -4289,7 +4289,7 @@ footer, .site-footer {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .specialty-tag {
