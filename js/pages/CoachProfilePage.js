@@ -404,9 +404,9 @@ const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall }) {
 
 /**
  * Profile Coach Card Component
- * Embedded coach card for the profile page with overlapping profile image
+ * Embedded coach card for the profile page with overlapping profile image and banner
  */
-const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, session }) {
+const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, session, isOwnProfile, onEditSection }) {
     const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
     const { cities, getLocalizedCityName } = useCities();
     const { lookupOptions, getLocalizedName } = useLookupOptions();
@@ -486,6 +486,51 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
 
     return html`
         <div class="profile-coach-card">
+            <!-- Banner Image inside card -->
+            <div class="profile-card-banner">
+                <img
+                    src=${coach.banner_url || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=300&fit=crop'}
+                    alt="Profile Banner"
+                    class="card-banner-image"
+                />
+                ${isOwnProfile && html`
+                    <button class="btn-edit-banner" onClick=${() => onEditSection('banner')} title="Edit banner">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                `}
+            </div>
+
+            <!-- Profile Image with Trust Badges -->
+            <div class="profile-card-image-section">
+                <div class="profile-image-wrapper-card ${hasVideo ? 'has-video' : ''}" onClick=${hasVideo ? onVideoClick : null}>
+                    <img
+                        src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name) + '&size=200'}
+                        alt=${coach.full_name}
+                        class="profile-image-card"
+                    />
+                    ${hasVideo && html`
+                        <div class="video-play-overlay-card">
+                            <div class="play-icon">▶</div>
+                        </div>
+                    `}
+                    <!-- Trust Badge on image -->
+                    ${hasVideo && html`
+                        <span class="trust-badge badge-video badge-on-image" title="Has Video">🎬</span>
+                    `}
+                </div>
+                ${isOwnProfile && html`
+                    <button class="btn-edit-photo" onClick=${() => onEditSection('photo')} title="Edit photo">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                    </button>
+                `}
+            </div>
+
             <!-- Main Card Content -->
             <div class="profile-card-content">
                 <div class="profile-card-main">
@@ -509,6 +554,14 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                                     `)
                                 }
                             </span>
+                        `}
+                        ${isOwnProfile && html`
+                            <button class="btn-edit-inline" onClick=${() => onEditSection('name')} title="Edit name">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
                         `}
                     </h1>
                     <div class="profile-coach-title">${coach.title}</div>
@@ -599,9 +652,6 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                     </div>
                 </div>
             </div>
-
-            <!-- Trust Badges -->
-            <${TrustBadges} coach=${coach} />
         </div>
     `;
 });
@@ -972,113 +1022,141 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const videoUrl = coach.intro_video_url || coach.video_url;
     const hasVideo = !!videoUrl;
 
+    // Check if this is the user's own profile
+    const isOwnProfile = session?.user?.id && coach.user_id && session.user.id === coach.user_id;
+
+    // Handle edit section clicks
+    const handleEditSection = (sectionName) => {
+        // Navigate to profile edit page with section parameter
+        window.navigateTo(`/profile/edit?section=${sectionName}`);
+    };
+
     return html`
         <div class="coach-profile-page linkedin-style">
-            <!-- Banner Image Section -->
-            <section class="profile-banner-section">
-                <div class="profile-banner">
-                    <img
-                        src=${coach.banner_url || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=300&fit=crop'}
-                        alt="Profile Banner"
-                        class="banner-image"
-                    />
-                </div>
-
-                <!-- Overlapping Profile Image -->
-                <div class="profile-image-container">
-                    <div class="profile-image-wrapper ${hasVideo ? 'has-video' : ''}" onClick=${hasVideo ? () => setShowVideoPopup(true) : null}>
-                        <img
-                            src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name) + '&size=200'}
-                            alt=${coach.full_name}
-                            class="profile-image"
-                        />
-                        ${hasVideo && html`
-                            <div class="video-play-overlay">
-                                <div class="play-icon">▶</div>
-                            </div>
-                        `}
-                    </div>
-                </div>
-            </section>
-
             <!-- Main Two-Column Layout -->
             <div class="profile-container">
                 <div class="profile-columns">
                     <!-- Main Content Column (70%) -->
                     <main class="profile-main-column">
-                        <!-- Coach Card Section -->
+                        <!-- Coach Card Section (now includes banner) -->
                         <section class="profile-section coach-card-section">
                             <${ProfileCoachCard}
                                 coach=${coach}
                                 onDiscoveryCall=${() => setShowDiscoveryModal(true)}
                                 onVideoClick=${() => setShowVideoPopup(true)}
                                 session=${session}
+                                isOwnProfile=${isOwnProfile}
+                                onEditSection=${handleEditSection}
                             />
                         </section>
 
                         <!-- Certifications Section -->
-                        ${credentials.length > 0 && html`
+                        ${(credentials.length > 0 || isOwnProfile) && html`
                             <section class="profile-section certifications-section">
-                                <h2 class="section-title">
-                                    <span class="section-icon">🏅</span>
-                                    ${t('coach.certifications') || 'Certifications & Credentials'}
-                                </h2>
-                                <div class="certifications-list">
-                                    ${credentials.map(cred => html`
-                                        <div key=${cred.id} class="certification-item">
-                                            ${cred.badge_url && html`
-                                                <img src=${cred.badge_url} alt=${cred.name} class="cert-badge" />
-                                            `}
-                                            <div class="cert-info">
-                                                <h4 class="cert-name">${cred.name}</h4>
-                                                ${cred.issuing_org && html`<p class="cert-org">${cred.issuing_org}</p>`}
-                                                ${cred.is_verified && html`<span class="cert-verified">✓ Verified</span>`}
-                                            </div>
-                                        </div>
-                                    `)}
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">🏅</span>
+                                        ${t('coach.certifications') || 'Certifications & Credentials'}
+                                    </h2>
+                                    ${isOwnProfile && html`
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('certifications')} title="Edit certifications">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                    `}
                                 </div>
+                                ${credentials.length > 0 ? html`
+                                    <div class="certifications-list">
+                                        ${credentials.map(cred => html`
+                                            <div key=${cred.id} class="certification-item">
+                                                ${cred.badge_url && html`
+                                                    <img src=${cred.badge_url} alt=${cred.name} class="cert-badge" />
+                                                `}
+                                                <div class="cert-info">
+                                                    <h4 class="cert-name">${cred.name}</h4>
+                                                    ${cred.issuing_org && html`<p class="cert-org">${cred.issuing_org}</p>`}
+                                                    ${cred.is_verified && html`<span class="cert-verified">✓ Verified</span>`}
+                                                </div>
+                                            </div>
+                                        `)}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('certifications')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addCertifications') || 'Add your certifications and credentials'}</p>
+                                    </div>
+                                `}
                             </section>
                         `}
 
                         <!-- Featured Section -->
-                        ${articles.length > 0 && html`
+                        ${(articles.length > 0 || isOwnProfile) && html`
                             <section class="profile-section featured-section">
-                                <h2 class="section-title">
-                                    <span class="section-icon">⭐</span>
-                                    ${t('coach.featured') || 'Featured'}
-                                </h2>
-                                <div class="featured-grid">
-                                    ${articles.slice(0, 3).map(article => html`
-                                        <article
-                                            key=${article.id}
-                                            class="featured-card"
-                                            onClick=${() => setSelectedArticle(article)}
-                                        >
-                                            ${article.featured_image && html`
-                                                <div class="featured-image">
-                                                    <img src=${article.featured_image} alt=${article.title} loading="lazy" />
-                                                </div>
-                                            `}
-                                            <div class="featured-content">
-                                                <h3 class="featured-title">${article.title}</h3>
-                                                <p class="featured-excerpt">
-                                                    ${article.excerpt || (article.content_html
-                                                        ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 80) + '...'
-                                                        : '')}
-                                                </p>
-                                            </div>
-                                        </article>
-                                    `)}
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">⭐</span>
+                                        ${t('coach.featured') || 'Featured'}
+                                    </h2>
+                                    ${isOwnProfile && html`
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('featured')} title="Edit featured">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                    `}
                                 </div>
+                                ${articles.length > 0 ? html`
+                                    <div class="featured-grid">
+                                        ${articles.slice(0, 3).map(article => html`
+                                            <article
+                                                key=${article.id}
+                                                class="featured-card"
+                                                onClick=${() => setSelectedArticle(article)}
+                                            >
+                                                ${article.featured_image && html`
+                                                    <div class="featured-image">
+                                                        <img src=${article.featured_image} alt=${article.title} loading="lazy" />
+                                                    </div>
+                                                `}
+                                                <div class="featured-content">
+                                                    <h3 class="featured-title">${article.title}</h3>
+                                                    <p class="featured-excerpt">
+                                                        ${article.excerpt || (article.content_html
+                                                            ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 80) + '...'
+                                                            : '')}
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        `)}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('featured')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addFeatured') || 'Add featured content to highlight your work'}</p>
+                                    </div>
+                                `}
                             </section>
                         `}
 
                         <!-- Activity Section -->
                         <section class="profile-section activity-section">
-                            <h2 class="section-title">
-                                <span class="section-icon">📊</span>
-                                ${t('coach.activity') || 'Activity'}
-                            </h2>
+                            <div class="section-header-editable">
+                                <h2 class="section-title">
+                                    <span class="section-icon">📊</span>
+                                    ${t('coach.activity') || 'Activity'}
+                                </h2>
+                                ${isOwnProfile && html`
+                                    <button class="btn-edit-section" onClick=${() => handleEditSection('activity')} title="Add content">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                    </button>
+                                `}
+                            </div>
 
                             <${ActivityTabs}
                                 activeTab=${activeActivityTab}
@@ -1155,104 +1233,189 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         </section>
 
                         <!-- Experience Section -->
-                        ${coach.experience && html`
+                        ${(coach.experience || isOwnProfile) && html`
                             <section class="profile-section experience-section">
-                                <h2 class="section-title">
-                                    <span class="section-icon">💼</span>
-                                    ${t('coach.experience') || 'Experience'}
-                                </h2>
-                                <div class="experience-content">
-                                    ${(Array.isArray(coach.experience) ? coach.experience : [coach.experience]).map((exp, i) => html`
-                                        <div key=${i} class="experience-item">
-                                            ${typeof exp === 'object' ? html`
-                                                <div class="exp-header">
-                                                    <h4 class="exp-title">${exp.title || exp.role}</h4>
-                                                    ${exp.company && html`<p class="exp-company">${exp.company}</p>`}
-                                                    ${exp.duration && html`<span class="exp-duration">${exp.duration}</span>`}
-                                                </div>
-                                                ${exp.description && html`<p class="exp-description">${exp.description}</p>`}
-                                            ` : html`<p>${exp}</p>`}
-                                        </div>
-                                    `)}
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">💼</span>
+                                        ${t('coach.experience') || 'Experience'}
+                                    </h2>
+                                    ${isOwnProfile && html`
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('experience')} title="Edit experience">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                    `}
                                 </div>
+                                ${coach.experience ? html`
+                                    <div class="experience-content">
+                                        ${(Array.isArray(coach.experience) ? coach.experience : [coach.experience]).map((exp, i) => html`
+                                            <div key=${i} class="experience-item">
+                                                ${typeof exp === 'object' ? html`
+                                                    <div class="exp-header">
+                                                        <h4 class="exp-title">${exp.title || exp.role}</h4>
+                                                        ${exp.company && html`<p class="exp-company">${exp.company}</p>`}
+                                                        ${exp.duration && html`<span class="exp-duration">${exp.duration}</span>`}
+                                                    </div>
+                                                    ${exp.description && html`<p class="exp-description">${exp.description}</p>`}
+                                                ` : html`<p>${exp}</p>`}
+                                            </div>
+                                        `)}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('experience')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addExperience') || 'Add your professional experience'}</p>
+                                    </div>
+                                `}
                             </section>
                         `}
 
                         <!-- Education Section -->
-                        ${coach.education && html`
+                        ${(coach.education || isOwnProfile) && html`
                             <section class="profile-section education-section">
-                                <h2 class="section-title">
-                                    <span class="section-icon">🎓</span>
-                                    ${t('coach.education') || 'Education'}
-                                </h2>
-                                <div class="education-content">
-                                    ${(Array.isArray(coach.education) ? coach.education : [coach.education]).map((edu, i) => html`
-                                        <div key=${i} class="education-item">
-                                            ${typeof edu === 'object' ? html`
-                                                <h4 class="edu-degree">${edu.degree || edu.title}</h4>
-                                                ${edu.institution && html`<p class="edu-institution">${edu.institution}</p>`}
-                                                ${edu.year && html`<span class="edu-year">${edu.year}</span>`}
-                                            ` : html`<p>${edu}</p>`}
-                                        </div>
-                                    `)}
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">🎓</span>
+                                        ${t('coach.education') || 'Education'}
+                                    </h2>
+                                    ${isOwnProfile && html`
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('education')} title="Edit education">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                    `}
                                 </div>
+                                ${coach.education ? html`
+                                    <div class="education-content">
+                                        ${(Array.isArray(coach.education) ? coach.education : [coach.education]).map((edu, i) => html`
+                                            <div key=${i} class="education-item">
+                                                ${typeof edu === 'object' ? html`
+                                                    <h4 class="edu-degree">${edu.degree || edu.title}</h4>
+                                                    ${edu.institution && html`<p class="edu-institution">${edu.institution}</p>`}
+                                                    ${edu.year && html`<span class="edu-year">${edu.year}</span>`}
+                                                ` : html`<p>${edu}</p>`}
+                                            </div>
+                                        `)}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('education')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addEducation') || 'Add your education and training'}</p>
+                                    </div>
+                                `}
                             </section>
                         `}
 
                         <!-- Skills Section -->
-                        ${coach.skills && coach.skills.length > 0 && html`
+                        ${((coach.skills && coach.skills.length > 0) || isOwnProfile) && html`
                             <section class="profile-section skills-section">
-                                <h2 class="section-title">
-                                    <span class="section-icon">🛠️</span>
-                                    ${t('coach.skills') || 'Skills'}
-                                </h2>
-                                <div class="skills-list">
-                                    ${(Array.isArray(coach.skills) ? coach.skills : [coach.skills]).map((skill, i) => html`
-                                        <span key=${i} class="skill-tag">${skill}</span>
-                                    `)}
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">🛠️</span>
+                                        ${t('coach.skills') || 'Skills'}
+                                    </h2>
+                                    ${isOwnProfile && html`
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('skills')} title="Edit skills">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                    `}
                                 </div>
+                                ${coach.skills && coach.skills.length > 0 ? html`
+                                    <div class="skills-list">
+                                        ${(Array.isArray(coach.skills) ? coach.skills : [coach.skills]).map((skill, i) => html`
+                                            <span key=${i} class="skill-tag">${skill}</span>
+                                        `)}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('skills')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addSkills') || 'Add your coaching skills'}</p>
+                                    </div>
+                                `}
                             </section>
                         `}
 
                         <!-- Interests Section -->
-                        ${coach.interests && coach.interests.length > 0 && html`
+                        ${((coach.interests && coach.interests.length > 0) || isOwnProfile) && html`
                             <section class="profile-section interests-section">
-                                <h2 class="section-title">
-                                    <span class="section-icon">❤️</span>
-                                    ${t('coach.interests') || 'Interests'}
-                                </h2>
-                                <div class="interests-list">
-                                    ${(Array.isArray(coach.interests) ? coach.interests : [coach.interests]).map((interest, i) => html`
-                                        <span key=${i} class="interest-tag">${interest}</span>
-                                    `)}
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">❤️</span>
+                                        ${t('coach.interests') || 'Interests'}
+                                    </h2>
+                                    ${isOwnProfile && html`
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('interests')} title="Edit interests">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                    `}
                                 </div>
+                                ${coach.interests && coach.interests.length > 0 ? html`
+                                    <div class="interests-list">
+                                        ${(Array.isArray(coach.interests) ? coach.interests : [coach.interests]).map((interest, i) => html`
+                                            <span key=${i} class="interest-tag">${interest}</span>
+                                        `)}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('interests')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addInterests') || 'Add your interests'}</p>
+                                    </div>
+                                `}
                             </section>
                         `}
 
                         <!-- About / Coaching Approach -->
-                        ${(coach.bio || coach.coaching_approach) && html`
+                        ${(coach.bio || coach.coaching_approach || isOwnProfile) && html`
                             <section class="profile-section about-section">
-                                <h2 class="section-title">
-                                    <span class="section-icon">📝</span>
-                                    ${t('coach.about') || 'About'}
-                                </h2>
-                                <div class="about-content">
-                                    ${coach.bio && html`
-                                        <div class="about-bio">
-                                            ${coach.bio.split('\n').map((para, i) =>
-                                                para.trim() ? html`<p key=${i}>${para}</p>` : null
-                                            )}
-                                        </div>
-                                    `}
-                                    ${coach.coaching_approach && html`
-                                        <div class="about-approach">
-                                            <h3>${t('coach.myApproach') || 'My Coaching Approach'}</h3>
-                                            ${coach.coaching_approach.split('\n').map((para, i) =>
-                                                para.trim() ? html`<p key=${i}>${para}</p>` : null
-                                            )}
-                                        </div>
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">📝</span>
+                                        ${t('coach.about') || 'About'}
+                                    </h2>
+                                    ${isOwnProfile && html`
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('about')} title="Edit about">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
                                     `}
                                 </div>
+                                ${(coach.bio || coach.coaching_approach) ? html`
+                                    <div class="about-content">
+                                        ${coach.bio && html`
+                                            <div class="about-bio">
+                                                ${coach.bio.split('\n').map((para, i) =>
+                                                    para.trim() ? html`<p key=${i}>${para}</p>` : null
+                                                )}
+                                            </div>
+                                        `}
+                                        ${coach.coaching_approach && html`
+                                            <div class="about-approach">
+                                                <h3>${t('coach.myApproach') || 'My Coaching Approach'}</h3>
+                                                ${coach.coaching_approach.split('\n').map((para, i) =>
+                                                    para.trim() ? html`<p key=${i}>${para}</p>` : null
+                                                )}
+                                            </div>
+                                        `}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('about')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addAbout') || 'Tell your story and describe your coaching approach'}</p>
+                                    </div>
+                                `}
                             </section>
                         `}
                     </main>
