@@ -5,6 +5,7 @@
  */
 
 import htm from '../../vendor/htm.js';
+import { t } from '../../i18n.js';
 import { useLookupOptions, useCities } from '../../context/AppContext.js';
 
 const React = window.React;
@@ -102,17 +103,17 @@ export function FilterSidebar({ filters, onChange, onReset }) {
     return html`
         <div class="filter-sidebar">
             <div class="filter-header">
-                <h3>Filters</h3>
-                <button class="filter-reset-btn" onClick=${onReset}>Reset</button>
+                <h3>${t('filter.filters') || 'Filters'}</h3>
+                <button class="filter-reset-btn" onClick=${onReset}>${t('filter.reset') || 'Reset'}</button>
             </div>
 
             <!-- Price Range -->
             <div class="filter-section">
-                <h4>Price Range</h4>
+                <h4>${t('filter.priceRange') || 'Price Range'}</h4>
                 <div class="price-range-inputs">
                     <input
                         type="number"
-                        placeholder="Min"
+                        placeholder=${t('filter.min') || 'Min'}
                         class="filter-input"
                         value=${filters.minPrice || ''}
                         onChange=${(e) => onChange({ ...filters, minPrice: e.target.value })}
@@ -120,7 +121,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                     <span>-</span>
                     <input
                         type="number"
-                        placeholder="Max"
+                        placeholder=${t('filter.max') || 'Max'}
                         class="filter-input"
                         value=${filters.maxPrice || ''}
                         onChange=${(e) => onChange({ ...filters, maxPrice: e.target.value })}
@@ -130,10 +131,10 @@ export function FilterSidebar({ filters, onChange, onReset }) {
 
             <!-- Location (Country & City) -->
             <div class="filter-section">
-                <h4>Location</h4>
+                <h4>${t('filter.location') || 'Location'}</h4>
                 <div class="location-filters">
                     <div style=${{ marginBottom: '10px' }}>
-                        <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>Country</label>
+                        <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>${t('filter.country') || 'Country'}</label>
                         <select
                             class="filter-input"
                             value=${filters.locationCountry || ''}
@@ -143,14 +144,14 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             }}
                             style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
                         >
-                            <option value="">All Countries</option>
+                            <option value="">${t('filter.allCountries') || 'All Countries'}</option>
                             ${(countriesFromCities.length > 0 ? countriesFromCities : COUNTRIES).map(country => html`
                                 <option key=${country.code} value=${country.name}>${country.name}</option>
                             `)}
                         </select>
                     </div>
                     <div>
-                        <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>City</label>
+                        <label style=${{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>${t('filter.city') || 'City'}</label>
                         <select
                             class="filter-input"
                             value=${filters.locationCityId || ''}
@@ -166,7 +167,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             }}
                             style=${{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
                         >
-                            <option value="">All Cities</option>
+                            <option value="">${t('filter.allCities') || 'All Cities'}</option>
                             ${filteredCities.map(city => html`
                                 <option key=${city.id} value=${city.id}>${getLocalizedCityName(city)}</option>
                             `)}
@@ -177,7 +178,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
 
             <!-- Specialties -->
             <div class="filter-section">
-                <h4>Specialties</h4>
+                <h4>${t('filter.specialties') || 'Specialties'}</h4>
                 <div class="filter-checkboxes">
                     ${specialtyOptions.map(specialty => {
                         // Check if specialty is selected (exact match or partial match for initial filters)
@@ -208,7 +209,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
 
             <!-- Languages -->
             <div class="filter-section">
-                <h4>Languages</h4>
+                <h4>${t('filter.languages') || 'Languages'}</h4>
                 <div class="filter-checkboxes">
                     ${languageOptions.map(lang => {
                         const flagCode = LANGUAGE_TO_FLAG[lang.code];
@@ -244,7 +245,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
 
             <!-- Session Type -->
             <div class="filter-section">
-                <h4>Session Type</h4>
+                <h4>${t('filter.sessionType') || 'Session Type'}</h4>
                 <div class="filter-checkboxes">
                     <label class="filter-checkbox">
                         <input
@@ -252,7 +253,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             checked=${filters.offersVirtual}
                             onChange=${(e) => onChange({ ...filters, offersVirtual: e.target.checked })}
                         />
-                        <span>💻 Video Call</span>
+                        <span>💻 ${t('filter.videoCall') || 'Video Call'}</span>
                     </label>
                     <label class="filter-checkbox">
                         <input
@@ -260,14 +261,14 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             checked=${filters.offersOnsite}
                             onChange=${(e) => onChange({ ...filters, offersOnsite: e.target.checked })}
                         />
-                        <span>🤝 In-Person</span>
+                        <span>🤝 ${t('filter.inPerson') || 'In-Person'}</span>
                     </label>
                 </div>
             </div>
 
             <!-- Other Options -->
             <div class="filter-section">
-                <h4>Other</h4>
+                <h4>${t('filter.other') || 'Other'}</h4>
                 <div class="filter-checkboxes">
                     <label class="filter-checkbox">
                         <input
@@ -275,7 +276,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             checked=${filters.hasVideo}
                             onChange=${(e) => onChange({ ...filters, hasVideo: e.target.checked })}
                         />
-                        <span>Has Intro Video</span>
+                        <span>🎬 ${t('filter.hasVideo') || 'Has Intro Video'}</span>
                     </label>
                     <label class="filter-checkbox">
                         <input
@@ -283,7 +284,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             checked=${filters.freeIntro}
                             onChange=${(e) => onChange({ ...filters, freeIntro: e.target.checked })}
                         />
-                        <span>Free Discovery Call</span>
+                        <span>📞 ${t('filter.freeDiscovery') || 'Free Discovery Call'}</span>
                     </label>
                     <label class="filter-checkbox">
                         <input
@@ -291,7 +292,15 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             checked=${filters.hasCertification}
                             onChange=${(e) => onChange({ ...filters, hasCertification: e.target.checked })}
                         />
-                        <span>Has Certification</span>
+                        <span>🎓 ${t('filter.hasCertification') || 'Has Certification'}</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input
+                            type="checkbox"
+                            checked=${filters.isVerified}
+                            onChange=${(e) => onChange({ ...filters, isVerified: e.target.checked })}
+                        />
+                        <span>✅ ${t('filter.isVerified') || 'Is Verified'}</span>
                     </label>
                 </div>
             </div>

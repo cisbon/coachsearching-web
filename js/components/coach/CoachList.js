@@ -114,6 +114,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         hasVideo: false,
         freeIntro: false,
         hasCertification: false,
+        isVerified: false,
         topRated: false,
         minRating: null,
         onlineOnly: false,
@@ -136,6 +137,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             hasVideo: false,
             freeIntro: false,
             hasCertification: false,
+            isVerified: false,
             topRated: false,
             minRating: null,
             onlineOnly: false,
@@ -203,6 +205,9 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         }
         if (filters.topRated) {
             result = result.filter(coach => (coach.rating_average || coach.rating || 0) >= 4.5);
+        }
+        if (filters.isVerified) {
+            result = result.filter(coach => coach.is_verified === true);
         }
 
         // Rating filter
@@ -431,6 +436,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         filters.hasVideo,
         filters.freeIntro,
         filters.hasCertification,
+        filters.isVerified,
         filters.topRated,
         filters.minRating,
         filters.offersVirtual,
@@ -446,14 +452,14 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             <!-- Header with title and filter toggle -->
             <div class="coaches-header">
                 <h2 class="section-title">
-                    ${searchFilters?.searchTerm ? `Search Results (${filteredCoaches.length})` : 'Top Rated Coaches'}
+                    ${searchFilters?.searchTerm ? `${t('filter.searchResults') || 'Search Results'} (${filteredCoaches.length})` : t('coaches.topRated') || 'Top Rated Coaches'}
                 </h2>
                 <div class="header-actions">
                     <button
                         class="filter-toggle-btn ${showFilters ? 'active' : ''}"
                         onClick=${() => setShowFilters(!showFilters)}
                     >
-                        <span>⚙️ Filters</span>
+                        <span>⚙️ ${t('filter.filters') || 'Filters'}</span>
                         ${activeFilterCount > 0 && html`<span class="filter-count">${activeFilterCount}</span>`}
                     </button>
                     <select
@@ -461,10 +467,10 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                         value=${filters.sortBy}
                         onChange=${(e) => setFilters({ ...filters, sortBy: e.target.value })}
                     >
-                        <option value="relevance">Sort: Relevance</option>
-                        <option value="rating">Sort: Highest Rated</option>
-                        <option value="price_low">Sort: Price Low-High</option>
-                        <option value="price_high">Sort: Price High-Low</option>
+                        <option value="relevance">${t('filter.sortBy') || 'Sort'}: ${t('filter.relevance') || 'Relevance'}</option>
+                        <option value="rating">${t('filter.sortBy') || 'Sort'}: ${t('filter.highestRated') || 'Highest Rated'}</option>
+                        <option value="price_low">${t('filter.sortBy') || 'Sort'}: ${t('filter.priceLowHigh') || 'Price Low-High'}</option>
+                        <option value="price_high">${t('filter.sortBy') || 'Sort'}: ${t('filter.priceHighLow') || 'Price High-Low'}</option>
                     </select>
                 </div>
             </div>
@@ -489,11 +495,11 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                     ${!loading && filteredCoaches.length === 0 && html`
                         <div class="empty-state">
                             <div class="empty-state-icon">🔍</div>
-                            <div class="empty-state-text">No coaches found</div>
-                            <div class="empty-state-subtext">Try adjusting your filters or search criteria</div>
+                            <div class="empty-state-text">${t('filter.noResults') || 'No coaches found'}</div>
+                            <div class="empty-state-subtext">${t('filter.adjustFilters') || 'Try adjusting your filters or search criteria'}</div>
                             ${activeFilterCount > 0 && html`
                                 <button class="btn-secondary" onClick=${resetFilters} style=${{ marginTop: '16px' }}>
-                                    Clear All Filters
+                                    ${t('filter.clearAll') || 'Clear All Filters'}
                                 </button>
                             `}
                             <div class="empty-state-promo" style=${{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
@@ -505,7 +511,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                     `}
                     ${!loading && filteredCoaches.length > 0 && html`
                         <div class="results-info">
-                            Showing ${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''}
+                            ${t('filter.showing') || 'Showing'} ${filteredCoaches.length} ${filteredCoaches.length !== 1 ? (t('filter.coaches') || 'coaches') : (t('filter.coach') || 'coach')}
                         </div>
                         <div class="coach-list">
                             ${filteredCoaches.map(coach => html`<${CoachCard} key=${coach.id} coach=${coach} session=${session} onViewDetails=${setSelectedCoach} />`)}
