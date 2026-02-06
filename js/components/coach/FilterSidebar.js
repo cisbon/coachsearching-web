@@ -9,8 +9,23 @@ import { t } from '../../i18n.js';
 import { useLookupOptions, useCities } from '../../context/AppContext.js';
 
 const React = window.React;
-const { useMemo } = React;
+const { useMemo, useState } = React;
 const html = htm.bind(React.createElement);
+
+// Languages to show initially (most common)
+const INITIAL_LANGUAGES = ['en', 'de', 'fr', 'es', 'it', 'nl', 'ru', 'tr'];
+
+// Specialties to show initially (most common)
+const INITIAL_SPECIALTIES = [
+    'life-coaching',
+    'business-coaching',
+    'career-coaching',
+    'executive-coaching',
+    'leadership-development',
+    'health-wellness',
+    'life-transitions',
+    'relationship-coaching'
+];
 
 // Flag CDN for SVG flag images
 const FLAG_CDN = 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3';
@@ -70,9 +85,24 @@ export function FilterSidebar({ filters, onChange, onReset }) {
     // Get cities from global context (cached)
     const { cities, getLocalizedCityName } = useCities();
 
+    // State for showing all languages/specialties
+    const [showAllLanguages, setShowAllLanguages] = useState(false);
+    const [showAllSpecialties, setShowAllSpecialties] = useState(false);
+
     // Extract specialties and languages from lookup options
     const specialtyOptions = lookupOptions.specialties || [];
     const languageOptions = lookupOptions.languages || [];
+
+    // Filter languages and specialties based on show more state
+    const visibleLanguages = useMemo(() => {
+        if (showAllLanguages) return languageOptions;
+        return languageOptions.filter(lang => INITIAL_LANGUAGES.includes(lang.code));
+    }, [languageOptions, showAllLanguages]);
+
+    const visibleSpecialties = useMemo(() => {
+        if (showAllSpecialties) return specialtyOptions;
+        return specialtyOptions.filter(spec => INITIAL_SPECIALTIES.includes(spec.code));
+    }, [specialtyOptions, showAllSpecialties]);
 
     // Get unique countries from cities list
     const countriesFromCities = useMemo(() => {
@@ -180,7 +210,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
             <div class="filter-section">
                 <h4>${t('filter.specialties') || 'Specialties'}</h4>
                 <div class="filter-checkboxes">
-                    ${specialtyOptions.map(specialty => {
+                    ${visibleSpecialties.map(specialty => {
                         // Check if specialty is selected (exact match or partial match for initial filters)
                         const isChecked = filters.specialties?.some(s =>
                             s === specialty.code ||
@@ -205,13 +235,22 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                         `;
                     })}
                 </div>
+                ${!showAllSpecialties && specialtyOptions.length > visibleSpecialties.length ? html`
+                    <button
+                        type="button"
+                        class="filter-show-more-btn"
+                        onClick=${() => setShowAllSpecialties(true)}
+                    >
+                        ${t('filter.showMore') || 'Show more'}
+                    </button>
+                ` : null}
             </div>
 
             <!-- Languages -->
             <div class="filter-section">
                 <h4>${t('filter.languages') || 'Languages'}</h4>
                 <div class="filter-checkboxes">
-                    ${languageOptions.map(lang => {
+                    ${visibleLanguages.map(lang => {
                         const flagCode = LANGUAGE_TO_FLAG[lang.code];
                         return html`
                             <label key=${lang.code} class="filter-checkbox">
@@ -241,6 +280,15 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                         `;
                     })}
                 </div>
+                ${!showAllLanguages && languageOptions.length > visibleLanguages.length ? html`
+                    <button
+                        type="button"
+                        class="filter-show-more-btn"
+                        onClick=${() => setShowAllLanguages(true)}
+                    >
+                        ${t('filter.showMore') || 'Show more'}
+                    </button>
+                ` : null}
             </div>
 
             <!-- Session Type -->

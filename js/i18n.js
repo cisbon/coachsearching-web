@@ -1875,6 +1875,7 @@ const translations = {
         "filter.other": "Other",
         "filter.hasCertification": "Has Certification",
         "filter.isVerified": "Is Verified",
+        "filter.showMore": "Show more",
 
         // Credentials
         "credentials.none": "No credentials added yet",
@@ -3558,6 +3559,7 @@ const translations = {
         "filter.other": "Sonstige",
         "filter.hasCertification": "Hat Zertifizierung",
         "filter.isVerified": "Ist verifiziert",
+        "filter.showMore": "Mehr anzeigen",
 
         // Credentials
         "credentials.none": "Noch keine Qualifikationen hinzugefügt",
@@ -5167,6 +5169,7 @@ const translations = {
         "filter.priceHighLow": "Precio: Mayor a Menor",
         "filter.priceRange": "Rango de Precios",
         "filter.freeDiscovery": "Llamada de Descubrimiento Gratis",
+        "filter.showMore": "Mostrar más",
 
         // Credentials
         "credentials.icf": "Certificado ICF",
@@ -6703,6 +6706,7 @@ const translations = {
         "filter.priceHighLow": "Prix : Décroissant",
         "filter.priceRange": "Fourchette de Prix",
         "filter.freeDiscovery": "Appel Découverte Gratuit",
+        "filter.showMore": "Afficher plus",
 
         // Credentials
         "credentials.icf": "Certifié ICF",
@@ -8239,6 +8243,7 @@ const translations = {
         "filter.priceHighLow": "Prezzo: Decrescente",
         "filter.priceRange": "Fascia di Prezzo",
         "filter.freeDiscovery": "Chiamata Scoperta Gratuita",
+        "filter.showMore": "Mostra di più",
 
         // Credentials
         "credentials.icf": "Certificato ICF",
