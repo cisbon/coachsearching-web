@@ -4751,6 +4751,7 @@ footer, .site-footer {
 /* Sort Button - Same height as filter button */
 .sort-select-mobile {
     height: 40px;
+    max-width: 250px;
     padding: 8px 16px;
     border-radius: 6px;
     border: 1px solid var(--border-color);
