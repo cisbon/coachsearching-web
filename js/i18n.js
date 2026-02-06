@@ -1843,8 +1843,8 @@ const translations = {
         "filter.onlineSessions": "Online Sessions",
         "filter.inPersonSessions": "In-Person Sessions",
         "filter.features": "Features",
-        "filter.hasVideo": "Has Video Intro",
-        "filter.freeDiscovery": "Free Discovery Call",
+        "filter.hasVideo": "Video Intro",
+        "filter.freeDiscovery": "Free Chemistry Call",
         "filter.verifiedOnly": "Verified Only",
         "filter.topRated": "Top Rated",
         "filter.experience": "Experience",
@@ -1873,8 +1873,8 @@ const translations = {
         "filter.videoCall": "Video Call",
         "filter.inPerson": "In-Person",
         "filter.other": "Other",
-        "filter.hasCertification": "Has Certification",
-        "filter.isVerified": "Is Verified",
+        "filter.hasCertification": "Certified",
+        "filter.isVerified": "Verified",
         "filter.showMore": "Show more",
 
         // Credentials
@@ -3527,8 +3527,8 @@ const translations = {
         "filter.onlineSessions": "Online-Sitzungen",
         "filter.inPersonSessions": "Persönliche Sitzungen",
         "filter.features": "Funktionen",
-        "filter.hasVideo": "Hat Video-Intro",
-        "filter.freeDiscovery": "Kostenloses Erstgespräch",
+        "filter.hasVideo": "Video Intro",
+        "filter.freeDiscovery": "Free Chemistry Call",
         "filter.verifiedOnly": "Nur verifizierte",
         "filter.topRated": "Top bewertet",
         "filter.experience": "Erfahrung",
@@ -3557,8 +3557,8 @@ const translations = {
         "filter.videoCall": "Videoanruf",
         "filter.inPerson": "Vor Ort",
         "filter.other": "Sonstige",
-        "filter.hasCertification": "Hat Zertifizierung",
-        "filter.isVerified": "Ist verifiziert",
+        "filter.hasCertification": "Zertifiziert",
+        "filter.isVerified": "Verifiziert",
         "filter.showMore": "Mehr anzeigen",
 
         // Credentials
@@ -5162,13 +5162,13 @@ const translations = {
         "filter.videoCall": "Videollamada",
         "filter.inPerson": "Presencial",
         "filter.other": "Otros",
-        "filter.hasCertification": "Tiene Certificación",
-        "filter.isVerified": "Está Verificado",
+        "filter.hasCertification": "Certificado",
+        "filter.isVerified": "Verificado",
         "filter.highestRated": "Mejor Valorados",
         "filter.priceLowHigh": "Precio: Menor a Mayor",
         "filter.priceHighLow": "Precio: Mayor a Menor",
         "filter.priceRange": "Rango de Precios",
-        "filter.freeDiscovery": "Llamada de Descubrimiento Gratis",
+        "filter.freeDiscovery": "Free Chemistry Call",
         "filter.showMore": "Mostrar más",
 
         // Credentials
@@ -6705,7 +6705,7 @@ const translations = {
         "filter.priceLowHigh": "Prix : Croissant",
         "filter.priceHighLow": "Prix : Décroissant",
         "filter.priceRange": "Fourchette de Prix",
-        "filter.freeDiscovery": "Appel Découverte Gratuit",
+        "filter.freeDiscovery": "Free Chemistry Call",
         "filter.showMore": "Afficher plus",
 
         // Credentials
@@ -8242,7 +8242,7 @@ const translations = {
         "filter.priceLowHigh": "Prezzo: Crescente",
         "filter.priceHighLow": "Prezzo: Decrescente",
         "filter.priceRange": "Fascia di Prezzo",
-        "filter.freeDiscovery": "Chiamata Scoperta Gratuita",
+        "filter.freeDiscovery": "Free Chemistry Call",
         "filter.showMore": "Mostra di più",
 
         // Credentials
