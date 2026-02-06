@@ -2842,7 +2842,7 @@ const translations = {
         "discovery.freeNoObligation": "Kostenlos und unverbindlich",
 
         // Discovery Call Booking
-        "discovery.bookFreeCall": "Kennenlerngespräch",
+        "discovery.bookFreeCall": "Discovery Call",
         "discovery.bookDiscoveryCall": "Kennenlerngespräch",
         "discovery.freeDiscoveryAvailable": "Kostenloses Kennenlerngespräch verfügbar!",
         "discovery.modalTitle": "Kostenloses Kennenlerngespräch vereinbaren",
@@ -4465,7 +4465,7 @@ const translations = {
         "coach.viewAllReviews": "Ver todas las reseñas",
 
         // Discovery Call Booking
-        "discovery.bookFreeCall": "Llamada Descubrimiento",
+        "discovery.bookFreeCall": "Discovery Call",
         "discovery.bookDiscoveryCall": "Llamada Descubrimiento",
         "discovery.freeDiscoveryAvailable": "¡Llamada de descubrimiento gratuita disponible!",
         "discovery.modalTitle": "Reservar una Llamada de Descubrimiento Gratuita",
@@ -5991,7 +5991,7 @@ const translations = {
         "coach.viewAllReviews": "Voir tous les avis",
 
         // Discovery Call Booking
-        "discovery.bookFreeCall": "Appel Découverte",
+        "discovery.bookFreeCall": "Discovery Call",
         "discovery.bookDiscoveryCall": "Appel Découverte",
         "discovery.freeDiscoveryAvailable": "Appel découverte gratuit disponible !",
         "discovery.modalTitle": "Réserver un Appel Découverte Gratuit",
@@ -7527,7 +7527,7 @@ const translations = {
         "coach.viewAllReviews": "Vedi tutte le recensioni",
 
         // Discovery Call Booking
-        "discovery.bookFreeCall": "Chiamata Conoscitiva",
+        "discovery.bookFreeCall": "Discovery Call",
         "discovery.bookDiscoveryCall": "Chiamata Conoscitiva",
         "discovery.freeDiscoveryAvailable": "Chiamata conoscitiva gratuita disponibile!",
         "discovery.modalTitle": "Prenota una Chiamata Conoscitiva Gratuita",
