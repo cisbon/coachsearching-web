@@ -953,8 +953,9 @@
 }
 
 .badge-video {
-    background: #d97706;
+    background: #f0f9f8;
     color: white;
+    border: 1px solid #d0e8e6;
 }
 
 .badge-free {
