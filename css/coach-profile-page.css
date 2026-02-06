@@ -1,861 +1,1157 @@
 /**
- * Coach Profile Page Styles
- * SEO-optimized full page layout for coach profiles
+ * Coach Profile Page Styles - LinkedIn-Style Layout
+ * Two-column layout with banner, overlapping profile image, and sidebar
  */
 
 /* ==========================================================================
-   Page Container
+   Page Container - LinkedIn Style
    ========================================================================== */
 
-.coach-profile-page {
-    background: var(--bg-body, #f5f5f5);
+.coach-profile-page.linkedin-style {
+    background: var(--bg-body, #f3f2ef);
     min-height: 100vh;
     padding-top: 0;
 }
 
-.breadcrumb-container {
-    background: white;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border-color, #e7e7e7);
-}
-
 /* ==========================================================================
-   Hero Section
+   Banner Section
    ========================================================================== */
 
-.coach-hero-section {
-    background: white;
-    padding: 40px 0 60px;
-}
-
-.coach-hero-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 48px;
-    align-items: start;
-}
-
-@media (max-width: 992px) {
-    .coach-hero-grid {
-        grid-template-columns: 1fr;
-        gap: 32px;
-    }
-}
-
-/* Media Column */
-.coach-media-column {
+.profile-banner-section {
     position: relative;
+    margin-bottom: 60px; /* Space for overlapping profile image */
 }
 
-.coach-hero-image {
-    border-radius: 16px;
+.profile-banner {
+    width: 100%;
+    height: 200px;
     overflow: hidden;
-    aspect-ratio: 4/3;
-    background: var(--bg-body);
+    background: linear-gradient(135deg, #006266 0%, #00bcd4 100%);
 }
 
-.coach-hero-image img {
+.profile-banner .banner-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* Profile Image Overlapping Banner */
+.profile-image-container {
+    position: absolute;
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.profile-image-wrapper {
+    width: 152px;
+    height: 152px;
+    border-radius: 12px; /* Square with rounded corners - NOT circular */
+    overflow: hidden;
+    border: 4px solid white;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    background: white;
     transition: transform 0.3s ease;
 }
 
-/* Video Play Overlay for Coach Profile */
-.coach-hero-image.has-video {
+.profile-image-wrapper.has-video {
     cursor: pointer;
-    position: relative;
 }
 
-.coach-hero-image.has-video:hover img {
-    transform: scale(1.05);
+.profile-image-wrapper.has-video:hover {
+    transform: scale(1.02);
 }
 
-.coach-hero-image .video-play-overlay {
+.profile-image-wrapper .profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-image-wrapper .video-play-overlay {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
+    background: rgba(0, 0, 0, 0.3);
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.profile-image-wrapper.has-video:hover .video-play-overlay {
     opacity: 1;
-    transition: background 0.3s ease;
 }
 
-.coach-hero-image.has-video:hover .video-play-overlay {
-    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
-}
-
-.coach-hero-image .play-button {
-    width: 80px;
-    height: 80px;
+.profile-image-wrapper .play-icon {
+    width: 48px;
+    height: 48px;
     background: rgba(255, 255, 255, 0.95);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s ease;
-}
-
-.coach-hero-image.has-video:hover .play-button {
-    transform: scale(1.1);
-}
-
-.coach-hero-image .play-button span {
-    font-size: 32px;
+    font-size: 20px;
     color: var(--primary-petrol, #006266);
-    margin-left: 4px;
 }
 
-.coach-hero-image .video-label {
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-    margin-top: 12px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Hero Video Layout - Video as main visual when available */
-.coach-hero-video {
-    border-radius: 16px;
-    overflow: hidden;
-    aspect-ratio: 16/9;
-    background: #000;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-}
-
-.coach-hero-video .youtube-player,
-.coach-hero-video .coach-video-player {
-    width: 100%;
-    height: 100%;
-    aspect-ratio: 16/9;
-    border-radius: 16px;
-    min-height: 280px;
-}
-
-.coach-hero-video .video-thumbnail {
-    border-radius: 16px;
-}
-
-.coach-hero-video .video-thumbnail img {
-    border-radius: 16px;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.coach-hero-video .video-play-button {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-/* Responsive hero video for mobile */
-@media (max-width: 768px) {
-    .coach-hero-video {
-        min-height: 200px;
+@media (min-width: 768px) {
+    .profile-banner {
+        height: 280px;
     }
 
-    .coach-hero-video .youtube-player,
-    .coach-hero-video .coach-video-player {
-        min-height: 200px;
+    .profile-image-container {
+        left: 40px;
+        transform: none;
+        bottom: -70px;
+    }
+
+    .profile-image-wrapper {
+        width: 180px;
+        height: 180px;
+    }
+
+    .profile-banner-section {
+        margin-bottom: 80px;
     }
 }
 
-/* Info Column */
-.coach-info-column {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
+@media (min-width: 1200px) {
+    .profile-banner {
+        height: 320px;
+    }
 
-.coach-header-content {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-}
-
-.coach-mini-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid var(--primary-petrol, #006266);
-}
-
-.coach-name {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-main, #1a1a1a);
-    margin: 0 0 4px;
-    line-height: 1.2;
-}
-
-.coach-title {
-    font-size: 1.125rem;
-    color: var(--primary-petrol, #006266);
-    margin: 0;
-    font-weight: 500;
-}
-
-/* Meta Row */
-.coach-meta-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
-.coach-meta-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.9375rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.meta-icon {
-    font-size: 1rem;
-}
-
-/* Language Flags in Meta Row */
-.coach-meta-languages {
-    display: flex;
-    align-items: center;
-}
-
-.coach-meta-languages .language-flags {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-}
-
-.coach-meta-languages .flag-icon {
-    font-size: 1.25rem;
-    cursor: default;
-}
-
-.coach-meta-languages .flag-img {
-    border-radius: 2px;
-    vertical-align: middle;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-.coach-meta-languages .more-langs {
-    font-size: 0.8rem;
-    color: var(--text-muted, #6b7280);
-    margin-left: 4px;
-}
-
-/* About Section in Info Column */
-.coach-about-section {
-    background: var(--bg-body, #f5f5f5);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 8px 0;
-}
-
-.coach-about-section .about-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-main, #1a1a1a);
-    margin: 0 0 12px;
-}
-
-.coach-about-section .coach-bio {
-    font-size: 0.9375rem;
-    line-height: 1.6;
-    color: var(--text-secondary, #4a5568);
-}
-
-.coach-about-section .coach-bio p {
-    margin: 0 0 8px;
-}
-
-.coach-about-section .coach-bio p:last-child {
-    margin-bottom: 0;
-}
-
-/* Trust Signals Bar under Profile Picture */
-.coach-media-column .trust-signals-bar {
-    margin-top: 16px;
-    padding: 12px 16px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-/* Stats Banner under Profile Picture */
-.coach-media-column .coach-stats-banner {
-    margin-top: 16px;
-    padding: 16px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-/* CTA Section */
-.coach-cta-section {
-    background: var(--bg-body, #f5f5f5);
-    border-radius: 12px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.price-display {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-}
-
-.price-label {
-    font-size: 0.875rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.price-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-main, #1a1a1a);
-}
-
-.price-unit {
-    font-size: 0.9375rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.btn-book-prominent {
-    padding: 16px 32px;
-    background: var(--primary-petrol, #006266);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.125rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-book-prominent:hover {
-    background: var(--petrol-dark, #004a4d);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 98, 102, 0.3);
-}
-
-.btn-contact-coach {
-    padding: 12px 24px;
-    background: white;
-    color: var(--primary-petrol, #006266);
-    border: 2px solid var(--primary-petrol, #006266);
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-contact-coach:hover {
-    background: rgba(0, 98, 102, 0.05);
-}
-
-/* Discovery Call Button - Prominent */
-.btn-discovery-prominent {
-    padding: 16px 32px;
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.125rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-}
-
-.btn-discovery-prominent:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.35);
-}
-
-/* Guarantees Row */
-.guarantees-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
-.guarantee-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: rgba(0, 98, 102, 0.05);
-    border-radius: 8px;
-    font-size: 0.8125rem;
-}
-
-.guarantee-icon {
-    font-size: 1rem;
-    color: var(--primary-petrol, #006266);
-}
-
-.guarantee-content {
-    display: flex;
-    flex-direction: column;
-}
-
-.guarantee-title {
-    font-weight: 600;
-    color: var(--text-main, #1a1a1a);
-}
-
-.guarantee-subtitle {
-    font-size: 0.75rem;
-    color: var(--text-muted, #6b7280);
+    .profile-image-container {
+        left: calc((100% - 1200px) / 2 + 40px);
+    }
 }
 
 /* ==========================================================================
-   Content Section
+   Two-Column Layout Container
    ========================================================================== */
 
-.coach-content-section {
-    padding: 60px 0;
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px 40px;
 }
 
-.coach-content-grid {
+.profile-columns {
     display: grid;
-    grid-template-columns: 1fr 360px;
-    gap: 40px;
-    align-items: start;
-}
-
-@media (max-width: 992px) {
-    .coach-content-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Main Column */
-.coach-main-column {
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-}
-
-.coach-section {
-    background: white;
-    border-radius: 16px;
-    padding: 32px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-main, #1a1a1a);
-    margin: 0 0 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.coach-bio p {
-    font-size: 1rem;
-    line-height: 1.7;
-    color: var(--text-main, #1a1a1a);
-    margin: 0 0 16px;
-}
-
-.coach-bio p:last-child {
-    margin-bottom: 0;
-}
-
-/* No Reviews Empty Stars */
-.no-reviews-yet {
-    text-align: center;
-    padding: 32px 20px;
-    background: var(--bg-body, #f5f5f5);
-    border-radius: 12px;
-}
-
-.no-reviews-yet .empty-stars {
-    font-size: 2rem;
-    color: var(--border-color, #ddd);
-    margin-bottom: 16px;
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-}
-
-.no-reviews-yet .empty-stars .star {
-    opacity: 0.5;
-}
-
-.no-reviews-yet p {
-    margin: 0;
-    color: var(--text-secondary, #666);
-    font-size: 1rem;
-}
-
-/* Specialties Grid */
-.specialties-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.specialty-card {
-    padding: 12px 20px;
-    background: var(--bg-body, #f5f5f5);
-    border: 2px solid transparent;
-    border-radius: 8px;
-    color: var(--text-main, #1a1a1a);
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.specialty-card:hover {
-    border-color: var(--primary-petrol, #006266);
-    background: rgba(0, 98, 102, 0.05);
-    color: var(--primary-petrol, #006266);
-}
-
-/* Session Formats Grid */
-.session-formats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-}
-
-.format-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 24px 16px;
-    background: var(--bg-body, #f5f5f5);
-    border-radius: 12px;
-    gap: 8px;
-}
-
-.format-icon {
-    font-size: 2rem;
-}
-
-.format-name {
-    font-weight: 600;
-    color: var(--text-main, #1a1a1a);
-}
-
-.format-desc {
-    font-size: 0.875rem;
-    color: var(--text-muted, #6b7280);
-}
-
-/* Articles Grid */
-.articles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: 1fr;
     gap: 24px;
 }
 
-.article-card {
-    background: var(--bg-body, #f5f5f5);
+@media (min-width: 992px) {
+    .profile-columns {
+        grid-template-columns: 70% 30%;
+        gap: 24px;
+        align-items: start;
+    }
+}
+
+/* ==========================================================================
+   Main Content Column
+   ========================================================================== */
+
+.profile-main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-section {
+    background: white;
     border-radius: 12px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.article-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
-
-.article-image {
-    aspect-ratio: 16/9;
-    overflow: hidden;
-}
-
-.article-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.article-content {
-    padding: 20px;
-}
-
-.article-title {
-    font-size: 1.125rem;
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
     font-weight: 600;
     color: var(--text-main, #1a1a1a);
-    margin: 0 0 8px;
-    line-height: 1.4;
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
-.article-excerpt {
-    font-size: 0.9375rem;
-    color: var(--text-muted, #6b7280);
-    line-height: 1.5;
-    margin: 0 0 12px;
+.section-icon {
+    font-size: 1.25rem;
 }
 
-.article-meta {
-    display: flex;
-    gap: 16px;
-    font-size: 0.8125rem;
-    color: var(--text-muted, #6b7280);
+/* ==========================================================================
+   Profile Coach Card (Main card in profile)
+   ========================================================================== */
+
+.profile-coach-card {
+    position: relative;
 }
 
-.articles-count,
-.reviews-summary {
-    font-size: 1rem;
-    font-weight: 400;
-    color: var(--text-muted, #6b7280);
-}
-
-/* Reviews */
-.reviews-list {
+.profile-card-content {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-.btn-load-more {
-    padding: 12px 24px;
-    background: transparent;
-    color: var(--primary-petrol, #006266);
-    border: 2px solid var(--primary-petrol, #006266);
-    border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
-    margin-top: 16px;
-    transition: all 0.3s ease;
-}
+@media (min-width: 768px) {
+    .profile-card-content {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
 
-.btn-load-more:hover {
-    background: rgba(0, 98, 102, 0.05);
-}
+    .profile-card-main {
+        flex: 1;
+        max-width: 65%;
+    }
 
-/* ==========================================================================
-   Sidebar
-   ========================================================================== */
-
-.coach-sidebar {
-    position: sticky;
-    top: 100px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-@media (max-width: 992px) {
-    .coach-sidebar {
-        position: static;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    .profile-card-actions {
+        flex-shrink: 0;
+        width: 280px;
     }
 }
 
-.sidebar-widget {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.sidebar-widget h3 {
-    font-size: 1rem;
-    font-weight: 600;
+.profile-coach-name {
+    font-size: 1.75rem;
+    font-weight: 700;
     color: var(--text-main, #1a1a1a);
-    margin: 0 0 16px;
-}
-
-/* Booking Widget */
-.booking-widget {
-    border: 2px solid var(--primary-petrol, #006266);
-}
-
-.widget-price {
+    margin: 0 0 4px;
     display: flex;
-    align-items: baseline;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.profile-coach-name .verified-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: var(--primary-petrol, #006266);
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+}
+
+.profile-coach-name .certification-badges-inline {
+    display: inline-flex;
     gap: 4px;
+    margin-left: 4px;
+}
+
+.profile-coach-name .certification-badge-inline {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.profile-coach-title {
+    font-size: 1.125rem;
+    color: var(--text-muted, #666);
+    margin: 0 0 12px;
+}
+
+.profile-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    color: var(--text-muted, #666);
+}
+
+.profile-meta-row .meta-location,
+.profile-meta-row .meta-experience {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.profile-session-formats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-bottom: 12px;
 }
 
-.price-main {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-main, #1a1a1a);
+.profile-session-formats .format-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: #f3f4f6;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    color: var(--text-main, #333);
 }
 
-.price-per {
-    font-size: 1rem;
-    color: var(--text-muted, #6b7280);
+.profile-rating-section {
+    margin-bottom: 12px;
 }
 
-.widget-rating {
+.profile-rating-section .rating-display {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 16px;
 }
 
-.widget-rating .stars {
+.profile-rating-section .rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.profile-rating-section .rating-stars .star {
+    color: #d1d5db;
+    font-size: 1rem;
+}
+
+.profile-rating-section .rating-stars .star.filled {
     color: #fbbf24;
 }
 
-.rating-text {
-    font-size: 0.9375rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.btn-book-widget {
-    width: 100%;
-    padding: 14px 24px;
-    background: var(--primary-petrol, #006266);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
+.profile-rating-section .rating-value {
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    color: var(--text-main, #1a1a1a);
 }
 
-.btn-book-widget:hover {
-    background: var(--petrol-dark, #004a4d);
+.profile-rating-section .rating-count {
+    color: var(--text-muted, #666);
+    font-size: 0.875rem;
 }
 
-.btn-discovery-widget {
-    width: 100%;
-    padding: 14px 24px;
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+.profile-rating-section .new-coach-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, var(--primary-petrol, #006266) 0%, #00bcd4 100%);
     color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-bottom: 10px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
 }
 
-.btn-discovery-widget:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+.profile-bio {
+    margin-bottom: 12px;
 }
 
-.booking-note {
-    font-size: 0.8125rem;
-    color: var(--text-muted, #6b7280);
-    text-align: center;
-    margin: 12px 0 0;
+.profile-bio p {
+    color: var(--text-secondary, #4a5568);
+    line-height: 1.6;
+    margin: 0;
+    font-size: 0.95rem;
 }
 
-/* Languages List */
-.languages-list {
+.profile-specialties {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
 
-.language-badge {
-    padding: 6px 12px;
-    background: var(--bg-body, #f5f5f5);
-    border-radius: 6px;
-    font-size: 0.875rem;
-    color: var(--text-main, #1a1a1a);
+.profile-specialties .specialty-tag {
+    display: inline-block;
+    padding: 5px 12px;
+    background: #e0f2fe;
+    color: var(--primary-petrol, #006266);
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
 }
 
-/* Quick Stats */
-.quick-stats-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+.profile-specialties .specialty-tag.more {
+    background: #f3f4f6;
+    color: var(--text-muted, #666);
+}
+
+/* Profile Card Actions */
+.profile-card-actions {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.quick-stats-list li {
+.profile-price {
+    text-align: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 4px;
+}
+
+.profile-price .price-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.profile-price .price-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-main, #1a1a1a);
+}
+
+/* Discovery Call Button - Very Prominent */
+.btn-discovery-prominent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.btn-discovery-prominent:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.btn-discovery-prominent .calendar-icon {
+    margin-bottom: 2px;
+}
+
+.btn-discovery-prominent .btn-text {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.btn-discovery-prominent .btn-subtext {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.profile-secondary-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.profile-secondary-actions button {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-watch-video {
+    background: #f3f4f6;
+    color: var(--text-main, #333);
+    border: 1px solid #e5e7eb;
+}
+
+.btn-watch-video:hover {
+    background: #e5e7eb;
+}
+
+.btn-message {
+    background: white;
+    color: var(--primary-petrol, #006266);
+    border: 1px solid var(--primary-petrol, #006266);
+}
+
+.btn-message:hover {
+    background: rgba(0, 98, 102, 0.05);
+}
+
+/* ==========================================================================
+   Certifications Section
+   ========================================================================== */
+
+.certifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.certification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.certification-item .cert-badge {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.cert-info {
+    flex: 1;
+}
+
+.cert-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 4px;
+}
+
+.cert-org {
+    font-size: 0.875rem;
+    color: var(--text-muted, #666);
+    margin: 0;
+}
+
+.cert-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    padding: 3px 8px;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Featured Section
+   ========================================================================== */
+
+.featured-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.featured-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.featured-card:hover {
+    border-color: var(--primary-petrol, #006266);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.featured-image {
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+}
+
+.featured-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.featured-content {
+    padding: 12px;
+}
+
+.featured-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 6px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.featured-excerpt {
+    font-size: 0.8rem;
+    color: var(--text-muted, #666);
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Activity Section
+   ========================================================================== */
+
+.activity-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    margin-bottom: 16px;
+}
+
+.activity-tab {
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted, #666);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.activity-tab:hover {
+    background: #f3f4f6;
+    color: var(--text-main, #333);
+}
+
+.activity-tab.active {
+    background: var(--primary-petrol, #006266);
+    color: white;
+}
+
+.activity-tab .tab-count {
+    padding: 2px 8px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    font-size: 0.75rem;
+}
+
+.activity-tab.active .tab-count {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.activity-content {
+    min-height: 100px;
+}
+
+.activity-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.activity-post {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.activity-post:hover {
+    background: #f0f2f5;
+}
+
+.post-author {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 0.9375rem;
-    color: var(--text-main, #1a1a1a);
+    margin-bottom: 12px;
 }
 
-.quick-stats-list .stat-icon {
-    font-size: 1.125rem;
-}
-
-/* Share Widget */
-.share-buttons {
-    display: flex;
-    gap: 12px;
-}
-
-.share-btn {
-    width: 44px;
-    height: 44px;
+.post-author .author-avatar {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    border: none;
+    object-fit: cover;
+}
+
+.post-author .author-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.post-author .author-name {
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    font-size: 0.9rem;
+}
+
+.post-author .post-date {
+    font-size: 0.8rem;
+    color: var(--text-muted, #666);
+}
+
+.post-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 8px;
+}
+
+.post-excerpt {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #4a5568);
+    line-height: 1.5;
+    margin: 0 0 12px;
+}
+
+.post-image {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.btn-show-all {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 8px;
+    color: var(--primary-petrol, #006266);
+    font-weight: 500;
     cursor: pointer;
-    font-size: 1.125rem;
-    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.btn-show-all:hover {
+    background: rgba(0, 98, 102, 0.05);
+    border-color: var(--primary-petrol, #006266);
+}
+
+/* Video Card */
+.activity-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.video-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.video-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.video-thumbnail {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+}
+
+.video-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-thumbnail .video-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    font-size: 20px;
+    color: var(--primary-petrol, #006266);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.share-linkedin {
-    background: #0077b5;
-    color: white;
+.video-info {
+    padding: 12px;
 }
 
-.share-twitter {
-    background: #000;
-    color: white;
-}
-
-.share-copy {
-    background: var(--bg-body, #f5f5f5);
+.video-info h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text-main, #1a1a1a);
+    margin: 0 0 4px;
 }
 
-.share-btn:hover {
-    transform: scale(1.1);
+.video-info p {
+    font-size: 0.85rem;
+    color: var(--text-muted, #666);
+    margin: 0;
+}
+
+.activity-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted, #666);
 }
 
 /* ==========================================================================
-   Similar Coaches Section
+   Experience Section
    ========================================================================== */
 
-.similar-coaches-section {
-    background: white;
-    padding: 60px 0;
+.experience-content,
+.education-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.similar-coaches-placeholder {
-    text-align: center;
-    padding: 40px;
-    color: var(--text-muted, #6b7280);
+.experience-item,
+.education-item {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 3px solid var(--primary-petrol, #006266);
+}
+
+.exp-header {
+    margin-bottom: 8px;
+}
+
+.exp-title,
+.edu-degree {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0;
+}
+
+.exp-company,
+.edu-institution {
+    font-size: 0.9rem;
+    color: var(--text-muted, #666);
+    margin: 4px 0 0;
+}
+
+.exp-duration,
+.edu-year {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 8px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-muted, #666);
+}
+
+.exp-description {
+    margin: 10px 0 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #4a5568);
+    line-height: 1.5;
 }
 
 /* ==========================================================================
-   Article Modal
+   Skills & Interests Sections
+   ========================================================================== */
+
+.skills-list,
+.interests-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.skill-tag,
+.interest-tag {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    color: var(--primary-petrol, #006266);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid rgba(0, 98, 102, 0.1);
+}
+
+.interest-tag {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border-color: rgba(146, 64, 14, 0.1);
+}
+
+/* ==========================================================================
+   About Section
+   ========================================================================== */
+
+.about-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-secondary, #4a5568);
+}
+
+.about-content p {
+    margin: 0 0 12px;
+}
+
+.about-approach {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.about-approach h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 12px;
+}
+
+/* ==========================================================================
+   Sidebar Column
+   ========================================================================== */
+
+.profile-sidebar-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 992px) {
+    .profile-sidebar-column {
+        position: sticky;
+        top: 80px;
+    }
+}
+
+.sidebar-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+/* ==========================================================================
+   Mini Coach Cards (Sidebar)
+   ========================================================================== */
+
+.mini-coaches-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mini-coach-card {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.mini-coach-card:hover {
+    background: #f0f2f5;
+    border-color: var(--primary-petrol, #006266);
+}
+
+.mini-coach-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.mini-coach-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.mini-coach-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mini-coach-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 2px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    line-height: 1.3;
+}
+
+.mini-coach-name .certification-badges-inline {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.mini-coach-name .certification-badge-inline-mini {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.mini-coach-title {
+    font-size: 0.8rem;
+    color: var(--text-muted, #666);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+}
+
+.btn-mini-discovery {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-mini-discovery:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.btn-mini-discovery .calendar-icon {
+    flex-shrink: 0;
+}
+
+.btn-view-all-coaches {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    margin-top: 12px;
+    color: var(--primary-petrol, #006266);
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-view-all-coaches:hover {
+    background: rgba(0, 98, 102, 0.05);
+}
+
+/* ==========================================================================
+   Loading & Error States
+   ========================================================================== */
+
+.profile-loading {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+.profile-loading .skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 12px;
+}
+
+.profile-loading .banner-skeleton {
+    height: 200px;
+    margin-bottom: 80px;
+}
+
+.profile-loading .card-skeleton {
+    height: 200px;
+    margin-bottom: 24px;
+}
+
+.profile-loading .content-skeleton {
+    height: 400px;
+}
+
+.profile-loading .sidebar-skeleton {
+    height: 300px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.error-state {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.error-icon {
+    font-size: 4rem;
+    margin-bottom: 24px;
+}
+
+.error-state h2 {
+    font-size: 1.75rem;
+    color: var(--text-main, #1a1a1a);
+    margin: 0 0 12px;
+}
+
+.error-state p {
+    color: var(--text-muted, #6b7280);
+    margin: 0 0 24px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.error-state .btn-primary {
+    display: inline-block;
+    padding: 12px 24px;
+    background: var(--primary-petrol, #006266);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Modal & Popup Styles (inherited from existing)
    ========================================================================== */
 
 .article-modal-overlay {
@@ -954,737 +1250,26 @@
     margin: 0 0 20px;
 }
 
-.article-body ul,
-.article-body ol {
-    margin: 0 0 20px;
-    padding-left: 24px;
-}
-
-.article-body li {
-    margin-bottom: 8px;
-}
-
-.article-body blockquote {
-    border-left: 4px solid var(--primary-petrol, #006266);
-    padding-left: 20px;
-    margin: 24px 0;
-    font-style: italic;
-    color: var(--text-muted, #6b7280);
-}
-
 /* ==========================================================================
-   Loading & Error States
+   Reviews & Discovery Modals (keep existing styles)
    ========================================================================== */
 
-.loading-skeleton {
-    padding: 40px 0;
-}
-
-.skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 8px;
-}
-
-.skeleton-hero {
-    height: 300px;
-    margin-bottom: 24px;
-}
-
-.skeleton-text {
-    height: 24px;
-    margin-bottom: 16px;
-}
-
-.skeleton-text.short {
-    width: 60%;
-}
-
-@keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-.error-state {
-    text-align: center;
-    padding: 80px 20px;
-}
-
-.error-icon {
-    font-size: 4rem;
-    margin-bottom: 24px;
-}
-
-.error-state h2 {
-    font-size: 1.75rem;
-    color: var(--text-main, #1a1a1a);
-    margin: 0 0 12px;
-}
-
-.error-state p {
-    color: var(--text-muted, #6b7280);
-    margin: 0 0 24px;
-    max-width: 400px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* ==========================================================================
-   Responsive
-   ========================================================================== */
-
-@media (max-width: 768px) {
-    .coach-hero-section {
-        padding: 24px 0 40px;
-    }
-
-    .coach-header-content {
-        flex-wrap: wrap;
-    }
-
-    .coach-name {
-        font-size: 1.5rem;
-    }
-
-    .coach-section {
-        padding: 24px;
-    }
-
-    .section-title {
-        font-size: 1.25rem;
-    }
-
-    .price-value {
-        font-size: 1.75rem;
-    }
-
-    .article-full {
-        padding: 24px;
-    }
-
-    .article-header h1 {
-        font-size: 1.5rem;
-    }
-}
-
-/* ==========================================================================
-   Featured Testimonial
-   ========================================================================== */
-
-.featured-testimonial {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 12px;
-    padding: 20px 24px;
-    border-left: 4px solid var(--primary-petrol, #006266);
-    margin: 16px 0;
-}
-
-.testimonial-quote {
-    font-size: 1rem;
-    font-style: italic;
-    color: var(--text-main, #333);
-    line-height: 1.6;
-    margin-bottom: 12px;
-}
-
-.quote-mark {
-    font-size: 2rem;
-    color: var(--primary-petrol, #006266);
-    opacity: 0.5;
-    font-family: Georgia, serif;
-    line-height: 0;
-    vertical-align: -0.4em;
-    margin-right: 4px;
-}
-
-.testimonial-author {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.875rem;
-    color: var(--text-muted, #666);
-}
-
-.testimonial-author .stars {
-    color: #f5a623;
-}
-
-/* ==========================================================================
-   Availability Indicator
-   ========================================================================== */
-
-.availability-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    background: #e8f5e9;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    color: #2e7d32;
-}
-
-.availability-indicator.available .availability-dot {
-    width: 10px;
-    height: 10px;
-    background: #4caf50;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.1); }
-}
-
-.availability-indicator .response-time {
-    color: #558b2f;
-    font-size: 0.8rem;
-}
-
-/* ==========================================================================
-   Pricing Options
-   ========================================================================== */
-
-.pricing-options {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.pricing-options .price-display {
-    flex: 1;
-    text-align: center;
-    padding: 16px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    border: 2px solid transparent;
-    transition: all 0.2s;
-}
-
-.pricing-options .price-display:hover {
-    border-color: var(--primary-petrol, #006266);
-}
-
-.pricing-options .package-price {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-}
-
-.pricing-options .price-label {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--text-muted, #666);
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.pricing-options .price-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-main, #1a1a1a);
-}
-
-.price-savings {
-    display: block;
-    font-size: 0.75rem;
-    color: #2e7d32;
-    font-weight: 600;
-    margin-top: 4px;
-}
-
-/* ==========================================================================
-   CTA Buttons - Improved Hierarchy
-   ========================================================================== */
-
-.btn-discovery-primary {
-    width: 100%;
-    padding: 16px 24px;
-    font-size: 1rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
-    color: white;
-    transition: all 0.2s;
-    margin-bottom: 12px;
-}
-
-.btn-discovery-primary:hover {
-    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
-}
-
-.btn-discovery-primary .btn-subtitle {
-    font-size: 0.75rem;
-    opacity: 0.9;
-    font-weight: 400;
-}
-
-.btn-book-secondary {
-    width: 100%;
-    padding: 14px 24px;
-    font-size: 1rem;
-    font-weight: 600;
-    border: 2px solid var(--primary-petrol, #006266);
-    border-radius: 10px;
-    cursor: pointer;
-    background: white;
-    color: var(--primary-petrol, #006266);
-    transition: all 0.2s;
-    margin-bottom: 8px;
-}
-
-.btn-book-secondary:hover {
-    background: var(--primary-petrol, #006266);
-    color: white;
-}
-
-.btn-contact-link {
-    width: 100%;
-    padding: 12px;
-    font-size: 0.9rem;
-    background: none;
-    border: none;
-    color: var(--text-muted, #666);
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.btn-contact-link:hover {
-    color: var(--primary-petrol, #006266);
-}
-
-/* ==========================================================================
-   Review Breakdown Chart
-   ========================================================================== */
-
-.review-breakdown {
-    margin-bottom: 24px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 12px;
-}
-
-.breakdown-summary {
-    display: flex;
-    gap: 32px;
-    align-items: center;
-}
-
-.breakdown-score {
-    text-align: center;
-    min-width: 100px;
-}
-
-.breakdown-score .big-rating {
-    font-size: 3rem;
-    font-weight: 700;
-    color: var(--text-main, #1a1a1a);
-    line-height: 1;
-}
-
-.breakdown-stars {
-    margin: 8px 0;
-}
-
-.breakdown-stars .star {
-    font-size: 1.25rem;
-    color: #ddd;
-}
-
-.breakdown-stars .star.filled {
-    color: #f5a623;
-}
-
-.breakdown-total {
-    font-size: 0.875rem;
-    color: var(--text-muted, #666);
-}
-
-.breakdown-bars {
-    flex: 1;
-}
-
-.breakdown-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 6px;
-}
-
-.breakdown-row .bar-label {
-    width: 30px;
-    font-size: 0.8rem;
-    color: var(--text-muted, #666);
-}
-
-.breakdown-row .bar-track {
-    flex: 1;
-    height: 8px;
-    background: #e0e0e0;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.breakdown-row .bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #f5a623 0%, #ffc107 100%);
-    border-radius: 4px;
-    transition: width 0.3s ease;
-}
-
-.breakdown-row .bar-count {
-    width: 24px;
-    font-size: 0.8rem;
-    color: var(--text-muted, #666);
-    text-align: right;
-}
-
-@media (max-width: 576px) {
-    .breakdown-summary {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .breakdown-score {
-        margin-bottom: 16px;
-    }
-
-    .breakdown-bars {
-        width: 100%;
-    }
-}
-
-/* ==========================================================================
-   My Approach / What to Expect Sections
-   ========================================================================== */
-
-.coach-approach-section .approach-content {
-    color: var(--text-main, #333);
-    line-height: 1.7;
-}
-
-.coaching-style {
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color, #e7e7e7);
-}
-
-.coaching-style h4 {
-    font-size: 0.875rem;
-    color: var(--text-muted, #666);
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.style-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.style-tag {
-    display: inline-block;
-    padding: 6px 14px;
-    background: linear-gradient(135deg, var(--primary-petrol, #006266) 0%, #008080 100%);
-    color: white;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.what-to-expect-section .expect-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-top: 24px;
-}
-
-.expect-item {
-    text-align: center;
-    padding: 24px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.expect-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-.expect-item .expect-icon {
-    font-size: 2.5rem;
-    display: block;
-    margin-bottom: 16px;
-}
-
-.expect-item h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-main, #1a1a1a);
-    margin-bottom: 8px;
-}
-
-.expect-item p {
-    font-size: 0.875rem;
-    color: var(--text-muted, #666);
-    line-height: 1.5;
-    margin: 0;
-}
-
-@media (max-width: 768px) {
-    .what-to-expect-section .expect-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-}
-
-/* ==========================================================================
-   Similar Coaches Section
-   ========================================================================== */
-
-.similar-coaches-section {
-    background: #f8f9fa;
-    padding: 60px 0;
-}
-
-.similar-coaches-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    margin-top: 32px;
-}
-
-.similar-coach-card {
-    display: block;
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    text-decoration: none;
-    text-align: center;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.similar-coach-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-}
-
-.similar-coach-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin: 0 auto 16px;
-    border: 3px solid var(--primary-petrol, #006266);
-}
-
-.similar-coach-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.similar-coach-name {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-main, #1a1a1a);
-    margin: 0 0 4px;
-}
-
-.similar-coach-title {
-    font-size: 0.8rem;
-    color: var(--text-muted, #666);
-    margin: 0 0 12px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.similar-coach-rating {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    font-size: 0.875rem;
-    margin-bottom: 8px;
-}
-
-.similar-coach-rating .stars {
-    color: #f5a623;
-}
-
-.similar-coach-rating .review-count {
-    color: var(--text-muted, #666);
-}
-
-.similar-coach-price {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--primary-petrol, #006266);
-}
-
-@media (max-width: 992px) {
-    .similar-coaches-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 576px) {
-    .similar-coaches-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .similar-coach-card {
-        display: flex;
-        text-align: left;
-        padding: 16px;
-    }
-
-    .similar-coach-avatar {
-        width: 60px;
-        height: 60px;
-        margin: 0 16px 0 0;
-        flex-shrink: 0;
-    }
-
-    .similar-coach-info {
-        flex: 1;
-    }
-
-    .similar-coach-rating {
-        justify-content: flex-start;
-    }
-}
-
-/* ==========================================================================
-   WhatsApp Share Button
-   ========================================================================== */
-
-.share-btn.share-whatsapp {
-    background: #25d366;
-    color: white;
-}
-
-.share-btn.share-whatsapp:hover {
-    background: #128c7e;
-}
-
-.share-btn.share-whatsapp svg {
-    display: block;
-}
-
-/* ==========================================================================
-   Write Review Section
-   ========================================================================== */
-
-.reviews-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.reviews-header .section-title {
-    margin-bottom: 0;
-}
-
-.write-review-cta {
-    flex-shrink: 0;
-}
-
-.btn-write-review {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, var(--primary-petrol, #006266) 0%, #008080 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-write-review:hover {
-    background: linear-gradient(135deg, #004d4d 0%, var(--primary-petrol, #006266) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 98, 102, 0.3);
-}
-
-.btn-write-review-login {
-    background: #f8f9fa;
-    color: var(--primary-petrol, #006266);
-    border: 2px solid var(--primary-petrol, #006266);
-}
-
-.btn-write-review-login:hover {
-    background: var(--primary-petrol, #006266);
-    color: white;
-}
-
-.already-reviewed {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: #e8f5e9;
-    color: #2e7d32;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.already-reviewed .check-icon {
-    font-size: 1.1rem;
-}
-
-.no-reviews-yet {
-    text-align: center;
-    padding: 40px 20px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    color: var(--text-muted, #666);
-}
-
-.no-reviews-yet p {
-    margin: 0;
-    font-size: 1rem;
-}
-
-/* ==========================================================================
-   Write Review Modal
-   ========================================================================== */
-
-.review-modal-overlay {
+.review-modal-overlay,
+.reviews-popup-overlay,
+.video-popup-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 9999;
     padding: 20px;
     backdrop-filter: blur(4px);
 }
 
-.review-modal-container {
+.review-modal-container,
+.reviews-popup-container {
     background: white;
     border-radius: 16px;
     width: 100%;
@@ -1706,7 +1291,8 @@
     }
 }
 
-.review-modal-header {
+.review-modal-header,
+.reviews-popup-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1714,13 +1300,15 @@
     border-bottom: 1px solid var(--border-color, #e7e7e7);
 }
 
-.review-modal-header h3 {
+.review-modal-header h3,
+.reviews-popup-header h3 {
     margin: 0;
     font-size: 1.25rem;
     color: var(--text-main, #1a1a1a);
 }
 
-.review-modal-close {
+.review-modal-close,
+.reviews-popup-close {
     background: none;
     border: none;
     font-size: 1.5rem;
@@ -1728,14 +1316,10 @@
     cursor: pointer;
     padding: 4px;
     line-height: 1;
-    transition: color 0.2s;
 }
 
-.review-modal-close:hover {
-    color: var(--text-main, #1a1a1a);
-}
-
-.review-modal-content {
+.review-modal-content,
+.reviews-popup-content {
     padding: 24px;
 }
 
@@ -1771,7 +1355,6 @@
     font-size: 0.9rem;
 }
 
-/* Star Rating Input */
 .star-rating-input {
     display: flex;
     align-items: center;
@@ -1803,12 +1386,11 @@
     font-weight: 500;
 }
 
-/* Form Group */
-.review-modal-content .form-group {
+.form-group {
     margin-bottom: 20px;
 }
 
-.review-modal-content .form-group label {
+.form-group label {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
@@ -1816,8 +1398,9 @@
     font-size: 0.9rem;
 }
 
-.review-modal-content .form-group input,
-.review-modal-content .form-group textarea {
+.form-group input,
+.form-group textarea,
+.form-group select {
     width: 100%;
     padding: 12px 14px;
     border: 1px solid var(--border-color, #ddd);
@@ -1827,14 +1410,15 @@
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.review-modal-content .form-group input:focus,
-.review-modal-content .form-group textarea:focus {
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
     outline: none;
     border-color: var(--primary-petrol, #006266);
     box-shadow: 0 0 0 3px rgba(0, 98, 102, 0.1);
 }
 
-.review-modal-content .form-group textarea {
+.form-group textarea {
     resize: vertical;
     min-height: 120px;
 }
@@ -1846,7 +1430,6 @@
     margin-top: 4px;
 }
 
-/* Form Actions */
 .review-form-actions {
     display: flex;
     gap: 12px;
@@ -1865,14 +1448,10 @@
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s;
 }
 
-.review-form-actions .btn-cancel:hover {
-    background: #e0e0e0;
-}
-
-.review-form-actions .btn-primary {
+.review-form-actions .btn-primary,
+.btn-primary {
     padding: 12px 24px;
     background: linear-gradient(135deg, var(--primary-petrol, #006266) 0%, #008080 100%);
     color: white;
@@ -1884,7 +1463,8 @@
     transition: all 0.2s;
 }
 
-.review-form-actions .btn-primary:hover:not(:disabled) {
+.review-form-actions .btn-primary:hover:not(:disabled),
+.btn-primary:hover {
     background: linear-gradient(135deg, #004d4d 0%, var(--primary-petrol, #006266) 100%);
 }
 
@@ -1893,178 +1473,7 @@
     cursor: not-allowed;
 }
 
-@media (max-width: 576px) {
-    .reviews-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .review-modal-container {
-        max-height: 100vh;
-        border-radius: 16px 16px 0 0;
-        margin-top: auto;
-    }
-
-    .review-form-actions {
-        flex-direction: column-reverse;
-    }
-
-    .review-form-actions button {
-        width: 100%;
-    }
-}
-
-/* ==========================================================================
-   Reviews Overview Card - Clickable
-   ========================================================================== */
-
-.coach-reviews-overview.clickable {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
-}
-
-.coach-reviews-overview.clickable:hover {
-    border-color: var(--primary-petrol, #006266);
-    background: rgba(0, 98, 102, 0.02);
-}
-
-.reviews-overview-content {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.reviews-overview-rating {
-    display: flex;
-    align-items: center;
-}
-
-.rating-display {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.rating-display .rating-score {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--text-main, #1a1a1a);
-}
-
-.rating-display .rating-stars {
-    display: flex;
-    gap: 2px;
-}
-
-.rating-display .rating-stars .star {
-    font-size: 1.5rem;
-    color: #ddd;
-}
-
-.rating-display .rating-stars .star.filled {
-    color: #fbbf24;
-}
-
-.rating-display .rating-stars .star.empty {
-    color: #ddd;
-}
-
-.rating-display .rating-count {
-    font-size: 1rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.rating-display.no-reviews {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-}
-
-.rating-display.no-reviews .no-reviews-text {
-    font-size: 0.9375rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.new-coach-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    background: linear-gradient(135deg, #006266 0%, #004d50 100%);
-    border: 1px solid #003d40;
-    border-radius: 20px;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: white;
-}
-
-.view-all-link {
-    font-size: 0.9375rem;
-    color: var(--primary-petrol, #006266);
-    font-weight: 500;
-}
-
-/* ==========================================================================
-   Reviews Popup
-   ========================================================================== */
-
-.reviews-popup-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    padding: 20px;
-}
-
-.reviews-popup-container {
-    background: white;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 600px;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.reviews-popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border-color, #e7e7e7);
-}
-
-.reviews-popup-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-.reviews-popup-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--text-muted, #6b7280);
-    padding: 4px;
-    line-height: 1;
-}
-
-.reviews-popup-close:hover {
-    color: var(--text-main, #1a1a1a);
-}
-
-.reviews-popup-content {
-    padding: 24px;
-    overflow-y: auto;
-    flex: 1;
-}
-
+/* Reviews Popup Specific */
 .reviews-popup-overview {
     display: flex;
     gap: 24px;
@@ -2160,36 +1569,12 @@
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-write-review-popup:hover {
-    background: var(--petrol-dark, #004a4d);
 }
 
 .btn-write-review-popup.btn-login {
     background: transparent;
     color: var(--primary-petrol, #006266);
     border: 2px solid var(--primary-petrol, #006266);
-}
-
-.btn-write-review-popup.btn-login:hover {
-    background: rgba(0, 98, 102, 0.05);
-}
-
-.popup-write-review .already-reviewed {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: #d1fae5;
-    color: #065f46;
-    border-radius: 8px;
-    font-size: 0.9375rem;
-}
-
-.popup-write-review .already-reviewed .check-icon {
-    font-weight: bold;
 }
 
 .popup-reviews-list {
@@ -2249,596 +1634,73 @@
     color: var(--text-muted, #6b7280);
 }
 
-@media (max-width: 640px) {
-    .reviews-popup-container {
-        max-height: 90vh;
+.already-reviewed {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+}
+
+/* ==========================================================================
+   Responsive Mobile Adjustments
+   ========================================================================== */
+
+@media (max-width: 767px) {
+    .profile-coach-name {
+        font-size: 1.35rem;
+    }
+
+    .profile-coach-title {
+        font-size: 1rem;
+    }
+
+    .profile-section {
+        padding: 20px;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+    }
+
+    .featured-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 12px;
+    }
+
+    .activity-tab {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    .article-full {
+        padding: 20px;
+    }
+
+    .article-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .review-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .review-form-actions button {
+        width: 100%;
     }
 
     .reviews-popup-overview {
         flex-direction: column;
         align-items: center;
         text-align: center;
-    }
-
-    .popup-breakdown {
-        width: 100%;
-    }
-}
-
-/* ==========================================================================
-   Video Popup Modal
-   ========================================================================== */
-
-.video-popup-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: 20px;
-    animation: fadeIn 0.2s ease;
-}
-
-.video-popup-container {
-    background: #1a1a1a;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 900px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
-    animation: slideUp 0.3s ease;
-    overflow: hidden;
-}
-
-.video-popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: #1a1a1a;
-    border-bottom: 1px solid #333;
-}
-
-.video-popup-header h3 {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--petrol-light);
-}
-
-.video-popup-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #999;
-    padding: 4px 8px;
-    line-height: 1;
-    transition: color 0.2s ease;
-    border-radius: 4px;
-}
-
-.video-popup-close:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.video-popup-content {
-    position: relative;
-    width: 100%;
-    padding-top: 56.25%; /* 16:9 aspect ratio */
-    background: #000;
-    min-height: 500px;
-}
-
-.video-popup-content .video-iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-.video-popup-content .video-player {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #000;
-}
-
-.video-popup-content .video-error {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    color: #999;
-    padding: 40px 20px;
-}
-
-.video-popup-content .video-error p {
-    margin: 0 0 16px;
-    font-size: 1rem;
-}
-
-.video-popup-content .video-external-link {
-    display: inline-block;
-    color: var(--primary-petrol, #006266);
-    background: white;
-    padding: 12px 24px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.video-popup-content .video-external-link:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .video-popup-overlay {
-        padding: 0;
-        align-items: flex-end;
-    }
-
-    .video-popup-container {
-        max-width: 100%;
-        max-height: 100vh;
-        border-radius: 16px 16px 0 0;
-    }
-
-    .video-popup-header {
-        padding: 14px 16px;
-    }
-
-    .video-popup-header h3 {
-        font-size: 1rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .video-popup-content {
-        padding-top: 75%; /* Taller ratio for small screens */
-    }
-}
-
-/* ==========================================================================
-   Reviews in Hero Section
-   ========================================================================== */
-
-.coach-reviews-hero {
-    background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin: 16px 0;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.coach-reviews-hero:hover {
-    background: linear-gradient(135deg, #f0f2f5 0%, #e9ecef 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.reviews-hero-rating {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.rating-score-hero {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--primary-petrol, #006266);
-    line-height: 1;
-}
-
-.rating-details-hero {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.rating-stars-hero {
-    display: flex;
-    gap: 2px;
-}
-
-.rating-stars-hero .star {
-    color: #d1d5db;
-    font-size: 1rem;
-}
-
-.rating-stars-hero .star.filled {
-    color: #fbbf24;
-}
-
-.rating-count-hero {
-    font-size: 0.85rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.view-reviews-link {
-    margin-left: auto;
-    font-size: 0.9rem;
-    color: var(--primary-petrol, #006266);
-    font-weight: 500;
-}
-
-.reviews-hero-empty {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.be-first-text {
-    color: var(--text-muted, #6b7280);
-    font-size: 0.9rem;
-}
-
-/* ==========================================================================
-   LinkedIn-Style Articles Feed
-   ========================================================================== */
-
-.coach-articles-feed {
-    margin-top: 32px;
-}
-
-.articles-feed-header {
-    margin-bottom: 24px;
-}
-
-.articles-feed-header .section-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-}
-
-.articles-icon {
-    font-size: 1.25rem;
-}
-
-.articles-subtitle {
-    color: var(--text-muted, #6b7280);
-    font-size: 0.95rem;
-    margin: 0;
-}
-
-.articles-feed-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.article-feed-card {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid var(--border-color, #e5e7eb);
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.article-feed-card:hover {
-    border-color: var(--primary-petrol, #006266);
-    box-shadow: 0 4px 16px rgba(0, 98, 102, 0.1);
-    transform: translateY(-2px);
-}
-
-.article-feed-card.featured {
-    border: 2px solid var(--primary-petrol, #006266);
-}
-
-.article-feed-card.featured::before {
-    content: "Featured";
-    display: block;
-    background: var(--primary-petrol, #006266);
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 6px 16px;
-}
-
-/* Author Header - LinkedIn Style */
-.article-author-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px 20px 12px;
-}
-
-.article-author-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.article-author-info {
-    flex: 1;
-}
-
-.article-author-name {
-    display: block;
-    font-weight: 600;
-    color: var(--text-main, #1a1a1a);
-    font-size: 0.95rem;
-}
-
-.article-author-title {
-    display: block;
-    color: var(--text-muted, #6b7280);
-    font-size: 0.85rem;
-    line-height: 1.4;
-}
-
-.article-publish-info {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 2px;
-    font-size: 0.8rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.article-read-time {
-    color: var(--text-muted, #6b7280);
-}
-
-/* Article Body */
-.article-feed-body {
-    padding: 0 20px 16px;
-}
-
-.article-feed-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--text-main, #1a1a1a);
-    margin: 0 0 10px;
-    line-height: 1.4;
-}
-
-.article-feed-card.featured .article-feed-title {
-    font-size: 1.35rem;
-}
-
-.article-feed-excerpt {
-    color: var(--text-muted, #6b7280);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin: 0;
-}
-
-/* Article Image */
-.article-feed-image {
-    width: 100%;
-    aspect-ratio: 16/9;
-    overflow: hidden;
-}
-
-.article-feed-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.article-feed-card:hover .article-feed-image img {
-    transform: scale(1.02);
-}
-
-/* Article Footer */
-.article-feed-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    border-top: 1px solid var(--border-color, #e5e7eb);
-    background: #f9fafb;
-}
-
-.article-views {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
-    color: var(--text-muted, #6b7280);
-}
-
-.view-icon {
-    font-size: 0.9rem;
-}
-
-.article-read-more {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--primary-petrol, #006266);
-}
-
-/* Mobile Responsive - Articles Feed */
-@media (max-width: 768px) {
-    .coach-reviews-hero {
-        padding: 14px 16px;
-    }
-
-    .rating-score-hero {
-        font-size: 1.75rem;
-    }
-
-    .view-reviews-link {
-        width: 100%;
-        text-align: center;
-        margin-top: 8px;
-        margin-left: 0;
-    }
-
-    .coach-articles-feed {
-        margin-top: 24px;
-    }
-
-    .article-author-header {
-        padding: 14px 16px 10px;
-    }
-
-    .article-author-avatar {
-        width: 40px;
-        height: 40px;
-    }
-
-    .article-feed-body {
-        padding: 0 16px 14px;
-    }
-
-    .article-feed-title {
-        font-size: 1.1rem;
-    }
-
-    .article-feed-card.featured .article-feed-title {
-        font-size: 1.2rem;
-    }
-
-    .article-feed-footer {
-        padding: 10px 16px;
-    }
-}
-
-/* ==========================================================================
-   Specialties in Hero (compact tags)
-   ========================================================================== */
-
-.coach-specialties-hero {
-    margin: 12px 0;
-}
-
-.specialties-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.specialty-tag-hero {
-    display: inline-block;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    color: var(--primary-petrol, #006266);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    text-decoration: none;
-    border: 1px solid rgba(0, 98, 102, 0.15);
-    transition: all 0.2s ease;
-}
-
-.specialty-tag-hero:hover {
-    background: var(--primary-petrol, #006266);
-    color: white;
-    transform: translateY(-1px);
-}
-
-.specialty-more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #f3f4f6;
-    color: var(--text-muted, #6b7280);
-    padding: 6px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-/* ==========================================================================
-   Session Formats in Hero (compact badges)
-   ========================================================================== */
-
-.session-formats-hero {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 12px 0;
-}
-
-.format-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #f9fafb;
-    border: 1px solid var(--border-color, #e5e7eb);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    color: var(--text-main, #333);
-}
-
-.format-badge .format-icon {
-    font-size: 0.9rem;
-}
-
-/* ==========================================================================
-   Sidebar Language Flags & Location
-   ========================================================================== */
-
-.languages-list-flags {
-    padding: 8px 0;
-}
-
-.languages-list-flags .language-flags {
-    gap: 8px;
-}
-
-.location-display {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 0;
-}
-
-.location-icon {
-    font-size: 1.1rem;
-}
-
-.location-text {
-    color: var(--text-main, #333);
-    font-size: 0.95rem;
-}
-
-/* Mobile Responsive - New Hero Elements */
-@media (max-width: 768px) {
-    .coach-specialties-hero {
-        margin: 10px 0;
-    }
-
-    .specialty-tag-hero {
-        padding: 5px 10px;
-        font-size: 0.8rem;
-    }
-
-    .session-formats-hero {
-        margin: 10px 0;
-    }
-
-    .format-badge {
-        padding: 5px 10px;
-        font-size: 0.8rem;
     }
 }

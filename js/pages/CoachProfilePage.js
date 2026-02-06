@@ -1,6 +1,6 @@
 /**
- * Coach Profile Page
- * @fileoverview SEO-optimized coach profile page with structured data
+ * Coach Profile Page - LinkedIn-Style Layout
+ * @fileoverview SEO-optimized coach profile page with two-column LinkedIn-style layout
  */
 
 import htm from '../vendor/htm.js';
@@ -15,19 +15,15 @@ import {
     generateBreadcrumbSchema,
     truncateForMeta,
 } from '../utils/seo.js';
-import { Breadcrumbs, CoachBreadcrumbs } from '../components/common/Breadcrumbs.js';
-import {
-    TrustScore,
-    TrustSignalsBar,
-    CoachStatsBanner,
-    CredentialsList,
-    ReviewCard,
-    GuaranteeBadge,
-    CoachVideoPlayer,
-} from '../coachProfile.js';
+import { formatPrice } from '../utils/formatting.js';
+import { LanguageFlags } from '../components/coach/LanguageFlags.js';
+import { TrustBadges } from '../components/coach/TrustBadges.js';
+import { VideoPopup } from '../components/coach/VideoPopup.js';
+import { DiscoveryCallModal } from '../components/coach/DiscoveryCallModal.js';
+import { useCities, useLookupOptions } from '../context/AppContext.js';
 
 const React = window.React;
-const { useState, useEffect, useCallback, memo } = React;
+const { useState, useEffect, useCallback, memo, useMemo } = React;
 const html = htm.bind(React.createElement);
 
 // Language to Country Code Mapping (for flag images)
@@ -56,320 +52,16 @@ const LANGUAGE_NAMES = {
     'Italian': 'Italian', 'Dutch': 'Dutch', 'Portuguese': 'Portuguese', 'Russian': 'Russian'
 };
 
-// Language Flags Component - Uses flag images for Windows compatibility
-const LanguageFlags = ({ languages }) => {
-    if (!languages || languages.length === 0) return null;
-    const langArray = Array.isArray(languages) ? languages : [languages];
-    if (langArray.length === 0) return null;
-
-    const getTooltip = (lang) => LANGUAGE_NAMES[lang] || lang;
-    const getCountryCode = (lang) => LANGUAGE_TO_COUNTRY[lang] || null;
-
-    return html`
-        <div class="language-flags" title="${langArray.map(getTooltip).join(', ')}">
-            ${langArray.slice(0, 5).map(lang => {
-                const countryCode = getCountryCode(lang);
-                return countryCode ? html`
-                    <img
-                        key=${lang}
-                        class="flag-img"
-                        src="https://flagcdn.com/24x18/${countryCode}.png"
-                        srcset="https://flagcdn.com/48x36/${countryCode}.png 2x"
-                        alt=${getTooltip(lang)}
-                        title=${getTooltip(lang)}
-                        width="24"
-                        height="18"
-                    />
-                ` : html`<span key=${lang} class="flag-icon" title=${getTooltip(lang)}>🌐</span>`;
-            })}
-            ${langArray.length > 5 ? html`<span class="more-langs">+${langArray.length - 5}</span>` : ''}
-        </div>
-    `;
-};
-
 /**
- * Video Popup Component - Supports YouTube, Vimeo, and direct video URLs
+ * Helper to detect if a string is a UUID
  */
-const VideoPopup = ({ videoUrl, coachName, onClose }) => {
-    useEffect(() => {
-        const handleEscape = (e) => {
-            if (e.key === 'Escape') onClose();
-        };
-        document.addEventListener('keydown', handleEscape);
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = '';
-        };
-    }, [onClose]);
-
-    const handleBackdropClick = (e) => {
-        if (e.target.classList.contains('video-popup-overlay')) {
-            onClose();
-        }
-    };
-
-    // Convert video URL to embeddable format
-    const getEmbedUrl = (url) => {
-        if (!url) return null;
-
-        // YouTube formats: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
-        const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-        if (youtubeMatch) {
-            return `https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=1&rel=0`;
-        }
-
-        // Vimeo formats: vimeo.com/ID, player.vimeo.com/video/ID
-        const vimeoMatch = url.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/);
-        if (vimeoMatch) {
-            return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
-        }
-
-        // Direct video URL (mp4, webm, etc.)
-        if (url.match(/\.(mp4|webm|ogg)(\?|$)/i)) {
-            return url;
-        }
-
-        // Return original URL as fallback
-        return url;
-    };
-
-    const embedUrl = getEmbedUrl(videoUrl);
-    const isDirectVideo = videoUrl && videoUrl.match(/\.(mp4|webm|ogg)(\?|$)/i);
-    const isYouTubeOrVimeo = embedUrl && (embedUrl.includes('youtube.com/embed') || embedUrl.includes('player.vimeo.com'));
-
-    return html`
-        <div class="video-popup-overlay" onClick=${handleBackdropClick}>
-            <div class="video-popup-container">
-                <div class="video-popup-header">
-                    <h3>${t('video.meet') || 'Meet'} ${coachName}</h3>
-                    <button class="video-popup-close" onClick=${onClose}>✕</button>
-                </div>
-                <div class="video-popup-content">
-                    ${isYouTubeOrVimeo ? html`
-                        <iframe
-                            src=${embedUrl}
-                            class="video-iframe"
-                            frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowfullscreen
-                        ></iframe>
-                    ` : isDirectVideo ? html`
-                        <video
-                            src=${videoUrl}
-                            controls
-                            autoplay
-                            class="video-player"
-                        >
-                            Your browser does not support video playback.
-                        </video>
-                    ` : html`
-                        <div class="video-error">
-                            <p>${t('video.unableToPlay') || 'Unable to play this video format.'}</p>
-                            <a href=${videoUrl} target="_blank" class="video-external-link">${t('video.openInNewTab') || 'Open video in new tab'} →</a>
-                        </div>
-                    `}
-                </div>
-            </div>
-        </div>
-    `;
-};
-
-/**
- * Discovery Call Modal Component - Simple booking for discovery calls
- */
-const DiscoveryCallModal = ({ coach, onClose }) => {
-    const [formData, setFormData] = useState({
-        name: '',
-        phone: '',
-        email: '',
-        message: '',
-        timePreference: 'flexible'
-    });
-    const [submitting, setSubmitting] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        const handleEscape = (e) => {
-            if (e.key === 'Escape') onClose();
-        };
-        document.addEventListener('keydown', handleEscape);
-        document.body.style.overflow = 'hidden';
-
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = '';
-        };
-    }, [onClose]);
-
-    const handleBackdropClick = (e) => {
-        if (e.target.classList.contains('discovery-modal-overlay')) {
-            onClose();
-        }
-    };
-
-    const timePreferenceOptions = [
-        { value: 'flexible', label: t('discovery.timeFlexible') },
-        { value: 'weekday_morning', label: t('discovery.timeWeekdayMorning') },
-        { value: 'weekday_afternoon', label: t('discovery.timeWeekdayAfternoon') },
-        { value: 'weekday_evening', label: t('discovery.timeWeekdayEvening') },
-        { value: 'weekend_morning', label: t('discovery.timeWeekendMorning') },
-        { value: 'weekend_afternoon', label: t('discovery.timeWeekendAfternoon') }
-    ];
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!formData.name.trim()) {
-            setError(t('discovery.errorName'));
-            return;
-        }
-        if (!formData.phone.trim()) {
-            setError(t('discovery.errorPhone'));
-            return;
-        }
-
-        setSubmitting(true);
-        setError('');
-
-        try {
-            const response = await fetch('/api/discovery-requests', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    coach_id: coach.id,
-                    client_name: formData.name.trim(),
-                    client_phone: formData.phone.trim(),
-                    client_email: formData.email.trim() || null,
-                    client_message: formData.message.trim() || null,
-                    time_preference: formData.timePreference
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                setSuccess(true);
-            } else {
-                setError(result.error?.message || t('discovery.errorGeneric'));
-            }
-        } catch (err) {
-            console.error('Discovery call request error:', err);
-            setError(t('discovery.errorNetwork'));
-        }
-
-        setSubmitting(false);
-    };
-
-    if (success) {
-        const coachName = coach.full_name || coach.display_name;
-        return html`
-            <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
-                <div class="discovery-modal-container">
-                    <div class="discovery-modal-header">
-                        <h3>${t('discovery.successTitle')}</h3>
-                        <button class="discovery-modal-close" onClick=${onClose}>✕</button>
-                    </div>
-                    <div class="discovery-modal-content success-content">
-                        <div class="success-icon">✓</div>
-                        <p>${t('discovery.successMessage').replace('{coachName}', coachName)}</p>
-                        <p>${t('discovery.successFollowUp')}</p>
-                        <button class="btn-primary" onClick=${onClose}>${t('discovery.close')}</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    const coachName = coach.full_name || coach.display_name;
-    return html`
-        <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
-            <div class="discovery-modal-container">
-                <div class="discovery-modal-header">
-                    <h3>${t('discovery.modalTitle')}</h3>
-                    <button class="discovery-modal-close" onClick=${onClose}>✕</button>
-                </div>
-                <div class="discovery-modal-content">
-                    <p class="discovery-intro">
-                        ${t('discovery.modalIntro').replace('{coachName}', coachName)}
-                    </p>
-
-                    ${error && html`<div class="discovery-error">${error}</div>`}
-
-                    <form onSubmit=${handleSubmit}>
-                        <div class="form-group">
-                            <label>${t('discovery.yourName')} *</label>
-                            <input
-                                type="text"
-                                placeholder=${t('discovery.yourNamePlaceholder')}
-                                value=${formData.name}
-                                onChange=${(e) => setFormData({...formData, name: e.target.value})}
-                                required
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label>${t('discovery.phoneNumber')} *</label>
-                            <input
-                                type="tel"
-                                placeholder=${t('discovery.phonePlaceholder')}
-                                value=${formData.phone}
-                                onChange=${(e) => setFormData({...formData, phone: e.target.value})}
-                                required
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label>${t('discovery.email')}</label>
-                            <input
-                                type="email"
-                                placeholder=${t('discovery.emailPlaceholder')}
-                                value=${formData.email}
-                                onChange=${(e) => setFormData({...formData, email: e.target.value})}
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label>${t('discovery.preferredTime')}</label>
-                            <select
-                                value=${formData.timePreference}
-                                onChange=${(e) => setFormData({...formData, timePreference: e.target.value})}
-                            >
-                                ${timePreferenceOptions.map(opt => html`
-                                    <option key=${opt.value} value=${opt.value}>${opt.label}</option>
-                                `)}
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>${t('discovery.message')}</label>
-                            <textarea
-                                placeholder=${t('discovery.messagePlaceholder')}
-                                rows="3"
-                                value=${formData.message}
-                                onChange=${(e) => setFormData({...formData, message: e.target.value})}
-                            ></textarea>
-                        </div>
-
-                        <div class="discovery-form-actions">
-                            <button type="button" class="btn-cancel" onClick=${onClose}>${t('discovery.cancel')}</button>
-                            <button type="submit" class="btn-primary" disabled=${submitting}>
-                                ${submitting ? t('discovery.submitting') : t('discovery.submit')}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
+const isUUID = (str) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
 };
 
 /**
  * Write Review Modal Component
- * Allows logged-in users to write a review for a coach
  */
 const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
     const [rating, setRating] = useState(5);
@@ -459,7 +151,6 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
                     ${error && html`<div class="review-error">${error}</div>`}
 
                     <form onSubmit=${handleSubmit}>
-                        <!-- Star Rating -->
                         <div class="form-group">
                             <label>${t('review.yourRating') || 'Your Rating'} *</label>
                             <div class="star-rating-input">
@@ -485,7 +176,6 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
                             </div>
                         </div>
 
-                        <!-- Name (optional) -->
                         <div class="form-group">
                             <label>${t('review.displayName') || 'Display Name'} (${t('review.optional') || 'optional'})</label>
                             <input
@@ -497,7 +187,6 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
                             />
                         </div>
 
-                        <!-- Review Content -->
                         <div class="form-group">
                             <label>${t('review.yourReview') || 'Your Review'} *</label>
                             <textarea
@@ -529,7 +218,6 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
 
 /**
  * Reviews Popup Component
- * Shows all reviews with ability to write a new review
  */
 const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasReviewed, isOwnProfile, onClose, onWriteReview, getReviewBreakdown }) => {
     useEffect(() => {
@@ -559,7 +247,6 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
                     <button class="reviews-popup-close" onClick=${onClose}>✕</button>
                 </div>
                 <div class="reviews-popup-content">
-                    <!-- Rating Overview -->
                     <div class="reviews-popup-overview">
                         <div class="popup-rating-big">
                             <span class="big-score">${rating.toFixed(1)}</span>
@@ -591,7 +278,6 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
                         `}
                     </div>
 
-                    <!-- Write Review Button -->
                     <div class="popup-write-review">
                         ${session?.user ? (
                             isOwnProfile ? null : (
@@ -613,7 +299,6 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
                         `}
                     </div>
 
-                    <!-- Reviews List -->
                     ${reviews.length > 0 ? html`
                         <div class="popup-reviews-list">
                             ${reviews.map(review => html`
@@ -645,20 +330,315 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
 };
 
 /**
- * Helper to detect if a string is a UUID
+ * Mini Coach Card Component for Sidebar
+ * Shows similar coaches with name, certification badge, title, and chemistry call button
  */
-const isUUID = (str) => {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(str);
+const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall }) {
+    const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
+
+    const handleDiscoveryClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowDiscoveryModal(true);
+    };
+
+    const handleCardClick = () => {
+        window.navigateTo(`/coach/${coach.slug || coach.id}`);
+    };
+
+    return html`
+        <div class="mini-coach-card" onClick=${handleCardClick}>
+            <div class="mini-coach-header">
+                <img
+                    src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name)}
+                    alt=${coach.full_name}
+                    class="mini-coach-avatar"
+                    loading="lazy"
+                />
+                <div class="mini-coach-info">
+                    <h4 class="mini-coach-name">
+                        ${coach.full_name}
+                        ${coach.cs_coach_certifications?.length > 0 && html`
+                            <span class="certification-badges-inline">
+                                ${coach.cs_coach_certifications
+                                    .filter(cert => cert.cs_certifications?.badge_url)
+                                    .slice(0, 2)
+                                    .map(cert => html`
+                                        <img
+                                            key=${cert.id}
+                                            src=${cert.cs_certifications?.badge_url}
+                                            alt=${cert.cs_certifications?.short_name || 'Cert'}
+                                            title=${cert.cs_certifications?.name || 'Certification'}
+                                            class="certification-badge-inline-mini"
+                                        />
+                                    `)
+                                }
+                            </span>
+                        `}
+                    </h4>
+                    <p class="mini-coach-title">${coach.title}</p>
+                </div>
+            </div>
+            <button
+                class="btn-mini-discovery"
+                onClick=${handleDiscoveryClick}
+            >
+                <svg class="calendar-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                ${t('discovery.freeCall') || 'Free Chemistry Call'}
+            </button>
+        </div>
+
+        ${showDiscoveryModal && html`
+            <${DiscoveryCallModal}
+                coach=${coach}
+                onClose=${() => setShowDiscoveryModal(false)}
+            />
+        `}
+    `;
+});
+
+/**
+ * Profile Coach Card Component
+ * Embedded coach card for the profile page with overlapping profile image
+ */
+const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, session }) {
+    const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
+    const { cities, getLocalizedCityName } = useCities();
+    const { lookupOptions, getLocalizedName } = useLookupOptions();
+
+    // Fetch live reviews data
+    useEffect(() => {
+        const fetchReviewsData = async () => {
+            const isValidUUID = typeof coach.id === 'string' &&
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(coach.id);
+
+            if (window.supabaseClient && isValidUUID) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('cs_reviews')
+                        .select('rating')
+                        .eq('coach_id', coach.id);
+
+                    if (!error && data) {
+                        const count = data.length;
+                        const avgRating = count > 0
+                            ? data.reduce((sum, r) => sum + (r.rating || 0), 0) / count
+                            : 0;
+                        setLiveReviewsData({ rating: avgRating, count, loaded: true });
+                    } else {
+                        setLiveReviewsData({ rating: 0, count: 0, loaded: true });
+                    }
+                } catch {
+                    setLiveReviewsData({ rating: 0, count: 0, loaded: true });
+                }
+            } else {
+                setLiveReviewsData({ rating: 0, count: 0, loaded: true });
+            }
+        };
+        fetchReviewsData();
+    }, [coach.id]);
+
+    const rating = liveReviewsData.loaded
+        ? liveReviewsData.rating
+        : (coach.rating_average || coach.rating || 0);
+    const reviewsCount = liveReviewsData.loaded
+        ? liveReviewsData.count
+        : (coach.rating_count || coach.reviews_count || 0);
+
+    const location = useMemo(() => {
+        if (coach.city_id && cities.list?.length > 0) {
+            const city = cities.list.find(c => c.id === coach.city_id);
+            if (city) {
+                return getLocalizedCityName(city);
+            }
+        }
+        return coach.location_city || coach.location || '';
+    }, [coach.city_id, coach.location_city, coach.location, cities.list, getLocalizedCityName]);
+
+    const languages = coach.languages || [];
+    const specialtyCodes = coach.specialties || [];
+
+    const localizedSpecialties = useMemo(() => {
+        if (!specialtyCodes.length || !lookupOptions.specialties?.length) {
+            return specialtyCodes.map(code => ({ code, name: code }));
+        }
+        return specialtyCodes.map(code => {
+            const specialtyOption = lookupOptions.specialties.find(s => s.code === code);
+            if (specialtyOption) {
+                return { code, name: getLocalizedName(specialtyOption) };
+            }
+            return { code, name: code };
+        });
+    }, [specialtyCodes, lookupOptions.specialties, getLocalizedName]);
+
+    const bio = coach.bio || '';
+    const videoUrl = coach.intro_video_url || coach.video_url;
+    const hasVideo = !!videoUrl;
+
+    const sessionTypes = coach.session_types || [];
+    const offersVideo = sessionTypes.includes('video') || coach.offers_virtual;
+    const offersInPerson = sessionTypes.includes('in-person') || coach.offers_onsite;
+
+    return html`
+        <div class="profile-coach-card">
+            <!-- Main Card Content -->
+            <div class="profile-card-content">
+                <div class="profile-card-main">
+                    <!-- Name and Title -->
+                    <h1 class="profile-coach-name">
+                        ${coach.full_name}
+                        ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
+                        ${coach.cs_coach_certifications?.length > 0 && html`
+                            <span class="certification-badges-inline">
+                                ${coach.cs_coach_certifications
+                                    .filter(cert => cert.cs_certifications?.badge_url)
+                                    .sort((a, b) => (b.cs_certifications?.sort_order || 0) - (a.cs_certifications?.sort_order || 0))
+                                    .map(cert => html`
+                                        <img
+                                            key=${cert.id}
+                                            src=${cert.cs_certifications?.badge_url}
+                                            alt=${cert.cs_certifications?.short_name || cert.cs_certifications?.name || 'Certification'}
+                                            title=${cert.cs_certifications?.name || 'Certification'}
+                                            class="certification-badge-inline"
+                                        />
+                                    `)
+                                }
+                            </span>
+                        `}
+                    </h1>
+                    <div class="profile-coach-title">${coach.title}</div>
+
+                    <!-- Location and Languages Row -->
+                    <div class="profile-meta-row">
+                        ${location && html`<span class="meta-location">📍 ${location}</span>`}
+                        <${LanguageFlags} languages=${languages} />
+                        ${coach.years_experience > 0 && html`
+                            <span class="meta-experience">🏆 ${coach.years_experience}+ ${t('coach.yearsExperience') || 'years'}</span>
+                        `}
+                    </div>
+
+                    <!-- Session Formats Row -->
+                    ${(offersVideo || offersInPerson) && html`
+                        <div class="profile-session-formats">
+                            ${offersVideo && html`<span class="format-tag">💻 Video Call</span>`}
+                            ${offersInPerson && html`<span class="format-tag">🤝 In-Person</span>`}
+                        </div>
+                    `}
+
+                    <!-- Rating Section -->
+                    <div class="profile-rating-section">
+                        ${reviewsCount > 0 ? html`
+                            <div class="rating-display">
+                                <div class="rating-stars">
+                                    ${[1,2,3,4,5].map(star => html`
+                                        <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                    `)}
+                                </div>
+                                <span class="rating-value">${rating.toFixed(1)}</span>
+                                <span class="rating-count">(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})</span>
+                            </div>
+                        ` : html`
+                            <div class="new-coach-badge">
+                                <span>✨</span> ${t('coach.new') || 'New Coach'}
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- Bio -->
+                    ${bio && html`
+                        <div class="profile-bio">
+                            <p>${bio.length > 200 ? bio.substring(0, 200) + '...' : bio}</p>
+                        </div>
+                    `}
+
+                    <!-- Specialties -->
+                    ${localizedSpecialties.length > 0 && html`
+                        <div class="profile-specialties">
+                            ${localizedSpecialties.slice(0, 6).map(s => html`
+                                <span key=${s.code} class="specialty-tag">${s.name}</span>
+                            `)}
+                            ${localizedSpecialties.length > 6 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 6}</span>` : ''}
+                        </div>
+                    `}
+                </div>
+
+                <!-- Price and CTA Section -->
+                <div class="profile-card-actions">
+                    <div class="profile-price">
+                        <span class="price-label">${t('coach.hourly_rate') || 'Hourly Rate'}</span>
+                        <span class="price-value">${formatPrice(coach.hourly_rate)}</span>
+                    </div>
+
+                    <!-- Primary CTA: Discovery Call - Very Prominent -->
+                    <button class="btn-discovery-prominent" onClick=${onDiscoveryCall}>
+                        <svg class="calendar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span class="btn-text">${t('discovery.bookFreeCall') || 'Book Free Chemistry Call'}</span>
+                        <span class="btn-subtext">${t('discovery.freeNoObligation') || 'Free, no obligation'}</span>
+                    </button>
+
+                    <!-- Secondary Actions -->
+                    <div class="profile-secondary-actions">
+                        ${hasVideo && html`
+                            <button class="btn-watch-video" onClick=${onVideoClick}>
+                                ▶ ${t('coach.watchIntro') || 'Watch Intro'}
+                            </button>
+                        `}
+                        <button class="btn-message" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
+                            💬 ${t('coach.sendMessage') || 'Message'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trust Badges -->
+            <${TrustBadges} coach=${coach} />
+        </div>
+    `;
+});
+
+/**
+ * Activity Tab Component
+ */
+const ActivityTabs = ({ activeTab, onTabChange, articles, coach }) => {
+    const tabs = [
+        { id: 'posts', label: t('activity.posts') || 'Posts', count: articles.length },
+        { id: 'comments', label: t('activity.comments') || 'Comments', count: 0 },
+        { id: 'videos', label: t('activity.videos') || 'Videos', count: coach.intro_video_url ? 1 : 0 },
+        { id: 'images', label: t('activity.images') || 'Images', count: 0 },
+        { id: 'newsletters', label: t('activity.newsletters') || 'Newsletters', count: 0 },
+        { id: 'documents', label: t('activity.documents') || 'Documents', count: 0 },
+    ];
+
+    return html`
+        <div class="activity-tabs">
+            ${tabs.map(tab => html`
+                <button
+                    key=${tab.id}
+                    class="activity-tab ${activeTab === tab.id ? 'active' : ''}"
+                    onClick=${() => onTabChange(tab.id)}
+                >
+                    ${tab.label}
+                    ${tab.count > 0 && html`<span class="tab-count">${tab.count}</span>`}
+                </button>
+            `)}
+        </div>
+    `;
 };
 
 /**
- * Main Coach Profile Page Component
- * Renders a full page for a coach profile with SEO optimizations
- * Supports both UUID and slug-based lookups for SEO-friendly URLs
+ * Main Coach Profile Page Component - LinkedIn Style
  */
 function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
-    // Support both old coachId prop and new coachIdOrSlug prop
     const identifier = coachIdOrSlug || coachId;
 
     const [coach, setCoach] = useState(null);
@@ -675,6 +655,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [showVideoPopup, setShowVideoPopup] = useState(false);
     const [userHasReviewed, setUserHasReviewed] = useState(false);
     const [userExistingReview, setUserExistingReview] = useState(null);
+    const [activeActivityTab, setActiveActivityTab] = useState('posts');
 
     // Load coach data
     useEffect(() => {
@@ -687,8 +668,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     useEffect(() => {
         if (coach) {
             setSEOData();
-
-            // Update URL to use slug if we came in via UUID
             if (coach.slug && isUUID(identifier) && window.history.replaceState) {
                 const newUrl = `/coach/${coach.slug}`;
                 window.history.replaceState(null, '', newUrl);
@@ -704,20 +683,18 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             if (window.supabaseClient) {
                 let data, fetchError;
 
-                // Try to load by UUID first if it looks like a UUID, otherwise by slug
                 if (isUUID(identifier)) {
                     const result = await window.supabaseClient
                         .from('cs_coaches')
-                        .select('*')
+                        .select('*, cs_coach_certifications(*, cs_certifications(*))')
                         .eq('id', identifier)
                         .single();
                     data = result.data;
                     fetchError = result.error;
                 } else {
-                    // Load by slug
                     const result = await window.supabaseClient
                         .from('cs_coaches')
-                        .select('*')
+                        .select('*, cs_coach_certifications(*, cs_certifications(*))')
                         .eq('slug', identifier)
                         .single();
                     data = result.data;
@@ -729,7 +706,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
                 setCoach(data);
 
-                // Load related data in parallel
                 await Promise.all([
                     loadArticles(data.id),
                     loadReviews(data.id),
@@ -790,16 +766,14 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadSimilarCoaches = async (coachData) => {
         try {
-            // Find coaches with similar specialties, excluding current coach
             const specialties = coachData.specialties || [];
             let query = window.supabaseClient
                 .from('cs_coaches')
-                .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location')
+                .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location, cs_coach_certifications(*, cs_certifications(*))')
                 .neq('id', coachData.id)
                 .eq('is_active', true)
-                .limit(4);
+                .limit(5);
 
-            // If coach has specialties, try to find similar ones
             if (specialties.length > 0) {
                 query = query.overlaps('specialties', specialties);
             }
@@ -807,14 +781,13 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             const { data, error } = await query.order('rating_average', { ascending: false });
 
             if (error) {
-                // Fallback: just get top rated coaches if overlaps query fails
                 const fallback = await window.supabaseClient
                     .from('cs_coaches')
-                    .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location')
+                    .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location, cs_coach_certifications(*, cs_certifications(*))')
                     .neq('id', coachData.id)
                     .eq('is_active', true)
                     .order('rating_average', { ascending: false })
-                    .limit(4);
+                    .limit(5);
                 setSimilarCoaches(fallback.data || []);
             } else {
                 setSimilarCoaches(data || []);
@@ -824,26 +797,17 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         }
     };
 
-    // Calculate review breakdown for chart
     const getReviewBreakdown = () => {
         const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
         reviews.forEach(review => {
-            const rating = Math.round(review.rating || 0);
-            if (rating >= 1 && rating <= 5) {
-                breakdown[rating]++;
+            const r = Math.round(review.rating || 0);
+            if (r >= 1 && r <= 5) {
+                breakdown[r]++;
             }
         });
         return breakdown;
     };
 
-    // Get featured testimonial (highest rated review with text)
-    const getFeaturedTestimonial = () => {
-        const reviewsWithText = reviews.filter(r => r.content && r.content.length > 50);
-        if (reviewsWithText.length === 0) return null;
-        return reviewsWithText.sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
-    };
-
-    // Check if logged-in user has already reviewed this coach
     const checkUserHasReviewed = async (coachId) => {
         if (!session?.user?.id) {
             setUserHasReviewed(false);
@@ -870,13 +834,11 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         }
     };
 
-    // Submit a new review
     const handleSubmitReview = async (reviewData) => {
         if (!session?.user?.id || !coach?.id) {
             return { success: false, error: 'Not authenticated' };
         }
 
-        // Prevent self-reviews
         if (session.user.id === coach.user_id) {
             return { success: false, error: t('review.cannotReviewSelf') || 'You cannot review yourself' };
         }
@@ -890,24 +852,20 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     rating: reviewData.rating,
                     content: reviewData.content,
                     reviewer_name: reviewData.name || session.user.email?.split('@')[0] || 'Anonymous',
-                    status: 'pending' // Reviews go to pending for moderation
+                    status: 'pending'
                 })
                 .select()
                 .single();
 
             if (error) {
-                // Check for unique constraint violation
                 if (error.code === '23505') {
                     return { success: false, error: t('review.alreadyReviewed') || 'You have already reviewed this coach' };
                 }
                 throw error;
             }
 
-            // Update local state
             setUserHasReviewed(true);
             setUserExistingReview(data);
-
-            // Reload reviews to show the new one (if approved)
             await loadReviews(coach.id);
 
             return { success: true, data };
@@ -922,13 +880,11 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         const coachUrl = `${baseUrl}/#coach/${coach.id}`;
         const specialtiesList = (coach.specialties || []).slice(0, 3).join(', ');
 
-        // Build SEO description
         const description = truncateForMeta(
             coach.bio ||
             `${coach.full_name} is a professional ${coach.title || 'coach'} specializing in ${specialtiesList || 'personal development'}. Book a session and start your transformation today.`
         );
 
-        // Set page meta tags
         setPageMeta({
             title: `${coach.full_name} - ${coach.title || 'Professional Coach'}`,
             description,
@@ -937,7 +893,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             type: 'profile',
         });
 
-        // Set structured data
         setStructuredData('coach-person-schema', generateCoachSchema({
             ...coach,
             rating: coach.rating_average,
@@ -954,13 +909,11 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             })),
         }));
 
-        // Add local business schema for in-person coaches
         const localBusiness = generateLocalBusinessSchema(coach);
         if (localBusiness) {
             setStructuredData('coach-local-schema', localBusiness);
         }
 
-        // Breadcrumb schema
         const breadcrumbItems = [
             { name: 'Home', url: baseUrl },
             { name: 'Coaches', url: `${baseUrl}/#coaches` },
@@ -982,24 +935,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         removeStructuredData('coach-breadcrumb-schema');
     };
 
-    // handleBookClick removed - MVP uses Discovery Calls only
-
-    const formatPrice = (price) => {
-        return new Intl.NumberFormat('de-DE', {
-            style: 'currency',
-            currency: 'EUR',
-        }).format(price || 0);
-    };
-
     // Loading state
     if (loading) {
         return html`
-            <div class="coach-profile-page">
-                <div class="container">
-                    <div class="loading-skeleton">
-                        <div class="skeleton skeleton-hero"></div>
-                        <div class="skeleton skeleton-text"></div>
-                        <div class="skeleton skeleton-text short"></div>
+            <div class="coach-profile-page linkedin-style">
+                <div class="profile-loading">
+                    <div class="skeleton banner-skeleton"></div>
+                    <div class="skeleton card-skeleton"></div>
+                    <div class="profile-columns">
+                        <div class="skeleton content-skeleton"></div>
+                        <div class="skeleton sidebar-skeleton"></div>
                     </div>
                 </div>
             </div>
@@ -1009,7 +954,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Error state
     if (error || !coach) {
         return html`
-            <div class="coach-profile-page">
+            <div class="coach-profile-page linkedin-style">
                 <div class="container">
                     <div class="error-state">
                         <div class="error-icon">😔</div>
@@ -1024,492 +969,321 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const rating = coach.rating_average || coach.rating || 0;
     const reviewsCount = coach.rating_count || 0;
-    const location = coach.location || 'Remote';
-    const languages = coach.languages || [];
-    const specialties = coach.specialties || [];
-    const sessionFormats = coach.session_formats || ['online'];
+    const videoUrl = coach.intro_video_url || coach.video_url;
+    const hasVideo = !!videoUrl;
 
     return html`
-        <div class="coach-profile-page">
-            <!-- Hero Section -->
-            <section class="coach-hero-section">
-                <div class="container">
-                    <div class="coach-hero-grid">
-                        <!-- Video/Image Column -->
-                        <div class="coach-media-column">
-                            ${(coach.video_intro_url || coach.intro_video_url) ? html`
-                                <!-- Hero Video Player -->
-                                <div class="coach-hero-video">
-                                    <${CoachVideoPlayer}
-                                        videoUrl=${coach.video_intro_url || coach.intro_video_url}
-                                        thumbnailUrl=${coach.video_thumbnail_url || coach.avatar_url}
-                                        coachName=${coach.full_name}
-                                    />
-                                </div>
-                            ` : html`
-                                <!-- Profile Image (no video) -->
-                                <div class="coach-hero-image">
-                                    <img
-                                        src=${coach.avatar_url || 'https://via.placeholder.com/400'}
-                                        alt=${coach.full_name}
-                                        loading="eager"
-                                    />
-                                </div>
-                            `}
+        <div class="coach-profile-page linkedin-style">
+            <!-- Banner Image Section -->
+            <section class="profile-banner-section">
+                <div class="profile-banner">
+                    <img
+                        src=${coach.banner_url || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=300&fit=crop'}
+                        alt="Profile Banner"
+                        class="banner-image"
+                    />
+                </div>
 
-                            <!-- Specialties (compact, in hero) -->
-                            ${specialties.length > 0 && html`
-                                <div class="coach-specialties-hero">
-                                    <div class="specialties-tags">
-                                        ${specialties.slice(0, 6).map((spec, i) => html`
-                                            <a
-                                                key=${i}
-                                                href="#coaching/${spec.toLowerCase().replace(/\s+/g, '-')}"
-                                                class="specialty-tag-hero"
-                                            >
-                                                ${spec}
-                                            </a>
-                                        `)}
-                                        ${specialties.length > 6 && html`
-                                            <span class="specialty-more">+${specialties.length - 6}</span>
-                                        `}
-                                    </div>
-                                </div>
-                            `}
-
-                            <!-- Stats Banner (below specialties) -->
-                            <${CoachStatsBanner} coach=${coach} />
-
-                            <!-- Reviews Overview (below stats banner) -->
-                            <div
-                                class="coach-reviews-hero clickable"
-                                id="reviews"
-                                onClick=${() => setShowReviewsPopup(true)}
-                            >
-                                ${reviews.length > 0 ? html`
-                                    <div class="reviews-hero-rating">
-                                        <span class="rating-score-hero">${rating.toFixed(1)}</span>
-                                        <div class="rating-details-hero">
-                                            <div class="rating-stars-hero">
-                                                ${[1,2,3,4,5].map(star => html`
-                                                    <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                                `)}
-                                            </div>
-                                            <span class="rating-count-hero">${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'}</span>
-                                        </div>
-                                        <span class="view-reviews-link">${t('coach.viewAllReviews') || 'View all'} →</span>
-                                    </div>
-                                ` : html`
-                                    <div class="reviews-hero-empty">
-                                        <span class="new-coach-badge">✨ ${t('coach.new') || 'New Coach'}</span>
-                                        <span class="be-first-text">${t('review.beFirstToReview') || 'Be the first to review!'}</span>
-                                    </div>
-                                `}
+                <!-- Overlapping Profile Image -->
+                <div class="profile-image-container">
+                    <div class="profile-image-wrapper ${hasVideo ? 'has-video' : ''}" onClick=${hasVideo ? () => setShowVideoPopup(true) : null}>
+                        <img
+                            src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name) + '&size=200'}
+                            alt=${coach.full_name}
+                            class="profile-image"
+                        />
+                        ${hasVideo && html`
+                            <div class="video-play-overlay">
+                                <div class="play-icon">▶</div>
                             </div>
-                        </div>
-
-                        <!-- Info Column -->
-                        <div class="coach-info-column">
-                            <div class="coach-header-content">
-                                ${(coach.video_intro_url || coach.intro_video_url) ? html`
-                                    <img
-                                        src=${coach.avatar_url || 'https://via.placeholder.com/80'}
-                                        alt=${coach.full_name}
-                                        class="coach-mini-avatar"
-                                        loading="eager"
-                                    />
-                                ` : null}
-                                <div>
-                                    <h1 class="coach-name" itemprop="name">${coach.full_name}</h1>
-                                    <p class="coach-title" itemprop="jobTitle">${coach.title}</p>
-                                </div>
-                                ${coach.trust_score ? html`
-                                    <${TrustScore} score=${coach.trust_score} size="medium" />
-                                ` : null}
-                            </div>
-
-                            <div class="coach-meta-row">
-                                <span class="coach-meta-item">
-                                    <span class="meta-icon">📍</span>
-                                    <span itemprop="address">${location}</span>
-                                </span>
-                                ${languages.length > 0 && html`
-                                    <span class="coach-meta-item coach-meta-languages">
-                                        <${LanguageFlags} languages=${languages} />
-                                    </span>
-                                `}
-                                ${coach.years_experience > 0 && html`
-                                    <span class="coach-meta-item">
-                                        <span class="meta-icon">🏆</span>
-                                        <span>${coach.years_experience}+ ${t('coach.yearsExperience') || 'years'}</span>
-                                    </span>
-                                `}
-                            </div>
-
-                            <!-- About Section -->
-                            ${coach.bio && html`
-                                <div class="coach-about-section">
-                                    <h3 class="about-title">${t('coach.about') || 'About'} ${coach.full_name.split(' ')[0]}</h3>
-                                    <div class="coach-bio" itemprop="description">
-                                        ${(coach.bio || '').split('\n').map((para, i) =>
-                                            para.trim() ? html`<p key=${i}>${para}</p>` : null
-                                        )}
-                                    </div>
-                                </div>
-                            `}
-
-                            <!-- Featured Testimonial -->
-                            ${(() => {
-                                const featured = getFeaturedTestimonial();
-                                return featured ? html`
-                                    <div class="featured-testimonial">
-                                        <div class="testimonial-quote">
-                                            <span class="quote-mark">"</span>
-                                            ${featured.content.length > 150
-                                                ? featured.content.substring(0, 150) + '...'
-                                                : featured.content}
-                                        </div>
-                                        <div class="testimonial-author">
-                                            <span class="stars">${'★'.repeat(Math.round(featured.rating || 5))}</span>
-                                            <span class="author-name">— ${featured.reviewer_name || t('coach.verifiedClient') || 'Verified Client'}</span>
-                                        </div>
-                                    </div>
-                                ` : null;
-                            })()}
-
-                            <!-- Availability Indicator -->
-                            ${coach.is_available !== false && html`
-                                <div class="availability-indicator available">
-                                    <span class="availability-dot"></span>
-                                    <span>${t('coach.availableNow') || 'Available for new clients'}</span>
-                                    ${coach.response_time_hours && html`
-                                        <span class="response-time">· ${t('coach.respondsWithin') || 'Responds within'} ${coach.response_time_hours}h</span>
-                                    `}
-                                </div>
-                            `}
-
-                            <!-- Session Formats (compact) -->
-                            <div class="session-formats-hero">
-                                ${sessionFormats.includes('online') && html`
-                                    <span class="format-badge"><span class="format-icon">💻</span> ${t('coach.online') || 'Online'}</span>
-                                `}
-                                ${sessionFormats.includes('in-person') && html`
-                                    <span class="format-badge"><span class="format-icon">🏢</span> ${t('coach.inPerson') || 'In-Person'}</span>
-                                `}
-                                ${sessionFormats.includes('phone') && html`
-                                    <span class="format-badge"><span class="format-icon">📞</span> ${t('coach.phone') || 'Phone'}</span>
-                                `}
-                            </div>
-
-                            <!-- Pricing & CTA -->
-                            <div class="coach-cta-section">
-                                <!-- Package Pricing -->
-                                <div class="pricing-options">
-                                    <div class="price-display">
-                                        <span class="price-label">${t('coach.singleSession') || 'Single Session'}</span>
-                                        <span class="price-value" itemprop="priceRange">${formatPrice(coach.hourly_rate)}</span>
-                                    </div>
-                                    ${coach.package_price && html`
-                                        <div class="price-display package-price">
-                                            <span class="price-label">${t('coach.packageDeal') || '4-Session Package'}</span>
-                                            <span class="price-value">${formatPrice(coach.package_price)}</span>
-                                            <span class="price-savings">${t('coach.savePercent') || 'Save'} ${Math.round((1 - coach.package_price / (coach.hourly_rate * 4)) * 100)}%</span>
-                                        </div>
-                                    `}
-                                </div>
-
-                                <!-- Primary CTA: Discovery Call -->
-                                <button class="btn-discovery-primary" onClick=${() => setShowDiscoveryModal(true)}>
-                                    📞 ${t('discovery.bookFreeCall')}
-                                    <span class="btn-subtitle">${t('discovery.freeNoObligation') || 'Free, no obligation'}</span>
-                                </button>
-
-                                <!-- Send Message -->
-                                <button class="btn-contact-link" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
-                                    💬 ${t('coach.sendMessage') || 'Send a Message'}
-                                </button>
-                            </div>
-
-                            <!-- Guarantees -->
-                            <div class="guarantees-row">
-                                <${GuaranteeBadge} type="satisfaction" />
-                                <${GuaranteeBadge} type="secure" />
-                                ${coach.is_verified && html`<${GuaranteeBadge} type="verified" />`}
-                            </div>
-                        </div>
+                        `}
                     </div>
                 </div>
             </section>
 
-            <!-- Main Content -->
-            <section class="coach-content-section">
-                <div class="container">
-                    <div class="coach-content-grid">
-                        <!-- Main Column -->
-                        <div class="coach-main-column">
-                            <!-- Articles - LinkedIn Style Feed (First thing to see) -->
-                            ${articles.length > 0 && html`
-                                <section class="coach-articles-feed" id="articles">
-                                    <div class="articles-feed-header">
-                                        <h2 class="section-title">
-                                            <span class="articles-icon">📝</span>
-                                            ${t('coach.articles') || 'Articles & Insights'}
-                                        </h2>
-                                        <p class="articles-subtitle">
-                                            ${t('coach.articlesSubtitle') || `Explore ${coach.full_name.split(' ')[0]}'s expertise and thought leadership`}
-                                        </p>
-                                    </div>
-                                    <div class="articles-feed-list">
-                                        ${articles.map((article, index) => html`
-                                            <article
-                                                key=${article.id}
-                                                class="article-feed-card ${index === 0 ? 'featured' : ''}"
-                                                onClick=${() => setSelectedArticle(article)}
-                                                itemscope
-                                                itemtype="https://schema.org/Article"
-                                            >
-                                                <!-- Author Header (LinkedIn-style) -->
-                                                <div class="article-author-header">
-                                                    <img
-                                                        src=${coach.avatar_url || 'https://via.placeholder.com/48'}
-                                                        alt=${coach.full_name}
-                                                        class="article-author-avatar"
-                                                    />
-                                                    <div class="article-author-info">
-                                                        <span class="article-author-name" itemprop="author">${coach.full_name}</span>
-                                                        <span class="article-author-title">${coach.title}</span>
-                                                        <div class="article-publish-info">
-                                                            <time datetime=${article.created_at} itemprop="datePublished">
-                                                                ${new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                            </time>
-                                                            ${article.read_time_minutes ? html`
-                                                                <span class="article-read-time">· ${article.read_time_minutes} min read</span>
-                                                            ` : html`
-                                                                <span class="article-read-time">· ${Math.max(1, Math.ceil((article.content_html?.length || 500) / 1000))} min read</span>
-                                                            `}
+            <!-- Main Two-Column Layout -->
+            <div class="profile-container">
+                <div class="profile-columns">
+                    <!-- Main Content Column (70%) -->
+                    <main class="profile-main-column">
+                        <!-- Coach Card Section -->
+                        <section class="profile-section coach-card-section">
+                            <${ProfileCoachCard}
+                                coach=${coach}
+                                onDiscoveryCall=${() => setShowDiscoveryModal(true)}
+                                onVideoClick=${() => setShowVideoPopup(true)}
+                                session=${session}
+                            />
+                        </section>
+
+                        <!-- Certifications Section -->
+                        ${credentials.length > 0 && html`
+                            <section class="profile-section certifications-section">
+                                <h2 class="section-title">
+                                    <span class="section-icon">🏅</span>
+                                    ${t('coach.certifications') || 'Certifications & Credentials'}
+                                </h2>
+                                <div class="certifications-list">
+                                    ${credentials.map(cred => html`
+                                        <div key=${cred.id} class="certification-item">
+                                            ${cred.badge_url && html`
+                                                <img src=${cred.badge_url} alt=${cred.name} class="cert-badge" />
+                                            `}
+                                            <div class="cert-info">
+                                                <h4 class="cert-name">${cred.name}</h4>
+                                                ${cred.issuing_org && html`<p class="cert-org">${cred.issuing_org}</p>`}
+                                                ${cred.is_verified && html`<span class="cert-verified">✓ Verified</span>`}
+                                            </div>
+                                        </div>
+                                    `)}
+                                </div>
+                            </section>
+                        `}
+
+                        <!-- Featured Section -->
+                        ${articles.length > 0 && html`
+                            <section class="profile-section featured-section">
+                                <h2 class="section-title">
+                                    <span class="section-icon">⭐</span>
+                                    ${t('coach.featured') || 'Featured'}
+                                </h2>
+                                <div class="featured-grid">
+                                    ${articles.slice(0, 3).map(article => html`
+                                        <article
+                                            key=${article.id}
+                                            class="featured-card"
+                                            onClick=${() => setSelectedArticle(article)}
+                                        >
+                                            ${article.featured_image && html`
+                                                <div class="featured-image">
+                                                    <img src=${article.featured_image} alt=${article.title} loading="lazy" />
+                                                </div>
+                                            `}
+                                            <div class="featured-content">
+                                                <h3 class="featured-title">${article.title}</h3>
+                                                <p class="featured-excerpt">
+                                                    ${article.excerpt || (article.content_html
+                                                        ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 80) + '...'
+                                                        : '')}
+                                                </p>
+                                            </div>
+                                        </article>
+                                    `)}
+                                </div>
+                            </section>
+                        `}
+
+                        <!-- Activity Section -->
+                        <section class="profile-section activity-section">
+                            <h2 class="section-title">
+                                <span class="section-icon">📊</span>
+                                ${t('coach.activity') || 'Activity'}
+                            </h2>
+
+                            <${ActivityTabs}
+                                activeTab=${activeActivityTab}
+                                onTabChange=${setActiveActivityTab}
+                                articles=${articles}
+                                coach=${coach}
+                            />
+
+                            <div class="activity-content">
+                                ${activeActivityTab === 'posts' && html`
+                                    ${articles.length > 0 ? html`
+                                        <div class="activity-posts">
+                                            ${articles.slice(0, 3).map(article => html`
+                                                <article key=${article.id} class="activity-post" onClick=${() => setSelectedArticle(article)}>
+                                                    <div class="post-author">
+                                                        <img src=${coach.avatar_url} alt=${coach.full_name} class="author-avatar" />
+                                                        <div class="author-info">
+                                                            <span class="author-name">${coach.full_name}</span>
+                                                            <span class="post-date">${new Date(article.created_at).toLocaleDateString()}</span>
                                                         </div>
                                                     </div>
-                                                </div>
-
-                                                <!-- Article Content -->
-                                                <div class="article-feed-body">
-                                                    <h3 class="article-feed-title" itemprop="headline">${article.title}</h3>
-                                                    <p class="article-feed-excerpt" itemprop="description">
+                                                    <h3 class="post-title">${article.title}</h3>
+                                                    <p class="post-excerpt">
                                                         ${article.excerpt || (article.content_html
-                                                            ? article.content_html.replace(/<[^>]*>/g, '').substring(0, index === 0 ? 250 : 150) + '...'
+                                                            ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 150) + '...'
                                                             : '')}
                                                     </p>
-                                                </div>
-
-                                                <!-- Article Image -->
-                                                ${article.featured_image && html`
-                                                    <div class="article-feed-image">
-                                                        <img
-                                                            src=${article.featured_image}
-                                                            alt=${article.title}
-                                                            loading="lazy"
-                                                            itemprop="image"
-                                                        />
-                                                    </div>
-                                                `}
-
-                                                <!-- Article Footer (engagement) -->
-                                                <div class="article-feed-footer">
-                                                    ${article.view_count > 0 && html`
-                                                        <span class="article-views">
-                                                            <span class="view-icon">👁️</span>
-                                                            ${article.view_count} ${t('coach.views') || 'views'}
-                                                        </span>
+                                                    ${article.featured_image && html`
+                                                        <img src=${article.featured_image} alt=${article.title} class="post-image" loading="lazy" />
                                                     `}
-                                                    <span class="article-read-more">${t('coach.readArticle') || 'Read article'} →</span>
-                                                </div>
-                                            </article>
-                                        `)}
-                                    </div>
-                                </section>
-                            `}
-
-                            <!-- My Approach -->
-                            ${coach.coaching_approach && html`
-                                <article class="coach-section coach-approach-section">
-                                    <h2 class="section-title">${t('coach.myApproach') || 'My Coaching Approach'}</h2>
-                                    <div class="approach-content">
-                                        ${(coach.coaching_approach || '').split('\n').map((para, i) =>
-                                            para.trim() ? html`<p key=${i}>${para}</p>` : null
-                                        )}
-                                    </div>
-                                    ${coach.coaching_style && html`
-                                        <div class="coaching-style">
-                                            <h4>${t('coach.coachingStyle') || 'Coaching Style'}</h4>
-                                            <div class="style-tags">
-                                                ${(Array.isArray(coach.coaching_style) ? coach.coaching_style : [coach.coaching_style]).map((style, i) => html`
-                                                    <span key=${i} class="style-tag">${style}</span>
-                                                `)}
-                                            </div>
+                                                </article>
+                                            `)}
+                                            ${articles.length > 3 && html`
+                                                <button class="btn-show-all">
+                                                    ${t('coach.showAllPosts') || 'Show all posts'} →
+                                                </button>
+                                            `}
+                                        </div>
+                                    ` : html`
+                                        <div class="activity-empty">
+                                            <p>${t('coach.noPosts') || 'No posts yet'}</p>
                                         </div>
                                     `}
-                                </article>
-                            `}
+                                `}
 
-                            <!-- What to Expect (only shown if no articles) -->
-                            ${articles.length === 0 && html`
-                                <article class="coach-section what-to-expect-section">
-                                    <h2 class="section-title">${t('coach.whatToExpect') || 'What to Expect'}</h2>
-                                    <div class="expect-grid">
-                                        <div class="expect-item">
-                                            <span class="expect-icon">📞</span>
-                                            <h4>${t('coach.expectStep1Title') || 'Free Discovery Call'}</h4>
-                                            <p>${t('coach.expectStep1Desc') || 'Start with a free call to discuss your goals and see if we\'re a good fit.'}</p>
-                                        </div>
-                                        <div class="expect-item">
-                                            <span class="expect-icon">🎯</span>
-                                            <h4>${t('coach.expectStep2Title') || 'Personalized Plan'}</h4>
-                                            <p>${t('coach.expectStep2Desc') || 'Together we\'ll create a tailored coaching plan based on your unique needs.'}</p>
-                                        </div>
-                                        <div class="expect-item">
-                                            <span class="expect-icon">🚀</span>
-                                            <h4>${t('coach.expectStep3Title') || 'Ongoing Support'}</h4>
-                                            <p>${t('coach.expectStep3Desc') || 'Regular sessions with accountability and support between meetings.'}</p>
-                                        </div>
-                                    </div>
-                                </article>
-                            `}
-
-                            <!-- Credentials -->
-                            ${credentials.length > 0 && html`
-                                <article class="coach-section">
-                                    <h2 class="section-title">${t('coach.credentials') || 'Credentials & Certifications'}</h2>
-                                    <${CredentialsList} credentials=${credentials} />
-                                </article>
-                            `}
-
-                        </div>
-
-                        <!-- Sidebar -->
-                        <aside class="coach-sidebar">
-                            <!-- Discovery Call Widget -->
-                            <div class="sidebar-widget booking-widget">
-                                <h3>${t('coach.getStarted') || 'Get Started'}</h3>
-                                <div class="widget-price">
-                                    <span class="price-main">${formatPrice(coach.hourly_rate)}</span>
-                                    <span class="price-per">/${t('coach.hour') || 'hour'}</span>
-                                </div>
-                                <button class="btn-discovery-widget" onClick=${() => setShowDiscoveryModal(true)}>
-                                    📞 ${t('discovery.bookFreeCall')}
-                                </button>
-                                <p class="booking-note">
-                                    ${t('discovery.freeDiscoveryAvailable')}
-                                </p>
-                            </div>
-
-                            <!-- Languages -->
-                            ${languages.length > 0 && html`
-                                <div class="sidebar-widget">
-                                    <h3>${t('coach.languages') || 'Languages'}</h3>
-                                    <div class="languages-list-flags">
-                                        <${LanguageFlags} languages=${languages} />
-                                    </div>
-                                </div>
-                            `}
-
-                            <!-- Location -->
-                            <div class="sidebar-widget">
-                                <h3>${t('coach.location') || 'Location'}</h3>
-                                <div class="location-display">
-                                    <span class="location-icon">📍</span>
-                                    <span class="location-text">${location}</span>
-                                </div>
-                            </div>
-
-                            <!-- Share Widget -->
-                            <div class="sidebar-widget share-widget">
-                                <h3>${t('coach.share') || 'Share Profile'}</h3>
-                                <div class="share-buttons">
-                                    <button
-                                        class="share-btn share-whatsapp"
-                                        onClick=${() => window.open(`https://wa.me/?text=${encodeURIComponent(`${t('coach.shareText') || 'Check out this coach'}: ${coach.full_name} - ${window.location.href}`)}`, '_blank')}
-                                        aria-label="Share on WhatsApp"
-                                    >
-                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                                        </svg>
-                                    </button>
-                                    <button
-                                        class="share-btn share-linkedin"
-                                        onClick=${() => window.open(`https://linkedin.com/shareArticle?url=${encodeURIComponent(window.location.href)}`, '_blank')}
-                                        aria-label="Share on LinkedIn"
-                                    >
-                                        in
-                                    </button>
-                                    <button
-                                        class="share-btn share-twitter"
-                                        onClick=${() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`${t('coach.shareText') || 'Check out this coach'}: ${coach.full_name}`)}`, '_blank')}
-                                        aria-label="Share on Twitter"
-                                    >
-                                        𝕏
-                                    </button>
-                                    <button
-                                        class="share-btn share-copy"
-                                        onClick=${() => {
-                                            navigator.clipboard.writeText(window.location.href);
-                                            alert(t('coach.linkCopied') || 'Link copied!');
-                                        }}
-                                        aria-label="Copy link"
-                                    >
-                                        🔗
-                                    </button>
-                                </div>
-                            </div>
-                        </aside>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Similar Coaches Section -->
-            ${similarCoaches.length > 0 && html`
-                <section class="similar-coaches-section">
-                    <div class="container">
-                        <h2 class="section-title">${t('coach.similarCoaches') || 'Similar Coaches You Might Like'}</h2>
-                        <div class="similar-coaches-grid">
-                            ${similarCoaches.map(similarCoach => html`
-                                <a
-                                    key=${similarCoach.id}
-                                    href="/coach/${similarCoach.slug || similarCoach.id}"
-                                    class="similar-coach-card"
-                                    onClick=${(e) => { e.preventDefault(); window.navigateTo(`/coach/${similarCoach.slug || similarCoach.id}`); }}
-                                >
-                                    <div class="similar-coach-avatar">
-                                        <img
-                                            src=${similarCoach.avatar_url || 'https://via.placeholder.com/80'}
-                                            alt=${similarCoach.full_name}
-                                            loading="lazy"
-                                        />
-                                    </div>
-                                    <div class="similar-coach-info">
-                                        <h4 class="similar-coach-name">${similarCoach.full_name}</h4>
-                                        <p class="similar-coach-title">${similarCoach.title}</p>
-                                        ${similarCoach.rating_average > 0 && html`
-                                            <div class="similar-coach-rating">
-                                                <span class="stars">★</span>
-                                                <span>${similarCoach.rating_average.toFixed(1)}</span>
-                                                <span class="review-count">(${similarCoach.rating_count || 0})</span>
+                                ${activeActivityTab === 'videos' && html`
+                                    ${hasVideo ? html`
+                                        <div class="activity-videos">
+                                            <div class="video-card" onClick=${() => setShowVideoPopup(true)}>
+                                                <div class="video-thumbnail">
+                                                    <img src=${coach.video_thumbnail_url || coach.avatar_url} alt="Intro Video" />
+                                                    <div class="video-play-btn">▶</div>
+                                                </div>
+                                                <div class="video-info">
+                                                    <h4>${t('coach.introVideo') || 'Introduction Video'}</h4>
+                                                    <p>${t('coach.meetCoach') || 'Get to know'} ${coach.full_name.split(' ')[0]}</p>
+                                                </div>
                                             </div>
-                                        `}
-                                        <div class="similar-coach-price">
-                                            ${formatPrice(similarCoach.hourly_rate)}/${t('coach.hour') || 'hr'}
                                         </div>
+                                    ` : html`
+                                        <div class="activity-empty">
+                                            <p>${t('coach.noVideos') || 'No videos yet'}</p>
+                                        </div>
+                                    `}
+                                `}
+
+                                ${(activeActivityTab === 'comments' || activeActivityTab === 'images' ||
+                                   activeActivityTab === 'newsletters' || activeActivityTab === 'documents') && html`
+                                    <div class="activity-empty">
+                                        <p>${t('coach.noContent') || 'No content available'}</p>
                                     </div>
+                                `}
+                            </div>
+                        </section>
+
+                        <!-- Experience Section -->
+                        ${coach.experience && html`
+                            <section class="profile-section experience-section">
+                                <h2 class="section-title">
+                                    <span class="section-icon">💼</span>
+                                    ${t('coach.experience') || 'Experience'}
+                                </h2>
+                                <div class="experience-content">
+                                    ${(Array.isArray(coach.experience) ? coach.experience : [coach.experience]).map((exp, i) => html`
+                                        <div key=${i} class="experience-item">
+                                            ${typeof exp === 'object' ? html`
+                                                <div class="exp-header">
+                                                    <h4 class="exp-title">${exp.title || exp.role}</h4>
+                                                    ${exp.company && html`<p class="exp-company">${exp.company}</p>`}
+                                                    ${exp.duration && html`<span class="exp-duration">${exp.duration}</span>`}
+                                                </div>
+                                                ${exp.description && html`<p class="exp-description">${exp.description}</p>`}
+                                            ` : html`<p>${exp}</p>`}
+                                        </div>
+                                    `)}
+                                </div>
+                            </section>
+                        `}
+
+                        <!-- Education Section -->
+                        ${coach.education && html`
+                            <section class="profile-section education-section">
+                                <h2 class="section-title">
+                                    <span class="section-icon">🎓</span>
+                                    ${t('coach.education') || 'Education'}
+                                </h2>
+                                <div class="education-content">
+                                    ${(Array.isArray(coach.education) ? coach.education : [coach.education]).map((edu, i) => html`
+                                        <div key=${i} class="education-item">
+                                            ${typeof edu === 'object' ? html`
+                                                <h4 class="edu-degree">${edu.degree || edu.title}</h4>
+                                                ${edu.institution && html`<p class="edu-institution">${edu.institution}</p>`}
+                                                ${edu.year && html`<span class="edu-year">${edu.year}</span>`}
+                                            ` : html`<p>${edu}</p>`}
+                                        </div>
+                                    `)}
+                                </div>
+                            </section>
+                        `}
+
+                        <!-- Skills Section -->
+                        ${coach.skills && coach.skills.length > 0 && html`
+                            <section class="profile-section skills-section">
+                                <h2 class="section-title">
+                                    <span class="section-icon">🛠️</span>
+                                    ${t('coach.skills') || 'Skills'}
+                                </h2>
+                                <div class="skills-list">
+                                    ${(Array.isArray(coach.skills) ? coach.skills : [coach.skills]).map((skill, i) => html`
+                                        <span key=${i} class="skill-tag">${skill}</span>
+                                    `)}
+                                </div>
+                            </section>
+                        `}
+
+                        <!-- Interests Section -->
+                        ${coach.interests && coach.interests.length > 0 && html`
+                            <section class="profile-section interests-section">
+                                <h2 class="section-title">
+                                    <span class="section-icon">❤️</span>
+                                    ${t('coach.interests') || 'Interests'}
+                                </h2>
+                                <div class="interests-list">
+                                    ${(Array.isArray(coach.interests) ? coach.interests : [coach.interests]).map((interest, i) => html`
+                                        <span key=${i} class="interest-tag">${interest}</span>
+                                    `)}
+                                </div>
+                            </section>
+                        `}
+
+                        <!-- About / Coaching Approach -->
+                        ${(coach.bio || coach.coaching_approach) && html`
+                            <section class="profile-section about-section">
+                                <h2 class="section-title">
+                                    <span class="section-icon">📝</span>
+                                    ${t('coach.about') || 'About'}
+                                </h2>
+                                <div class="about-content">
+                                    ${coach.bio && html`
+                                        <div class="about-bio">
+                                            ${coach.bio.split('\n').map((para, i) =>
+                                                para.trim() ? html`<p key=${i}>${para}</p>` : null
+                                            )}
+                                        </div>
+                                    `}
+                                    ${coach.coaching_approach && html`
+                                        <div class="about-approach">
+                                            <h3>${t('coach.myApproach') || 'My Coaching Approach'}</h3>
+                                            ${coach.coaching_approach.split('\n').map((para, i) =>
+                                                para.trim() ? html`<p key=${i}>${para}</p>` : null
+                                            )}
+                                        </div>
+                                    `}
+                                </div>
+                            </section>
+                        `}
+                    </main>
+
+                    <!-- Sidebar Column (30%) -->
+                    <aside class="profile-sidebar-column">
+                        <!-- More Coaches For You -->
+                        <section class="sidebar-section similar-coaches-sidebar">
+                            <h3 class="sidebar-title">${t('coach.moreCoachesForYou') || 'More coaches for you'}</h3>
+                            <div class="mini-coaches-list">
+                                ${similarCoaches.map(similarCoach => html`
+                                    <${MiniCoachCard}
+                                        key=${similarCoach.id}
+                                        coach=${similarCoach}
+                                    />
+                                `)}
+                            </div>
+                            ${similarCoaches.length >= 5 && html`
+                                <a href="#coaches" class="btn-view-all-coaches">
+                                    ${t('coach.viewAllCoaches') || 'View all coaches'} →
                                 </a>
-                            `)}
-                        </div>
-                    </div>
-                </section>
-            `}
+                            `}
+                        </section>
+                    </aside>
+                </div>
+            </div>
 
             <!-- Video Popup -->
-            ${showVideoPopup && (coach.video_intro_url || coach.intro_video_url) && html`
+            ${showVideoPopup && hasVideo && html`
                 <${VideoPopup}
-                    videoUrl=${coach.video_intro_url || coach.intro_video_url}
+                    videoUrl=${videoUrl}
                     coachName=${coach.full_name}
                     onClose=${() => setShowVideoPopup(false)}
                 />
@@ -1550,14 +1324,14 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 <div class="article-modal-overlay" onClick=${() => setSelectedArticle(null)}>
                     <div class="article-modal" onClick=${(e) => e.stopPropagation()}>
                         <button class="modal-close" onClick=${() => setSelectedArticle(null)}>×</button>
-                        <article class="article-full" itemscope itemtype="https://schema.org/Article">
+                        <article class="article-full">
                             <header class="article-header">
-                                <h1 itemprop="headline">${selectedArticle.title}</h1>
+                                <h1>${selectedArticle.title}</h1>
                                 <div class="article-author">
                                     <img src=${coach.avatar_url} alt=${coach.full_name} />
                                     <div>
-                                        <span itemprop="author">${coach.full_name}</span>
-                                        <time datetime=${selectedArticle.created_at} itemprop="datePublished">
+                                        <span>${coach.full_name}</span>
+                                        <time datetime=${selectedArticle.created_at}>
                                             ${new Date(selectedArticle.created_at).toLocaleDateString()}
                                         </time>
                                     </div>
@@ -1565,7 +1339,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             </header>
                             <div
                                 class="article-body"
-                                itemprop="articleBody"
                                 dangerouslySetInnerHTML=${{ __html: selectedArticle.content_html || '' }}
                             />
                         </article>
