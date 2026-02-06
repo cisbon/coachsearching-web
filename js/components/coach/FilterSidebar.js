@@ -332,7 +332,7 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                             checked=${filters.freeIntro}
                             onChange=${(e) => onChange({ ...filters, freeIntro: e.target.checked })}
                         />
-                        <span>📞 ${t('filter.freeDiscovery') || 'Free Discovery Call'}</span>
+                        <span>🗓️ ${t('filter.freeDiscovery') || 'Chemistry Call'}</span>
                     </label>
                     <label class="filter-checkbox">
                         <input
