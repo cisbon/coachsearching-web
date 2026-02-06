@@ -29,6 +29,7 @@ const translations = {
         "coach.book": "Book Now",
         "coach.view_profile": "View Profile",
         "coach.reviews": "reviews",
+        "coach.review": "review",
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. All rights reserved.",
@@ -649,6 +650,7 @@ const translations = {
         "common.cancel": "Cancel",
         "common.close": "Close",
         "common.submitting": "Submitting...",
+        "common.optional": "optional",
 
         // Discovery Page
         "discovery.title": "Find Your Perfect Coach",
@@ -1927,6 +1929,8 @@ const translations = {
         "review.errorGeneric": "Failed to submit review. Please try again.",
         "review.errorAlreadyReviewed": "You have already reviewed this coach.",
         "review.close": "Close",
+        "review.reviewsFor": "Reviews for",
+        "review.anonymousName": "Anonymous",
 
         // Pricing Page
         "nav.pricing": "Pricing",
@@ -2152,6 +2156,7 @@ const translations = {
         "coach.book": "Jetzt buchen",
         "coach.view_profile": "Profil ansehen",
         "coach.reviews": "Bewertungen",
+        "coach.review": "Bewertung",
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. Alle Rechte vorbehalten.",
@@ -3570,6 +3575,9 @@ const translations = {
         "review.errorGeneric": "Bewertung konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
         "review.errorAlreadyReviewed": "Sie haben diesen Coach bereits bewertet.",
         "review.close": "Schließen",
+        "review.reviewsFor": "Bewertungen für",
+        "review.anonymousName": "Anonym",
+        "common.optional": "optional",
 
         // Pricing Page
         "nav.pricing": "Preise",
@@ -3772,6 +3780,7 @@ const translations = {
         "coach.book": "Reservar ahora",
         "coach.view_profile": "Ver perfil",
         "coach.reviews": "reseñas",
+        "coach.review": "reseña",
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. Todos los derechos reservados.",
@@ -5166,6 +5175,9 @@ const translations = {
         "review.errorGeneric": "No se pudo enviar la reseña. Por favor, inténtalo de nuevo.",
         "review.errorAlreadyReviewed": "Ya has reseñado a este coach.",
         "review.close": "Cerrar",
+        "review.reviewsFor": "Reseñas de",
+        "review.anonymousName": "Anónimo",
+        "common.optional": "opcional",
 
         // City Landing Pages
         "cityPage.in": "en",
@@ -5264,6 +5276,7 @@ const translations = {
         "coach.book": "Réserver maintenant",
         "coach.view_profile": "Voir le profil",
         "coach.reviews": "avis",
+        "coach.review": "avis",
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. Tous droits réservés.",
@@ -6668,6 +6681,9 @@ const translations = {
         "review.errorGeneric": "Échec de l'envoi de l'avis. Veuillez réessayer.",
         "review.errorAlreadyReviewed": "Vous avez déjà donné votre avis sur ce coach.",
         "review.close": "Fermer",
+        "review.reviewsFor": "Avis pour",
+        "review.anonymousName": "Anonyme",
+        "common.optional": "optionnel",
 
         // City Landing Pages
         "cityPage.in": "à",
@@ -6766,6 +6782,7 @@ const translations = {
         "coach.book": "Prenota ora",
         "coach.view_profile": "Vedi profilo",
         "coach.reviews": "recensioni",
+        "coach.review": "recensione",
 
         // Footer
         "footer.copyright": "© 2025 CoachSearching. Tutti i diritti riservati.",
@@ -8170,6 +8187,9 @@ const translations = {
         "review.errorGeneric": "Invio della recensione fallito. Riprova.",
         "review.errorAlreadyReviewed": "Hai già recensito questo coach.",
         "review.close": "Chiudi",
+        "review.reviewsFor": "Recensioni per",
+        "review.anonymousName": "Anonimo",
+        "common.optional": "opzionale",
 
         // City Landing Pages
         "cityPage.in": "a",

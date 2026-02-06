@@ -37,7 +37,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
                 .from('cs_reviews')
                 .select('id')
                 .eq('coach_id', coach.id)
-                .eq('client_id', session.user.id)
+                .eq('user_id', session.user.id)
                 .maybeSingle();
             setUserHasReviewed(!!data);
         } catch (err) {
@@ -90,17 +90,12 @@ export function ReviewsPopup({ coach, onClose, session }) {
 
     const handleSubmitReview = async () => {
         if (!session?.user?.id) {
-            setMessage('Please log in to write a review');
+            setMessage(t('review.loginToReview') || 'Please log in to write a review');
             return;
         }
 
         if (userHasReviewed) {
-            setMessage('You have already reviewed this coach');
-            return;
-        }
-
-        if (!newReview.comment.trim()) {
-            setMessage('Please write a review');
+            setMessage(t('review.errorAlreadyReviewed') || 'You have already reviewed this coach');
             return;
         }
 
@@ -109,46 +104,23 @@ export function ReviewsPopup({ coach, onClose, session }) {
 
         try {
             if (window.supabaseClient) {
-                const reviewText = newReview.comment.trim();
+                const reviewText = newReview.comment.trim() || null;
                 const reviewerName = newReview.name.trim() || null;
-                const clientId = session.user.id;
+                const userId = session.user.id;
 
-                // Try inserting with 'text' column first, then 'comment' as fallback
-                let data = null;
-                let lastError = null;
-
-                const attempt1 = await window.supabaseClient
+                const { data, error } = await window.supabaseClient
                     .from('cs_reviews')
                     .insert([{
                         coach_id: coach.id,
-                        client_id: clientId,
+                        user_id: userId,
                         rating: newReview.rating,
                         text: reviewText,
                         reviewer_name: reviewerName
                     }])
                     .select();
 
-                if (!attempt1.error) {
-                    data = attempt1.data;
-                } else {
-                    lastError = attempt1.error;
-
-                    const attempt2 = await window.supabaseClient
-                        .from('cs_reviews')
-                        .insert([{
-                            coach_id: coach.id,
-                            client_id: clientId,
-                            rating: newReview.rating,
-                            comment: reviewText,
-                            reviewer_name: reviewerName
-                        }])
-                        .select();
-
-                    if (!attempt2.error) {
-                        data = attempt2.data;
-                    } else {
-                        throw lastError;
-                    }
+                if (error) {
+                    throw error;
                 }
 
                 // Update coach's rating average
@@ -164,7 +136,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
                     })
                     .eq('id', coach.id);
 
-                setMessage('Review submitted successfully!');
+                setMessage(t('review.successMessage') || 'Your review has been submitted successfully.');
                 setNewReview({ rating: 5, name: '', comment: '' });
                 setShowAddReview(false);
                 setUserHasReviewed(true);
@@ -172,7 +144,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
             }
         } catch (err) {
             console.error('Error submitting review:', err);
-            setMessage('Error: ' + (err.message || 'Failed to submit review'));
+            setMessage((t('review.errorTitle') || 'Error') + ': ' + (err.message || t('review.errorGeneric') || 'Failed to submit review'));
         }
         setSubmitting(false);
     };
@@ -187,7 +159,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
             <div class="reviews-popup-container">
                 <div class="reviews-popup-header">
                     <div class="reviews-header-info">
-                        <h3>Reviews for ${coach.full_name}</h3>
+                        <h3>${t('review.reviewsFor') || 'Reviews for'} ${coach.full_name}</h3>
                         <div class="reviews-summary">
                             <div class="reviews-avg-rating">
                                 <span class="big-rating">${reviewsCount > 0 ? rating.toFixed(1) : '—'}</span>
@@ -196,7 +168,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
                                         <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
                                     `)}
                                 </div>
-                                <span class="total-reviews">${reviewsCount} review${reviewsCount !== 1 ? 's' : ''}</span>
+                                <span class="total-reviews">${reviewsCount} ${reviewsCount !== 1 ? (t('coach.reviews') || 'reviews') : (t('coach.review') || 'review')}</span>
                             </div>
                         </div>
                     </div>
@@ -230,9 +202,9 @@ export function ReviewsPopup({ coach, onClose, session }) {
 
                     ${showAddReview && html`
                         <div class="add-review-form">
-                            <h4>Write Your Review</h4>
+                            <h4>${t('review.title') || 'Write a Review'}</h4>
                             <div class="rating-select">
-                                <label>Your Rating:</label>
+                                <label>${t('review.yourRating') || 'Your Rating'}:</label>
                                 <div class="star-select">
                                     ${[1,2,3,4,5].map(star => html`
                                         <span
@@ -244,39 +216,40 @@ export function ReviewsPopup({ coach, onClose, session }) {
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Your Name (optional)</label>
+                                <label>${t('review.displayName') || 'Display Name (optional)'}</label>
                                 <input
                                     type="text"
-                                    placeholder="Anonymous"
+                                    placeholder=${t('review.displayNamePlaceholder') || 'How should we display your name?'}
                                     value=${newReview.name}
                                     onChange=${(e) => setNewReview({...newReview, name: e.target.value})}
                                 />
+                                <span class="form-hint">${t('review.anonymous') || 'Leave empty for anonymous'}</span>
                             </div>
                             <div class="form-group">
-                                <label>Your Review *</label>
+                                <label>${t('review.yourReview') || 'Your Review'} <span class="optional-label">(${t('common.optional') || 'optional'})</span></label>
                                 <textarea
-                                    placeholder="Share your experience with this coach..."
+                                    placeholder=${t('review.reviewPlaceholder') || 'Share your experience working with this coach...'}
                                     rows="4"
                                     value=${newReview.comment}
                                     onChange=${(e) => setNewReview({...newReview, comment: e.target.value})}
                                 ></textarea>
                             </div>
                             <div class="review-form-actions">
-                                <button class="btn-cancel" onClick=${() => setShowAddReview(false)}>Cancel</button>
+                                <button class="btn-cancel" onClick=${() => setShowAddReview(false)}>${t('review.cancel') || 'Cancel'}</button>
                                 <button class="btn-submit" onClick=${handleSubmitReview} disabled=${submitting}>
-                                    ${submitting ? 'Submitting...' : 'Submit Review'}
+                                    ${submitting ? (t('review.submitting') || 'Submitting...') : (t('review.submit') || 'Submit Review')}
                                 </button>
                             </div>
                         </div>
                     `}
 
                     ${loading ? html`
-                        <div class="reviews-loading">Loading reviews...</div>
+                        <div class="reviews-loading">${t('common.loading') || 'Loading'}...</div>
                     ` : reviews.length === 0 ? html`
                         <div class="no-reviews">
                             <div class="no-reviews-icon">📝</div>
-                            <p>No reviews yet</p>
-                            <p class="no-reviews-subtext">Be the first to review this coach!</p>
+                            <p>${t('review.noReviews') || 'No reviews yet'}</p>
+                            <p class="no-reviews-subtext">${t('review.beFirst') || 'Be the first to review this coach!'}</p>
                         </div>
                     ` : html`
                         <div class="reviews-list">
@@ -284,7 +257,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
                                 <div key=${review.id} class="review-item">
                                     <div class="review-header">
                                         <div class="reviewer-info">
-                                            <span class="reviewer-name">${review.reviewer_name || 'Anonymous'}</span>
+                                            <span class="reviewer-name">${review.reviewer_name || (t('review.anonymousName') || 'Anonymous')}</span>
                                             <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
                                         </div>
                                         <div class="review-rating">
