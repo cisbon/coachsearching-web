@@ -4095,19 +4095,19 @@ footer, .site-footer {
 
 .new-coach-compact {
     padding: 6px 12px;
-    background: var(--primary-petrol);
+    background: #f8f9fa;
     border-radius: 20px;
     transition: background 0.2s;
 }
 
 .new-coach-compact:hover {
-    background: #005555;
+    background: #e9ecef;
 }
 
 .new-badge-compact {
     font-size: 0.85rem;
     font-weight: 600;
-    color: white;
+    color: var(--primary-petrol);
 }
 
 /* Coach Info Section */
