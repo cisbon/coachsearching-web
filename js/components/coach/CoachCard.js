@@ -173,7 +173,7 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                             </div>
                         ` : html`
                             <div class="new-coach-compact clickable">
-                                <span class="new-badge-compact">✨ NEW</span>
+                                <span class="new-badge-compact">✨</span>
                             </div>
                         `}
                     </div>
