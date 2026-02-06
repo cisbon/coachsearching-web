@@ -135,121 +135,161 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
 
     return html`
         <div class="coach-card ${hasVideo ? 'has-video' : ''}">
-            <!-- Left Column: Image + Rating -->
-            <div class="coach-image-column">
-                <!-- Image Container with Video Play Overlay -->
-                <div class="coach-img-container ${hasVideo ? 'clickable' : ''}" onClick=${handleImageClick}>
-                    <img
-                        src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name)}
-                        alt=${coach.full_name}
-                        class="coach-img"
-                        loading="lazy"
-                    />
-                    ${hasVideo && html`
-                        <div class="video-play-overlay">
-                            <div class="play-button">
-                                <span>▶</span>
+            <!-- Top Row: Image + Info + Price -->
+            <div class="coach-card-top">
+                <!-- Left Column: Image + Rating -->
+                <div class="coach-image-column">
+                    <!-- Image Container with Video Play Overlay -->
+                    <div class="coach-img-container ${hasVideo ? 'clickable' : ''}" onClick=${handleImageClick}>
+                        <img
+                            src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name)}
+                            alt=${coach.full_name}
+                            class="coach-img"
+                            loading="lazy"
+                        />
+                        ${hasVideo && html`
+                            <div class="video-play-overlay">
+                                <div class="play-button">
+                                    <span>▶</span>
+                                </div>
+                                <span class="video-label">Watch Intro</span>
                             </div>
-                            <span class="video-label">Watch Intro</span>
-                        </div>
-                    `}
-                    <!-- Trust Badges Overlay -->
-                    <${TrustBadges} coach=${coach} />
+                        `}
+                        <!-- Trust Badges Overlay -->
+                        <${TrustBadges} coach=${coach} />
+                    </div>
+
+                    <!-- Rating Section - Under Profile Picture -->
+                    <div class="coach-rating-section" onClick=${handleReviewsClick}>
+                        ${reviewsCount > 0 ? html`
+                            <div class="rating-compact clickable">
+                                <div class="rating-stars-compact">
+                                    ${[1,2,3,4,5].map(star => html`
+                                        <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                    `)}
+                                </div>
+                                <span class="rating-value">${rating.toFixed(1)}</span>
+                                <span class="rating-count">(${reviewsCount})</span>
+                            </div>
+                        ` : html`
+                            <div class="new-coach-compact clickable">
+                                <span class="new-badge-compact">✨ NEW</span>
+                            </div>
+                        `}
+                    </div>
                 </div>
 
-                <!-- Rating Section - Under Profile Picture -->
-                <div class="coach-rating-section" onClick=${handleReviewsClick}>
-                    ${reviewsCount > 0 ? html`
-                        <div class="rating-compact clickable">
-                            <div class="rating-stars-compact">
-                                ${[1,2,3,4,5].map(star => html`
-                                    <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                `)}
-                            </div>
-                            <span class="rating-value">${rating.toFixed(1)}</span>
-                            <span class="rating-count">(${reviewsCount})</span>
-                        </div>
-                    ` : html`
-                        <div class="new-coach-compact clickable">
-                            <span class="new-badge-compact">✨ NEW</span>
+                <div class="coach-info">
+                    <!-- Name and Title -->
+                    <h3 class="coach-name">
+                        ${coach.full_name}
+                        ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
+                        ${coach.cs_coach_certifications?.length > 0 && html`
+                            <span class="certification-badges-inline">
+                                ${coach.cs_coach_certifications
+                                    .filter(cert => cert.cs_certifications?.badge_url)
+                                    .sort((a, b) => (b.cs_certifications?.sort_order || 0) - (a.cs_certifications?.sort_order || 0))
+                                    .map(cert => html`
+                                        <img
+                                            key=${cert.id}
+                                            src=${cert.cs_certifications?.badge_url}
+                                            alt=${cert.cs_certifications?.short_name || cert.cs_certifications?.name || 'Certification'}
+                                            title=${cert.cs_certifications?.name || 'Certification'}
+                                            class="certification-badge-inline"
+                                        />
+                                    `)
+                                }
+                            </span>
+                        `}
+                    </h3>
+                    <div class="coach-title">${coach.title}</div>
+
+                    <!-- Location and Languages Row -->
+                    <div class="coach-meta-row">
+                        ${location && html`<span class="meta-location">📍 ${location}</span>`}
+                        <${LanguageFlags} languages=${languages} />
+                    </div>
+
+                    <!-- Session Formats Row -->
+                    ${(offersVideo || offersInPerson) && html`
+                        <div class="coach-session-formats" style=${{ display: 'flex', gap: '12px', marginTop: '6px', fontSize: '0.85rem', color: '#64748b' }}>
+                            ${offersVideo && html`<span>💻 Video Call</span>`}
+                            ${offersInPerson && html`<span>🤝 In-Person</span>`}
                         </div>
                     `}
+
+                    <!-- Bio -->
+                    <div class="coach-bio">
+                        <p>${bio.length > 120 ? bio.substring(0, 120) + '...' : bio}</p>
+                    </div>
+
+                    <!-- Specialties - shown inside coach-info on mobile -->
+                    ${localizedSpecialties.length > 0 ? html`
+                        <div class="specialty-tags specialty-tags-mobile">
+                            ${localizedSpecialties.slice(0, 4).map(s => html`
+                                <span key=${s.code} class="specialty-tag">${s.name}</span>
+                            `)}
+                            ${localizedSpecialties.length > 4 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 4}</span>` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Price Section - Top Right on Desktop -->
+                <div class="coach-price-top">
+                    <div class="price-info">
+                        <div class="price-label">${t('coach.hourly_rate') || 'Hourly Rate'}</div>
+                        <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
+                    </div>
+                </div>
+
+                <!-- Price Section - For Mobile Only -->
+                <div class="coach-price-section coach-price-mobile">
+                    <div class="price-info">
+                        <div class="price-label">${t('coach.hourly_rate') || 'Hourly Rate'}</div>
+                        <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
+                    </div>
+                    <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
+                        <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        ${t('discovery.bookFreeCall') || 'Free Discovery Call'}
+                    </button>
+                    <a href="/coach/${coach.slug || coach.id}" class="btn-book">
+                        ${t('coach.view_profile') || 'View Profile'} →
+                    </a>
                 </div>
             </div>
 
-            <div class="coach-info">
-                <!-- Name and Title -->
-                <h3 class="coach-name">
-                    ${coach.full_name}
-                    ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
-                    ${coach.cs_coach_certifications?.length > 0 && html`
-                        <span class="certification-badges-inline">
-                            ${coach.cs_coach_certifications
-                                .filter(cert => cert.cs_certifications?.badge_url)
-                                .sort((a, b) => (b.cs_certifications?.sort_order || 0) - (a.cs_certifications?.sort_order || 0))
-                                .map(cert => html`
-                                    <img
-                                        key=${cert.id}
-                                        src=${cert.cs_certifications?.badge_url}
-                                        alt=${cert.cs_certifications?.short_name || cert.cs_certifications?.name || 'Certification'}
-                                        title=${cert.cs_certifications?.name || 'Certification'}
-                                        class="certification-badge-inline"
-                                    />
-                                `)
-                            }
-                        </span>
-                    `}
-                </h3>
-                <div class="coach-title">${coach.title}</div>
-
-                <!-- Location and Languages Row -->
-                <div class="coach-meta-row">
-                    ${location && html`<span class="meta-location">📍 ${location}</span>`}
-                    <${LanguageFlags} languages=${languages} />
-                </div>
-
-                <!-- Session Formats Row -->
-                ${(offersVideo || offersInPerson) && html`
-                    <div class="coach-session-formats" style=${{ display: 'flex', gap: '12px', marginTop: '6px', fontSize: '0.85rem', color: '#64748b' }}>
-                        ${offersVideo && html`<span>💻 Video Call</span>`}
-                        ${offersInPerson && html`<span>🤝 In-Person</span>`}
-                    </div>
-                `}
-
-                <!-- Bio -->
-                <div class="coach-bio">
-                    <p>${bio.length > 120 ? bio.substring(0, 120) + '...' : bio}</p>
-                </div>
-
-                <!-- Specialties -->
+            <!-- Bottom Row: Specialties + Actions (Desktop Only) -->
+            <div class="coach-card-bottom">
+                <!-- Specialties - Desktop -->
                 ${localizedSpecialties.length > 0 ? html`
-                    <div class="specialty-tags">
+                    <div class="specialty-tags specialty-tags-desktop">
                         ${localizedSpecialties.slice(0, 4).map(s => html`
                             <span key=${s.code} class="specialty-tag">${s.name}</span>
                         `)}
                         ${localizedSpecialties.length > 4 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 4}</span>` : ''}
                     </div>
-                ` : ''}
-            </div>
+                ` : html`<div class="specialty-tags-placeholder"></div>`}
 
-            <!-- Price Section -->
-            <div class="coach-price-section">
-                <div class="price-info">
-                    <div class="price-label">${t('coach.hourly_rate') || 'Hourly Rate'}</div>
-                    <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
+                <!-- Actions - Desktop -->
+                <div class="coach-card-actions">
+                    <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
+                        <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        ${t('discovery.bookFreeCall') || 'Free Discovery Call'}
+                    </button>
+                    <a href="/coach/${coach.slug || coach.id}" class="btn-book">
+                        ${t('coach.view_profile') || 'View Profile'} →
+                    </a>
                 </div>
-                <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
-                    <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                    ${t('discovery.bookFreeCall') || 'Free Discovery Call'}
-                </button>
-                <a href="/coach/${coach.slug || coach.id}" class="btn-book">
-                    ${t('coach.view_profile') || 'View Profile'} →
-                </a>
             </div>
         </div>
 

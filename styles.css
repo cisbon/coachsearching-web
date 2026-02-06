@@ -3840,6 +3840,125 @@ footer, .site-footer {
     border-left: 4px solid var(--primary-petrol);
 }
 
+/* Coach Card - Desktop 2-Line Layout */
+.coach-card-top {
+    display: flex;
+    gap: 24px;
+    width: 100%;
+}
+
+.coach-card-bottom {
+    display: none; /* Hidden on mobile, shown on desktop */
+}
+
+/* Price section - top right on desktop */
+.coach-price-top {
+    display: none; /* Hidden on mobile */
+}
+
+/* Mobile price section */
+.coach-price-mobile {
+    display: flex;
+}
+
+/* Specialty tags visibility */
+.specialty-tags-mobile {
+    display: flex;
+}
+
+.specialty-tags-desktop {
+    display: none;
+}
+
+/* Desktop Layout (min-width: 769px) */
+@media (min-width: 769px) {
+    .coach-card {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .coach-card-top {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .coach-card-bottom {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #eee;
+    }
+
+    /* Price - top right on desktop */
+    .coach-price-top {
+        display: block;
+        flex-shrink: 0;
+        text-align: right;
+        margin-left: auto;
+    }
+
+    .coach-price-top .price-info {
+        text-align: right;
+    }
+
+    .coach-price-top .price-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .coach-price-top .price-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    /* Hide mobile price section on desktop */
+    .coach-price-mobile {
+        display: none !important;
+    }
+
+    /* Coach info takes remaining space */
+    .coach-card-top .coach-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Hide specialty tags inside coach-info on desktop */
+    .specialty-tags-mobile {
+        display: none !important;
+    }
+
+    /* Show specialty tags in bottom row on desktop */
+    .specialty-tags-desktop {
+        display: flex;
+        flex: 1;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: flex-start;
+        margin: 0;
+    }
+
+    .specialty-tags-placeholder {
+        flex: 1;
+    }
+
+    /* Actions section in bottom row */
+    .coach-card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex-shrink: 0;
+        min-width: 180px;
+    }
+
+    .coach-card-actions .btn-discovery,
+    .coach-card-actions .btn-book {
+        width: 100%;
+    }
+}
+
 /* Image Container with Video Overlay */
 .coach-img-container {
     position: relative;
@@ -4186,7 +4305,7 @@ footer, .site-footer {
     border-color: #d0d0d0;
 }
 
-/* Price Section */
+/* Price Section - Mobile Layout */
 .coach-price-section {
     display: flex;
     flex-direction: column;
@@ -4194,6 +4313,11 @@ footer, .site-footer {
     align-items: flex-end;
     min-width: 160px;
     gap: 6px;
+}
+
+/* Mobile price section shows on mobile by default */
+.coach-price-section.coach-price-mobile {
+    display: flex;
 }
 
 .free-intro-badge {
@@ -4494,6 +4618,31 @@ footer, .site-footer {
     .coach-card {
         flex-direction: column;
         padding: 16px;
+    }
+
+    .coach-card-top {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .coach-card-bottom {
+        display: none !important; /* Hidden on mobile */
+    }
+
+    .coach-price-top {
+        display: none !important; /* Hidden on mobile */
+    }
+
+    .coach-price-mobile {
+        display: flex !important;
+    }
+
+    .specialty-tags-mobile {
+        display: flex !important;
+    }
+
+    .specialty-tags-desktop {
+        display: none !important;
     }
 
     .coach-img-container {
