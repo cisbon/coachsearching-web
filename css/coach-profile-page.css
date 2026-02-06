@@ -1201,7 +1201,6 @@
 @media (min-width: 992px) {
     .profile-sidebar-column {
         position: sticky;
-        top: 80px;
     }
 }
 
