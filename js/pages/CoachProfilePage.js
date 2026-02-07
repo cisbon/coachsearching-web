@@ -788,6 +788,486 @@ const ViewersAlsoViewedSidebar = memo(function ViewersAlsoViewedSidebar({ coache
 });
 
 /**
+ * Banner Editor Modal Component
+ * LinkedIn-style cover image editor with crop, zoom, and rotation controls
+ */
+const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSave, session }) {
+    const [image, setImage] = useState(null);
+    const [originalImage, setOriginalImage] = useState(null);
+    const [zoom, setZoom] = useState(1);
+    const [rotation, setRotation] = useState(0);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+    const [hasExistingBanner, setHasExistingBanner] = useState(false);
+
+    const fileInputRef = React.useRef(null);
+    const canvasRef = React.useRef(null);
+    const containerRef = React.useRef(null);
+
+    // Banner aspect ratio (4:1 for LinkedIn-style banners)
+    const ASPECT_RATIO = 4;
+    const CROP_HEIGHT = 180;
+    const CROP_WIDTH = CROP_HEIGHT * ASPECT_RATIO;
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+
+        // Check if coach has existing banner
+        const existingBanner = coach.banner_url && !coach.banner_url.includes('unsplash.com');
+        setHasExistingBanner(existingBanner);
+
+        // If existing banner, load it for editing
+        if (existingBanner) {
+            loadImageFromUrl(coach.banner_url);
+        } else {
+            // If no banner, immediately prompt for file selection
+            setTimeout(() => {
+                fileInputRef.current?.click();
+            }, 100);
+        }
+
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, []);
+
+    const loadImageFromUrl = (url) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            setOriginalImage(img);
+            setImage(img);
+            // Reset transformations
+            setZoom(1);
+            setRotation(0);
+            setPosition({ x: 0, y: 0 });
+        };
+        img.onerror = () => {
+            setError('Failed to load existing banner image');
+        };
+        img.src = url + '?t=' + Date.now(); // Cache bust
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            setError('Please select an image file');
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            setError('Image must be less than 10MB');
+            return;
+        }
+
+        setError('');
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                setOriginalImage(img);
+                setImage(img);
+                setHasExistingBanner(true);
+                // Reset transformations
+                setZoom(1);
+                setRotation(0);
+                setPosition({ x: 0, y: 0 });
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleMouseDown = (e) => {
+        if (!image) return;
+        setIsDragging(true);
+        setDragStart({
+            x: e.clientX - position.x,
+            y: e.clientY - position.y
+        });
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDragging || !image) return;
+        setPosition({
+            x: e.clientX - dragStart.x,
+            y: e.clientY - dragStart.y
+        });
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleTouchStart = (e) => {
+        if (!image || e.touches.length !== 1) return;
+        setIsDragging(true);
+        setDragStart({
+            x: e.touches[0].clientX - position.x,
+            y: e.touches[0].clientY - position.y
+        });
+    };
+
+    const handleTouchMove = (e) => {
+        if (!isDragging || !image || e.touches.length !== 1) return;
+        e.preventDefault();
+        setPosition({
+            x: e.touches[0].clientX - dragStart.x,
+            y: e.touches[0].clientY - dragStart.y
+        });
+    };
+
+    const handleTouchEnd = () => {
+        setIsDragging(false);
+    };
+
+    const getCroppedImage = () => {
+        return new Promise((resolve, reject) => {
+            if (!image || !canvasRef.current) {
+                reject(new Error('No image to crop'));
+                return;
+            }
+
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+
+            // Set output dimensions (high quality)
+            canvas.width = 1200;
+            canvas.height = 300;
+
+            // Clear canvas
+            ctx.fillStyle = '#f3f2ef';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate the crop area in image coordinates
+            const containerWidth = containerRef.current?.offsetWidth || CROP_WIDTH;
+            const containerHeight = CROP_HEIGHT;
+
+            const scaleX = canvas.width / containerWidth;
+            const scaleY = canvas.height / containerHeight;
+
+            ctx.save();
+
+            // Move to center for rotation
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((rotation * Math.PI) / 180);
+            ctx.scale(zoom, zoom);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+            // Calculate image position
+            const imgWidth = image.width;
+            const imgHeight = image.height;
+
+            // Scale image to fit the crop area
+            const fitScale = Math.max(
+                containerWidth / imgWidth,
+                containerHeight / imgHeight
+            );
+
+            const scaledWidth = imgWidth * fitScale * scaleX;
+            const scaledHeight = imgHeight * fitScale * scaleY;
+
+            const drawX = (canvas.width - scaledWidth) / 2 + position.x * scaleX;
+            const drawY = (canvas.height - scaledHeight) / 2 + position.y * scaleY;
+
+            ctx.drawImage(image, drawX, drawY, scaledWidth, scaledHeight);
+            ctx.restore();
+
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Failed to create image blob'));
+                }
+            }, 'image/jpeg', 0.9);
+        });
+    };
+
+    const handleApply = async () => {
+        if (!image) return;
+
+        setSaving(true);
+        setError('');
+
+        try {
+            const blob = await getCroppedImage();
+            const fileName = `${coach.id}/banner-${Date.now()}.jpg`;
+
+            // Upload to profile-banners bucket
+            const { error: uploadError } = await window.supabaseClient.storage
+                .from('profile-banners')
+                .upload(fileName, blob, {
+                    upsert: true,
+                    contentType: 'image/jpeg'
+                });
+
+            if (uploadError) throw uploadError;
+
+            // Get public URL
+            const { data: { publicUrl } } = window.supabaseClient.storage
+                .from('profile-banners')
+                .getPublicUrl(fileName);
+
+            // Save to coach profile with cache busting
+            const bannerUrl = publicUrl + '?t=' + Date.now();
+            await onSave({ banner_url: bannerUrl });
+            onClose();
+        } catch (err) {
+            console.error('Banner upload error:', err);
+            setError(err.message || 'Failed to upload banner image');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to delete your banner image?')) return;
+
+        setSaving(true);
+        setError('');
+
+        try {
+            // Set banner_url to null or default
+            await onSave({ banner_url: null });
+            onClose();
+        } catch (err) {
+            console.error('Delete banner error:', err);
+            setError(err.message || 'Failed to delete banner image');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('banner-editor-overlay')) {
+            onClose();
+        }
+    };
+
+    // Calculate image display styles
+    const getImageStyle = () => {
+        if (!image) return {};
+
+        const containerWidth = containerRef.current?.offsetWidth || CROP_WIDTH;
+        const containerHeight = CROP_HEIGHT;
+
+        // Scale to cover the container
+        const scaleToFit = Math.max(
+            containerWidth / image.width,
+            containerHeight / image.height
+        );
+
+        const width = image.width * scaleToFit * zoom;
+        const height = image.height * scaleToFit * zoom;
+
+        return {
+            width: `${width}px`,
+            height: `${height}px`,
+            transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
+            cursor: isDragging ? 'grabbing' : 'grab'
+        };
+    };
+
+    return html`
+        <div class="banner-editor-overlay" onClick=${handleBackdropClick}>
+            <div class="banner-editor-container">
+                <!-- Header -->
+                <div class="banner-editor-header">
+                    <h3>Cover image</h3>
+                    <button class="banner-editor-close" onClick=${onClose}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Crop Area -->
+                <div class="banner-editor-crop-area">
+                    <div
+                        class="banner-crop-container"
+                        ref=${containerRef}
+                        onMouseDown=${handleMouseDown}
+                        onMouseMove=${handleMouseMove}
+                        onMouseUp=${handleMouseUp}
+                        onMouseLeave=${handleMouseUp}
+                        onTouchStart=${handleTouchStart}
+                        onTouchMove=${handleTouchMove}
+                        onTouchEnd=${handleTouchEnd}
+                    >
+                        ${image ? html`
+                            <img
+                                src=${image.src}
+                                alt="Banner preview"
+                                class="banner-preview-image"
+                                style=${getImageStyle()}
+                                draggable="false"
+                            />
+                        ` : html`
+                            <div class="banner-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <p>Select an image to upload</p>
+                            </div>
+                        `}
+                        <!-- Crop frame overlay -->
+                        <div class="banner-crop-frame"></div>
+                    </div>
+                </div>
+
+                ${error && html`<div class="banner-editor-error">${error}</div>`}
+
+                <!-- Controls -->
+                ${image && html`
+                    <div class="banner-editor-controls">
+                        <div class="banner-control-tabs">
+                            <button class="control-tab active">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                </svg>
+                                Crop
+                            </button>
+                        </div>
+
+                        <div class="banner-control-sliders">
+                            <!-- Zoom -->
+                            <div class="banner-slider-row">
+                                <span class="slider-label">Zoom</span>
+                                <div class="slider-container">
+                                    <button
+                                        class="slider-btn"
+                                        onClick=${() => setZoom(z => Math.max(1, z - 0.1))}
+                                    >−</button>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="3"
+                                        step="0.1"
+                                        value=${zoom}
+                                        onChange=${(e) => setZoom(parseFloat(e.target.value))}
+                                        class="banner-slider"
+                                    />
+                                    <button
+                                        class="slider-btn"
+                                        onClick=${() => setZoom(z => Math.min(3, z + 0.1))}
+                                    >+</button>
+                                </div>
+                            </div>
+
+                            <!-- Straighten (Rotation) -->
+                            <div class="banner-slider-row">
+                                <span class="slider-label">Straighten</span>
+                                <div class="slider-container">
+                                    <button
+                                        class="slider-btn"
+                                        onClick=${() => setRotation(r => Math.max(-45, r - 1))}
+                                    >−</button>
+                                    <input
+                                        type="range"
+                                        min="-45"
+                                        max="45"
+                                        step="1"
+                                        value=${rotation}
+                                        onChange=${(e) => setRotation(parseInt(e.target.value))}
+                                        class="banner-slider"
+                                    />
+                                    <button
+                                        class="slider-btn"
+                                        onClick=${() => setRotation(r => Math.min(45, r + 1))}
+                                    >+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rotation buttons -->
+                        <div class="banner-rotate-buttons">
+                            <button
+                                class="rotate-btn"
+                                onClick=${() => setRotation(r => r - 90)}
+                                title="Rotate left"
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="1 4 1 10 7 10"></polyline>
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                </svg>
+                            </button>
+                            <button
+                                class="rotate-btn"
+                                onClick=${() => setRotation(r => r + 90)}
+                                title="Rotate right"
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `}
+
+                <!-- Footer Actions -->
+                <div class="banner-editor-actions">
+                    <div class="banner-actions-left">
+                        ${hasExistingBanner && html`
+                            <button
+                                class="btn-delete-banner"
+                                onClick=${handleDelete}
+                                disabled=${saving}
+                            >
+                                Delete photo
+                            </button>
+                        `}
+                    </div>
+                    <div class="banner-actions-right">
+                        <button
+                            class="btn-change-photo"
+                            onClick=${() => fileInputRef.current?.click()}
+                            disabled=${saving}
+                        >
+                            Change photo
+                        </button>
+                        <button
+                            class="btn-apply-banner"
+                            onClick=${handleApply}
+                            disabled=${saving || !image}
+                        >
+                            ${saving ? 'Applying...' : 'Apply'}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden file input -->
+                <input
+                    type="file"
+                    ref=${fileInputRef}
+                    accept="image/*"
+                    style="display: none"
+                    onChange=${handleFileSelect}
+                />
+
+                <!-- Hidden canvas for cropping -->
+                <canvas ref=${canvasRef} style="display: none" />
+            </div>
+        </div>
+    `;
+});
+
+/**
  * Edit Section Modal Component
  * Allows inline editing of profile sections
  */
@@ -1089,6 +1569,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     // Edit mode states
     const [editingSection, setEditingSection] = useState(null);
+    const [showBannerEditor, setShowBannerEditor] = useState(false);
 
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
@@ -1495,10 +1976,13 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         // Sections that can be edited inline
         const inlineEditableSections = ['name', 'title', 'about', 'skills', 'interests', 'experience', 'education', 'languages', 'hourly_rate'];
 
-        if (inlineEditableSections.includes(sectionName)) {
+        if (sectionName === 'banner') {
+            // Open the banner editor modal
+            setShowBannerEditor(true);
+        } else if (inlineEditableSections.includes(sectionName)) {
             setEditingSection(sectionName);
         } else {
-            // For complex sections (photo, banner, video, certifications, featured), navigate to edit page
+            // For complex sections (photo, video, certifications, featured), navigate to edit page
             window.navigateTo(`/profile/edit?section=${sectionName}`);
         }
     };
@@ -2001,6 +2485,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     section=${editingSection}
                     coach=${coach}
                     onClose=${() => setEditingSection(null)}
+                    onSave=${saveCoachProfile}
+                />
+            `}
+
+            <!-- Banner Editor Modal -->
+            ${showBannerEditor && isOwnProfile && html`
+                <${BannerEditorModal}
+                    coach=${coach}
+                    session=${session}
+                    onClose=${() => setShowBannerEditor(false)}
                     onSave=${saveCoachProfile}
                 />
             `}

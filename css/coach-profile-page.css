@@ -2448,3 +2448,434 @@
         padding: 2px 6px;
     }
 }
+
+/* ==========================================================================
+   Banner Editor Modal - LinkedIn Style
+   ========================================================================== */
+
+.banner-editor-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+    backdrop-filter: blur(8px);
+}
+
+.banner-editor-container {
+    background: #1d2226;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 800px;
+    max-height: 95vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+    animation: bannerEditorSlideIn 0.3s ease;
+}
+
+@keyframes bannerEditorSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Header */
+.banner-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.banner-editor-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: white;
+}
+
+.banner-editor-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.banner-editor-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Crop Area */
+.banner-editor-crop-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    min-height: 280px;
+    background: #000;
+    overflow: hidden;
+}
+
+.banner-crop-container {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    height: 180px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: none;
+}
+
+.banner-preview-image {
+    position: absolute;
+    object-fit: contain;
+    pointer-events: none;
+    transition: transform 0.05s ease-out;
+}
+
+.banner-crop-frame {
+    position: absolute;
+    inset: 0;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    pointer-events: none;
+    box-shadow:
+        0 0 0 4000px rgba(0, 0, 0, 0.5),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.banner-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+}
+
+.banner-placeholder svg {
+    opacity: 0.6;
+}
+
+.banner-placeholder p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Error Message */
+.banner-editor-error {
+    padding: 12px 20px;
+    background: rgba(220, 53, 69, 0.2);
+    color: #ff6b6b;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+/* Controls Section */
+.banner-editor-controls {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: #1d2226;
+}
+
+.banner-control-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.control-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 20px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.control-tab.active {
+    background: rgba(0, 166, 137, 0.15);
+    color: #00a689;
+}
+
+.banner-control-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.banner-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.slider-label {
+    width: 80px;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
+}
+
+.slider-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.slider-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.slider-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.banner-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.banner-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #00a689;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.banner-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.banner-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #00a689;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.banner-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Rotation Buttons */
+.banner-rotate-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.rotate-btn {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.rotate-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Footer Actions */
+.banner-editor-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: #1d2226;
+}
+
+.banner-actions-left {
+    display: flex;
+    gap: 8px;
+}
+
+.banner-actions-right {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-delete-banner {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-banner:hover:not(:disabled) {
+    color: #ff6b6b;
+}
+
+.btn-delete-banner:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-change-photo {
+    padding: 10px 20px;
+    background: transparent;
+    border: 2px solid #00a689;
+    border-radius: 24px;
+    color: #00a689;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-change-photo:hover:not(:disabled) {
+    background: rgba(0, 166, 137, 0.1);
+}
+
+.btn-change-photo:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-apply-banner {
+    padding: 10px 24px;
+    background: #00a689;
+    border: none;
+    border-radius: 24px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-apply-banner:hover:not(:disabled) {
+    background: #00b899;
+    transform: translateY(-1px);
+}
+
+.btn-apply-banner:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Mobile Responsive */
+@media (max-width: 767px) {
+    .banner-editor-overlay {
+        padding: 0;
+    }
+
+    .banner-editor-container {
+        border-radius: 0;
+        max-height: 100vh;
+        height: 100%;
+    }
+
+    .banner-editor-crop-area {
+        min-height: 200px;
+        padding: 16px;
+    }
+
+    .banner-crop-container {
+        height: 140px;
+    }
+
+    .banner-slider-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .slider-label {
+        width: 100%;
+        margin-bottom: 4px;
+    }
+
+    .banner-editor-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .banner-actions-left,
+    .banner-actions-right {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .banner-actions-right {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-change-photo,
+    .btn-apply-banner {
+        width: 100%;
+    }
+}
