@@ -1084,7 +1084,7 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
             <div class="banner-editor-container">
                 <!-- Header -->
                 <div class="banner-editor-header">
-                    <h3>Cover image</h3>
+                    <h3>Banner image</h3>
                     <button class="banner-editor-close" onClick=${onClose}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
