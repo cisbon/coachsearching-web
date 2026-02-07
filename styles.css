@@ -152,13 +152,13 @@ header {
 
 /* Hero Split Layout (with coach image) */
 .hero.hero-split {
-    padding: 60px 0 80px;
+    padding: 60px 0 0;
     overflow: hidden;
 }
 
 .hero-content-wrapper {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 60px;
     justify-content: space-between;
 }
@@ -166,12 +166,14 @@ header {
 .hero-left {
     flex: 1;
     max-width: 600px;
+    padding-bottom: 60px;
 }
 
 .hero-left h1 {
     font-size: 2.75rem;
     margin-bottom: 16px;
     line-height: 1.15;
+    white-space: nowrap;
 }
 
 .hero-subtitle {
@@ -252,21 +254,25 @@ header {
 
 /* Hero Right - Coach Image */
 .hero-right {
-    flex: 0 0 400px;
+    flex: 0 0 420px;
     display: flex;
     justify-content: center;
+    align-items: flex-end;
 }
 
 .hero-image-container {
     position: relative;
+    display: flex;
+    align-items: flex-end;
 }
 
 .hero-coach-image {
-    width: 380px;
-    height: 480px;
-    object-fit: cover;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    width: 420px;
+    height: auto;
+    max-height: 520px;
+    object-fit: contain;
+    object-position: bottom;
+    display: block;
 }
 
 .hero-image-badge {
@@ -314,6 +320,7 @@ header {
     .hero-content-wrapper {
         flex-direction: column;
         text-align: center;
+        align-items: center;
     }
 
     .hero-left {
@@ -321,7 +328,8 @@ header {
     }
 
     .hero-left h1 {
-        font-size: 2.25rem;
+        font-size: 2rem;
+        white-space: nowrap;
     }
 
     .hero-right {
@@ -331,11 +339,12 @@ header {
 
     .hero-coach-image {
         width: 320px;
-        height: 400px;
+        max-height: 400px;
     }
 
     .hero-split .discovery-options {
         justify-content: center;
+        flex-wrap: nowrap;
     }
 
     .hero-search-bar {
@@ -349,11 +358,12 @@ header {
 
 @media (max-width: 768px) {
     .hero.hero-split {
-        padding: 40px 0 60px;
+        padding: 40px 0 0;
     }
 
     .hero-left h1 {
-        font-size: 1.875rem;
+        font-size: 1.5rem;
+        white-space: nowrap;
     }
 
     .hero-subtitle {
@@ -370,6 +380,16 @@ header {
 
     .hero-search-btn {
         padding: 16px 28px;
+    }
+
+    .hero-split .discovery-options {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .discovery-option {
+        padding: 12px 16px;
+        min-width: 100px;
     }
 }
 

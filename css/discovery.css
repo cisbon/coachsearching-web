@@ -879,23 +879,24 @@
 ============================================= */
 .discovery-options {
     display: flex;
-    gap: 16px;
-    justify-content: center;
+    gap: 12px;
+    justify-content: flex-start;
     margin: 32px 0;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .discovery-option {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px 32px;
+    padding: 16px 20px;
     background: rgba(255, 255, 255, 0.95);
     border: 2px solid transparent;
-    border-radius: 16px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 160px;
+    min-width: 140px;
+    flex: 1;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -1325,13 +1326,13 @@
 /* Mobile Responsive */
 @media (max-width: 900px) {
     .discovery-options {
-        flex-direction: column;
-        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .discovery-option {
-        width: 100%;
-        max-width: 300px;
+        flex: 0 0 auto;
+        min-width: 120px;
     }
 
     .coaches-layout {

@@ -96,14 +96,10 @@ export function Hero() {
                     <div class="hero-right">
                         <div class="hero-image-container">
                             <img
-                                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-                                alt="${t('hero.coachImageAlt') || 'Professional female coach smiling warmly'}"
+                                src="https://coachsearching.com/hero.jpg"
+                                alt="${t('hero.coachImageAlt') || 'Professional female coach'}"
                                 class="hero-coach-image"
                             />
-                            <div class="hero-image-badge">
-                                <span class="badge-icon">✓</span>
-                                <span class="badge-text">${t('hero.verifiedCoaches') || '500+ verifizierte Coaches'}</span>
-                            </div>
                         </div>
                     </div>
                 </div>
