@@ -15,6 +15,10 @@ const translations = {
         // Hero
         "hero.title": "Find Your Perfect Coach",
         "hero.subtitle": "Professional coaching for business, life, and personal growth.",
+        "hero.searchPlaceholder": "Career or Entrepreneurship",
+        "hero.searchBtn": "Search",
+        "hero.coachImageAlt": "Professional female coach smiling warmly",
+        "hero.verifiedCoaches": "500+ Verified Coaches",
 
         // Search
         "search.placeholder": "Search by name, title, or bio...",
@@ -2137,6 +2141,10 @@ const translations = {
         // Hero
         "hero.title": "Finde deinen perfekten Coach",
         "hero.subtitle": "Professionelles Coaching für Business, Leben und persönliches Wachstum.",
+        "hero.searchPlaceholder": "Karriere oder Entrepreneurship",
+        "hero.searchBtn": "Suchen",
+        "hero.coachImageAlt": "Professionelle weibliche Coach lächelt freundlich",
+        "hero.verifiedCoaches": "500+ verifizierte Coaches",
 
         // Discovery
         "discovery.title": "Finde deinen perfekten Coach",

@@ -150,6 +150,229 @@ header {
     opacity: 0.9;
 }
 
+/* Hero Split Layout (with coach image) */
+.hero.hero-split {
+    padding: 60px 0 80px;
+    overflow: hidden;
+}
+
+.hero-content-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+    justify-content: space-between;
+}
+
+.hero-left {
+    flex: 1;
+    max-width: 600px;
+}
+
+.hero-left h1 {
+    font-size: 2.75rem;
+    margin-bottom: 16px;
+    line-height: 1.15;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 28px;
+    opacity: 0.9;
+    line-height: 1.5;
+}
+
+/* Hero Search Bar (Google-style) */
+.hero-search-container {
+    margin-bottom: 32px;
+}
+
+.hero-search-bar {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.hero-search-input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.hero-search-icon {
+    position: absolute;
+    left: 18px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.hero-search-input {
+    width: 100%;
+    padding: 18px 20px 18px 54px;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.3s ease;
+}
+
+.hero-search-input:focus {
+    outline: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 0 0 2px var(--petrol-light);
+}
+
+.hero-search-input::placeholder {
+    color: #9ca3af;
+}
+
+.hero-search-btn {
+    padding: 18px 36px;
+    background: white;
+    color: var(--primary-petrol);
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.hero-search-btn:hover {
+    background: var(--petrol-light);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 203, 206, 0.4);
+}
+
+/* Hero Right - Coach Image */
+.hero-right {
+    flex: 0 0 400px;
+    display: flex;
+    justify-content: center;
+}
+
+.hero-image-container {
+    position: relative;
+}
+
+.hero-coach-image {
+    width: 380px;
+    height: 480px;
+    object-fit: cover;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.hero-image-badge {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 12px 20px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+}
+
+.hero-image-badge .badge-icon {
+    width: 24px;
+    height: 24px;
+    background: #22c55e;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.hero-image-badge .badge-text {
+    color: #1a1a1a;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Discovery options in hero split layout */
+.hero-split .discovery-options {
+    justify-content: flex-start;
+    margin: 0;
+}
+
+/* Responsive Hero Split */
+@media (max-width: 1024px) {
+    .hero-content-wrapper {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero-left {
+        max-width: 100%;
+    }
+
+    .hero-left h1 {
+        font-size: 2.25rem;
+    }
+
+    .hero-right {
+        flex: 0 0 auto;
+        margin-top: 40px;
+    }
+
+    .hero-coach-image {
+        width: 320px;
+        height: 400px;
+    }
+
+    .hero-split .discovery-options {
+        justify-content: center;
+    }
+
+    .hero-search-bar {
+        flex-direction: column;
+    }
+
+    .hero-search-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero.hero-split {
+        padding: 40px 0 60px;
+    }
+
+    .hero-left h1 {
+        font-size: 1.875rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .hero-right {
+        display: none;
+    }
+
+    .hero-search-input {
+        padding: 16px 16px 16px 48px;
+    }
+
+    .hero-search-btn {
+        padding: 16px 28px;
+    }
+}
+
 /* Search Box (Sticky/Overlapping) */
 .search-container {
     background: var(--petrol-light);

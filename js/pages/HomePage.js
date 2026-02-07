@@ -10,9 +10,11 @@ const React = window.React;
 const html = htm.bind(React.createElement);
 
 /**
- * Hero Section - Main landing area with discovery options
+ * Hero Section - Main landing area with discovery options and coach image
  */
 export function Hero() {
+    const [searchQuery, setSearchQuery] = React.useState('');
+
     const handleNavigate = (path) => {
         if (window.navigateTo) {
             window.navigateTo(path);
@@ -21,29 +23,89 @@ export function Hero() {
         }
     };
 
-    return html`
-        <section class="hero">
-            <div class="container">
-                <h1>${t('hero.title')}</h1>
-                <p>${t('hero.subtitle')}</p>
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            handleNavigate(`/coaches?search=${encodeURIComponent(searchQuery.trim())}`);
+        } else {
+            handleNavigate('/coaches');
+        }
+    };
 
-                <!-- Discovery Options -->
-                <div class="discovery-options">
-                    <button class="discovery-option quiz-option" onClick=${() => handleNavigate('/quiz')}>
-                        <span class="discovery-icon">🎯</span>
-                        <span class="discovery-label">${t('discovery.takeQuiz')}</span>
-                        <span class="discovery-desc">${t('discovery.takeQuizDesc')}</span>
-                    </button>
-                    <button class="discovery-option browse-option" onClick=${() => handleNavigate('/coaches')}>
-                        <span class="discovery-icon">🔍</span>
-                        <span class="discovery-label">${t('discovery.browse')}</span>
-                        <span class="discovery-desc">${t('discovery.browseDesc')}</span>
-                    </button>
-                    <button class="discovery-option ai-option" onClick=${() => handleNavigate('/ai-match')}>
-                        <span class="discovery-icon">✨</span>
-                        <span class="discovery-label">${t('discovery.aiMatch')}</span>
-                        <span class="discovery-desc">${t('discovery.aiMatchDesc')}</span>
-                    </button>
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch(e);
+        }
+    };
+
+    return html`
+        <section class="hero hero-split">
+            <div class="container">
+                <div class="hero-content-wrapper">
+                    <!-- Left Side: Text, Search Bar, and Discovery Options -->
+                    <div class="hero-left">
+                        <h1>${t('hero.title')}</h1>
+                        <p class="hero-subtitle">${t('hero.subtitle')}</p>
+
+                        <!-- Google-style Search Bar -->
+                        <div class="hero-search-container">
+                            <form class="hero-search-bar" onSubmit=${handleSearch}>
+                                <div class="hero-search-input-wrapper">
+                                    <span class="hero-search-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        class="hero-search-input"
+                                        placeholder=${t('hero.searchPlaceholder') || 'Karriere oder Entrepreneurship'}
+                                        value=${searchQuery}
+                                        onInput=${(e) => setSearchQuery(e.target.value)}
+                                        onKeyPress=${handleKeyPress}
+                                    />
+                                </div>
+                                <button type="submit" class="hero-search-btn">
+                                    ${t('hero.searchBtn') || 'Suchen'}
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Discovery Options -->
+                        <div class="discovery-options">
+                            <button class="discovery-option quiz-option" onClick=${() => handleNavigate('/quiz')}>
+                                <span class="discovery-icon">🎯</span>
+                                <span class="discovery-label">${t('discovery.takeQuiz')}</span>
+                                <span class="discovery-desc">${t('discovery.takeQuizDesc')}</span>
+                            </button>
+                            <button class="discovery-option browse-option" onClick=${() => handleNavigate('/coaches')}>
+                                <span class="discovery-icon">🔍</span>
+                                <span class="discovery-label">${t('discovery.browse')}</span>
+                                <span class="discovery-desc">${t('discovery.browseDesc')}</span>
+                            </button>
+                            <button class="discovery-option ai-option" onClick=${() => handleNavigate('/ai-match')}>
+                                <span class="discovery-icon">✨</span>
+                                <span class="discovery-label">${t('discovery.aiMatch')}</span>
+                                <span class="discovery-desc">${t('discovery.aiMatchDesc')}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Coach Image -->
+                    <div class="hero-right">
+                        <div class="hero-image-container">
+                            <img
+                                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                                alt="${t('hero.coachImageAlt') || 'Professional female coach smiling warmly'}"
+                                class="hero-coach-image"
+                            />
+                            <div class="hero-image-badge">
+                                <span class="badge-icon">✓</span>
+                                <span class="badge-text">${t('hero.verifiedCoaches') || '500+ verifizierte Coaches'}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
