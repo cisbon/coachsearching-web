@@ -329,7 +329,6 @@ header {
 
     .hero-left h1 {
         font-size: 2rem;
-        white-space: nowrap;
     }
 
     .hero-right {
@@ -344,7 +343,7 @@ header {
 
     .hero-split .discovery-options {
         justify-content: center;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
     }
 
     .hero-search-bar {
@@ -363,7 +362,6 @@ header {
 
     .hero-left h1 {
         font-size: 1.5rem;
-        white-space: nowrap;
     }
 
     .hero-subtitle {
@@ -383,13 +381,14 @@ header {
     }
 
     .hero-split .discovery-options {
-        flex-wrap: wrap;
-        gap: 8px;
+        flex-direction: column;
+        gap: 10px;
     }
 
     .discovery-option {
-        padding: 12px 16px;
-        min-width: 100px;
+        padding: 14px 20px;
+        width: 100%;
+        min-width: unset;
     }
 }
 
