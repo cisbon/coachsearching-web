@@ -1256,12 +1256,12 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
                     type="file"
                     ref=${fileInputRef}
                     accept="image/*"
-                    style="display: none"
+                    style=${{ display: 'none' }}
                     onChange=${handleFileSelect}
                 />
 
                 <!-- Hidden canvas for cropping -->
-                <canvas ref=${canvasRef} style="display: none" />
+                <canvas ref=${canvasRef} style=${{ display: 'none' }} />
             </div>
         </div>
     `;
