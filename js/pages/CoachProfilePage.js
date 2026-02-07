@@ -1002,7 +1002,15 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
 
         try {
             const blob = await getCroppedImage();
-            const fileName = `${coach.id}/banner-${Date.now()}.jpg`;
+
+            // Get the current user's ID for the folder name
+            const userId = session?.user?.id;
+            if (!userId) {
+                throw new Error('Not authenticated - please sign in again');
+            }
+
+            const fileName = `${userId}/banner-${Date.now()}.jpg`;
+            console.log('Uploading banner:', { fileName, coachId: coach.id, userId });
 
             // Upload to profile-banners bucket
             const { error: uploadError } = await window.supabaseClient.storage
@@ -1012,7 +1020,11 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
                     contentType: 'image/jpeg'
                 });
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+                console.error('Storage upload error:', uploadError);
+                throw uploadError;
+            }
+            console.log('Storage upload successful');
 
             // Get public URL
             const { data: { publicUrl } } = window.supabaseClient.storage
@@ -1021,7 +1033,10 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
 
             // Save to coach profile with cache busting
             const bannerUrl = publicUrl + '?t=' + Date.now();
+            console.log('Saving banner URL to profile:', bannerUrl);
+
             await onSave({ banner_url: bannerUrl });
+            console.log('Profile update successful');
             onClose();
         } catch (err) {
             console.error('Banner upload error:', err);
