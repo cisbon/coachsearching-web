@@ -96,7 +96,7 @@ export function Hero() {
                     <div class="hero-right">
                         <div class="hero-image-container">
                             <img
-                                src="https://coachsearching.com/hero.jpg"
+                                src="https://coachsearching.com/hero.png"
                                 alt="${t('hero.coachImageAlt') || 'Professional female coach'}"
                                 class="hero-coach-image"
                             />
