@@ -688,6 +688,386 @@ const ActivityTabs = ({ activeTab, onTabChange, articles, coach }) => {
 /**
  * Main Coach Profile Page Component - LinkedIn Style
  */
+/**
+ * Profile Language Sidebar Component
+ * Shows languages the coach provides coaching in
+ */
+const ProfileLanguageSidebar = memo(function ProfileLanguageSidebar({ languages, onEditLanguages }) {
+    if (!languages || languages.length === 0) {
+        return html`
+            <section class="sidebar-section profile-languages-sidebar">
+                <h3 class="sidebar-title">${t('coach.profileLanguages') || 'Profile Languages'}</h3>
+                <div class="empty-languages-prompt" onClick=${onEditLanguages}>
+                    <span class="empty-icon">+</span>
+                    <p>${t('coach.addLanguages') || 'Add languages you coach in'}</p>
+                </div>
+            </section>
+        `;
+    }
+
+    return html`
+        <section class="sidebar-section profile-languages-sidebar">
+            <div class="sidebar-header-editable">
+                <h3 class="sidebar-title">${t('coach.profileLanguages') || 'Profile Languages'}</h3>
+                <button class="btn-edit-sidebar" onClick=${onEditLanguages} title="Edit languages">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </button>
+            </div>
+            <p class="sidebar-description">${t('coach.languagesDescription') || 'Languages I provide coaching in:'}</p>
+            <div class="profile-languages-list">
+                ${languages.map(lang => {
+                    const langCode = LANGUAGE_TO_COUNTRY[lang] || LANGUAGE_TO_COUNTRY[lang.toLowerCase()] || 'un';
+                    const langName = LANGUAGE_NAMES[lang] || lang;
+                    return html`
+                        <div key=${lang} class="profile-language-item">
+                            <img
+                                src=${`https://flagcdn.com/w40/${langCode}.png`}
+                                alt=${langName}
+                                class="language-flag"
+                                onError=${(e) => { e.target.style.display = 'none'; }}
+                            />
+                            <span class="language-name">${langName}</span>
+                            <span class="language-badge">${t('coach.profileAvailable') || 'Profile Available'}</span>
+                        </div>
+                    `;
+                })}
+            </div>
+        </section>
+    `;
+});
+
+/**
+ * Viewers Also Viewed Sidebar Component
+ * Shows coaches that viewers of this profile also looked at (competition insight)
+ */
+const ViewersAlsoViewedSidebar = memo(function ViewersAlsoViewedSidebar({ coaches, isLoading }) {
+    if (isLoading) {
+        return html`
+            <section class="sidebar-section viewers-also-viewed-sidebar">
+                <h3 class="sidebar-title">${t('coach.viewersAlsoViewed') || 'Who your viewers also viewed'}</h3>
+                <div class="mini-coaches-list">
+                    ${[1, 2, 3].map(i => html`
+                        <div key=${i} class="mini-coach-card skeleton-card">
+                            <div class="skeleton skeleton-avatar"></div>
+                            <div class="skeleton skeleton-text"></div>
+                        </div>
+                    `)}
+                </div>
+            </section>
+        `;
+    }
+
+    if (!coaches || coaches.length === 0) {
+        return html`
+            <section class="sidebar-section viewers-also-viewed-sidebar">
+                <h3 class="sidebar-title">${t('coach.viewersAlsoViewed') || 'Who your viewers also viewed'}</h3>
+                <div class="empty-viewers-message">
+                    <p>${t('coach.noViewerData') || 'Not enough data yet. Check back later!'}</p>
+                </div>
+            </section>
+        `;
+    }
+
+    return html`
+        <section class="sidebar-section viewers-also-viewed-sidebar">
+            <h3 class="sidebar-title">${t('coach.viewersAlsoViewed') || 'Who your viewers also viewed'}</h3>
+            <p class="sidebar-description">${t('coach.competitorInsight') || 'Coaches your profile visitors also checked out:'}</p>
+            <div class="mini-coaches-list">
+                ${coaches.map(coach => html`
+                    <${MiniCoachCard}
+                        key=${coach.id}
+                        coach=${coach}
+                    />
+                `)}
+            </div>
+        </section>
+    `;
+});
+
+/**
+ * Edit Section Modal Component
+ * Allows inline editing of profile sections
+ */
+const EditSectionModal = memo(function EditSectionModal({ section, coach, onClose, onSave }) {
+    const [formData, setFormData] = useState({});
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        // Initialize form data based on section
+        switch (section) {
+            case 'name':
+                setFormData({ full_name: coach.full_name || '' });
+                break;
+            case 'title':
+                setFormData({ title: coach.title || '' });
+                break;
+            case 'about':
+                setFormData({
+                    bio: coach.bio || '',
+                    coaching_approach: coach.coaching_approach || ''
+                });
+                break;
+            case 'skills':
+                setFormData({ skills: (coach.skills || []).join(', ') });
+                break;
+            case 'interests':
+                setFormData({ interests: (coach.interests || []).join(', ') });
+                break;
+            case 'experience':
+                setFormData({ experience: JSON.stringify(coach.experience || [], null, 2) });
+                break;
+            case 'education':
+                setFormData({ education: JSON.stringify(coach.education || [], null, 2) });
+                break;
+            case 'languages':
+                setFormData({ languages: (coach.languages || []).join(', ') });
+                break;
+            case 'hourly_rate':
+                setFormData({ hourly_rate: coach.hourly_rate || '' });
+                break;
+            default:
+                setFormData({});
+        }
+
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, [section, coach]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        try {
+            let updateData = {};
+
+            switch (section) {
+                case 'name':
+                    updateData = { full_name: formData.full_name };
+                    break;
+                case 'title':
+                    updateData = { title: formData.title };
+                    break;
+                case 'about':
+                    updateData = {
+                        bio: formData.bio,
+                        coaching_approach: formData.coaching_approach
+                    };
+                    break;
+                case 'skills':
+                    updateData = {
+                        skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean)
+                    };
+                    break;
+                case 'interests':
+                    updateData = {
+                        interests: formData.interests.split(',').map(s => s.trim()).filter(Boolean)
+                    };
+                    break;
+                case 'experience':
+                    updateData = { experience: JSON.parse(formData.experience) };
+                    break;
+                case 'education':
+                    updateData = { education: JSON.parse(formData.education) };
+                    break;
+                case 'languages':
+                    updateData = {
+                        languages: formData.languages.split(',').map(s => s.trim()).filter(Boolean)
+                    };
+                    break;
+                case 'hourly_rate':
+                    updateData = { hourly_rate: parseFloat(formData.hourly_rate) || 0 };
+                    break;
+            }
+
+            await onSave(updateData);
+            onClose();
+        } catch (err) {
+            console.error('Save error:', err);
+            setError(err.message || 'Failed to save changes');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const getSectionTitle = () => {
+        const titles = {
+            name: t('edit.name') || 'Edit Name',
+            title: t('edit.title') || 'Edit Title',
+            about: t('edit.about') || 'Edit About',
+            skills: t('edit.skills') || 'Edit Skills',
+            interests: t('edit.interests') || 'Edit Interests',
+            experience: t('edit.experience') || 'Edit Experience',
+            education: t('edit.education') || 'Edit Education',
+            languages: t('edit.languages') || 'Edit Languages',
+            hourly_rate: t('edit.hourlyRate') || 'Edit Hourly Rate'
+        };
+        return titles[section] || 'Edit Section';
+    };
+
+    const renderFormFields = () => {
+        switch (section) {
+            case 'name':
+                return html`
+                    <div class="form-group">
+                        <label>${t('edit.fullName') || 'Full Name'}</label>
+                        <input
+                            type="text"
+                            value=${formData.full_name || ''}
+                            onChange=${(e) => handleChange('full_name', e.target.value)}
+                            placeholder="Your full name"
+                            required
+                        />
+                    </div>
+                `;
+            case 'title':
+                return html`
+                    <div class="form-group">
+                        <label>${t('edit.professionalTitle') || 'Professional Title'}</label>
+                        <input
+                            type="text"
+                            value=${formData.title || ''}
+                            onChange=${(e) => handleChange('title', e.target.value)}
+                            placeholder="e.g., Executive Coach, Life Coach"
+                            required
+                        />
+                    </div>
+                `;
+            case 'about':
+                return html`
+                    <div class="form-group">
+                        <label>${t('edit.bio') || 'Bio'}</label>
+                        <textarea
+                            value=${formData.bio || ''}
+                            onChange=${(e) => handleChange('bio', e.target.value)}
+                            placeholder="Tell your story..."
+                            rows="6"
+                        ></textarea>
+                        <div class="char-count">${(formData.bio || '').length}/2000</div>
+                    </div>
+                    <div class="form-group">
+                        <label>${t('edit.coachingApproach') || 'Coaching Approach'}</label>
+                        <textarea
+                            value=${formData.coaching_approach || ''}
+                            onChange=${(e) => handleChange('coaching_approach', e.target.value)}
+                            placeholder="Describe your coaching methodology..."
+                            rows="4"
+                        ></textarea>
+                    </div>
+                `;
+            case 'skills':
+                return html`
+                    <div class="form-group">
+                        <label>${t('edit.skills') || 'Skills'}</label>
+                        <textarea
+                            value=${formData.skills || ''}
+                            onChange=${(e) => handleChange('skills', e.target.value)}
+                            placeholder="Enter skills separated by commas (e.g., Leadership, Communication, Time Management)"
+                            rows="3"
+                        ></textarea>
+                        <p class="form-hint">${t('edit.skillsHint') || 'Separate each skill with a comma'}</p>
+                    </div>
+                `;
+            case 'interests':
+                return html`
+                    <div class="form-group">
+                        <label>${t('edit.interests') || 'Interests'}</label>
+                        <textarea
+                            value=${formData.interests || ''}
+                            onChange=${(e) => handleChange('interests', e.target.value)}
+                            placeholder="Enter interests separated by commas"
+                            rows="3"
+                        ></textarea>
+                        <p class="form-hint">${t('edit.interestsHint') || 'Separate each interest with a comma'}</p>
+                    </div>
+                `;
+            case 'languages':
+                return html`
+                    <div class="form-group">
+                        <label>${t('edit.languages') || 'Languages'}</label>
+                        <textarea
+                            value=${formData.languages || ''}
+                            onChange=${(e) => handleChange('languages', e.target.value)}
+                            placeholder="Enter languages separated by commas (e.g., English, German, Spanish)"
+                            rows="2"
+                        ></textarea>
+                        <p class="form-hint">${t('edit.languagesHint') || 'Languages you provide coaching in'}</p>
+                    </div>
+                `;
+            case 'hourly_rate':
+                return html`
+                    <div class="form-group">
+                        <label>${t('edit.hourlyRate') || 'Hourly Rate (€)'}</label>
+                        <input
+                            type="number"
+                            value=${formData.hourly_rate || ''}
+                            onChange=${(e) => handleChange('hourly_rate', e.target.value)}
+                            placeholder="e.g., 150"
+                            min="0"
+                            step="5"
+                        />
+                    </div>
+                `;
+            case 'experience':
+            case 'education':
+                return html`
+                    <div class="form-group">
+                        <label>${section === 'experience' ? (t('edit.experienceJson') || 'Experience (JSON format)') : (t('edit.educationJson') || 'Education (JSON format)')}</label>
+                        <textarea
+                            value=${formData[section] || '[]'}
+                            onChange=${(e) => handleChange(section, e.target.value)}
+                            placeholder='[{"title": "...", "company": "...", "duration": "..."}]'
+                            rows="8"
+                            class="json-textarea"
+                        ></textarea>
+                        <p class="form-hint">${t('edit.jsonHint') || 'Enter as JSON array. Each item can have: title, company/institution, duration/year, description'}</p>
+                    </div>
+                `;
+            default:
+                return html`<p>${t('edit.notSupported') || 'This section cannot be edited inline.'}</p>`;
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container">
+                <div class="edit-modal-header">
+                    <h3>${getSectionTitle()}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+                        ${renderFormFields()}
+                    </div>
+                    <div class="edit-modal-actions">
+                        <button type="button" class="btn-cancel" onClick=${onClose}>
+                            ${t('edit.cancel') || 'Cancel'}
+                        </button>
+                        <button type="submit" class="btn-primary" disabled=${saving}>
+                            ${saving ? (t('edit.saving') || 'Saving...') : (t('edit.save') || 'Save Changes')}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
 function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const identifier = coachIdOrSlug || coachId;
 
@@ -706,6 +1086,13 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [userHasReviewed, setUserHasReviewed] = useState(false);
     const [userExistingReview, setUserExistingReview] = useState(null);
     const [activeActivityTab, setActiveActivityTab] = useState('posts');
+
+    // Edit mode states
+    const [editingSection, setEditingSection] = useState(null);
+
+    // Viewers also viewed coaches (for own profile)
+    const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
+    const [loadingViewersAlsoViewed, setLoadingViewersAlsoViewed] = useState(false);
 
     // Load coach data
     useEffect(() => {
@@ -846,6 +1233,84 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             console.error('Failed to load similar coaches:', err);
         }
     };
+
+    // Load "viewers also viewed" coaches for own profile insights
+    const loadViewersAlsoViewed = async (coachData) => {
+        setLoadingViewersAlsoViewed(true);
+        try {
+            // For now, we'll show similar coaches as "competition"
+            // In the future, this could be based on actual analytics data
+            const specialties = coachData.specialties || [];
+            const location = coachData.location_city || coachData.location;
+
+            let query = window.supabaseClient
+                .from('cs_coaches')
+                .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location, cs_coach_certifications(*, cs_certifications(*))')
+                .neq('id', coachData.id)
+                .eq('is_active', true)
+                .limit(5);
+
+            // Try to find coaches with similar specialties OR same location
+            if (specialties.length > 0) {
+                query = query.overlaps('specialties', specialties);
+            }
+
+            const { data, error } = await query.order('rating_average', { ascending: false });
+
+            if (error) {
+                // Fallback to just top rated coaches
+                const fallback = await window.supabaseClient
+                    .from('cs_coaches')
+                    .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location, cs_coach_certifications(*, cs_certifications(*))')
+                    .neq('id', coachData.id)
+                    .eq('is_active', true)
+                    .order('rating_average', { ascending: false })
+                    .limit(5);
+                setViewersAlsoViewed(fallback.data || []);
+            } else {
+                setViewersAlsoViewed(data || []);
+            }
+        } catch (err) {
+            console.error('Failed to load viewers also viewed:', err);
+            setViewersAlsoViewed([]);
+        } finally {
+            setLoadingViewersAlsoViewed(false);
+        }
+    };
+
+    // Save coach profile changes
+    const saveCoachProfile = async (updateData) => {
+        if (!coach?.id || !session?.user?.id) {
+            throw new Error('Not authenticated');
+        }
+
+        // Verify this is the user's own profile
+        if (session.user.id !== coach.user_id) {
+            throw new Error('You can only edit your own profile');
+        }
+
+        const { data, error } = await window.supabaseClient
+            .from('cs_coaches')
+            .update(updateData)
+            .eq('id', coach.id)
+            .eq('user_id', session.user.id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Update local state with new data
+        setCoach(prev => ({ ...prev, ...data }));
+
+        return data;
+    };
+
+    // Load viewers also viewed when viewing own profile
+    useEffect(() => {
+        if (coach && session?.user?.id && coach.user_id === session.user.id) {
+            loadViewersAlsoViewed(coach);
+        }
+    }, [coach, session]);
 
     const getReviewBreakdown = () => {
         const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -1025,10 +1490,17 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Check if this is the user's own profile
     const isOwnProfile = session?.user?.id && coach.user_id && session.user.id === coach.user_id;
 
-    // Handle edit section clicks
+    // Handle edit section clicks - open inline edit modal
     const handleEditSection = (sectionName) => {
-        // Navigate to profile edit page with section parameter
-        window.navigateTo(`/profile/edit?section=${sectionName}`);
+        // Sections that can be edited inline
+        const inlineEditableSections = ['name', 'title', 'about', 'skills', 'interests', 'experience', 'education', 'languages', 'hourly_rate'];
+
+        if (inlineEditableSections.includes(sectionName)) {
+            setEditingSection(sectionName);
+        } else {
+            // For complex sections (photo, banner, video, certifications, featured), navigate to edit page
+            window.navigateTo(`/profile/edit?section=${sectionName}`);
+        }
     };
 
     return html`
@@ -1049,47 +1521,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 onEditSection=${handleEditSection}
                             />
                         </section>
-
-                        <!-- Certifications Section -->
-                        ${(credentials.length > 0 || isOwnProfile) && html`
-                            <section class="profile-section certifications-section">
-                                <div class="section-header-editable">
-                                    <h2 class="section-title">
-                                        <span class="section-icon">🏅</span>
-                                        ${t('coach.certifications') || 'Certifications & Credentials'}
-                                    </h2>
-                                    ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('certifications')} title="Edit certifications">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                            </svg>
-                                        </button>
-                                    `}
-                                </div>
-                                ${credentials.length > 0 ? html`
-                                    <div class="certifications-list">
-                                        ${credentials.map(cred => html`
-                                            <div key=${cred.id} class="certification-item">
-                                                ${cred.badge_url && html`
-                                                    <img src=${cred.badge_url} alt=${cred.name} class="cert-badge" />
-                                                `}
-                                                <div class="cert-info">
-                                                    <h4 class="cert-name">${cred.name}</h4>
-                                                    ${cred.issuing_org && html`<p class="cert-org">${cred.issuing_org}</p>`}
-                                                    ${cred.is_verified && html`<span class="cert-verified">✓ Verified</span>`}
-                                                </div>
-                                            </div>
-                                        `)}
-                                    </div>
-                                ` : html`
-                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('certifications')}>
-                                        <span class="empty-icon">+</span>
-                                        <p>${t('coach.addCertifications') || 'Add your certifications and credentials'}</p>
-                                    </div>
-                                `}
-                            </section>
-                        `}
 
                         <!-- Featured Section -->
                         ${(articles.length > 0 || isOwnProfile) && html`
@@ -1311,6 +1742,47 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             </section>
                         `}
 
+                        <!-- Certifications Section (below Education, above Skills) -->
+                        ${(credentials.length > 0 || isOwnProfile) && html`
+                            <section class="profile-section certifications-section">
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">🏅</span>
+                                        ${t('coach.certifications') || 'Certifications & Credentials'}
+                                    </h2>
+                                    ${isOwnProfile && html`
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('certifications')} title="Edit certifications">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                    `}
+                                </div>
+                                ${credentials.length > 0 ? html`
+                                    <div class="certifications-list">
+                                        ${credentials.map(cred => html`
+                                            <div key=${cred.id} class="certification-item">
+                                                ${cred.badge_url && html`
+                                                    <img src=${cred.badge_url} alt=${cred.name} class="cert-badge" />
+                                                `}
+                                                <div class="cert-info">
+                                                    <h4 class="cert-name">${cred.name}</h4>
+                                                    ${cred.issuing_org && html`<p class="cert-org">${cred.issuing_org}</p>`}
+                                                    ${cred.is_verified && html`<span class="cert-verified">✓ Verified</span>`}
+                                                </div>
+                                            </div>
+                                        `)}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('certifications')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addCertifications') || 'Add your certifications and credentials'}</p>
+                                    </div>
+                                `}
+                            </section>
+                        `}
+
                         <!-- Skills Section -->
                         ${((coach.skills && coach.skills.length > 0) || isOwnProfile) && html`
                             <section class="profile-section skills-section">
@@ -1422,23 +1894,37 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
                     <!-- Sidebar Column (30%) -->
                     <aside class="profile-sidebar-column">
-                        <!-- More Coaches For You -->
-                        <section class="sidebar-section similar-coaches-sidebar">
-                            <h3 class="sidebar-title">${t('coach.moreCoachesForYou') || 'More coaches for you'}</h3>
-                            <div class="mini-coaches-list">
-                                ${similarCoaches.map(similarCoach => html`
-                                    <${MiniCoachCard}
-                                        key=${similarCoach.id}
-                                        coach=${similarCoach}
-                                    />
-                                `)}
-                            </div>
-                            ${similarCoaches.length >= 5 && html`
-                                <a href="#coaches" class="btn-view-all-coaches">
-                                    ${t('coach.viewAllCoaches') || 'View all coaches'} →
-                                </a>
-                            `}
-                        </section>
+                        ${isOwnProfile ? html`
+                            <!-- Own Profile: Profile Languages Section -->
+                            <${ProfileLanguageSidebar}
+                                languages=${coach.languages || []}
+                                onEditLanguages=${() => handleEditSection('languages')}
+                            />
+
+                            <!-- Own Profile: Who Your Viewers Also Viewed -->
+                            <${ViewersAlsoViewedSidebar}
+                                coaches=${viewersAlsoViewed}
+                                isLoading=${loadingViewersAlsoViewed}
+                            />
+                        ` : html`
+                            <!-- Other Profile: More Coaches For You -->
+                            <section class="sidebar-section similar-coaches-sidebar">
+                                <h3 class="sidebar-title">${t('coach.moreCoachesForYou') || 'More coaches for you'}</h3>
+                                <div class="mini-coaches-list">
+                                    ${similarCoaches.map(similarCoach => html`
+                                        <${MiniCoachCard}
+                                            key=${similarCoach.id}
+                                            coach=${similarCoach}
+                                        />
+                                    `)}
+                                </div>
+                                ${similarCoaches.length >= 5 && html`
+                                    <a href="#coaches" class="btn-view-all-coaches">
+                                        ${t('coach.viewAllCoaches') || 'View all coaches'} →
+                                    </a>
+                                `}
+                            </section>
+                        `}
                     </aside>
                 </div>
             </div>
@@ -1507,6 +1993,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         </article>
                     </div>
                 </div>
+            `}
+
+            <!-- Edit Section Modal (for own profile inline editing) -->
+            ${editingSection && isOwnProfile && html`
+                <${EditSectionModal}
+                    section=${editingSection}
+                    coach=${coach}
+                    onClose=${() => setEditingSection(null)}
+                    onSave=${saveCoachProfile}
+                />
             `}
         </div>
     `;
