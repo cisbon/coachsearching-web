@@ -426,7 +426,7 @@ const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall, sess
  * Profile Coach Card Component
  * Embedded coach card for the profile page with overlapping profile image and banner
  */
-const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, session, isOwnProfile, onEditSection }) {
+const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, onWriteReview, session, isOwnProfile, onEditSection, hasOtherVisibleSections }) {
     const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
     const { cities, getLocalizedCityName } = useCities();
     const { lookupOptions, getLocalizedName } = useLookupOptions();
@@ -603,12 +603,12 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                         </div>
                     `}
 
-                    <!-- Rating Section -->
-                    <div class="coach-rating-section" onClick=${() => {
-                        const el = document.getElementById('recommendations-ratings-section');
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}>
-                        ${reviewsCount > 0 ? html`
+                    <!-- Rating Section - only show when there are reviews and other sections exist -->
+                    ${reviewsCount > 0 && hasOtherVisibleSections && html`
+                        <div class="coach-rating-section" onClick=${() => {
+                            const el = document.getElementById('recommendations-ratings-section');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}>
                             <div class="rating-compact clickable">
                                 <div class="rating-stars-compact">
                                     ${[1,2,3,4,5].map(star => html`
@@ -618,12 +618,8 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                                 <span class="rating-value">${rating.toFixed(1)}</span>
                                 <span class="rating-count">(${reviewsCount})</span>
                             </div>
-                        ` : html`
-                            <div class="new-coach-compact clickable">
-                                <span>✨</span> ${t('coach.new') || 'New Coach'}
-                            </div>
-                        `}
-                    </div>
+                        </div>
+                    `}
 
                     <!-- Bio -->
                     ${bio && html`
@@ -672,6 +668,11 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                         <button class="btn-message" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
                             💬 ${t('coach.sendMessage') || 'Message'}
                         </button>
+                        ${!isOwnProfile && html`
+                            <button class="btn-recommendation" onClick=${onWriteReview}>
+                                ⭐ ${t('coach.giveRecommendation') || 'Give Recommendation'}
+                            </button>
+                        `}
                     </div>
                 </div>
             </div>
@@ -2136,14 +2137,33 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         if (session) {
             setShowDiscoveryModal(true);
         } else {
+            setPendingAuthAction('discovery');
             setShowAuthModal(true);
         }
     };
 
-    // Handle successful auth - close auth modal and open discovery modal
+    // Handle write review click - check auth status first
+    const handleWriteReviewClick = () => {
+        if (session) {
+            setShowReviewModal(true);
+        } else {
+            setPendingAuthAction('review');
+            setShowAuthModal(true);
+        }
+    };
+
+    // Track what action to take after auth (discovery or review)
+    const [pendingAuthAction, setPendingAuthAction] = useState(null);
+
+    // Handle successful auth - close auth modal and open the pending modal
     const handleAuthSuccess = () => {
         setShowAuthModal(false);
-        setShowDiscoveryModal(true);
+        if (pendingAuthAction === 'review') {
+            setShowReviewModal(true);
+        } else {
+            setShowDiscoveryModal(true);
+        }
+        setPendingAuthAction(null);
     };
 
     // Handle edit section clicks - open inline edit modal
@@ -2162,6 +2182,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         }
     };
 
+    // Check if there are other visible sections besides recommendations-ratings
+    const hasActivityContent = articles.length > 0 || hasVideo;
+    const hasOtherVisibleSections = (articles.length > 0 || isOwnProfile) || // featured/highlights
+        hasActivityContent || // activity
+        coach.experience || isOwnProfile || // experience
+        coach.education || isOwnProfile || // education
+        credentials.length > 0 || isOwnProfile || // certifications
+        (coach.specialties?.length > 0) || isOwnProfile; // skills
+
     return html`
         <div class="coach-profile-page linkedin-style">
             <!-- Main Two-Column Layout -->
@@ -2175,9 +2204,11 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 coach=${coach}
                                 onDiscoveryCall=${handleDiscoveryClick}
                                 onVideoClick=${() => setShowVideoPopup(true)}
+                                onWriteReview=${handleWriteReviewClick}
                                 session=${session}
                                 isOwnProfile=${isOwnProfile}
                                 onEditSection=${handleEditSection}
+                                hasOtherVisibleSections=${hasOtherVisibleSections}
                             />
                         </section>
 
@@ -2231,33 +2262,35 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             </section>
                         `}
 
-                        <!-- Activity Section -->
-                        <section class="profile-section activity-section">
-                            <div class="section-header-editable">
-                                <h2 class="section-title">
-                                    <span class="section-icon">📊</span>
-                                    ${t('coach.activity') || 'Activity'}
-                                </h2>
-                                ${isOwnProfile && html`
-                                    <button class="btn-edit-section" onClick=${() => handleEditSection('activity')} title="Add content">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                                        </svg>
-                                    </button>
-                                `}
-                            </div>
+                        <!-- Activity Section - only show when there is activity content -->
+                        ${hasActivityContent && html`
+                            <section class="profile-section activity-section">
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">📊</span>
+                                        ${t('coach.activity') || 'Activity'}
+                                    </h2>
+                                    ${isOwnProfile && html`
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('activity')} title="Add content">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                        </button>
+                                    `}
+                                </div>
 
-                            <${ActivityTabs}
-                                activeTab=${activeActivityTab}
-                                onTabChange=${setActiveActivityTab}
-                                articles=${articles}
-                                coach=${coach}
-                            />
+                                <!-- Activity tabs commented out for now - not enough content to separate -->
+                                <!-- <${ActivityTabs}
+                                    activeTab=${activeActivityTab}
+                                    onTabChange=${setActiveActivityTab}
+                                    articles=${articles}
+                                    coach=${coach}
+                                /> -->
 
-                            <div class="activity-content">
-                                ${activeActivityTab === 'posts' && html`
-                                    ${articles.length > 0 ? html`
+                                <div class="activity-content">
+                                    <!-- Posts -->
+                                    ${articles.length > 0 && html`
                                         <div class="activity-posts">
                                             ${articles.slice(0, 3).map(article => html`
                                                 <article key=${article.id} class="activity-post" onClick=${() => setSelectedArticle(article)}>
@@ -2285,15 +2318,10 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                                 </button>
                                             `}
                                         </div>
-                                    ` : html`
-                                        <div class="activity-empty">
-                                            <p>${t('coach.noPosts') || 'No posts yet'}</p>
-                                        </div>
                                     `}
-                                `}
 
-                                ${activeActivityTab === 'videos' && html`
-                                    ${hasVideo ? html`
+                                    <!-- Videos -->
+                                    ${hasVideo && html`
                                         <div class="activity-videos">
                                             <div class="video-card" onClick=${() => setShowVideoPopup(true)}>
                                                 <div class="video-thumbnail">
@@ -2306,43 +2334,31 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                                 </div>
                                             </div>
                                         </div>
-                                    ` : html`
-                                        <div class="activity-empty">
-                                            <p>${t('coach.noVideos') || 'No videos yet'}</p>
-                                        </div>
                                     `}
-                                `}
+                                </div>
+                            </section>
+                        `}
 
-                                ${(activeActivityTab === 'comments' || activeActivityTab === 'images' ||
-                                   activeActivityTab === 'newsletters' || activeActivityTab === 'documents') && html`
-                                    <div class="activity-empty">
-                                        <p>${t('coach.noContent') || 'No content available'}</p>
-                                    </div>
-                                `}
-                            </div>
-                        </section>
-
-                        <!-- Recommendations & Ratings Section -->
-                        <section id="recommendations-ratings-section" class="profile-section rating-section">
-                            <div class="section-header-editable">
-                                <h2 class="section-title">
-                                    <span class="section-icon">⭐</span>
-                                    ${t('coach.recommendationsRatings') || 'Recommendations & Ratings'}
-                                </h2>
-                            </div>
-                            ${reviews.length > 0 ? html`
-                                <div class="ratings-overview">
-                                    <div class="ratings-summary">
-                                        <div class="ratings-big-score">
-                                            <span class="big-number">${rating.toFixed(1)}</span>
-                                            <div class="rating-stars-compact">
-                                                ${[1,2,3,4,5].map(star => html`
-                                                    <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                                `)}
-                                            </div>
-                                            <span class="ratings-total">${reviewsCount} ${reviewsCount === 1 ? (t('coach.review') || 'review') : (t('coach.reviews') || 'reviews')}</span>
+                        <!-- Recommendations & Ratings Section - only show when there are ratings -->
+                        ${reviews.length > 0 && html`
+                            <section id="recommendations-ratings-section" class="profile-section rating-section">
+                                <div class="section-header-editable">
+                                    <h2 class="section-title">
+                                        <span class="section-icon">⭐</span>
+                                        ${t('coach.recommendationsRatings') || 'Recommendations & Ratings'}
+                                    </h2>
+                                    <div class="section-header-rating">
+                                        <span class="big-number">${rating.toFixed(1)}</span>
+                                        <div class="rating-stars-compact">
+                                            ${[1,2,3,4,5].map(star => html`
+                                                <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                            `)}
                                         </div>
-                                        ${reviews.length >= 3 && html`
+                                    </div>
+                                </div>
+                                <div class="ratings-overview">
+                                    ${reviews.length >= 3 && html`
+                                        <div class="ratings-summary">
                                             <div class="ratings-breakdown">
                                                 ${[5,4,3,2,1].map(stars => {
                                                     const breakdown = getReviewBreakdown();
@@ -2359,23 +2375,25 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                                     `;
                                                 })}
                                             </div>
-                                        `}
-                                    </div>
+                                        </div>
+                                    `}
                                     <div class="ratings-reviews-list">
                                         ${reviews.slice(0, 3).map(review => html`
                                             <div key=${review.id} class="rating-review-item">
-                                                <div class="review-header">
-                                                    <div class="reviewer-info">
-                                                        <span class="reviewer-name">${review.reviewer_name || 'Anonymous'}</span>
-                                                        <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
-                                                    </div>
-                                                    <div class="review-rating">
-                                                        ${[1,2,3,4,5].map(star => html`
-                                                            <span key=${star} class="star-compact ${star <= review.rating ? 'filled' : ''}">★</span>
-                                                        `)}
-                                                    </div>
+                                                <div class="review-left-column">
+                                                    <span class="reviewer-name">${review.reviewer_name || 'Anonymous'}</span>
+                                                    <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
                                                 </div>
-                                                <p class="review-content">${review.content}</p>
+                                                ${(review.content || review.comment) && html`
+                                                    <div class="review-middle-column">
+                                                        <p class="review-text">${review.content || review.comment}</p>
+                                                    </div>
+                                                `}
+                                                <div class="review-right-column">
+                                                    ${[1,2,3,4,5].map(star => html`
+                                                        <span key=${star} class="star-compact ${star <= review.rating ? 'filled' : ''}">★</span>
+                                                    `)}
+                                                </div>
                                             </div>
                                         `)}
                                         ${reviews.length > 3 && html`
@@ -2385,12 +2403,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         `}
                                     </div>
                                 </div>
-                            ` : html`
-                                <div class="ratings-empty">
-                                    <p>${t('coach.noReviewsYet') || 'No recommendations or ratings yet.'}</p>
-                                </div>
-                            `}
-                        </section>
+                            </section>
+                        `}
 
                         <!-- Experience Section -->
                         ${(coach.experience || isOwnProfile) && html`

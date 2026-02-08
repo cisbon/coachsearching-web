@@ -680,6 +680,16 @@
     background: rgba(0, 98, 102, 0.05);
 }
 
+.btn-recommendation {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+.btn-recommendation:hover {
+    background: #fde68a;
+}
+
 /* ==========================================================================
    Certifications Section
    ========================================================================== */
@@ -2225,20 +2235,32 @@
     gap: 16px;
 }
 
+/* Section header rating display (right side of header) */
+.rating-section .section-header-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rating-section .section-header-rating .big-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main, #1a1a1a);
+    line-height: 1;
+}
+
+/* Three-column review item layout */
 .rating-section .rating-review-item {
+    display: grid;
+    grid-template-columns: 140px 1fr auto;
+    gap: 16px;
+    align-items: start;
     padding: 16px;
     background: #f8f9fa;
     border-radius: 12px;
 }
 
-.rating-section .rating-review-item .review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 10px;
-}
-
-.rating-section .rating-review-item .reviewer-info {
+.rating-section .rating-review-item .review-left-column {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -2255,22 +2277,21 @@
     color: var(--text-muted, #6b7280);
 }
 
-.rating-section .rating-review-item .review-content {
+.rating-section .rating-review-item .review-middle-column {
+    flex: 1;
+}
+
+.rating-section .rating-review-item .review-text {
     margin: 0;
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--text-secondary, #4a5568);
 }
 
-.rating-section .ratings-empty {
-    text-align: center;
-    padding: 32px 20px;
-    color: var(--text-muted, #666);
-}
-
-.rating-section .ratings-empty p {
-    margin: 0;
-    font-size: 0.9rem;
+.rating-section .rating-review-item .review-right-column {
+    display: flex;
+    gap: 1px;
+    white-space: nowrap;
 }
 
 @media (max-width: 767px) {
@@ -2278,6 +2299,15 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
+    }
+
+    .rating-section .rating-review-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .rating-section .rating-review-item .review-right-column {
+        order: -1;
     }
 }
 
