@@ -109,7 +109,8 @@ export function Auth({ onSuccess, skipNavigation, defaultMode } = {}) {
                 // If onSuccess callback provided (modal context), call it instead of navigating
                 if (onSuccess && skipNavigation) {
                     setMessage({ type: 'success', text: 'Welcome!' });
-                    setTimeout(() => onSuccess(data), 300);
+                    // Call onSuccess immediately - the caller handles the transition
+                    onSuccess(data);
                     return;
                 }
 
@@ -125,7 +126,8 @@ export function Auth({ onSuccess, skipNavigation, defaultMode } = {}) {
                 // If onSuccess callback provided (modal context), call it instead of navigating
                 if (onSuccess && skipNavigation) {
                     setMessage({ type: 'success', text: 'Welcome back!' });
-                    setTimeout(() => onSuccess(data), 300);
+                    // Call onSuccess immediately - the caller handles the transition
+                    onSuccess(data);
                     return;
                 }
 
