@@ -1656,6 +1656,16 @@ const EditExperienceModal = memo(function EditExperienceModal({ coach, experienc
         }
 
         try {
+            // Debug: log coach object to verify correct IDs
+            const currentUser = await window.supabaseClient.auth.getUser();
+            console.log('DEBUG experience insert:', {
+                'coach.id': coach.id,
+                'coach.user_id': coach.user_id,
+                'auth.uid()': currentUser?.data?.user?.id,
+                'match coach.id === auth.uid': coach.id === currentUser?.data?.user?.id,
+                'match coach.user_id === auth.uid': coach.user_id === currentUser?.data?.user?.id
+            });
+
             const payload = {
                 coach_id: coach.id,
                 title: formData.title.trim(),
