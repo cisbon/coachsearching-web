@@ -20,6 +20,7 @@ import { LanguageFlags } from '../components/coach/LanguageFlags.js';
 import { TrustBadges } from '../components/coach/TrustBadges.js';
 import { VideoPopup } from '../components/coach/VideoPopup.js';
 import { DiscoveryCallModal } from '../components/coach/DiscoveryCallModal.js';
+import { AuthModal } from '../components/auth/AuthModal.js';
 import { useCities, useLookupOptions } from '../context/AppContext.js';
 
 const React = window.React;
@@ -333,12 +334,22 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
  * Mini Coach Card Component for Sidebar
  * Shows similar coaches with name, certification badge, title, and chemistry call button
  */
-const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall }) {
+const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall, session }) {
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
     const handleDiscoveryClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (session) {
+            setShowDiscoveryModal(true);
+        } else {
+            setShowAuthModal(true);
+        }
+    };
+
+    const handleAuthSuccess = () => {
+        setShowAuthModal(false);
         setShowDiscoveryModal(true);
     };
 
@@ -397,6 +408,15 @@ const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall }) {
             <${DiscoveryCallModal}
                 coach=${coach}
                 onClose=${() => setShowDiscoveryModal(false)}
+            />
+        `}
+
+        ${showAuthModal && html`
+            <${AuthModal}
+                onClose=${() => setShowAuthModal(false)}
+                onSuccess=${handleAuthSuccess}
+                title=${t('auth.signInToBook') || 'Sign in to book your call'}
+                subtitle=${(t('auth.signInToBookSubtitle') || 'Create an account or sign in to book a free discovery call with {coachName}').replace('{coachName}', coach.full_name)}
             />
         `}
     `;
@@ -772,7 +792,7 @@ const ProfileLanguageSidebar = memo(function ProfileLanguageSidebar({ languages,
  * Viewers Also Viewed Sidebar Component
  * Shows coaches that viewers of this profile also looked at (competition insight)
  */
-const ViewersAlsoViewedSidebar = memo(function ViewersAlsoViewedSidebar({ coaches, isLoading }) {
+const ViewersAlsoViewedSidebar = memo(function ViewersAlsoViewedSidebar({ coaches, isLoading, session }) {
     if (isLoading) {
         return html`
             <section class="sidebar-section viewers-also-viewed-sidebar">
@@ -809,6 +829,7 @@ const ViewersAlsoViewedSidebar = memo(function ViewersAlsoViewedSidebar({ coache
                     <${MiniCoachCard}
                         key=${coach.id}
                         coach=${coach}
+                        session=${session}
                     />
                 `)}
             </div>
@@ -1696,6 +1717,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [credentials, setCredentials] = useState([]);
     const [similarCoaches, setSimilarCoaches] = useState([]);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [showReviewsPopup, setShowReviewsPopup] = useState(false);
@@ -2109,6 +2131,21 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Check if this is the user's own profile
     const isOwnProfile = session?.user?.id && coach.user_id && session.user.id === coach.user_id;
 
+    // Handle discovery button click - check auth status first
+    const handleDiscoveryClick = () => {
+        if (session) {
+            setShowDiscoveryModal(true);
+        } else {
+            setShowAuthModal(true);
+        }
+    };
+
+    // Handle successful auth - close auth modal and open discovery modal
+    const handleAuthSuccess = () => {
+        setShowAuthModal(false);
+        setShowDiscoveryModal(true);
+    };
+
     // Handle edit section clicks - open inline edit modal
     const handleEditSection = (sectionName) => {
         // Sections that can be edited inline
@@ -2136,7 +2173,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         <section class="profile-section coach-card-section">
                             <${ProfileCoachCard}
                                 coach=${coach}
-                                onDiscoveryCall=${() => setShowDiscoveryModal(true)}
+                                onDiscoveryCall=${handleDiscoveryClick}
                                 onVideoClick=${() => setShowVideoPopup(true)}
                                 session=${session}
                                 isOwnProfile=${isOwnProfile}
@@ -2572,6 +2609,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             <${ViewersAlsoViewedSidebar}
                                 coaches=${viewersAlsoViewed}
                                 isLoading=${loadingViewersAlsoViewed}
+                                session=${session}
                             />
                         ` : html`
                             <!-- Other Profile: More Coaches For You -->
@@ -2582,6 +2620,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         <${MiniCoachCard}
                                             key=${similarCoach.id}
                                             coach=${similarCoach}
+                                            session=${session}
                                         />
                                     `)}
                                 </div>
@@ -2608,6 +2647,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             <!-- Discovery Call Modal -->
             ${showDiscoveryModal && html`
                 <${DiscoveryCallModal} coach=${coach} onClose=${() => setShowDiscoveryModal(false)} />
+            `}
+
+            <!-- Auth Modal (for non-logged-in users booking discovery calls) -->
+            ${showAuthModal && html`
+                <${AuthModal}
+                    onClose=${() => setShowAuthModal(false)}
+                    onSuccess=${handleAuthSuccess}
+                    title=${t('auth.signInToBook') || 'Sign in to book your call'}
+                    subtitle=${(t('auth.signInToBookSubtitle') || 'Create an account or sign in to book a free discovery call with {coachName}').replace('{coachName}', coach.full_name)}
+                />
             `}
 
             <!-- Write Review Modal -->
