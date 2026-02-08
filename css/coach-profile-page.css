@@ -1095,6 +1095,29 @@
     background: #f8f9fa;
     border-radius: 10px;
     border-left: 3px solid var(--primary-petrol, #006266);
+    position: relative;
+}
+
+.experience-item.editable {
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.experience-item.editable:hover {
+    background: #f0f1f3;
+}
+
+.experience-item .exp-edit-icon {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    opacity: 0;
+    color: var(--text-muted, #666);
+    transition: opacity 0.2s ease;
+}
+
+.experience-item.editable:hover .exp-edit-icon {
+    opacity: 1;
 }
 
 .exp-header {
@@ -1107,6 +1130,37 @@
     font-weight: 600;
     color: var(--text-main, #1a1a1a);
     margin: 0;
+}
+
+.exp-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.exp-organization {
+    font-size: 0.9rem;
+    color: var(--text-muted, #666);
+}
+
+.exp-type {
+    display: inline-block;
+    padding: 1px 8px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-muted, #666);
+}
+
+.exp-dates {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.exp-location {
+    color: var(--text-muted, #6b7280);
 }
 
 .exp-company,
@@ -1132,6 +1186,27 @@
     font-size: 0.9rem;
     color: var(--text-secondary, #4a5568);
     line-height: 1.5;
+}
+
+/* Add section button (+ icon) */
+.btn-add-section {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: var(--primary-petrol, #006266);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-add-section:hover {
+    background: var(--primary-petrol, #006266);
+    color: white;
+    border-color: var(--primary-petrol, #006266);
 }
 
 /* ==========================================================================
@@ -2634,6 +2709,43 @@
     line-height: 1.5;
 }
 
+/* Wide modal variant for experience/complex forms */
+.edit-modal-container.edit-modal-wide {
+    max-width: 700px;
+}
+
+.edit-modal-content .form-row {
+    display: flex;
+    gap: 16px;
+}
+
+@media (max-width: 600px) {
+    .edit-modal-content .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+.edit-modal-content .form-group-flex {
+    flex: 1;
+    min-width: 0;
+}
+
+.edit-modal-content select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+    background: white;
+}
+
+.edit-modal-content select:focus {
+    outline: none;
+    border-color: var(--primary-petrol, #006266);
+}
+
 .edit-modal-content .form-hint {
     margin: 6px 0 0;
     font-size: 0.8rem;
@@ -2643,11 +2755,35 @@
 .edit-modal-actions {
     display: flex;
     gap: 12px;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     padding: 20px 24px;
     border-top: 1px solid var(--border-color, #e7e7e7);
     background: #f8f9fa;
     border-radius: 0 0 16px 16px;
+}
+
+.edit-modal-actions-right {
+    display: flex;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.edit-modal-actions .btn-delete {
+    padding: 12px 24px;
+    background: white;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.edit-modal-actions .btn-delete:hover {
+    background: #fef2f2;
+    border-color: #b91c1c;
 }
 
 .edit-modal-actions .btn-cancel {

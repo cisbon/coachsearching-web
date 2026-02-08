@@ -1355,9 +1355,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
             case 'skills':
                 setFormData({ skills: (coach.skills || []).join(', ') });
                 break;
-            case 'experience':
-                setFormData({ experience: JSON.stringify(coach.experience || [], null, 2) });
-                break;
             case 'education':
                 setFormData({ education: JSON.stringify(coach.education || [], null, 2) });
                 break;
@@ -1401,9 +1398,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                         skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean)
                     };
                     break;
-                case 'experience':
-                    updateData = { experience: JSON.parse(formData.experience) };
-                    break;
                 case 'education':
                     updateData = { education: JSON.parse(formData.education) };
                     break;
@@ -1443,7 +1437,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
             title: t('edit.title') || 'Edit Title',
             about: t('edit.about') || 'Edit About',
             skills: t('edit.skills') || 'Edit Skills',
-            experience: t('edit.experience') || 'Edit Experience',
             education: t('edit.education') || 'Edit Education',
             languages: t('edit.primaryLanguage') || 'Edit Primary Profile Language',
             hourly_rate: t('edit.hourlyRate') || 'Edit Hourly Rate'
@@ -1560,11 +1553,10 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                         />
                     </div>
                 `;
-            case 'experience':
             case 'education':
                 return html`
                     <div class="form-group">
-                        <label>${section === 'experience' ? (t('edit.experienceJson') || 'Experience (JSON format)') : (t('edit.educationJson') || 'Education (JSON format)')}</label>
+                        <label>${(t('edit.educationJson') || 'Education (JSON format)')}</label>
                         <textarea
                             value=${formData[section] || '[]'}
                             onChange=${(e) => handleChange(section, e.target.value)}
@@ -1599,6 +1591,254 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                         <button type="submit" class="btn-primary" disabled=${saving}>
                             ${saving ? (t('edit.saving') || 'Saving...') : (t('edit.save') || 'Save Changes')}
                         </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
+/**
+ * Edit Experience Modal Component
+ * Used for both adding new and editing existing experience items
+ * Data is stored in cs_coach_experiences table
+ */
+const EditExperienceModal = memo(function EditExperienceModal({ coach, experience, onClose, onSaved }) {
+    const isEditing = !!experience;
+    const [formData, setFormData] = useState({
+        title: experience?.title || '',
+        title_en: experience?.title_en || '',
+        employment_type: experience?.employment_type || '',
+        organization: experience?.organization || '',
+        start_date: experience?.start_date || '',
+        end_date: experience?.end_date || '',
+        location: experience?.location || '',
+        description: experience?.description || '',
+        description_en: experience?.description_en || ''
+    });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        if (!formData.title.trim()) {
+            setError(t('edit.titleRequired') || 'Title is required');
+            setSaving(false);
+            return;
+        }
+        if (!formData.organization.trim()) {
+            setError(t('edit.organizationRequired') || 'Organization is required');
+            setSaving(false);
+            return;
+        }
+        if (!formData.start_date) {
+            setError(t('edit.startDateRequired') || 'Start date is required');
+            setSaving(false);
+            return;
+        }
+
+        try {
+            const payload = {
+                coach_id: coach.id,
+                title: formData.title.trim(),
+                title_en: formData.title_en.trim() || null,
+                employment_type: formData.employment_type || null,
+                organization: formData.organization.trim(),
+                start_date: formData.start_date,
+                end_date: formData.end_date || null,
+                location: formData.location.trim() || null,
+                description: formData.description.trim() || null,
+                description_en: formData.description_en.trim() || null
+            };
+
+            if (isEditing) {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_experiences')
+                    .update(payload)
+                    .eq('id', experience.id)
+                    .eq('coach_id', coach.id);
+                if (dbError) throw dbError;
+            } else {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_experiences')
+                    .insert(payload);
+                if (dbError) throw dbError;
+            }
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Save experience error:', err);
+            setError(err.message || 'Failed to save experience');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!isEditing) return;
+        if (!confirm(t('edit.confirmDeleteExperience') || 'Are you sure you want to delete this experience?')) return;
+
+        setSaving(true);
+        try {
+            const { error: dbError } = await window.supabaseClient
+                .from('cs_coach_experiences')
+                .delete()
+                .eq('id', experience.id)
+                .eq('coach_id', coach.id);
+            if (dbError) throw dbError;
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Delete experience error:', err);
+            setError(err.message || 'Failed to delete experience');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container edit-modal-wide">
+                <div class="edit-modal-header">
+                    <h3>${isEditing ? (t('edit.editExperience') || 'Edit Experience') : (t('edit.addExperience') || 'Add Experience')}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.jobTitle') || 'Title'} *</label>
+                                <input
+                                    type="text"
+                                    value=${formData.title}
+                                    onChange=${(e) => handleChange('title', e.target.value)}
+                                    placeholder=${t('edit.jobTitlePlaceholder') || 'e.g., Executive Coach'}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.titleEn') || 'Title (English)'}</label>
+                                <input
+                                    type="text"
+                                    value=${formData.title_en}
+                                    onChange=${(e) => handleChange('title_en', e.target.value)}
+                                    placeholder=${t('edit.titleEnPlaceholder') || 'English translation of title'}
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.organization') || 'Organization'} *</label>
+                                <input
+                                    type="text"
+                                    value=${formData.organization}
+                                    onChange=${(e) => handleChange('organization', e.target.value)}
+                                    placeholder=${t('edit.organizationPlaceholder') || 'e.g., Company Name'}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.employmentType') || 'Employment Type'}</label>
+                                <select
+                                    value=${formData.employment_type}
+                                    onChange=${(e) => handleChange('employment_type', e.target.value)}
+                                >
+                                    <option value="">${t('edit.selectType') || 'Select type...'}</option>
+                                    <option value="Full-Time">${t('edit.fullTime') || 'Full-Time'}</option>
+                                    <option value="Part-Time">${t('edit.partTime') || 'Part-Time'}</option>
+                                    <option value="Self-Employed">${t('edit.selfEmployed') || 'Self-Employed'}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.startDate') || 'Start Date'} *</label>
+                                <input
+                                    type="date"
+                                    value=${formData.start_date}
+                                    onChange=${(e) => handleChange('start_date', e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.endDate') || 'End Date'}</label>
+                                <input
+                                    type="date"
+                                    value=${formData.end_date}
+                                    onChange=${(e) => handleChange('end_date', e.target.value)}
+                                />
+                                <p class="form-hint">${t('edit.endDateHint') || 'Leave empty if current position'}</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.location') || 'Location'}</label>
+                            <input
+                                type="text"
+                                value=${formData.location}
+                                onChange=${(e) => handleChange('location', e.target.value)}
+                                placeholder=${t('edit.locationPlaceholder') || 'e.g., Berlin, Germany'}
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.description') || 'Description'}</label>
+                            <textarea
+                                value=${formData.description}
+                                onChange=${(e) => handleChange('description', e.target.value)}
+                                placeholder=${t('edit.descriptionPlaceholder') || 'Describe your role and responsibilities...'}
+                                rows="4"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.descriptionEn') || 'Description (English)'}</label>
+                            <textarea
+                                value=${formData.description_en}
+                                onChange=${(e) => handleChange('description_en', e.target.value)}
+                                placeholder=${t('edit.descriptionEnPlaceholder') || 'English translation of description...'}
+                                rows="4"
+                            ></textarea>
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions">
+                        ${isEditing && html`
+                            <button type="button" class="btn-delete" onClick=${handleDelete} disabled=${saving}>
+                                ${t('edit.delete') || 'Delete'}
+                            </button>
+                        `}
+                        <div class="edit-modal-actions-right">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>
+                                ${t('edit.cancel') || 'Cancel'}
+                            </button>
+                            <button type="submit" class="btn-primary" disabled=${saving}>
+                                ${saving ? (t('edit.saving') || 'Saving...') : (isEditing ? (t('edit.save') || 'Save Changes') : (t('edit.add') || 'Add Experience'))}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -1711,6 +1951,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [articles, setArticles] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [credentials, setCredentials] = useState([]);
+    const [experiences, setExperiences] = useState([]);
     const [similarCoaches, setSimilarCoaches] = useState([]);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
@@ -1727,6 +1968,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [editingSection, setEditingSection] = useState(null);
     const [showBannerEditor, setShowBannerEditor] = useState(false);
     const [showEnglishProfileEditor, setShowEnglishProfileEditor] = useState(false);
+    const [editingExperience, setEditingExperience] = useState(null); // null=closed, 'new'=add new, object=edit existing
 
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
@@ -1785,6 +2027,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     loadArticles(data.id),
                     loadReviews(data.id),
                     loadCredentials(data.id),
+                    loadExperiences(data.id),
                     loadSimilarCoaches(data),
                     checkUserHasReviewed(data.id),
                 ]);
@@ -1836,6 +2079,19 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             setCredentials(data || []);
         } catch (err) {
             console.error('Failed to load credentials:', err);
+        }
+    };
+
+    const loadExperiences = async (id) => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('cs_coach_experiences')
+                .select('*')
+                .eq('coach_id', id)
+                .order('start_date', { ascending: false });
+            setExperiences(data || []);
+        } catch (err) {
+            console.error('Failed to load experiences:', err);
         }
     };
 
@@ -2165,7 +2421,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Handle edit section clicks - open inline edit modal
     const handleEditSection = (sectionName) => {
         // Sections that can be edited inline
-        const inlineEditableSections = ['name', 'title', 'about', 'skills', 'experience', 'education', 'languages', 'hourly_rate'];
+        const inlineEditableSections = ['name', 'title', 'about', 'skills', 'education', 'languages', 'hourly_rate'];
 
         if (sectionName === 'banner') {
             // Open the banner editor modal
@@ -2182,7 +2438,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const hasActivityContent = articles.length > 0 || hasVideo;
     const hasOtherVisibleSections = (articles.length > 0 || isOwnProfile) || // featured/highlights
         hasActivityContent || // activity
-        coach.experience || isOwnProfile || // experience
+        experiences.length > 0 || isOwnProfile || // experience
         coach.education || isOwnProfile || // education
         credentials.length > 0 || isOwnProfile || // certifications
         (coach.specialties?.length > 0) || isOwnProfile; // skills
@@ -2403,7 +2659,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Experience Section -->
-                        ${(coach.experience || isOwnProfile) && html`
+                        ${(experiences.length > 0 || isOwnProfile) && html`
                             <section class="profile-section experience-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -2411,31 +2667,45 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         ${t('coach.experience') || 'Experience'}
                                     </h2>
                                     ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('experience')} title="Edit experience">
+                                        <button class="btn-add-section" onClick=${() => setEditingExperience('new')} title="Add experience">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
                                             </svg>
                                         </button>
                                     `}
                                 </div>
-                                ${coach.experience ? html`
+                                ${experiences.length > 0 ? html`
                                     <div class="experience-content">
-                                        ${(Array.isArray(coach.experience) ? coach.experience : [coach.experience]).map((exp, i) => html`
-                                            <div key=${i} class="experience-item">
-                                                ${typeof exp === 'object' ? html`
-                                                    <div class="exp-header">
-                                                        <h4 class="exp-title">${exp.title || exp.role}</h4>
-                                                        ${exp.company && html`<p class="exp-company">${exp.company}</p>`}
-                                                        ${exp.duration && html`<span class="exp-duration">${exp.duration}</span>`}
+                                        ${experiences.map(exp => html`
+                                            <div key=${exp.id} class="experience-item ${isOwnProfile ? 'editable' : ''}" onClick=${isOwnProfile ? () => setEditingExperience(exp) : null}>
+                                                <div class="exp-header">
+                                                    <h4 class="exp-title">${exp.title}</h4>
+                                                    <div class="exp-meta">
+                                                        <span class="exp-organization">${exp.organization}</span>
+                                                        ${exp.employment_type && html`<span class="exp-type">${exp.employment_type}</span>`}
                                                     </div>
-                                                    ${exp.description && html`<p class="exp-description">${exp.description}</p>`}
-                                                ` : html`<p>${exp}</p>`}
+                                                    <div class="exp-dates">
+                                                        <span>${new Date(exp.start_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                                                        <span> - </span>
+                                                        <span>${exp.end_date ? new Date(exp.end_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : (t('coach.present') || 'Present')}</span>
+                                                        ${exp.location && html` · <span class="exp-location">${exp.location}</span>`}
+                                                    </div>
+                                                </div>
+                                                ${exp.description && html`<p class="exp-description">${exp.description}</p>`}
+                                                ${isOwnProfile && html`
+                                                    <span class="exp-edit-icon">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                        </svg>
+                                                    </span>
+                                                `}
                                             </div>
                                         `)}
                                     </div>
                                 ` : html`
-                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('experience')}>
+                                    <div class="empty-section-prompt" onClick=${() => setEditingExperience('new')}>
                                         <span class="empty-icon">+</span>
                                         <p>${t('coach.addExperience') || 'Add your professional experience'}</p>
                                     </div>
@@ -2728,6 +2998,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     coach=${coach}
                     onClose=${() => setEditingSection(null)}
                     onSave=${saveCoachProfile}
+                />
+            `}
+
+            <!-- Edit Experience Modal (add new / edit existing) -->
+            ${editingExperience && isOwnProfile && html`
+                <${EditExperienceModal}
+                    coach=${coach}
+                    experience=${editingExperience === 'new' ? null : editingExperience}
+                    onClose=${() => setEditingExperience(null)}
+                    onSaved=${() => loadExperiences(coach.id)}
                 />
             `}
 
