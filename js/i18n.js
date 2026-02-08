@@ -201,6 +201,9 @@ const translations = {
         "auth.coachDesc": "Offer coaching services",
         "auth.business": "Business",
         "auth.businessDesc": "Manage team coaching needs",
+        "auth.modalTitle": "Sign in to continue",
+        "auth.signInToBook": "Sign in to book your call",
+        "auth.signInToBookSubtitle": "Create an account or sign in to book a free discovery call with {coachName}",
 
         // Languages
         "lang.english": "English",
@@ -2384,6 +2387,9 @@ const translations = {
         "auth.coachDesc": "Coaching-Dienstleistungen anbieten",
         "auth.business": "Unternehmen",
         "auth.businessDesc": "Team-Coaching-Bedarf verwalten",
+        "auth.modalTitle": "Anmelden, um fortzufahren",
+        "auth.signInToBook": "Anmelden, um Ihren Anruf zu buchen",
+        "auth.signInToBookSubtitle": "Erstellen Sie ein Konto oder melden Sie sich an, um ein kostenloses Kennenlerngespräch mit {coachName} zu buchen",
 
         // Languages
         "lang.english": "Englisch",
@@ -4060,6 +4066,9 @@ const translations = {
         "auth.coachDesc": "Ofrecer servicios de coaching",
         "auth.business": "Empresa",
         "auth.businessDesc": "Gestionar necesidades de coaching del equipo",
+        "auth.modalTitle": "Inicia sesión para continuar",
+        "auth.signInToBook": "Inicia sesión para reservar tu llamada",
+        "auth.signInToBookSubtitle": "Crea una cuenta o inicia sesión para reservar una llamada de descubrimiento gratuita con {coachName}",
 
         // Languages
         "lang.english": "Inglés",
@@ -5619,6 +5628,9 @@ const translations = {
         "auth.coachDesc": "Offrir des services de coaching",
         "auth.business": "Entreprise",
         "auth.businessDesc": "Gérer les besoins d'équipe",
+        "auth.modalTitle": "Connectez-vous pour continuer",
+        "auth.signInToBook": "Connectez-vous pour réserver votre appel",
+        "auth.signInToBookSubtitle": "Créez un compte ou connectez-vous pour réserver un appel découverte gratuit avec {coachName}",
 
         // Languages
         "lang.english": "Anglais",
@@ -7188,6 +7200,9 @@ const translations = {
         "auth.coachDesc": "Offri servizi di coaching",
         "auth.business": "Azienda",
         "auth.businessDesc": "Gestisci esigenze di coaching del team",
+        "auth.modalTitle": "Accedi per continuare",
+        "auth.signInToBook": "Accedi per prenotare la tua chiamata",
+        "auth.signInToBookSubtitle": "Crea un account o accedi per prenotare una chiamata conoscitiva gratuita con {coachName}",
 
         // Languages
         "lang.english": "Inglese",

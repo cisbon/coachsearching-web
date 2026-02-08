@@ -20,19 +20,26 @@ const ROLES = [
 /**
  * Auth Component
  * Premium authentication experience
+ * @param {Object} props
+ * @param {function} [props.onSuccess] - Callback when auth is successful (used in modal context)
+ * @param {boolean} [props.skipNavigation] - If true, skip navigation after auth (used in modal context)
+ * @param {string} [props.defaultMode] - 'login' or 'register' - default mode to show
  */
-export function Auth() {
+export function Auth({ onSuccess, skipNavigation, defaultMode } = {}) {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [userType, setUserType] = useState('client');
-    const [isLogin, setIsLogin] = useState(true);
+    const [isLogin, setIsLogin] = useState(defaultMode !== 'register');
     const [message, setMessage] = useState({ type: '', text: '' });
 
-    // Check URL for mode=register parameter
+    // Check URL for mode=register parameter (only if no defaultMode provided)
     useEffect(() => {
+        // Skip URL-based mode detection when used in modal context
+        if (skipNavigation) return;
+
         const checkMode = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const pathname = window.location.pathname;
@@ -46,7 +53,7 @@ export function Auth() {
         checkMode();
         window.addEventListener('popstate', checkMode);
         return () => window.removeEventListener('popstate', checkMode);
-    }, []);
+    }, [skipNavigation]);
 
     const handleAuth = async (e) => {
         e.preventDefault();
@@ -99,6 +106,13 @@ export function Auth() {
                     return;
                 }
 
+                // If onSuccess callback provided (modal context), call it instead of navigating
+                if (onSuccess && skipNavigation) {
+                    setMessage({ type: 'success', text: 'Welcome!' });
+                    setTimeout(() => onSuccess(data), 300);
+                    return;
+                }
+
                 const needsOnboarding = userType === 'coach';
                 if (needsOnboarding) {
                     setMessage({ type: 'success', text: 'Welcome! Setting up your profile...' });
@@ -108,6 +122,13 @@ export function Auth() {
                     setTimeout(() => window.navigateTo('/coaches'), 500);
                 }
             } else {
+                // If onSuccess callback provided (modal context), call it instead of navigating
+                if (onSuccess && skipNavigation) {
+                    setMessage({ type: 'success', text: 'Welcome back!' });
+                    setTimeout(() => onSuccess(data), 300);
+                    return;
+                }
+
                 setMessage({ type: 'success', text: 'Welcome back! Loading...' });
                 setTimeout(() => window.navigateTo('/dashboard'), 500);
             }

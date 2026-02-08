@@ -11,6 +11,7 @@ import { TrustBadges } from './TrustBadges.js';
 import { VideoPopup } from './VideoPopup.js';
 import { ReviewsPopup } from './ReviewsPopup.js';
 import { DiscoveryCallModal } from './DiscoveryCallModal.js';
+import { AuthModal } from '../auth/AuthModal.js';
 import { useCities, useLookupOptions } from '../../context/AppContext.js';
 
 const React = window.React;
@@ -28,6 +29,7 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
     const [showVideoPopup, setShowVideoPopup] = useState(false);
     const [showReviewsPopup, setShowReviewsPopup] = useState(false);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
     const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
 
     // Get cities for location lookup with localized names
@@ -131,6 +133,29 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
         e.preventDefault();
         e.stopPropagation();
         setShowReviewsPopup(true);
+    };
+
+    // Handle discovery button click - check auth status first
+    const handleDiscoveryClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // If user is logged in, show discovery modal directly
+        if (session) {
+            setShowDiscoveryModal(true);
+        } else {
+            // If not logged in, show auth modal first
+            setShowAuthModal(true);
+        }
+    };
+
+    // Handle successful auth - close auth modal and open discovery modal
+    const handleAuthSuccess = () => {
+        setShowAuthModal(false);
+        // Small delay to ensure smooth transition
+        setTimeout(() => {
+            setShowDiscoveryModal(true);
+        }, 100);
     };
 
     return html`
@@ -248,7 +273,7 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                         <div class="price-label">${t('coach.hourly_rate') || 'Hourly Rate'}</div>
                         <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
                     </div>
-                    <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
+                    <button class="btn-discovery" onClick=${handleDiscoveryClick}>
                         <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                             <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -277,7 +302,7 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
 
                 <!-- Actions - Desktop -->
                 <div class="coach-card-actions">
-                    <button class="btn-discovery" onClick=${(e) => { e.preventDefault(); e.stopPropagation(); setShowDiscoveryModal(true); }}>
+                    <button class="btn-discovery" onClick=${handleDiscoveryClick}>
                         <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                             <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -313,6 +338,15 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
             <${DiscoveryCallModal}
                 coach=${coach}
                 onClose=${() => setShowDiscoveryModal(false)}
+            />
+        `}
+
+        ${showAuthModal && html`
+            <${AuthModal}
+                onClose=${() => setShowAuthModal(false)}
+                onSuccess=${handleAuthSuccess}
+                title=${t('auth.signInToBook') || 'Sign in to book your call'}
+                subtitle=${(t('auth.signInToBookSubtitle') || 'Create an account or sign in to book a free discovery call with {coachName}').replace('{coachName}', coach.full_name)}
             />
         `}
     `;
