@@ -1719,6 +1719,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [similarCoaches, setSimilarCoaches] = useState([]);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
+    const [pendingAuthAction, setPendingAuthAction] = useState(null);
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [showReviewsPopup, setShowReviewsPopup] = useState(false);
@@ -2151,9 +2152,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             setShowAuthModal(true);
         }
     };
-
-    // Track what action to take after auth (discovery or review)
-    const [pendingAuthAction, setPendingAuthAction] = useState(null);
 
     // Handle successful auth - close auth modal and open the pending modal
     const handleAuthSuccess = () => {
