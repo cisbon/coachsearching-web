@@ -35,20 +35,38 @@ ALTER TABLE public.cs_coach_experiences ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Coach experiences are viewable by everyone"
     ON public.cs_coach_experiences FOR SELECT USING (true);
 
--- Coaches can insert their own experiences
+-- Coaches can insert their own experiences (coach_id -> cs_coaches.id, check via user_id)
 CREATE POLICY "Coaches can insert own experiences"
     ON public.cs_coach_experiences FOR INSERT
-    WITH CHECK (coach_id = (SELECT auth.uid()));
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.cs_coaches
+            WHERE cs_coaches.id = coach_id
+            AND cs_coaches.user_id = (SELECT auth.uid())
+        )
+    );
 
 -- Coaches can update their own experiences
 CREATE POLICY "Coaches can update own experiences"
     ON public.cs_coach_experiences FOR UPDATE
-    USING (coach_id = (SELECT auth.uid()));
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.cs_coaches
+            WHERE cs_coaches.id = coach_id
+            AND cs_coaches.user_id = (SELECT auth.uid())
+        )
+    );
 
 -- Coaches can delete their own experiences
 CREATE POLICY "Coaches can delete own experiences"
     ON public.cs_coach_experiences FOR DELETE
-    USING (coach_id = (SELECT auth.uid()));
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.cs_coaches
+            WHERE cs_coaches.id = coach_id
+            AND cs_coaches.user_id = (SELECT auth.uid())
+        )
+    );
 
 -- Auto-update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_coach_experience_updated_at()

@@ -1,13 +1,17 @@
 -- ============================================================================
--- cs_coach_experiences - FIX RLS + GRANT permissions
+-- cs_coach_experiences - FIX RLS policies
 -- Run this in the Supabase SQL Editor
+--
+-- The coach_id column references cs_coaches.id which is NOT the same as
+-- auth.uid(). The auth user ID is stored in cs_coaches.user_id.
+-- So we must check through the cs_coaches table.
 -- ============================================================================
 
--- Grant table-level permissions to authenticated and anon roles
+-- Grant table-level permissions
 GRANT SELECT ON public.cs_coach_experiences TO anon, authenticated;
 GRANT INSERT, UPDATE, DELETE ON public.cs_coach_experiences TO authenticated;
 
--- Drop existing policies if they exist (safe to re-run)
+-- Drop existing policies
 DROP POLICY IF EXISTS "Coach experiences are viewable by everyone" ON public.cs_coach_experiences;
 DROP POLICY IF EXISTS "Coaches can insert own experiences" ON public.cs_coach_experiences;
 DROP POLICY IF EXISTS "Coaches can update own experiences" ON public.cs_coach_experiences;
@@ -20,17 +24,35 @@ ALTER TABLE public.cs_coach_experiences ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Coach experiences are viewable by everyone"
     ON public.cs_coach_experiences FOR SELECT USING (true);
 
--- Coaches can insert their own experiences (coach_id must match auth.uid())
+-- Coaches can insert their own experiences
 CREATE POLICY "Coaches can insert own experiences"
     ON public.cs_coach_experiences FOR INSERT
-    WITH CHECK (coach_id = (SELECT auth.uid()));
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.cs_coaches
+            WHERE cs_coaches.id = coach_id
+            AND cs_coaches.user_id = (SELECT auth.uid())
+        )
+    );
 
 -- Coaches can update their own experiences
 CREATE POLICY "Coaches can update own experiences"
     ON public.cs_coach_experiences FOR UPDATE
-    USING (coach_id = (SELECT auth.uid()));
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.cs_coaches
+            WHERE cs_coaches.id = coach_id
+            AND cs_coaches.user_id = (SELECT auth.uid())
+        )
+    );
 
 -- Coaches can delete their own experiences
 CREATE POLICY "Coaches can delete own experiences"
     ON public.cs_coach_experiences FOR DELETE
-    USING (coach_id = (SELECT auth.uid()));
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.cs_coaches
+            WHERE cs_coaches.id = coach_id
+            AND cs_coaches.user_id = (SELECT auth.uid())
+        )
+    );
