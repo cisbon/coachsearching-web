@@ -4291,7 +4291,6 @@ footer, .site-footer {
 /* Rating Section - Under Profile Picture */
 .coach-rating-section {
     display: flex;
-    justify-content: center;
     margin-top: 10px;
     cursor: pointer;
     width: 100%;
