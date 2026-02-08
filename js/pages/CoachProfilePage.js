@@ -523,38 +523,36 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                 `}
             </div>
 
-            <!-- Profile Image with Trust Badges -->
-            <div class="profile-card-image-section">
-                <div class="profile-image-wrapper-card ${hasVideo ? 'has-video' : ''}" onClick=${hasVideo ? onVideoClick : null}>
-                    <img
-                        src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name) + '&size=200'}
-                        alt=${coach.full_name}
-                        class="profile-image-card"
-                    />
-                    ${hasVideo && html`
-                        <div class="video-play-overlay-card">
-                            <div class="play-icon">▶</div>
-                        </div>
-                    `}
-                    <!-- Trust Badge on image -->
-                    ${hasVideo && html`
-                        <span class="trust-badge badge-video badge-on-image" title="Has Video">🎬</span>
+            <!-- Profile Image with Name beside it -->
+            <div class="profile-card-header-row">
+                <div class="profile-card-image-section">
+                    <div class="profile-image-wrapper-card ${hasVideo ? 'has-video' : ''}" onClick=${hasVideo ? onVideoClick : null}>
+                        <img
+                            src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name) + '&size=200'}
+                            alt=${coach.full_name}
+                            class="profile-image-card"
+                        />
+                        ${hasVideo && html`
+                            <div class="video-play-overlay-card">
+                                <div class="play-icon">▶</div>
+                            </div>
+                        `}
+                        <!-- Trust Badge on image -->
+                        ${hasVideo && html`
+                            <span class="trust-badge badge-video badge-on-image" title="Has Video">🎬</span>
+                        `}
+                    </div>
+                    ${isOwnProfile && html`
+                        <button class="btn-edit-photo" onClick=${() => onEditSection('photo')} title="Edit photo">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </button>
                     `}
                 </div>
-                ${isOwnProfile && html`
-                    <button class="btn-edit-photo" onClick=${() => onEditSection('photo')} title="Edit photo">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                            <circle cx="12" cy="13" r="4"></circle>
-                        </svg>
-                    </button>
-                `}
-            </div>
 
-            <!-- Main Card Content -->
-            <div class="profile-card-content">
-                <div class="profile-card-main">
-                    <!-- Name and Title -->
+                <div class="profile-card-name-section">
                     <h1 class="profile-coach-name">
                         ${coach.full_name}
                         ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
@@ -585,7 +583,12 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                         `}
                     </h1>
                     <div class="profile-coach-title">${coach.title}</div>
+                </div>
+            </div>
 
+            <!-- Main Card Content -->
+            <div class="profile-card-content">
+                <div class="profile-card-main">
                     <!-- Location and Languages Row -->
                     <div class="profile-meta-row">
                         ${location && html`<span class="meta-location">📍 ${location}</span>`}
@@ -595,36 +598,28 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                         `}
                     </div>
 
-                    <!-- Session Formats Row -->
-                    ${(offersVideo || offersInPerson) && html`
-                        <div class="profile-session-formats">
-                            ${offersVideo && html`<span class="format-tag">💻 Video Call</span>`}
-                            ${offersInPerson && html`<span class="format-tag">🤝 In-Person</span>`}
-                        </div>
-                    `}
-
-                    <!-- Rating Section - only show when there are reviews and other sections exist -->
-                    ${reviewsCount > 0 && hasOtherVisibleSections && html`
-                        <div class="coach-rating-section" onClick=${() => {
-                            const el = document.getElementById('recommendations-ratings-section');
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }}>
-                            <div class="rating-compact clickable">
-                                <div class="rating-stars-compact">
-                                    ${[1,2,3,4,5].map(star => html`
-                                        <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                    `)}
-                                </div>
+                    <!-- Session Formats & Rating Row -->
+                    <div class="profile-session-formats">
+                        ${offersVideo && html`<span class="format-tag">💻 Video Call</span>`}
+                        ${offersInPerson && html`<span class="format-tag">🤝 In-Person</span>`}
+                        ${reviewsCount > 0 && hasOtherVisibleSections && html`
+                            <span class="format-tag rating-tag clickable" onClick=${() => {
+                                const el = document.getElementById('recommendations-ratings-section');
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}>
+                                ${[1,2,3,4,5].map(star => html`
+                                    <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                `)}
                                 <span class="rating-value">${rating.toFixed(1)}</span>
                                 <span class="rating-count">(${reviewsCount})</span>
-                            </div>
-                        </div>
-                    `}
+                            </span>
+                        `}
+                    </div>
 
                     <!-- Bio -->
                     ${bio && html`
                         <div class="profile-bio">
-                            <p>${bio.length > 200 ? bio.substring(0, 200) + '...' : bio}</p>
+                            <p>${bio}</p>
                         </div>
                     `}
 
