@@ -257,20 +257,8 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                     ` : ''}
                 </div>
 
-                <!-- Price Section - Top Right on Desktop -->
-                <div class="coach-price-top">
-                    <div class="price-info">
-                        <div class="price-label">${t('coach.hourly_rate') || 'Hourly Rate'}</div>
-                        <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
-                    </div>
-                </div>
-
                 <!-- Price Section - For Mobile Only -->
                 <div class="coach-price-section coach-price-mobile">
-                    <div class="price-info">
-                        <div class="price-label">${t('coach.hourly_rate') || 'Hourly Rate'}</div>
-                        <div class="price-value">${formatPrice(coach.hourly_rate)}</div>
-                    </div>
                     <button class="btn-discovery" onClick=${handleDiscoveryClick}>
                         <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
