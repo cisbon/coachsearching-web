@@ -692,7 +692,7 @@ const ActivityTabs = ({ activeTab, onTabChange, articles, coach }) => {
  * Profile Language Sidebar Component
  * Shows languages the coach provides coaching in
  */
-const ProfileLanguageSidebar = memo(function ProfileLanguageSidebar({ languages, onEditLanguages }) {
+const ProfileLanguageSidebar = memo(function ProfileLanguageSidebar({ languages, primaryProfileLanguage, onEditLanguages, onEditEnglishProfile, isOwnProfile }) {
     if (!languages || languages.length === 0) {
         return html`
             <section class="sidebar-section profile-languages-sidebar">
@@ -705,35 +705,61 @@ const ProfileLanguageSidebar = memo(function ProfileLanguageSidebar({ languages,
         `;
     }
 
+    // Determine primary language: use saved value, or auto-detect
+    const primaryLang = primaryProfileLanguage || (languages.length === 1 ? languages[0] : (languages.find(l => l !== 'en' && l !== 'English') || languages[0]));
+    const primaryCountryCode = LANGUAGE_TO_COUNTRY[primaryLang] || LANGUAGE_TO_COUNTRY[primaryLang?.toLowerCase()] || 'un';
+    const primaryLangName = LANGUAGE_NAMES[primaryLang] || primaryLang;
+
+    // Check if English is in the coach's languages (and is different from primary)
+    const hasEnglish = languages.some(l => l === 'en' || l === 'English');
+    const primaryIsEnglish = primaryLang === 'en' || primaryLang === 'English';
+
     return html`
         <section class="sidebar-section profile-languages-sidebar">
             <div class="sidebar-header-editable">
                 <h3 class="sidebar-title">${t('coach.profileLanguages') || 'Profile Languages'}</h3>
-                <button class="btn-edit-sidebar" onClick=${onEditLanguages} title="Edit languages">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                </button>
+                ${isOwnProfile && html`
+                    <button class="btn-edit-sidebar" onClick=${onEditLanguages} title="Edit languages">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                `}
             </div>
-            <p class="sidebar-description">${t('coach.languagesDescription') || 'Languages I provide coaching in:'}</p>
             <div class="profile-languages-list">
-                ${languages.map(lang => {
-                    const langCode = LANGUAGE_TO_COUNTRY[lang] || LANGUAGE_TO_COUNTRY[lang.toLowerCase()] || 'un';
-                    const langName = LANGUAGE_NAMES[lang] || lang;
-                    return html`
-                        <div key=${lang} class="profile-language-item">
-                            <img
-                                src=${`https://flagcdn.com/w40/${langCode}.png`}
-                                alt=${langName}
-                                class="language-flag"
-                                onError=${(e) => { e.target.style.display = 'none'; }}
-                            />
-                            <span class="language-name">${langName}</span>
-                            <span class="language-badge">${t('coach.profileAvailable') || 'Profile Available'}</span>
-                        </div>
-                    `;
-                })}
+                <!-- Primary Language -->
+                <div class="profile-language-item primary-language-item">
+                    <img
+                        src=${`https://flagcdn.com/w40/${primaryCountryCode}.png`}
+                        alt=${primaryLangName}
+                        class="language-flag"
+                        onError=${(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <span class="language-name">${primaryLangName}</span>
+                    <span class="language-badge primary-badge">${t('coach.primary') || 'Primary'}</span>
+                </div>
+
+                <!-- English Language (if coach has it and it's not the primary) -->
+                ${hasEnglish && !primaryIsEnglish && html`
+                    <div class="profile-language-item english-language-item">
+                        <img
+                            src="https://flagcdn.com/w40/gb.png"
+                            alt="English"
+                            class="language-flag"
+                            onError=${(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <span class="language-name">English</span>
+                        ${isOwnProfile && html`
+                            <button class="btn-edit-sidebar" onClick=${onEditEnglishProfile} title="Edit English profile">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                        `}
+                    </div>
+                `}
             </div>
         </section>
     `;
@@ -1319,7 +1345,7 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                 setFormData({ education: JSON.stringify(coach.education || [], null, 2) });
                 break;
             case 'languages':
-                setFormData({ languages: (coach.languages || []).join(', ') });
+                setFormData({ primary_profile_language: coach.primary_profile_language || '' });
                 break;
             case 'hourly_rate':
                 setFormData({ hourly_rate: coach.hourly_rate || '' });
@@ -1371,7 +1397,7 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                     break;
                 case 'languages':
                     updateData = {
-                        languages: formData.languages.split(',').map(s => s.trim()).filter(Boolean)
+                        primary_profile_language: formData.primary_profile_language
                     };
                     break;
                 case 'hourly_rate':
@@ -1408,7 +1434,7 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
             interests: t('edit.interests') || 'Edit Interests',
             experience: t('edit.experience') || 'Edit Experience',
             education: t('edit.education') || 'Edit Education',
-            languages: t('edit.languages') || 'Edit Languages',
+            languages: t('edit.primaryLanguage') || 'Edit Primary Profile Language',
             hourly_rate: t('edit.hourlyRate') || 'Edit Hourly Rate'
         };
         return titles[section] || 'Edit Section';
@@ -1493,14 +1519,33 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
             case 'languages':
                 return html`
                     <div class="form-group">
-                        <label>${t('edit.languages') || 'Languages'}</label>
-                        <textarea
-                            value=${formData.languages || ''}
-                            onChange=${(e) => handleChange('languages', e.target.value)}
-                            placeholder="Enter languages separated by commas (e.g., English, German, Spanish)"
-                            rows="2"
-                        ></textarea>
-                        <p class="form-hint">${t('edit.languagesHint') || 'Languages you provide coaching in'}</p>
+                        <label>${t('edit.selectPrimaryLanguage') || 'Select Primary Profile Language'}</label>
+                        <p class="form-hint">${t('edit.primaryLanguageHint') || 'Choose which language will be your primary profile language. Click on a flag to select it.'}</p>
+                        <div class="primary-language-selector">
+                            ${(coach.languages || []).map(lang => {
+                                const countryCode = LANGUAGE_TO_COUNTRY[lang] || LANGUAGE_TO_COUNTRY[lang?.toLowerCase()] || 'un';
+                                const langName = LANGUAGE_NAMES[lang] || lang;
+                                const isSelected = formData.primary_profile_language === lang;
+                                return html`
+                                    <button
+                                        key=${lang}
+                                        type="button"
+                                        class="primary-lang-flag-btn ${isSelected ? 'selected' : ''}"
+                                        onClick=${() => handleChange('primary_profile_language', lang)}
+                                        title=${langName}
+                                    >
+                                        <img
+                                            src=${`https://flagcdn.com/w80/${countryCode}.png`}
+                                            alt=${langName}
+                                            class="primary-lang-flag-img"
+                                            onError=${(e) => { e.target.style.display = 'none'; }}
+                                        />
+                                        <span class="primary-lang-flag-name">${langName}</span>
+                                        ${isSelected && html`<span class="primary-lang-check">✓</span>`}
+                                    </button>
+                                `;
+                            })}
+                        </div>
                     </div>
                 `;
             case 'hourly_rate':
@@ -1563,6 +1608,102 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
     `;
 });
 
+/**
+ * Edit English Profile Modal Component
+ * Allows editing English-specific profile fields (title_en, bio_en)
+ */
+const EditEnglishProfileModal = memo(function EditEnglishProfileModal({ coach, onClose, onSave }) {
+    const [titleEn, setTitleEn] = useState(coach.title_en || '');
+    const [bioEn, setBioEn] = useState(coach.bio_en || '');
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, [onClose]);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        try {
+            await onSave({
+                title_en: titleEn.trim(),
+                bio_en: bioEn.trim()
+            });
+            onClose();
+        } catch (err) {
+            console.error('Save English profile error:', err);
+            setError(err.message || 'Failed to save changes');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container">
+                <div class="edit-modal-header">
+                    <h3>${t('edit.englishProfile') || 'English Profile'}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+                        <p class="form-hint" style=${{ marginBottom: '16px' }}>
+                            ${t('edit.englishProfileHint') || 'Set your English profile details so visitors can view your profile in English alongside your primary language.'}
+                        </p>
+                        <div class="form-group">
+                            <label>${t('edit.professionalTitle') || 'Professional Title'}</label>
+                            <input
+                                type="text"
+                                value=${titleEn}
+                                onChange=${(e) => setTitleEn(e.target.value)}
+                                placeholder=${t('edit.titlePlaceholder') || 'e.g., Executive Coach, Life Coach'}
+                                maxlength="150"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>${t('edit.aboutYou') || 'About You'}</label>
+                            <textarea
+                                value=${bioEn}
+                                onChange=${(e) => setBioEn(e.target.value)}
+                                placeholder=${t('edit.bioEnPlaceholder') || 'Tell your story in English...'}
+                                rows="6"
+                                maxlength="2000"
+                            ></textarea>
+                            <div class="char-count">${bioEn.length}/2000</div>
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions">
+                        <button type="button" class="btn-cancel" onClick=${onClose}>
+                            ${t('edit.cancel') || 'Cancel'}
+                        </button>
+                        <button type="submit" class="btn-primary" disabled=${saving}>
+                            ${saving ? (t('edit.saving') || 'Saving...') : (t('edit.save') || 'Save Changes')}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
 function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const identifier = coachIdOrSlug || coachId;
 
@@ -1585,6 +1726,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Edit mode states
     const [editingSection, setEditingSection] = useState(null);
     const [showBannerEditor, setShowBannerEditor] = useState(false);
+    const [showEnglishProfileEditor, setShowEnglishProfileEditor] = useState(false);
 
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
@@ -2397,7 +2539,10 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             <!-- Own Profile: Profile Languages Section -->
                             <${ProfileLanguageSidebar}
                                 languages=${coach.languages || []}
+                                primaryProfileLanguage=${coach.primary_profile_language}
                                 onEditLanguages=${() => handleEditSection('languages')}
+                                onEditEnglishProfile=${() => setShowEnglishProfileEditor(true)}
+                                isOwnProfile=${true}
                             />
 
                             <!-- Own Profile: Who Your Viewers Also Viewed -->
@@ -2510,6 +2655,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     coach=${coach}
                     session=${session}
                     onClose=${() => setShowBannerEditor(false)}
+                    onSave=${saveCoachProfile}
+                />
+            `}
+
+            <!-- English Profile Editor Modal -->
+            ${showEnglishProfileEditor && isOwnProfile && html`
+                <${EditEnglishProfileModal}
+                    coach=${coach}
+                    onClose=${() => setShowEnglishProfileEditor(false)}
                     onSave=${saveCoachProfile}
                 />
             `}
