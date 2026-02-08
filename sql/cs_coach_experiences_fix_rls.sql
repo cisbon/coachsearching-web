@@ -1,7 +1,11 @@
 -- ============================================================================
--- cs_coach_experiences - FIX RLS policies
--- Run this in the Supabase SQL Editor if you get RLS policy errors
+-- cs_coach_experiences - FIX RLS + GRANT permissions
+-- Run this in the Supabase SQL Editor
 -- ============================================================================
+
+-- Grant table-level permissions to authenticated and anon roles
+GRANT SELECT ON public.cs_coach_experiences TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.cs_coach_experiences TO authenticated;
 
 -- Drop existing policies if they exist (safe to re-run)
 DROP POLICY IF EXISTS "Coach experiences are viewable by everyone" ON public.cs_coach_experiences;

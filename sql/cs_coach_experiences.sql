@@ -23,6 +23,10 @@ CREATE TABLE public.cs_coach_experiences (
 -- Index for faster lookups by coach_id
 CREATE INDEX idx_coach_experiences_coach ON public.cs_coach_experiences(coach_id);
 
+-- Grant table-level permissions
+GRANT SELECT ON public.cs_coach_experiences TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.cs_coach_experiences TO authenticated;
+
 -- Enable RLS
 ALTER TABLE public.cs_coach_experiences ENABLE ROW LEVEL SECURITY;
 
