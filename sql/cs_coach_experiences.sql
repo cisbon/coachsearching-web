@@ -34,17 +34,17 @@ CREATE POLICY "Coach experiences are viewable by everyone"
 -- Coaches can insert their own experiences
 CREATE POLICY "Coaches can insert own experiences"
     ON public.cs_coach_experiences FOR INSERT
-    WITH CHECK ((SELECT auth.uid()) = coach_id);
+    WITH CHECK (coach_id = (SELECT auth.uid()));
 
 -- Coaches can update their own experiences
 CREATE POLICY "Coaches can update own experiences"
     ON public.cs_coach_experiences FOR UPDATE
-    USING ((SELECT auth.uid()) = coach_id);
+    USING (coach_id = (SELECT auth.uid()));
 
 -- Coaches can delete their own experiences
 CREATE POLICY "Coaches can delete own experiences"
     ON public.cs_coach_experiences FOR DELETE
-    USING ((SELECT auth.uid()) = coach_id);
+    USING (coach_id = (SELECT auth.uid()));
 
 -- Auto-update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_coach_experience_updated_at()
