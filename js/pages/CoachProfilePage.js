@@ -668,12 +668,12 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                         <button class="btn-message" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
                             💬 ${t('coach.sendMessage') || 'Message'}
                         </button>
-                        ${!isOwnProfile && html`
-                            <button class="btn-recommendation" onClick=${onWriteReview}>
-                                ⭐ ${t('coach.giveRecommendation') || 'Give Recommendation'}
-                            </button>
-                        `}
                     </div>
+                    ${!isOwnProfile && html`
+                        <button class="btn-recommendation" onClick=${onWriteReview}>
+                            ⭐ ${t('coach.giveRecommendation') || 'Give Recommendation'}
+                        </button>
+                    `}
                 </div>
             </div>
         </div>
@@ -2125,8 +2125,11 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         `;
     }
 
-    const rating = coach.rating_average || coach.rating || 0;
-    const reviewsCount = coach.rating_count || 0;
+    // Compute rating from loaded reviews for accuracy (matching ProfileCoachCard's live data approach)
+    const rating = reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+        : (coach.rating_average || coach.rating || 0);
+    const reviewsCount = reviews.length > 0 ? reviews.length : (coach.rating_count || 0);
     const videoUrl = coach.intro_video_url || coach.video_url;
     const hasVideo = !!videoUrl;
 
@@ -2382,9 +2385,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                                     <span class="reviewer-name">${review.reviewer_name || 'Anonymous'}</span>
                                                     <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
                                                 </div>
-                                                ${(review.content || review.comment) && html`
+                                                ${(review.text || review.comment || review.content) && html`
                                                     <div class="review-middle-column">
-                                                        <p class="review-text">${review.content || review.comment}</p>
+                                                        <p class="review-text">${review.text || review.comment || review.content}</p>
                                                     </div>
                                                 `}
                                                 <div class="review-right-column">
