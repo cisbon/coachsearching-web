@@ -541,52 +541,6 @@
     color: var(--text-main, #333);
 }
 
-.profile-rating-section {
-    margin-bottom: 12px;
-}
-
-.profile-rating-section .rating-display {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.profile-rating-section .rating-stars {
-    display: flex;
-    gap: 2px;
-}
-
-.profile-rating-section .rating-stars .star {
-    color: #d1d5db;
-    font-size: 1rem;
-}
-
-.profile-rating-section .rating-stars .star.filled {
-    color: #fbbf24;
-}
-
-.profile-rating-section .rating-value {
-    font-weight: 600;
-    color: var(--text-main, #1a1a1a);
-}
-
-.profile-rating-section .rating-count {
-    color: var(--text-muted, #666);
-    font-size: 0.875rem;
-}
-
-.profile-rating-section .new-coach-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: linear-gradient(135deg, var(--primary-petrol, #006266) 0%, #00bcd4 100%);
-    color: white;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
 .profile-bio {
     margin-bottom: 12px;
 }
@@ -2184,6 +2138,153 @@
     font-size: 0.85rem;
     color: var(--text-muted, #666);
     text-align: center;
+}
+
+/* ==========================================================================
+   Recommendations & Ratings Section
+   ========================================================================== */
+
+.rating-section .ratings-overview {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.rating-section .ratings-summary {
+    display: flex;
+    gap: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.rating-section .ratings-big-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 80px;
+}
+
+.rating-section .ratings-big-score .big-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-main, #1a1a1a);
+    line-height: 1;
+}
+
+.rating-section .ratings-big-score .ratings-total {
+    font-size: 0.85rem;
+    color: var(--text-muted, #666);
+    margin-top: 4px;
+}
+
+.rating-section .ratings-breakdown {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
+}
+
+.rating-section .ratings-breakdown .breakdown-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rating-section .ratings-breakdown .bar-label {
+    width: 30px;
+    font-size: 0.8125rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.rating-section .ratings-breakdown .bar-track {
+    flex: 1;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.rating-section .ratings-breakdown .bar-fill {
+    height: 100%;
+    background: #fbbf24;
+    border-radius: 4px;
+}
+
+.rating-section .ratings-breakdown .bar-count {
+    width: 20px;
+    font-size: 0.75rem;
+    color: var(--text-muted, #6b7280);
+    text-align: right;
+}
+
+.rating-section .ratings-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.rating-section .rating-review-item {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.rating-section .rating-review-item .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.rating-section .rating-review-item .reviewer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.rating-section .rating-review-item .reviewer-name {
+    font-weight: 600;
+    color: var(--text-main, #1a1a1a);
+    font-size: 0.9rem;
+}
+
+.rating-section .rating-review-item .review-date {
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.rating-section .rating-review-item .review-content {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-secondary, #4a5568);
+}
+
+.rating-section .ratings-empty {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--text-muted, #666);
+}
+
+.rating-section .ratings-empty p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 767px) {
+    .rating-section .ratings-summary {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}
+
+/* Coach Rating Section in Profile Card (matches coach-card styling) */
+.profile-coach-card .coach-rating-section {
+    margin-bottom: 12px;
+    cursor: pointer;
 }
 
 /* Primary Language Item Styling */

@@ -584,19 +584,22 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                     `}
 
                     <!-- Rating Section -->
-                    <div class="profile-rating-section">
+                    <div class="coach-rating-section" onClick=${() => {
+                        const el = document.getElementById('recommendations-ratings-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}>
                         ${reviewsCount > 0 ? html`
-                            <div class="rating-display">
-                                <div class="rating-stars">
+                            <div class="rating-compact clickable">
+                                <div class="rating-stars-compact">
                                     ${[1,2,3,4,5].map(star => html`
-                                        <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                        <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
                                     `)}
                                 </div>
                                 <span class="rating-value">${rating.toFixed(1)}</span>
-                                <span class="rating-count">(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})</span>
+                                <span class="rating-count">(${reviewsCount})</span>
                             </div>
                         ` : html`
-                            <div class="new-coach-badge">
+                            <div class="new-coach-compact clickable">
                                 <span>✨</span> ${t('coach.new') || 'New Coach'}
                             </div>
                         `}
@@ -1335,9 +1338,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
             case 'skills':
                 setFormData({ skills: (coach.skills || []).join(', ') });
                 break;
-            case 'interests':
-                setFormData({ interests: (coach.interests || []).join(', ') });
-                break;
             case 'experience':
                 setFormData({ experience: JSON.stringify(coach.experience || [], null, 2) });
                 break;
@@ -1384,11 +1384,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                         skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean)
                     };
                     break;
-                case 'interests':
-                    updateData = {
-                        interests: formData.interests.split(',').map(s => s.trim()).filter(Boolean)
-                    };
-                    break;
                 case 'experience':
                     updateData = { experience: JSON.parse(formData.experience) };
                     break;
@@ -1431,7 +1426,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
             title: t('edit.title') || 'Edit Title',
             about: t('edit.about') || 'Edit About',
             skills: t('edit.skills') || 'Edit Skills',
-            interests: t('edit.interests') || 'Edit Interests',
             experience: t('edit.experience') || 'Edit Experience',
             education: t('edit.education') || 'Edit Education',
             languages: t('edit.primaryLanguage') || 'Edit Primary Profile Language',
@@ -1501,19 +1495,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                             rows="3"
                         ></textarea>
                         <p class="form-hint">${t('edit.skillsHint') || 'Separate each skill with a comma'}</p>
-                    </div>
-                `;
-            case 'interests':
-                return html`
-                    <div class="form-group">
-                        <label>${t('edit.interests') || 'Interests'}</label>
-                        <textarea
-                            value=${formData.interests || ''}
-                            onChange=${(e) => handleChange('interests', e.target.value)}
-                            placeholder="Enter interests separated by commas"
-                            rows="3"
-                        ></textarea>
-                        <p class="form-hint">${t('edit.interestsHint') || 'Separate each interest with a comma'}</p>
                     </div>
                 `;
             case 'languages':
@@ -2131,7 +2112,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Handle edit section clicks - open inline edit modal
     const handleEditSection = (sectionName) => {
         // Sections that can be edited inline
-        const inlineEditableSections = ['name', 'title', 'about', 'skills', 'interests', 'experience', 'education', 'languages', 'hourly_rate'];
+        const inlineEditableSections = ['name', 'title', 'about', 'skills', 'experience', 'education', 'languages', 'hourly_rate'];
 
         if (sectionName === 'banner') {
             // Open the banner editor modal
@@ -2169,7 +2150,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
                                         <span class="section-icon">⭐</span>
-                                        ${t('coach.featured') || 'Featured'}
+                                        ${t('coach.highlights') || 'Highlights'}
                                     </h2>
                                     ${isOwnProfile && html`
                                         <button class="btn-edit-section" onClick=${() => handleEditSection('featured')} title="Edit featured">
@@ -2304,6 +2285,76 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             </div>
                         </section>
 
+                        <!-- Recommendations & Ratings Section -->
+                        <section id="recommendations-ratings-section" class="profile-section rating-section">
+                            <div class="section-header-editable">
+                                <h2 class="section-title">
+                                    <span class="section-icon">⭐</span>
+                                    ${t('coach.recommendationsRatings') || 'Recommendations & Ratings'}
+                                </h2>
+                            </div>
+                            ${reviews.length > 0 ? html`
+                                <div class="ratings-overview">
+                                    <div class="ratings-summary">
+                                        <div class="ratings-big-score">
+                                            <span class="big-number">${rating.toFixed(1)}</span>
+                                            <div class="rating-stars-compact">
+                                                ${[1,2,3,4,5].map(star => html`
+                                                    <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                                `)}
+                                            </div>
+                                            <span class="ratings-total">${reviewsCount} ${reviewsCount === 1 ? (t('coach.review') || 'review') : (t('coach.reviews') || 'reviews')}</span>
+                                        </div>
+                                        ${reviews.length >= 3 && html`
+                                            <div class="ratings-breakdown">
+                                                ${[5,4,3,2,1].map(stars => {
+                                                    const breakdown = getReviewBreakdown();
+                                                    const count = breakdown[stars];
+                                                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                                                    return html`
+                                                        <div key=${stars} class="breakdown-row">
+                                                            <span class="bar-label">${stars}★</span>
+                                                            <div class="bar-track">
+                                                                <div class="bar-fill" style=${{ width: percentage + '%' }}></div>
+                                                            </div>
+                                                            <span class="bar-count">${count}</span>
+                                                        </div>
+                                                    `;
+                                                })}
+                                            </div>
+                                        `}
+                                    </div>
+                                    <div class="ratings-reviews-list">
+                                        ${reviews.slice(0, 3).map(review => html`
+                                            <div key=${review.id} class="rating-review-item">
+                                                <div class="review-header">
+                                                    <div class="reviewer-info">
+                                                        <span class="reviewer-name">${review.reviewer_name || 'Anonymous'}</span>
+                                                        <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <div class="review-rating">
+                                                        ${[1,2,3,4,5].map(star => html`
+                                                            <span key=${star} class="star-compact ${star <= review.rating ? 'filled' : ''}">★</span>
+                                                        `)}
+                                                    </div>
+                                                </div>
+                                                <p class="review-content">${review.content}</p>
+                                            </div>
+                                        `)}
+                                        ${reviews.length > 3 && html`
+                                            <button class="btn-show-all" onClick=${() => setShowReviewsPopup(true)}>
+                                                ${t('coach.showAllReviews') || 'Show all reviews'} →
+                                            </button>
+                                        `}
+                                    </div>
+                                </div>
+                            ` : html`
+                                <div class="ratings-empty">
+                                    <p>${t('coach.noReviewsYet') || 'No recommendations or ratings yet.'}</p>
+                                </div>
+                            `}
+                        </section>
+
                         <!-- Experience Section -->
                         ${(coach.experience || isOwnProfile) && html`
                             <section class="profile-section experience-section">
@@ -2383,7 +2434,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             </section>
                         `}
 
-                        <!-- Certifications Section (below Education, above Skills) -->
+                        <!-- Certifications Section -->
                         ${(credentials.length > 0 || isOwnProfile) && html`
                             <section class="profile-section certifications-section">
                                 <div class="section-header-editable">
@@ -2456,16 +2507,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             </section>
                         `}
 
-                        <!-- Interests Section -->
-                        ${((coach.interests && coach.interests.length > 0) || isOwnProfile) && html`
-                            <section class="profile-section interests-section">
+                        <!-- Volunteering Section -->
+                        ${isOwnProfile && html`
+                            <section class="profile-section volunteering-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
-                                        <span class="section-icon">❤️</span>
-                                        ${t('coach.interests') || 'Interests'}
+                                        <span class="section-icon">🤝</span>
+                                        ${t('coach.volunteering') || 'Volunteering'}
                                     </h2>
                                     ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('interests')} title="Edit interests">
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('volunteering')} title="Edit volunteering">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -2473,31 +2524,23 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         </button>
                                     `}
                                 </div>
-                                ${coach.interests && coach.interests.length > 0 ? html`
-                                    <div class="interests-list">
-                                        ${(Array.isArray(coach.interests) ? coach.interests : [coach.interests]).map((interest, i) => html`
-                                            <span key=${i} class="interest-tag">${interest}</span>
-                                        `)}
-                                    </div>
-                                ` : html`
-                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('interests')}>
-                                        <span class="empty-icon">+</span>
-                                        <p>${t('coach.addInterests') || 'Add your interests'}</p>
-                                    </div>
-                                `}
+                                <div class="empty-section-prompt" onClick=${() => handleEditSection('volunteering')}>
+                                    <span class="empty-icon">+</span>
+                                    <p>${t('coach.addVolunteering') || 'Add your volunteering experience'}</p>
+                                </div>
                             </section>
                         `}
 
-                        <!-- About / Coaching Approach -->
-                        ${(coach.bio || coach.coaching_approach || isOwnProfile) && html`
-                            <section class="profile-section about-section">
+                        <!-- Publications Section -->
+                        ${isOwnProfile && html`
+                            <section class="profile-section publications-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
-                                        <span class="section-icon">📝</span>
-                                        ${t('coach.about') || 'About'}
+                                        <span class="section-icon">📚</span>
+                                        ${t('coach.publications') || 'Publications'}
                                     </h2>
                                     ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('about')} title="Edit about">
+                                        <button class="btn-edit-section" onClick=${() => handleEditSection('publications')} title="Edit publications">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -2505,30 +2548,10 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         </button>
                                     `}
                                 </div>
-                                ${(coach.bio || coach.coaching_approach) ? html`
-                                    <div class="about-content">
-                                        ${coach.bio && html`
-                                            <div class="about-bio">
-                                                ${coach.bio.split('\n').map((para, i) =>
-                                                    para.trim() ? html`<p key=${i}>${para}</p>` : null
-                                                )}
-                                            </div>
-                                        `}
-                                        ${coach.coaching_approach && html`
-                                            <div class="about-approach">
-                                                <h3>${t('coach.myApproach') || 'My Coaching Approach'}</h3>
-                                                ${coach.coaching_approach.split('\n').map((para, i) =>
-                                                    para.trim() ? html`<p key=${i}>${para}</p>` : null
-                                                )}
-                                            </div>
-                                        `}
-                                    </div>
-                                ` : html`
-                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('about')}>
-                                        <span class="empty-icon">+</span>
-                                        <p>${t('coach.addAbout') || 'Tell your story and describe your coaching approach'}</p>
-                                    </div>
-                                `}
+                                <div class="empty-section-prompt" onClick=${() => handleEditSection('publications')}>
+                                    <span class="empty-icon">+</span>
+                                    <p>${t('coach.addPublications') || 'Add your publications'}</p>
+                                </div>
                             </section>
                         `}
                     </main>
