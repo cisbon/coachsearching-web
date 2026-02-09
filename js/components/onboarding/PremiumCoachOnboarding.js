@@ -96,6 +96,7 @@ const DEFAULT_DATA = {
     session_formats: ['video'],
     session_durations: [60],
     hourly_rate: '',
+    services: [], // Array of { name, name_en, description, description_en, unit, price, currency, active }
     offers_free_discovery: true,
     plan_type: 'free',
     referral_code: '',
@@ -432,6 +433,33 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     });
                 } catch {
                     // Silently skip referral tracking errors
+                }
+            }
+
+            // Save services if any
+            if (data.services && data.services.length > 0 && coachId) {
+                try {
+                    const servicesToInsert = data.services.map(svc => ({
+                        coach_id: coachId,
+                        name: svc.name,
+                        name_en: svc.name_en || null,
+                        description: svc.description || null,
+                        description_en: svc.description_en || null,
+                        unit: svc.unit || 'hour',
+                        price: parseFloat(svc.price) || 0,
+                        currency: svc.currency || 'EUR',
+                        active: svc.active !== false
+                    }));
+
+                    const { error: svcError } = await supabase
+                        .from('cs_coach_services')
+                        .insert(servicesToInsert);
+
+                    if (svcError) {
+                        console.error('[Onboarding] Failed to insert services:', svcError);
+                    }
+                } catch (svcErr) {
+                    console.error('[Onboarding] Failed to save services:', svcErr);
                 }
             }
 
@@ -1535,6 +1563,8 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
     const EXCLUDED_FORMATS = ['chat', 'hybrid', 'phone'];
     const filteredFormats = sessionFormats.filter(f => !EXCLUDED_FORMATS.includes(f.code));
 
+    const [editingServiceIndex, setEditingServiceIndex] = useState(null); // null=closed, -1=add new, index=edit
+
     const toggleFormat = (formatCode) => {
         const formats = data.session_formats || [];
         const newFormats = formats.includes(formatCode)
@@ -1542,6 +1572,24 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
             : [...formats, formatCode];
         updateData('session_formats', newFormats);
     };
+
+    const services = data.services || [];
+
+    const addService = () => {
+        setEditingServiceIndex(-1);
+    };
+
+    const editService = (index) => {
+        setEditingServiceIndex(index);
+    };
+
+    const deleteService = (index) => {
+        const newServices = services.filter((_, i) => i !== index);
+        updateData('services', newServices);
+    };
+
+    const CURRENCY_SYMBOLS = { EUR: '\u20AC', USD: '$', GBP: '\u00A3', CHF: 'CHF' };
+    const UNIT_LABELS = { hour: '/hr', day: '/day', session: '/session' };
 
     return html`
         <div class="slide-up">
@@ -1627,28 +1675,277 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
             </div>
 
             <div class="form-section">
-                <div class="form-section-title">💰 ${t('onboard.premium.hourlyRate')}</div>
+                <div class="form-section-title" style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>💰 ${t('onboard.premium.services') || 'Your Services'}</span>
+                    <button
+                        type="button"
+                        class="btn-add-onboarding-service"
+                        onClick=${addService}
+                        style=${{
+                            background: 'var(--petrol, #006266)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '6px 14px',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}
+                    >
+                        + ${t('onboard.premium.addService') || 'Add Service'}
+                    </button>
+                </div>
                 <div class="form-hint">
-                    ${t('onboard.premium.hourlyRateHint')}
+                    ${t('onboard.premium.servicesHint') || 'Add your coaching services with pricing. You can add more later from your profile.'}
                 </div>
 
-                <div class="pricing-input-group">
-                    <span class="currency-prefix">€</span>
-                    <input
-                        type="number"
-                        class="premium-input pricing-input"
-                        placeholder="75"
-                        min="0"
-                        value=${String(data.hourly_rate || '')}
-                        onInput=${(e) => updateData('hourly_rate', e.target.value)}
-                    />
-                    <span class="pricing-suffix">${t('onboard.premium.perHour')}</span>
-                </div>
+                ${services.length > 0 ? html`
+                    <div class="onboarding-services-list" style=${{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
+                        ${services.map((svc, index) => html`
+                            <div key=${index} class="onboarding-service-item" style=${{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '14px 16px',
+                                background: '#f8f9fa',
+                                borderRadius: '10px',
+                                border: '1px solid #e0e0e0'
+                            }}>
+                                <div>
+                                    <div style=${{ fontWeight: 600, fontSize: '0.95rem' }}>${svc.name}</div>
+                                    <div style=${{ fontSize: '0.85rem', color: '#666', marginTop: '2px' }}>
+                                        ${CURRENCY_SYMBOLS[svc.currency] || svc.currency}${parseFloat(svc.price).toFixed(0)}${UNIT_LABELS[svc.unit] || ''}
+                                        ${svc.description ? html` — <span style=${{ color: '#888' }}>${svc.description.length > 60 ? svc.description.substring(0, 60) + '...' : svc.description}</span>` : ''}
+                                    </div>
+                                </div>
+                                <div style=${{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        type="button"
+                                        onClick=${() => editService(index)}
+                                        style=${{ background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontSize: '0.8rem' }}
+                                    >
+                                        ${t('edit.edit') || 'Edit'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick=${() => deleteService(index)}
+                                        style=${{ background: 'none', border: '1px solid #e74c3c', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontSize: '0.8rem', color: '#e74c3c' }}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                        `)}
+                    </div>
+                ` : html`
+                    <div
+                        onClick=${addService}
+                        style=${{
+                            textAlign: 'center',
+                            padding: '30px 20px',
+                            background: '#f8f9fa',
+                            borderRadius: '12px',
+                            border: '2px dashed #d0d0d0',
+                            cursor: 'pointer',
+                            color: '#888',
+                            marginTop: '12px'
+                        }}
+                    >
+                        <div style=${{ fontSize: '2rem', marginBottom: '8px' }}>+</div>
+                        <p style=${{ margin: 0, fontSize: '0.9rem' }}>${t('onboard.premium.addFirstService') || 'Add your first coaching service'}</p>
+                    </div>
+                `}
 
                 <div class="no-fee-notice">
                     <span class="no-fee-icon">✨</span>
                     <span>${t('onboard.premium.noFeeNotice')}</span>
                 </div>
+            </div>
+        </div>
+
+        ${editingServiceIndex !== null && html`
+            <${OnboardingServiceModal}
+                service=${editingServiceIndex >= 0 ? services[editingServiceIndex] : null}
+                onClose=${() => setEditingServiceIndex(null)}
+                onSave=${(serviceData) => {
+                    const newServices = [...services];
+                    if (editingServiceIndex >= 0) {
+                        newServices[editingServiceIndex] = serviceData;
+                    } else {
+                        newServices.push(serviceData);
+                    }
+                    updateData('services', newServices);
+                    setEditingServiceIndex(null);
+                }}
+            />
+        `}
+    `;
+};
+
+/**
+ * Onboarding Service Modal
+ * Inline modal for adding/editing services during onboarding
+ */
+const OnboardingServiceModal = ({ service, onClose, onSave }) => {
+    const isEditing = !!service;
+    const [name, setName] = useState(service?.name || '');
+    const [nameEn, setNameEn] = useState(service?.name_en || '');
+    const [description, setDescription] = useState(service?.description || '');
+    const [descriptionEn, setDescriptionEn] = useState(service?.description_en || '');
+    const [unit, setUnit] = useState(service?.unit || 'hour');
+    const [price, setPrice] = useState(service?.price || '');
+    const [currency, setCurrency] = useState(service?.currency || 'EUR');
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!name.trim()) {
+            setError(t('edit.serviceNameRequired') || 'Service name is required');
+            return;
+        }
+        if (!price || parseFloat(price) < 0) {
+            setError(t('edit.priceRequired') || 'Please enter a valid price');
+            return;
+        }
+        onSave({
+            name: name.trim(),
+            name_en: nameEn.trim() || null,
+            description: description.trim() || null,
+            description_en: descriptionEn.trim() || null,
+            unit,
+            price: parseFloat(price) || 0,
+            currency,
+            active: true
+        });
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick} style=${{ zIndex: 10001 }}>
+            <div class="edit-modal-container edit-modal-wide" style=${{ maxHeight: '90vh', overflow: 'auto' }}>
+                <div class="edit-modal-header">
+                    <h3>${isEditing ? (t('edit.editService') || 'Edit Service') : (t('edit.addService') || 'Add Service')}</h3>
+                    <button type="button" class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+
+                        <div class="form-row" style=${{ display: 'flex', gap: '16px' }}>
+                            <div class="form-group" style=${{ flex: 1 }}>
+                                <label>${t('edit.serviceName') || 'Service Name'} *</label>
+                                <input
+                                    type="text"
+                                    value=${name}
+                                    onChange=${(e) => setName(e.target.value)}
+                                    placeholder=${t('edit.serviceNamePlaceholder') || 'e.g., Executive Coaching Session'}
+                                    required
+                                    class="premium-input"
+                                />
+                            </div>
+                            <div class="form-group" style=${{ flex: 1 }}>
+                                <label>${t('edit.serviceNameEn') || 'Service Name (English)'}</label>
+                                <input
+                                    type="text"
+                                    value=${nameEn}
+                                    onChange=${(e) => setNameEn(e.target.value)}
+                                    placeholder=${t('edit.serviceNameEnPlaceholder') || 'English translation'}
+                                    class="premium-input"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-row" style=${{ display: 'flex', gap: '16px' }}>
+                            <div class="form-group" style=${{ flex: 1 }}>
+                                <label>${t('edit.price') || 'Price'} *</label>
+                                <div style=${{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        type="number"
+                                        value=${String(price)}
+                                        onChange=${(e) => setPrice(e.target.value)}
+                                        placeholder="0"
+                                        min="0"
+                                        step="0.01"
+                                        required
+                                        class="premium-input"
+                                        style=${{ flex: 1 }}
+                                    />
+                                    <select
+                                        value=${currency}
+                                        onChange=${(e) => setCurrency(e.target.value)}
+                                        class="premium-input"
+                                        style=${{ width: '90px' }}
+                                    >
+                                        <option value="EUR">EUR</option>
+                                        <option value="USD">USD</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="CHF">CHF</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" style=${{ flex: 1 }}>
+                                <label>${t('edit.unit') || 'Unit'}</label>
+                                <select
+                                    value=${unit}
+                                    onChange=${(e) => setUnit(e.target.value)}
+                                    class="premium-input"
+                                >
+                                    <option value="hour">${t('edit.perHour') || 'Per Hour'}</option>
+                                    <option value="day">${t('edit.perDay') || 'Per Day'}</option>
+                                    <option value="session">${t('edit.perSession') || 'Per Session'}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.description') || 'Description'}</label>
+                            <textarea
+                                value=${description}
+                                onChange=${(e) => setDescription(e.target.value)}
+                                placeholder=${t('edit.serviceDescriptionPlaceholder') || 'Describe this service...'}
+                                rows="3"
+                                class="premium-input"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.descriptionEn') || 'Description (English)'}</label>
+                            <textarea
+                                value=${descriptionEn}
+                                onChange=${(e) => setDescriptionEn(e.target.value)}
+                                placeholder=${t('edit.descriptionEnPlaceholder') || 'English translation of description...'}
+                                rows="3"
+                                class="premium-input"
+                            ></textarea>
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions" style=${{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '16px 24px', borderTop: '1px solid #eee' }}>
+                        <button type="button" onClick=${onClose} style=${{
+                            background: 'none', border: '1px solid #ccc', borderRadius: '8px',
+                            padding: '8px 20px', cursor: 'pointer'
+                        }}>
+                            ${t('edit.cancel') || 'Cancel'}
+                        </button>
+                        <button type="submit" style=${{
+                            background: 'var(--petrol, #006266)', color: 'white', border: 'none',
+                            borderRadius: '8px', padding: '8px 20px', cursor: 'pointer', fontWeight: 600
+                        }}>
+                            ${isEditing ? (t('edit.save') || 'Save Changes') : (t('edit.add') || 'Add Service')}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     `;

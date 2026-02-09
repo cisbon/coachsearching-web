@@ -2644,6 +2644,306 @@ const EditPublicationModal = memo(function EditPublicationModal({ coach, publica
 });
 
 /**
+ * Edit Service Modal Component
+ * Used for both adding new and editing existing service items
+ * Data is stored in cs_coach_services table
+ */
+const EditServiceModal = memo(function EditServiceModal({ coach, service, onClose, onSaved }) {
+    const isEditing = !!service;
+    const [formData, setFormData] = useState({
+        name: service?.name || '',
+        name_en: service?.name_en || '',
+        description: service?.description || '',
+        description_en: service?.description_en || '',
+        unit: service?.unit || 'hour',
+        price: service?.price || '',
+        currency: service?.currency || 'EUR',
+        active: service?.active !== false
+    });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        if (!formData.name.trim()) {
+            setError(t('edit.serviceNameRequired') || 'Service name is required');
+            setSaving(false);
+            return;
+        }
+        if (!formData.price || parseFloat(formData.price) < 0) {
+            setError(t('edit.priceRequired') || 'Please enter a valid price');
+            setSaving(false);
+            return;
+        }
+
+        try {
+            const payload = {
+                coach_id: coach.id,
+                name: formData.name.trim(),
+                name_en: formData.name_en.trim() || null,
+                description: formData.description.trim() || null,
+                description_en: formData.description_en.trim() || null,
+                unit: formData.unit,
+                price: parseFloat(formData.price) || 0,
+                currency: formData.currency,
+                active: formData.active
+            };
+
+            if (isEditing) {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_services')
+                    .update(payload)
+                    .eq('id', service.id)
+                    .eq('coach_id', coach.id);
+                if (dbError) throw dbError;
+            } else {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_services')
+                    .insert(payload);
+                if (dbError) throw dbError;
+            }
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Save service error:', err);
+            setError(err.message || 'Failed to save service');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!isEditing) return;
+        if (!confirm(t('edit.confirmDeleteService') || 'Are you sure you want to delete this service?')) return;
+
+        setSaving(true);
+        try {
+            const { error: dbError } = await window.supabaseClient
+                .from('cs_coach_services')
+                .delete()
+                .eq('id', service.id)
+                .eq('coach_id', coach.id);
+            if (dbError) throw dbError;
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Delete service error:', err);
+            setError(err.message || 'Failed to delete service');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const unitLabels = {
+        hour: t('service.perHour') || '/ hour',
+        day: t('service.perDay') || '/ day',
+        session: t('service.perSession') || '/ session'
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container edit-modal-wide">
+                <div class="edit-modal-header">
+                    <h3>${isEditing ? (t('edit.editService') || 'Edit Service') : (t('edit.addService') || 'Add Service')}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.serviceName') || 'Service Name'} *</label>
+                                <input
+                                    type="text"
+                                    value=${formData.name}
+                                    onChange=${(e) => handleChange('name', e.target.value)}
+                                    placeholder=${t('edit.serviceNamePlaceholder') || 'e.g., Executive Coaching Session'}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.serviceNameEn') || 'Service Name (English)'}</label>
+                                <input
+                                    type="text"
+                                    value=${formData.name_en}
+                                    onChange=${(e) => handleChange('name_en', e.target.value)}
+                                    placeholder=${t('edit.serviceNameEnPlaceholder') || 'English translation'}
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.price') || 'Price'} *</label>
+                                <div class="price-input-row">
+                                    <input
+                                        type="number"
+                                        value=${formData.price}
+                                        onChange=${(e) => handleChange('price', e.target.value)}
+                                        placeholder="0.00"
+                                        min="0"
+                                        step="0.01"
+                                        required
+                                        class="price-input"
+                                    />
+                                    <select
+                                        value=${formData.currency}
+                                        onChange=${(e) => handleChange('currency', e.target.value)}
+                                        class="currency-select"
+                                    >
+                                        <option value="EUR">EUR</option>
+                                        <option value="USD">USD</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="CHF">CHF</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.unit') || 'Unit'}</label>
+                                <select
+                                    value=${formData.unit}
+                                    onChange=${(e) => handleChange('unit', e.target.value)}
+                                >
+                                    <option value="hour">${t('edit.perHour') || 'Per Hour'}</option>
+                                    <option value="day">${t('edit.perDay') || 'Per Day'}</option>
+                                    <option value="session">${t('edit.perSession') || 'Per Session'}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.description') || 'Description'}</label>
+                            <textarea
+                                value=${formData.description}
+                                onChange=${(e) => handleChange('description', e.target.value)}
+                                placeholder=${t('edit.serviceDescriptionPlaceholder') || 'Describe this service...'}
+                                rows="3"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.descriptionEn') || 'Description (English)'}</label>
+                            <textarea
+                                value=${formData.description_en}
+                                onChange=${(e) => handleChange('description_en', e.target.value)}
+                                placeholder=${t('edit.descriptionEnPlaceholder') || 'English translation of description...'}
+                                rows="3"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked=${formData.active}
+                                    onChange=${(e) => handleChange('active', e.target.checked)}
+                                />
+                                <span>${t('edit.serviceActive') || 'Service is active and visible'}</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions">
+                        ${isEditing && html`
+                            <button type="button" class="btn-delete" onClick=${handleDelete} disabled=${saving}>
+                                ${t('edit.delete') || 'Delete'}
+                            </button>
+                        `}
+                        <div class="edit-modal-actions-right">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>
+                                ${t('edit.cancel') || 'Cancel'}
+                            </button>
+                            <button type="submit" class="btn-primary" disabled=${saving}>
+                                ${saving ? (t('edit.saving') || 'Saving...') : (isEditing ? (t('edit.save') || 'Save Changes') : (t('edit.add') || 'Add Service'))}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
+/**
+ * Profile Services Sidebar Component
+ * Shows coach services with pricing in the sidebar
+ */
+const ProfileServicesSidebar = memo(function ProfileServicesSidebar({ coach, services, isOwnProfile, onAddService, onEditService }) {
+    const CURRENCY_SYMBOLS = { EUR: '\u20AC', USD: '$', GBP: '\u00A3', CHF: 'CHF' };
+    const UNIT_LABELS = { hour: '/hr', day: '/day', session: '/session' };
+
+    return html`
+        <section class="sidebar-section profile-services-sidebar">
+            <div class="sidebar-header-editable">
+                <h3 class="sidebar-title">${t('coach.servicesOf') || 'Services of'} ${coach.full_name}</h3>
+                ${isOwnProfile && html`
+                    <button class="btn-add-sidebar" onClick=${onAddService} title="Add service">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                `}
+            </div>
+            ${services.length > 0 ? html`
+                <div class="services-list">
+                    ${services.filter(s => s.active || isOwnProfile).map(svc => html`
+                        <div key=${svc.id} class="service-line-item ${isOwnProfile ? 'editable' : ''} ${!svc.active ? 'inactive' : ''}">
+                            <div class="service-line-main">
+                                <div class="service-line-info">
+                                    <span class="service-line-name">${svc.name}${!svc.active ? ' (inactive)' : ''}</span>
+                                    <span class="service-line-price">${CURRENCY_SYMBOLS[svc.currency] || svc.currency}${parseFloat(svc.price).toFixed(0)}${UNIT_LABELS[svc.unit] || ''}</span>
+                                </div>
+                                ${isOwnProfile && html`
+                                    <button class="btn-edit-service" onClick=${() => onEditService(svc)} title="Edit service">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                    </button>
+                                `}
+                            </div>
+                            ${svc.description && html`
+                                <p class="service-line-description">${svc.description}</p>
+                            `}
+                        </div>
+                    `)}
+                </div>
+            ` : html`
+                ${isOwnProfile ? html`
+                    <div class="empty-services-prompt" onClick=${onAddService}>
+                        <span class="empty-icon">+</span>
+                        <p>${t('coach.addServices') || 'Add your coaching services'}</p>
+                    </div>
+                ` : html`
+                    <p class="no-services-text">${t('coach.noServicesYet') || 'No services listed yet.'}</p>
+                `}
+            `}
+        </section>
+    `;
+});
+
+/**
  * Edit English Profile Modal Component
  * Allows editing English-specific profile fields (title_en, bio_en)
  */
@@ -2774,6 +3074,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [editingVolunteering, setEditingVolunteering] = useState(null);
     const [publications, setPublications] = useState([]);
     const [editingPublication, setEditingPublication] = useState(null);
+    const [coachServices, setCoachServices] = useState([]);
+    const [editingService, setEditingService] = useState(null);
 
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
@@ -2837,6 +3139,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     loadCoachSkills(data.id),
                     loadVolunteering(data.id),
                     loadPublications(data.id),
+                    loadCoachServices(data.id),
                     loadSimilarCoaches(data),
                     checkUserHasReviewed(data.id),
                 ]);
@@ -2953,6 +3256,19 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             setPublications(data || []);
         } catch (err) {
             console.error('Failed to load publications:', err);
+        }
+    };
+
+    const loadCoachServices = async (id) => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('cs_coach_services')
+                .select('*')
+                .eq('coach_id', id)
+                .order('created_at', { ascending: true });
+            setCoachServices(data || []);
+        } catch (err) {
+            console.error('Failed to load coach services:', err);
         }
     };
 
@@ -3862,6 +4178,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 isOwnProfile=${true}
                             />
 
+                            <!-- Own Profile: Services Section -->
+                            <${ProfileServicesSidebar}
+                                coach=${coach}
+                                services=${coachServices}
+                                isOwnProfile=${true}
+                                onAddService=${() => setEditingService('new')}
+                                onEditService=${(svc) => setEditingService(svc)}
+                            />
+
                             <!-- Own Profile: Who Your Viewers Also Viewed -->
                             <${ViewersAlsoViewedSidebar}
                                 coaches=${viewersAlsoViewed}
@@ -3869,6 +4194,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 session=${session}
                             />
                         ` : html`
+                            <!-- Other Profile: Services Section -->
+                            ${coachServices.filter(s => s.active).length > 0 && html`
+                                <${ProfileServicesSidebar}
+                                    coach=${coach}
+                                    services=${coachServices}
+                                    isOwnProfile=${false}
+                                />
+                            `}
+
                             <!-- Other Profile: More Coaches For You -->
                             <section class="sidebar-section similar-coaches-sidebar">
                                 <h3 class="sidebar-title">${t('coach.moreCoachesForYou') || 'More coaches for you'}</h3>
@@ -4025,6 +4359,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     publication=${editingPublication === 'new' ? null : editingPublication}
                     onClose=${() => setEditingPublication(null)}
                     onSaved=${() => loadPublications(coach.id)}
+                />
+            `}
+
+            <!-- Edit Service Modal (add new / edit existing) -->
+            ${editingService && isOwnProfile && html`
+                <${EditServiceModal}
+                    coach=${coach}
+                    service=${editingService === 'new' ? null : editingService}
+                    onClose=${() => setEditingService(null)}
+                    onSaved=${() => loadCoachServices(coach.id)}
                 />
             `}
 
