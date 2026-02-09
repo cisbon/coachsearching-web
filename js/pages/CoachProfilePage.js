@@ -636,10 +636,6 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
 
                 <!-- Price and CTA Section -->
                 <div class="profile-card-actions">
-                    <div class="profile-price">
-                        <span class="price-label">${t('coach.hourly_rate') || 'Hourly Rate'}</span>
-                        <span class="price-value">${formatPrice(coach.hourly_rate)}</span>
-                    </div>
 
                     <!-- Primary CTA: Discovery Call - Very Prominent -->
                     <button class="btn-discovery-prominent" onClick=${onDiscoveryCall}>
