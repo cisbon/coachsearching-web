@@ -4294,6 +4294,7 @@ footer, .site-footer {
     margin-top: 10px;
     cursor: pointer;
     width: 100%;
+    justify-content: center;
 }
 
 .rating-compact {
