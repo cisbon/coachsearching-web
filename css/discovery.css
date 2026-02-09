@@ -443,7 +443,7 @@
 }
 
 .budget-bar.in-range {
-    background: var(--primary-petrol, #006266);
+    background: #00626673;
 }
 
 .budget-bar.out-range {
