@@ -3915,8 +3915,11 @@
 @media (max-width: 767px) {
     .profile-card-header-actions {
         gap: 6px;
-        margin-top: -180px;
+        position: absolute;
+        top: 100px;
+        right: 30px;
     }
+   
     .btn-external-link,
     .btn-edit-profile {
         width: 32px;
