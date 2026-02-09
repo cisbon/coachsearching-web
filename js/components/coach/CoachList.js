@@ -151,6 +151,113 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         });
     };
 
+    // Coaches filtered by everything EXCEPT budget (for budget histogram)
+    const coachesExcludingBudget = useMemo(() => {
+        let result = [...coaches];
+
+        // Text search filter
+        if (searchFilters && searchFilters.searchTerm) {
+            const term = searchFilters.searchTerm.toLowerCase();
+            result = result.filter(coach =>
+                coach.full_name?.toLowerCase().includes(term) ||
+                coach.title?.toLowerCase().includes(term) ||
+                coach.bio?.toLowerCase().includes(term) ||
+                coach.specialties?.some(s => s.toLowerCase().includes(term)) ||
+                coach.location?.toLowerCase().includes(term)
+            );
+        }
+
+        // Specialty filter
+        if (filters.specialties?.length > 0) {
+            result = result.filter(coach =>
+                filters.specialties.some(s =>
+                    coach.specialties?.some(cs => cs.toLowerCase().includes(s.toLowerCase()))
+                )
+            );
+        }
+
+        // Language filter
+        if (filters.languages?.length > 0) {
+            result = result.filter(coach =>
+                filters.languages.some(l =>
+                    coach.languages?.some(cl => cl.toLowerCase().includes(l.toLowerCase()))
+                )
+            );
+        }
+
+        // Feature filters
+        if (filters.hasVideo) {
+            result = result.filter(coach => coach.intro_video_url || coach.video_url || coach.video_intro_url);
+        }
+        if (filters.freeIntro) {
+            result = result.filter(coach => coach.offers_free_intro || coach.free_discovery_call || coach.offers_free_discovery);
+        }
+        if (filters.hasCertification) {
+            result = result.filter(coach => coach.cs_coach_certifications?.length > 0);
+        }
+        if (filters.isVerified) {
+            result = result.filter(coach => coach.is_verified === true);
+        }
+
+        // Session format filters
+        if (filters.offersVirtual) {
+            result = result.filter(coach =>
+                coach.session_types?.includes('video') ||
+                coach.session_formats?.includes('online') ||
+                coach.session_formats?.includes('video') ||
+                coach.offers_online
+            );
+        }
+        if (filters.offersOnsite) {
+            result = result.filter(coach =>
+                coach.session_types?.includes('in-person') ||
+                coach.session_formats?.includes('in-person') ||
+                coach.offers_in_person ||
+                coach.location_city
+            );
+        }
+
+        // Location filters
+        const getCoachCityExcl = (coach) => {
+            if (!coach.city_id || !cities.list || cities.list.length === 0) return null;
+            return cities.list.find(city => city.id === coach.city_id);
+        };
+
+        if (filters.locationCountry) {
+            result = result.filter(coach => {
+                const city = getCoachCityExcl(coach);
+                return city?.country_en?.toLowerCase() === filters.locationCountry.toLowerCase();
+            });
+        }
+
+        if (filters.locationCityId) {
+            const selectedState = filters.locationState;
+            if (selectedState && cities.list && cities.list.length > 0) {
+                result = result.filter(coach => {
+                    if (coach.city_id === filters.locationCityId) return true;
+                    const city = getCoachCityExcl(coach);
+                    const coachState = city?.state || null;
+                    if (coachState && coachState === selectedState) return true;
+                    return false;
+                });
+            } else {
+                result = result.filter(coach => coach.city_id === filters.locationCityId);
+            }
+        }
+
+        if (filters.experience) {
+            const minYears = Number(filters.experience);
+            result = result.filter(coach => (coach.years_experience || 0) >= minYears);
+        }
+
+        return result;
+    }, [searchFilters, coaches, filters.specialties, filters.languages, filters.hasVideo, filters.freeIntro, filters.hasCertification, filters.isVerified, filters.offersVirtual, filters.offersOnsite, filters.locationCountry, filters.locationCityId, filters.locationState, filters.experience, cities.list]);
+
+    // IDs of coaches matching all filters except budget (for histogram)
+    const filteredCoachIdsForBudget = useMemo(() => {
+        return coachesExcludingBudget.map(c => c.id);
+    }, [coachesExcludingBudget]);
+
     // Memoized filtered and sorted coaches
     const filteredCoaches = useMemo(() => {
         let result = [...coaches];
@@ -167,7 +274,8 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
             );
         }
 
-        // Price filters
+        // Price/Budget filters - now work via service prices loaded in FilterSidebar
+        // Still check hourly_rate as fallback for coaches without services
         if (filters.minPrice) {
             result = result.filter(coach => coach.hourly_rate >= Number(filters.minPrice));
         }
@@ -469,8 +577,8 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                     >
                         <option value="relevance">${t('filter.sortBy') || 'Sort'}: ${t('filter.relevance') || 'Relevance'}</option>
                         <option value="rating">${t('filter.sortBy') || 'Sort'}: ${t('filter.highestRated') || 'Highest Rated'}</option>
-                        <option value="price_low">${t('filter.sortBy') || 'Sort'}: ${t('filter.priceLowHigh') || 'Price Low-High'}</option>
-                        <option value="price_high">${t('filter.sortBy') || 'Sort'}: ${t('filter.priceHighLow') || 'Price High-Low'}</option>
+                        <option value="price_low">${t('filter.sortBy') || 'Sort'}: ${t('filter.budgetLowHigh') || 'Budget Low-High'}</option>
+                        <option value="price_high">${t('filter.sortBy') || 'Sort'}: ${t('filter.budgetHighLow') || 'Budget High-Low'}</option>
                     </select>
                 </div>
             </div>
@@ -482,6 +590,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                         filters=${filters}
                         onChange=${setFilters}
                         onReset=${resetFilters}
+                        filteredCoachIds=${filteredCoachIdsForBudget}
                     />
                 `}
 

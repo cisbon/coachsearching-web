@@ -4083,6 +4083,23 @@ footer, .site-footer {
     border-left: 4px solid var(--primary-petrol);
 }
 
+/* Coach Name Row - name + discovery button inline */
+.coach-name-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.coach-name-row .coach-name {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Discovery button in name row - hidden on mobile, shown on desktop */
+.btn-discovery-top {
+    display: none;
+}
+
 /* Coach Card - Desktop 2-Line Layout */
 .coach-card-top {
     display: flex;
@@ -4182,12 +4199,22 @@ footer, .site-footer {
         align-items: flex-start;
         align-content: flex-start;
         margin: 0;
-        max-height: 100px; /* Limit to ~3 rows */
+        max-height: 66px; /* Limit to ~2 rows */
         overflow: hidden;
     }
 
     .specialty-tags-placeholder {
         flex: 1;
+    }
+
+    /* Show discovery button next to name on desktop */
+    .btn-discovery-top {
+        display: flex !important;
+        width: auto;
+        padding: 8px 14px;
+        font-size: 13px;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     /* Actions section in bottom row */
@@ -4199,7 +4226,6 @@ footer, .site-footer {
         min-width: 180px;
     }
 
-    .coach-card-actions .btn-discovery,
     .coach-card-actions .btn-book {
         width: 100%;
     }

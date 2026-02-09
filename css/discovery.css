@@ -413,7 +413,111 @@
     border-color: var(--primary-color, #4a90a4);
 }
 
-/* Price Range */
+/* Budget Slider (Booking.com style) */
+.budget-slider-container {
+    padding: 4px 0;
+    user-select: none;
+}
+
+.budget-histogram {
+    display: flex;
+    align-items: flex-end;
+    gap: 1px;
+    height: 52px;
+    padding: 0 2px;
+}
+
+.budget-bar-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 100%;
+}
+
+.budget-bar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    transition: background-color 0.15s;
+}
+
+.budget-bar.in-range {
+    background: var(--primary-petrol, #006266);
+}
+
+.budget-bar.out-range {
+    background: #d1d5db;
+}
+
+.budget-track {
+    position: relative;
+    height: 24px;
+    padding: 10px 0;
+    cursor: pointer;
+}
+
+.budget-track-bg {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    transform: translateY(-50%);
+    background: #e5e7eb;
+    border-radius: 2px;
+}
+
+.budget-track-fill {
+    position: absolute;
+    top: 50%;
+    height: 4px;
+    transform: translateY(-50%);
+    background: var(--primary-petrol, #006266);
+    border-radius: 2px;
+}
+
+.budget-handle {
+    position: absolute;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--primary-petrol, #006266);
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    z-index: 2;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.budget-handle:hover {
+    box-shadow: 0 0 0 6px rgba(0, 98, 102, 0.15);
+}
+
+.budget-handle.active {
+    cursor: grabbing;
+    box-shadow: 0 0 0 8px rgba(0, 98, 102, 0.2);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.budget-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #374151;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.budget-loading {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.85rem;
+    padding: 12px 0;
+}
+
+/* Legacy price range inputs - keep for backward compatibility */
 .price-range-inputs {
     display: flex;
     align-items: center;

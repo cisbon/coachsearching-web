@@ -203,28 +203,39 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                 </div>
 
                 <div class="coach-info">
-                    <!-- Name and Title -->
-                    <h3 class="coach-name">
-                        ${coach.full_name}
-                        ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
-                        ${coach.cs_coach_certifications?.length > 0 && html`
-                            <span class="certification-badges-inline">
-                                ${coach.cs_coach_certifications
-                                    .filter(cert => cert.cs_certifications?.badge_url)
-                                    .sort((a, b) => (b.cs_certifications?.sort_order || 0) - (a.cs_certifications?.sort_order || 0))
-                                    .map(cert => html`
-                                        <img
-                                            key=${cert.id}
-                                            src=${cert.cs_certifications?.badge_url}
-                                            alt=${cert.cs_certifications?.short_name || cert.cs_certifications?.name || 'Certification'}
-                                            title=${cert.cs_certifications?.name || 'Certification'}
-                                            class="certification-badge-inline"
-                                        />
-                                    `)
-                                }
-                            </span>
-                        `}
-                    </h3>
+                    <!-- Name Row with Discovery Button (desktop) -->
+                    <div class="coach-name-row">
+                        <h3 class="coach-name">
+                            ${coach.full_name}
+                            ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
+                            ${coach.cs_coach_certifications?.length > 0 && html`
+                                <span class="certification-badges-inline">
+                                    ${coach.cs_coach_certifications
+                                        .filter(cert => cert.cs_certifications?.badge_url)
+                                        .sort((a, b) => (b.cs_certifications?.sort_order || 0) - (a.cs_certifications?.sort_order || 0))
+                                        .map(cert => html`
+                                            <img
+                                                key=${cert.id}
+                                                src=${cert.cs_certifications?.badge_url}
+                                                alt=${cert.cs_certifications?.short_name || cert.cs_certifications?.name || 'Certification'}
+                                                title=${cert.cs_certifications?.name || 'Certification'}
+                                                class="certification-badge-inline"
+                                            />
+                                        `)
+                                    }
+                                </span>
+                            `}
+                        </h3>
+                        <button class="btn-discovery btn-discovery-top" onClick=${handleDiscoveryClick}>
+                            <svg class="calendar-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            ${t('discovery.bookFreeCall') || 'Free Discovery Call'}
+                        </button>
+                    </div>
                     <div class="coach-title">${coach.title}</div>
 
                     <!-- Location and Languages Row -->
@@ -276,27 +287,18 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
 
             <!-- Bottom Row: Specialties + Actions (Desktop Only) -->
             <div class="coach-card-bottom">
-                <!-- Specialties - Desktop (show up to 8, max 3 rows) -->
+                <!-- Specialties - Desktop (show up to 5, max 2 rows) -->
                 ${localizedSpecialties.length > 0 ? html`
                     <div class="specialty-tags specialty-tags-desktop">
-                        ${localizedSpecialties.slice(0, 8).map(s => html`
+                        ${localizedSpecialties.slice(0, 5).map(s => html`
                             <span key=${s.code} class="specialty-tag">${s.name}</span>
                         `)}
-                        ${localizedSpecialties.length > 8 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 8}</span>` : ''}
+                        ${localizedSpecialties.length > 5 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 5}</span>` : ''}
                     </div>
                 ` : html`<div class="specialty-tags-placeholder"></div>`}
 
                 <!-- Actions - Desktop -->
                 <div class="coach-card-actions">
-                    <button class="btn-discovery" onClick=${handleDiscoveryClick}>
-                        <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        ${t('discovery.bookFreeCall') || 'Free Discovery Call'}
-                    </button>
                     <a href="/coach/${coach.slug || coach.id}" class="btn-book">
                         ${t('coach.view_profile') || 'View Profile'} →
                     </a>

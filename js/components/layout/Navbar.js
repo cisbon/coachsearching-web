@@ -169,7 +169,7 @@ export function Navbar({ session }) {
             }
 
             /* Mobile styles */
-            @media (max-width: 768px) {
+            @media (max-width: 1200px) {
                 .hamburger-btn { display: flex !important; }
 
                 header[role="banner"] .nav-links {

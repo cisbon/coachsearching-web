@@ -1,6 +1,6 @@
 /**
  * FilterSidebar Component
- * Sidebar for filtering coach list by price, specialty, language, etc.
+ * Sidebar for filtering coach list by budget, specialty, language, etc.
  * Uses dynamic lookup options and cities from AppContext
  */
 
@@ -9,7 +9,7 @@ import { t } from '../../i18n.js';
 import { useLookupOptions, useCities } from '../../context/AppContext.js';
 
 const React = window.React;
-const { useMemo, useState } = React;
+const { useMemo, useState, useEffect, useCallback, useRef } = React;
 const html = htm.bind(React.createElement);
 
 // Languages to show initially (most common)
@@ -71,14 +71,159 @@ const COUNTRIES = [
     { code: 'OTHER', name: 'Other' }
 ];
 
+const NUM_BARS = 20;
+
+/**
+ * BudgetSlider Component
+ * Booking.com-style histogram budget slider
+ */
+function BudgetSlider({ prices, minBudget, maxBudget, onChange }) {
+    const trackRef = useRef(null);
+    const [dragging, setDragging] = useState(null); // 'min' or 'max'
+
+    // Compute price range from available prices
+    const priceRange = useMemo(() => {
+        if (!prices || prices.length === 0) return { min: 0, max: 500, step: 25 };
+        const min = Math.floor(Math.min(...prices));
+        const max = Math.ceil(Math.max(...prices));
+        const range = max - min || 100;
+        const step = Math.max(1, Math.round(range / NUM_BARS));
+        return { min, max: min + step * NUM_BARS, step };
+    }, [prices]);
+
+    // Build histogram bars
+    const bars = useMemo(() => {
+        if (!prices || prices.length === 0) return Array(NUM_BARS).fill(0);
+        const { min, step } = priceRange;
+        const buckets = Array(NUM_BARS).fill(0);
+        prices.forEach(p => {
+            const idx = Math.min(NUM_BARS - 1, Math.floor((p - min) / step));
+            buckets[idx]++;
+        });
+        return buckets;
+    }, [prices, priceRange]);
+
+    const maxCount = Math.max(1, ...bars);
+
+    // Current slider values (default to full range)
+    const currentMin = minBudget !== '' && minBudget !== undefined ? Number(minBudget) : priceRange.min;
+    const currentMax = maxBudget !== '' && maxBudget !== undefined ? Number(maxBudget) : priceRange.max;
+
+    // Convert value to percentage position
+    const valToPercent = useCallback((val) => {
+        const range = priceRange.max - priceRange.min;
+        if (range === 0) return 0;
+        return Math.max(0, Math.min(100, ((val - priceRange.min) / range) * 100));
+    }, [priceRange]);
+
+    // Convert percentage to value
+    const percentToVal = useCallback((pct) => {
+        const range = priceRange.max - priceRange.min;
+        const raw = priceRange.min + (pct / 100) * range;
+        return Math.round(raw / priceRange.step) * priceRange.step;
+    }, [priceRange]);
+
+    const minPct = valToPercent(currentMin);
+    const maxPct = valToPercent(currentMax);
+
+    // Handle drag on track
+    const handlePointerDown = useCallback((e, handle) => {
+        e.preventDefault();
+        setDragging(handle);
+    }, []);
+
+    useEffect(() => {
+        if (!dragging) return;
+
+        const handleMove = (e) => {
+            const track = trackRef.current;
+            if (!track) return;
+            const rect = track.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+            const val = percentToVal(pct);
+
+            if (dragging === 'min') {
+                const newMin = Math.min(val, currentMax - priceRange.step);
+                onChange({ minBudget: newMin <= priceRange.min ? '' : newMin, maxBudget: maxBudget });
+            } else {
+                const newMax = Math.max(val, currentMin + priceRange.step);
+                onChange({ minBudget: minBudget, maxBudget: newMax >= priceRange.max ? '' : newMax });
+            }
+        };
+
+        const handleUp = () => setDragging(null);
+
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleUp);
+        window.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchend', handleUp);
+        return () => {
+            window.removeEventListener('mousemove', handleMove);
+            window.removeEventListener('mouseup', handleUp);
+            window.removeEventListener('touchmove', handleMove);
+            window.removeEventListener('touchend', handleUp);
+        };
+    }, [dragging, currentMin, currentMax, minBudget, maxBudget, priceRange, percentToVal, onChange]);
+
+    const isBarInRange = (barIndex) => {
+        const barStart = priceRange.min + barIndex * priceRange.step;
+        const barEnd = barStart + priceRange.step;
+        return barStart < currentMax && barEnd > currentMin;
+    };
+
+    return html`
+        <div class="budget-slider-container">
+            <!-- Histogram -->
+            <div class="budget-histogram">
+                ${bars.map((count, i) => {
+                    const height = count > 0 ? Math.max(4, (count / maxCount) * 48) : 2;
+                    const inRange = isBarInRange(i);
+                    return html`
+                        <div key=${i} class="budget-bar-wrapper">
+                            <div
+                                class="budget-bar ${inRange ? 'in-range' : 'out-range'}"
+                                style=${{ height: height + 'px' }}
+                            ></div>
+                        </div>
+                    `;
+                })}
+            </div>
+            <!-- Dual Range Slider -->
+            <div class="budget-track" ref=${trackRef}>
+                <div class="budget-track-bg"></div>
+                <div class="budget-track-fill" style=${{ left: minPct + '%', width: (maxPct - minPct) + '%' }}></div>
+                <div
+                    class="budget-handle budget-handle-min ${dragging === 'min' ? 'active' : ''}"
+                    style=${{ left: minPct + '%' }}
+                    onMouseDown=${(e) => handlePointerDown(e, 'min')}
+                    onTouchStart=${(e) => handlePointerDown(e, 'min')}
+                ></div>
+                <div
+                    class="budget-handle budget-handle-max ${dragging === 'max' ? 'active' : ''}"
+                    style=${{ left: maxPct + '%' }}
+                    onMouseDown=${(e) => handlePointerDown(e, 'max')}
+                    onTouchStart=${(e) => handlePointerDown(e, 'max')}
+                ></div>
+            </div>
+            <!-- Labels -->
+            <div class="budget-labels">
+                <span class="budget-label-min">€${currentMin}</span>
+                <span class="budget-label-max">${currentMax >= priceRange.max ? '€' + priceRange.max + '+' : '€' + currentMax}</span>
+            </div>
+        </div>
+    `;
+}
+
 /**
  * FilterSidebar Component
  * @param {Object} props
  * @param {Object} props.filters - Current filter values
  * @param {function} props.onChange - Handler for filter changes
  * @param {function} props.onReset - Handler for resetting filters
+ * @param {Array} props.filteredCoachIds - IDs of coaches matching current non-price filters
  */
-export function FilterSidebar({ filters, onChange, onReset }) {
+export function FilterSidebar({ filters, onChange, onReset, filteredCoachIds }) {
     // Get lookup options from global context (cached)
     const { lookupOptions, getLocalizedName } = useLookupOptions();
 
@@ -88,6 +233,39 @@ export function FilterSidebar({ filters, onChange, onReset }) {
     // State for showing all languages/specialties
     const [showAllLanguages, setShowAllLanguages] = useState(false);
     const [showAllSpecialties, setShowAllSpecialties] = useState(false);
+
+    // Service prices state - map of coach_id -> min price
+    const [allServicePrices, setAllServicePrices] = useState([]);
+
+    // Load service prices from cs_coach_services
+    useEffect(() => {
+        const loadPrices = async () => {
+            if (!window.supabaseClient) return;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('cs_coach_services')
+                    .select('coach_id, price')
+                    .eq('active', true)
+                    .gt('price', 0);
+                if (!error && data) {
+                    setAllServicePrices(data);
+                }
+            } catch (err) {
+                console.error('Failed to load service prices:', err);
+            }
+        };
+        loadPrices();
+    }, []);
+
+    // Compute prices relevant to current filters (excluding budget filter itself)
+    const relevantPrices = useMemo(() => {
+        if (!allServicePrices.length) return [];
+        if (filteredCoachIds && filteredCoachIds.length > 0) {
+            const idSet = new Set(filteredCoachIds);
+            return allServicePrices.filter(s => idSet.has(s.coach_id)).map(s => Number(s.price));
+        }
+        return allServicePrices.map(s => Number(s.price));
+    }, [allServicePrices, filteredCoachIds]);
 
     // Extract specialties and languages from lookup options
     const specialtyOptions = lookupOptions.specialties || [];
@@ -130,6 +308,10 @@ export function FilterSidebar({ filters, onChange, onReset }) {
         return cities.list.filter(city => city.country_en === filters.locationCountry);
     }, [cities.list, filters.locationCountry]);
 
+    const handleBudgetChange = useCallback(({ minBudget, maxBudget }) => {
+        onChange({ ...filters, minPrice: minBudget, maxPrice: maxBudget });
+    }, [filters, onChange]);
+
     return html`
         <div class="filter-sidebar">
             <div class="filter-header">
@@ -137,26 +319,19 @@ export function FilterSidebar({ filters, onChange, onReset }) {
                 <button class="filter-reset-btn" onClick=${onReset}>${t('filter.reset') || 'Reset'}</button>
             </div>
 
-            <!-- Price Range -->
+            <!-- Budget Range -->
             <div class="filter-section">
-                <h4>${t('filter.priceRange') || 'Price Range'}</h4>
-                <div class="price-range-inputs">
-                    <input
-                        type="number"
-                        placeholder=${t('filter.min') || 'Min'}
-                        class="filter-input"
-                        value=${filters.minPrice || ''}
-                        onChange=${(e) => onChange({ ...filters, minPrice: e.target.value })}
+                <h4>${t('filter.budget') || 'Budget'}</h4>
+                ${relevantPrices.length > 0 ? html`
+                    <${BudgetSlider}
+                        prices=${relevantPrices}
+                        minBudget=${filters.minPrice}
+                        maxBudget=${filters.maxPrice}
+                        onChange=${handleBudgetChange}
                     />
-                    <span>-</span>
-                    <input
-                        type="number"
-                        placeholder=${t('filter.max') || 'Max'}
-                        class="filter-input"
-                        value=${filters.maxPrice || ''}
-                        onChange=${(e) => onChange({ ...filters, maxPrice: e.target.value })}
-                    />
-                </div>
+                ` : html`
+                    <div class="budget-loading">${t('common.loading') || 'Loading'}...</div>
+                `}
             </div>
 
             <!-- Location (Country & City) -->
