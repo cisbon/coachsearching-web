@@ -21,7 +21,7 @@ import { TrustBadges } from '../components/coach/TrustBadges.js';
 import { VideoPopup } from '../components/coach/VideoPopup.js';
 import { DiscoveryCallModal } from '../components/coach/DiscoveryCallModal.js';
 import { AuthModal } from '../components/auth/AuthModal.js';
-import { useCities, useLookupOptions } from '../context/AppContext.js';
+import { useCities, useLookupOptions, useCertifications } from '../context/AppContext.js';
 
 const React = window.React;
 const { useState, useEffect, useCallback, memo, useMemo } = React;
@@ -2644,6 +2644,217 @@ const EditPublicationModal = memo(function EditPublicationModal({ coach, publica
 });
 
 /**
+ * Edit Certification Modal Component
+ * Used for both adding new and editing existing certification items
+ * Data is stored in cs_coach_certifications table, linked to cs_certifications lookup
+ */
+const EditCertificationModal = memo(function EditCertificationModal({ coach, credential, certificationsList, onClose, onSaved }) {
+    const isEditing = !!credential;
+    const [certificationId, setCertificationId] = useState(credential?.certification_id || '');
+    const [dateAcquired, setDateAcquired] = useState(credential?.date_acquired || '');
+    const [certificateUrl, setCertificateUrl] = useState(credential?.certificate_url || '');
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Get certifications grouped by organization for the dropdown
+    const activeCerts = (certificationsList || []).filter(c => c.is_active);
+
+    // Filter certifications by search term
+    const filteredCerts = searchTerm.trim()
+        ? activeCerts.filter(c =>
+            c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.short_name && c.short_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            c.issuing_organization.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        : activeCerts;
+
+    // Group by organization
+    const groupedCerts = filteredCerts.reduce((acc, cert) => {
+        const org = cert.issuing_organization;
+        if (!acc[org]) acc[org] = [];
+        acc[org].push(cert);
+        return acc;
+    }, {});
+
+    const selectedCert = activeCerts.find(c => c.id === parseInt(certificationId));
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        if (!certificationId) {
+            setError(t('edit.certificationRequired') || 'Please select a certification');
+            setSaving(false);
+            return;
+        }
+
+        try {
+            const payload = {
+                coach_id: coach.id,
+                certification_id: parseInt(certificationId),
+                date_acquired: dateAcquired || null,
+                certificate_url: certificateUrl.trim() || null
+            };
+
+            if (isEditing) {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_certifications')
+                    .update(payload)
+                    .eq('id', credential.id)
+                    .eq('coach_id', coach.id);
+                if (dbError) throw dbError;
+            } else {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_certifications')
+                    .insert(payload);
+                if (dbError) throw dbError;
+            }
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Save certification error:', err);
+            if (err.message?.includes('unique')) {
+                setError(t('edit.certificationDuplicate') || 'You already have this certification added');
+            } else {
+                setError(err.message || 'Failed to save certification');
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!isEditing) return;
+        if (!confirm(t('edit.confirmDeleteCertification') || 'Are you sure you want to remove this certification?')) return;
+
+        setSaving(true);
+        try {
+            const { error: dbError } = await window.supabaseClient
+                .from('cs_coach_certifications')
+                .delete()
+                .eq('id', credential.id)
+                .eq('coach_id', coach.id);
+            if (dbError) throw dbError;
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Delete certification error:', err);
+            setError(err.message || 'Failed to delete certification');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container edit-modal-wide">
+                <div class="edit-modal-header">
+                    <h3>${isEditing ? (t('edit.editCertification') || 'Edit Certification') : (t('edit.addCertification') || 'Add Certification')}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+
+                        <div class="form-group">
+                            <label>${t('edit.certification') || 'Certification'} *</label>
+                            <input
+                                type="text"
+                                value=${searchTerm}
+                                onChange=${(e) => setSearchTerm(e.target.value)}
+                                placeholder=${t('edit.searchCertifications') || 'Search certifications...'}
+                                class="cert-search-input"
+                            />
+                            <div class="cert-select-list">
+                                ${Object.keys(groupedCerts).length > 0 ? Object.entries(groupedCerts).map(([org, certs]) => html`
+                                    <div key=${org} class="cert-org-group">
+                                        <div class="cert-org-label">${org}</div>
+                                        ${certs.map(cert => html`
+                                            <div
+                                                key=${cert.id}
+                                                class="cert-select-option ${parseInt(certificationId) === cert.id ? 'selected' : ''}"
+                                                onClick=${() => { setCertificationId(cert.id); setSearchTerm(''); }}
+                                            >
+                                                ${cert.badge_url && html`<img src=${cert.badge_url} alt="" class="cert-option-badge" />`}
+                                                <div class="cert-option-info">
+                                                    <span class="cert-option-name">${cert.name}</span>
+                                                    ${cert.short_name && html`<span class="cert-option-short">(${cert.short_name})</span>`}
+                                                </div>
+                                            </div>
+                                        `)}
+                                    </div>
+                                `) : html`
+                                    <div class="cert-no-results">${t('edit.noCertificationsFound') || 'No certifications found'}</div>
+                                `}
+                            </div>
+                            ${selectedCert && html`
+                                <div class="cert-selected-preview">
+                                    ${selectedCert.badge_url && html`<img src=${selectedCert.badge_url} alt="" class="cert-preview-badge" />`}
+                                    <div>
+                                        <strong>${selectedCert.name}</strong>
+                                        <p class="cert-preview-org">${selectedCert.issuing_organization}</p>
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.dateAcquired') || 'Date Acquired'}</label>
+                                <input
+                                    type="date"
+                                    value=${dateAcquired}
+                                    onChange=${(e) => setDateAcquired(e.target.value)}
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.certificateUrl') || 'Certificate URL'}</label>
+                                <input
+                                    type="url"
+                                    value=${certificateUrl}
+                                    onChange=${(e) => setCertificateUrl(e.target.value)}
+                                    placeholder=${t('edit.certificateUrlPlaceholder') || 'https://... (link to verify)'}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions">
+                        ${isEditing && html`
+                            <button type="button" class="btn-delete" onClick=${handleDelete} disabled=${saving}>
+                                ${t('edit.delete') || 'Delete'}
+                            </button>
+                        `}
+                        <div class="edit-modal-actions-right">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>
+                                ${t('edit.cancel') || 'Cancel'}
+                            </button>
+                            <button type="submit" class="btn-primary" disabled=${saving}>
+                                ${saving ? (t('edit.saving') || 'Saving...') : (isEditing ? (t('edit.save') || 'Save Changes') : (t('edit.add') || 'Add Certification'))}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
+/**
  * Edit Service Modal Component
  * Used for both adding new and editing existing service items
  * Data is stored in cs_coach_services table
@@ -3041,6 +3252,7 @@ const EditEnglishProfileModal = memo(function EditEnglishProfileModal({ coach, o
 
 function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const identifier = coachIdOrSlug || coachId;
+    const { certifications: certificationsLookup } = useCertifications();
 
     const [coach, setCoach] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -3076,6 +3288,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [editingPublication, setEditingPublication] = useState(null);
     const [coachServices, setCoachServices] = useState([]);
     const [editingService, setEditingService] = useState(null);
+    const [editingCertification, setEditingCertification] = useState(null);
 
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
@@ -3981,10 +4194,10 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         ${t('coach.certifications') || 'Certifications & Credentials'}
                                     </h2>
                                     ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('certifications')} title="Edit certifications">
+                                        <button class="btn-add-section" onClick=${() => setEditingCertification('new')} title="Add certification">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
                                             </svg>
                                         </button>
                                     `}
@@ -3992,20 +4205,29 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 ${credentials.length > 0 ? html`
                                     <div class="certifications-list">
                                         ${credentials.map(cred => html`
-                                            <div key=${cred.id} class="certification-item">
+                                            <div key=${cred.id} class="certification-item ${isOwnProfile ? 'editable' : ''}" onClick=${isOwnProfile ? () => setEditingCertification(cred) : null}>
                                                 ${cred.badge_url && html`
-                                                    <img src=${cred.badge_url} alt=${cred.name} class="cert-badge" />
+                                                    <img src=${cred.badge_url} alt=${cred.certification_name || cred.name} class="cert-badge" />
                                                 `}
                                                 <div class="cert-info">
-                                                    <h4 class="cert-name">${cred.name}</h4>
-                                                    ${cred.issuing_org && html`<p class="cert-org">${cred.issuing_org}</p>`}
+                                                    <h4 class="cert-name">${cred.certification_name || cred.name}</h4>
+                                                    ${(cred.issuing_organization || cred.issuing_org) && html`<p class="cert-org">${cred.issuing_organization || cred.issuing_org}</p>`}
+                                                    ${cred.date_acquired && html`<p class="cert-date">${new Date(cred.date_acquired).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</p>`}
                                                     ${cred.is_verified && html`<span class="cert-verified">✓ Verified</span>`}
                                                 </div>
+                                                ${isOwnProfile && html`
+                                                    <span class="cert-edit-icon">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                        </svg>
+                                                    </span>
+                                                `}
                                             </div>
                                         `)}
                                     </div>
                                 ` : html`
-                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('certifications')}>
+                                    <div class="empty-section-prompt" onClick=${() => setEditingCertification('new')}>
                                         <span class="empty-icon">+</span>
                                         <p>${t('coach.addCertifications') || 'Add your certifications and credentials'}</p>
                                     </div>
@@ -4135,10 +4357,13 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         ${publications.map(pub => html`
                                             <div key=${pub.id} class="publication-item ${isOwnProfile ? 'editable' : ''}" onClick=${isOwnProfile ? () => setEditingPublication(pub) : null}>
                                                 <div class="pub-header">
-                                                    <h4 class="pub-title">
-                                                        ${pub.publication_url ? html`<a href=${pub.publication_url} target="_blank" rel="noopener noreferrer" onClick=${(e) => e.stopPropagation()}>${pub.title}</a>` : pub.title}
-                                                    </h4>
+                                                    <h4 class="pub-title">${pub.title}</h4>
                                                     ${pub.publisher && html`<p class="pub-publisher">${pub.publisher}</p>`}
+                                                    ${pub.publication_url && html`
+                                                        <a href=${pub.publication_url} target="_blank" rel="noopener noreferrer" class="btn-view-publication" onClick=${(e) => e.stopPropagation()}>
+                                                            ${t('coach.viewPublication') || 'View Publication'} 🔗
+                                                        </a>
+                                                    `}
                                                     <div class="pub-meta">
                                                         ${pub.publication_date && html`<span class="pub-date">${new Date(pub.publication_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>`}
                                                         ${pub.authors && html`<span class="pub-authors">${pub.authors}</span>`}
@@ -4369,6 +4594,17 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     service=${editingService === 'new' ? null : editingService}
                     onClose=${() => setEditingService(null)}
                     onSaved=${() => loadCoachServices(coach.id)}
+                />
+            `}
+
+            <!-- Edit Certification Modal (add new / edit existing) -->
+            ${editingCertification && isOwnProfile && html`
+                <${EditCertificationModal}
+                    coach=${coach}
+                    credential=${editingCertification === 'new' ? null : editingCertification}
+                    certificationsList=${certificationsLookup.list || []}
+                    onClose=${() => setEditingCertification(null)}
+                    onSaved=${() => loadCredentials(coach.id)}
                 />
             `}
 
