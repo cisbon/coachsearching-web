@@ -537,7 +537,6 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                                 <div class="play-icon">▶</div>
                             </div>
                         `}
-                        <!-- Trust Badge on image -->
                         ${hasVideo && html`
                             <span class="trust-badge badge-video badge-on-image" title="Has Video">🎬</span>
                         `}
@@ -573,16 +572,37 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                                 }
                             </span>
                         `}
-                        ${isOwnProfile && html`
-                            <button class="btn-edit-inline" onClick=${() => onEditSection('name')} title="Edit name">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </button>
-                        `}
                     </h1>
                     <div class="profile-coach-title">${coach.title}</div>
+                </div>
+
+                <div class="profile-card-header-actions">
+                    <!-- External Links -->
+                    ${coach.linkedin_url && html`
+                        <a href=${coach.linkedin_url} target="_blank" rel="noopener noreferrer" class="btn-external-link btn-linkedin" title="LinkedIn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </a>
+                    `}
+                    ${coach.website_url && html`
+                        <a href=${coach.website_url} target="_blank" rel="noopener noreferrer" class="btn-external-link btn-website" title="Website">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                            </svg>
+                        </a>
+                    `}
+                    <!-- Edit Profile Button (own profile only) -->
+                    ${isOwnProfile && html`
+                        <button class="btn-edit-profile" onClick=${() => onEditSection('coach-profile')} title="Edit profile">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                    `}
                 </div>
             </div>
 
@@ -826,6 +846,546 @@ const ViewersAlsoViewedSidebar = memo(function ViewersAlsoViewedSidebar({ coache
                 `)}
             </div>
         </section>
+    `;
+});
+
+/**
+ * Constants for language flags (shared with onboarding)
+ */
+const FLAG_CDN = 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3';
+const LANGUAGE_TO_FLAG = {
+    'en': 'gb', 'de': 'de', 'es': 'es', 'fr': 'fr', 'it': 'it',
+    'nl': 'nl', 'pt': 'pt', 'ru': 'ru', 'zh': 'cn', 'ja': 'jp',
+    'ko': 'kr', 'ar': 'sa', 'hi': 'in', 'pl': 'pl', 'sv': 'se',
+    'no': 'no', 'da': 'dk', 'fi': 'fi', 'el': 'gr', 'tr': 'tr',
+    'cs': 'cz', 'ro': 'ro', 'hu': 'hu', 'uk': 'ua'
+};
+
+/**
+ * Edit Coach Profile Modal
+ * Comprehensive profile editor reusing onboarding-style field patterns
+ */
+const EditCoachProfileModal = memo(function EditCoachProfileModal({ coach, onClose, onSave }) {
+    const { lookupOptions, getLocalizedName, getLocalizedDescription } = useLookupOptions();
+    const { cities, getLocalizedCityName } = useCities();
+
+    const [formData, setFormData] = useState({
+        full_name: coach.full_name || '',
+        title: coach.title || '',
+        linkedin_url: coach.linkedin_url || '',
+        website_url: coach.website_url || '',
+        city_id: coach.city_id || null,
+        location_country: '',
+        languages: coach.languages || [],
+        years_experience: coach.years_experience || '',
+        bio: coach.bio || '',
+        specialties: coach.specialties || [],
+        session_types: coach.session_types || [],
+        offers_free_discovery: coach.offers_free_discovery !== false
+    });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    // Derive country from city_id on mount
+    useEffect(() => {
+        if (coach.city_id && cities.list?.length > 0) {
+            const city = cities.list.find(c => c.id === coach.city_id);
+            if (city) {
+                setFormData(prev => ({ ...prev, location_country: city.country_en }));
+            }
+        }
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, [cities.list]);
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) onClose();
+    };
+
+    // Lookup data
+    const languages = lookupOptions.languages || [];
+    const specialties = lookupOptions.specialties || [];
+    const sessionFormats = (lookupOptions.sessionFormats || []).filter(f => !['chat', 'hybrid', 'phone'].includes(f.code));
+
+    // Country/city derivation
+    const countriesFromCities = useMemo(() => {
+        const countryMap = new Map();
+        (cities.list || []).forEach(city => {
+            if (!countryMap.has(city.country_code)) {
+                countryMap.set(city.country_code, city.country_en);
+            }
+        });
+        return Array.from(countryMap.entries())
+            .map(([code, name]) => ({ code, name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [cities.list]);
+
+    const filteredCities = useMemo(() => {
+        if (!cities.list || cities.list.length === 0) return [];
+        if (!formData.location_country) return cities.list;
+        return cities.list.filter(city => city.country_en === formData.location_country);
+    }, [formData.location_country, cities.list]);
+
+    const toggleLanguage = (code) => {
+        const langs = formData.languages || [];
+        handleChange('languages', langs.includes(code) ? langs.filter(l => l !== code) : [...langs, code]);
+    };
+
+    const toggleSpecialty = (code) => {
+        const current = formData.specialties || [];
+        handleChange('specialties', current.includes(code) ? current.filter(s => s !== code) : current.length < 10 ? [...current, code] : current);
+    };
+
+    const toggleFormat = (code) => {
+        const formats = formData.session_types || [];
+        handleChange('session_types', formats.includes(code) ? formats.filter(f => f !== code) : [...formats, code]);
+    };
+
+    const getSpecialtyDisplayName = (code) => {
+        const s = specialties.find(sp => sp.code === code);
+        return s ? String(getLocalizedName(s)) : String(code);
+    };
+
+    const selectedSpecCount = (formData.specialties || []).length;
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        if (!formData.full_name.trim()) { setError('Name is required'); setSaving(false); return; }
+
+        try {
+            await onSave({
+                full_name: formData.full_name.trim(),
+                title: formData.title.trim() || null,
+                linkedin_url: formData.linkedin_url.trim() || null,
+                website_url: formData.website_url.trim() || null,
+                city_id: formData.city_id ? parseInt(formData.city_id) : null,
+                languages: formData.languages,
+                years_experience: parseInt(formData.years_experience) || 0,
+                bio: formData.bio.trim() || null,
+                specialties: formData.specialties,
+                session_types: formData.session_types,
+                offers_free_discovery: formData.offers_free_discovery
+            });
+            onClose();
+        } catch (err) {
+            console.error('Save profile error:', err);
+            setError(err.message || 'Failed to save profile');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container edit-coach-profile-modal">
+                <div class="edit-modal-header">
+                    <h3>${t('edit.editProfile') || 'Edit Profile'}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content edit-coach-profile-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+
+                        <!-- Name & Title -->
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.fullName') || 'Full Name'} *</label>
+                                <input type="text" value=${formData.full_name} onChange=${(e) => handleChange('full_name', e.target.value)} required />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.professionalTitle') || 'Professional Title'}</label>
+                                <input type="text" value=${formData.title} onChange=${(e) => handleChange('title', e.target.value)} placeholder="e.g., Executive Coach" />
+                            </div>
+                        </div>
+
+                        <!-- LinkedIn & Website -->
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>LinkedIn URL</label>
+                                <input type="url" value=${formData.linkedin_url} onChange=${(e) => handleChange('linkedin_url', e.target.value)} placeholder="https://linkedin.com/in/..." />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>Website URL</label>
+                                <input type="url" value=${formData.website_url} onChange=${(e) => handleChange('website_url', e.target.value)} placeholder="https://..." />
+                            </div>
+                        </div>
+
+                        <!-- Location: Country & City -->
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.country') || 'Country'}</label>
+                                <select value=${formData.location_country || ''} onChange=${(e) => { handleChange('location_country', e.target.value); handleChange('city_id', null); }}>
+                                    <option value="">...</option>
+                                    ${countriesFromCities.map(country => html`
+                                        <option key=${country.code} value=${country.name}>${country.name}</option>
+                                    `)}
+                                </select>
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.city') || 'City'}</label>
+                                <select value=${String(formData.city_id || '')} onChange=${(e) => handleChange('city_id', e.target.value ? parseInt(e.target.value) : null)} disabled=${!formData.location_country}>
+                                    <option value="">${formData.location_country ? 'Select city...' : 'Select country first'}</option>
+                                    ${filteredCities.map(city => html`
+                                        <option key=${city.id} value=${city.id}>${getLocalizedCityName ? getLocalizedCityName(city) : city.name_en}</option>
+                                    `)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Years of Experience -->
+                        <div class="form-group">
+                            <label>${t('edit.yearsExperience') || 'Years of Experience'}</label>
+                            <div class="years-stepper-inline">
+                                <button type="button" class="btn-stepper-inline" onClick=${() => {
+                                    const c = parseInt(formData.years_experience) || 0;
+                                    if (c > 0) handleChange('years_experience', String(c - 1));
+                                }}>−</button>
+                                <input type="number" value=${String(formData.years_experience || '')} onInput=${(e) => handleChange('years_experience', e.target.value)} placeholder="0" min="0" class="years-input-inline" />
+                                <button type="button" class="btn-stepper-inline" onClick=${() => {
+                                    const c = parseInt(formData.years_experience) || 0;
+                                    handleChange('years_experience', String(c + 1));
+                                }}>+</button>
+                            </div>
+                        </div>
+
+                        <!-- Languages -->
+                        <div class="form-group">
+                            <label>🌍 ${t('edit.languages') || 'Languages'}</label>
+                            <div class="language-grid-inline">
+                                ${languages.map(lang => {
+                                    const isSelected = (formData.languages || []).includes(lang.code);
+                                    const flagCode = LANGUAGE_TO_FLAG[lang.code];
+                                    return html`
+                                        <button key=${lang.code} type="button" class="language-option-inline ${isSelected ? 'selected' : ''}" onClick=${() => toggleLanguage(lang.code)}>
+                                            ${flagCode ? html`<img src="${FLAG_CDN}/${flagCode}.svg" alt=${getLocalizedName(lang)} class="lang-flag-inline" loading="lazy" />` : html`<span>🌐</span>`}
+                                            <span>${String(getLocalizedName(lang))}</span>
+                                        </button>
+                                    `;
+                                })}
+                            </div>
+                        </div>
+
+                        <!-- Bio -->
+                        <div class="form-group">
+                            <label>${t('edit.aboutYou') || 'About You'}</label>
+                            <textarea value=${formData.bio} onChange=${(e) => handleChange('bio', e.target.value)} placeholder="Tell your story..." rows="5"></textarea>
+                            <div class="char-count">${(formData.bio || '').length}/2000</div>
+                        </div>
+
+                        <!-- Specialties -->
+                        <div class="form-group">
+                            <label>🎯 ${t('edit.specialties') || 'Specialties'} ${selectedSpecCount > 0 ? `(${selectedSpecCount}/10)` : ''}</label>
+                            ${selectedSpecCount > 0 && html`
+                                <div class="selected-pills">
+                                    ${(formData.specialties || []).map(code => html`
+                                        <span key=${code} class="specialty-pill-inline">
+                                            ${getSpecialtyDisplayName(code)}
+                                            <button type="button" class="pill-remove" onClick=${() => toggleSpecialty(code)}>×</button>
+                                        </span>
+                                    `)}
+                                </div>
+                            `}
+                            <div class="specialty-grid-inline">
+                                ${specialties.map(s => {
+                                    const isSel = (formData.specialties || []).includes(s.code);
+                                    const isDis = !isSel && selectedSpecCount >= 10;
+                                    return html`
+                                        <button key=${s.code} type="button" class="specialty-option-inline ${isSel ? 'selected' : ''}" onClick=${() => toggleSpecialty(s.code)} disabled=${isDis}>
+                                            <span>${String(s.icon || '🎯')}</span>
+                                            <span>${String(getLocalizedName(s))}</span>
+                                        </button>
+                                    `;
+                                })}
+                            </div>
+                        </div>
+
+                        <!-- Session Formats -->
+                        <div class="form-group">
+                            <label>💬 ${t('edit.sessionFormats') || 'Session Formats'}</label>
+                            <div class="format-grid-inline">
+                                ${sessionFormats.map(format => {
+                                    const isSel = (formData.session_types || []).includes(format.code);
+                                    return html`
+                                        <div key=${format.code} class="format-card-inline ${isSel ? 'selected' : ''}" onClick=${() => toggleFormat(format.code)}>
+                                            <div class="format-icon-inline">${String(format.icon || '💬')}</div>
+                                            <div class="format-title-inline">${String(getLocalizedName(format))}</div>
+                                        </div>
+                                    `;
+                                })}
+                            </div>
+                        </div>
+
+                        <!-- Free Discovery Call -->
+                        <div class="form-group">
+                            <label class="checkbox-label discovery-toggle">
+                                <input type="checkbox" checked=${formData.offers_free_discovery} onChange=${(e) => handleChange('offers_free_discovery', e.target.checked)} />
+                                <div>
+                                    <span class="discovery-label-text">📞 ${t('edit.offerDiscoveryCall') || 'Offer Free Discovery Call'}</span>
+                                    <span class="discovery-hint">${t('edit.discoveryCallHint') || 'Allow potential clients to book a free introductory call'}</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions">
+                        <div class="edit-modal-actions-right">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>${t('edit.cancel') || 'Cancel'}</button>
+                            <button type="submit" class="btn-primary" disabled=${saving}>
+                                ${saving ? (t('edit.saving') || 'Saving...') : (t('edit.save') || 'Save Changes')}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
+/**
+ * Profile Photo Editor Modal Component
+ * Reuses banner editor pattern with square (1:1) crop for profile images
+ */
+const ProfilePhotoEditorModal = memo(function ProfilePhotoEditorModal({ coach, onClose, onSave, session }) {
+    const [image, setImage] = useState(null);
+    const [zoom, setZoom] = useState(1);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+    const [hasExistingPhoto, setHasExistingPhoto] = useState(false);
+
+    const fileInputRef = React.useRef(null);
+    const canvasRef = React.useRef(null);
+    const containerRef = React.useRef(null);
+
+    const CROP_SIZE = 280; // Square crop area
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+
+        const existingPhoto = coach.avatar_url && !coach.avatar_url.includes('ui-avatars.com');
+        setHasExistingPhoto(existingPhoto);
+
+        if (existingPhoto) {
+            loadImageFromUrl(coach.avatar_url);
+        } else {
+            setTimeout(() => { fileInputRef.current?.click(); }, 100);
+        }
+
+        const handleEscape = (e) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = '';
+        };
+    }, []);
+
+    const loadImageFromUrl = (url) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => { setImage(img); setZoom(1); setPosition({ x: 0, y: 0 }); };
+        img.onerror = () => { setError('Failed to load existing photo'); };
+        img.src = url + '?t=' + Date.now();
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { setError('Please select an image file'); return; }
+        if (file.size > 10 * 1024 * 1024) { setError('Image must be less than 10MB'); return; }
+
+        setError('');
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => { setImage(img); setHasExistingPhoto(true); setZoom(1); setPosition({ x: 0, y: 0 }); };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleMouseDown = (e) => { if (!image) return; setIsDragging(true); setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y }); };
+    const handleMouseMove = (e) => { if (!isDragging || !image) return; setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); };
+    const handleMouseUp = () => { setIsDragging(false); };
+    const handleTouchStart = (e) => { if (!image || e.touches.length !== 1) return; setIsDragging(true); setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y }); };
+    const handleTouchMove = (e) => { if (!isDragging || !image || e.touches.length !== 1) return; e.preventDefault(); setPosition({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y }); };
+    const handleTouchEnd = () => { setIsDragging(false); };
+
+    const getCroppedImage = () => {
+        return new Promise((resolve, reject) => {
+            if (!image || !canvasRef.current) { reject(new Error('No image to crop')); return; }
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            canvas.width = 400;
+            canvas.height = 400;
+            ctx.fillStyle = '#f3f2ef';
+            ctx.fillRect(0, 0, 400, 400);
+
+            const containerSize = containerRef.current?.offsetWidth || CROP_SIZE;
+            const scale = 400 / containerSize;
+
+            ctx.save();
+            ctx.translate(200, 200);
+            ctx.scale(zoom, zoom);
+            ctx.translate(-200, -200);
+
+            const fitScale = Math.max(containerSize / image.width, containerSize / image.height);
+            const scaledWidth = image.width * fitScale * scale;
+            const scaledHeight = image.height * fitScale * scale;
+            const drawX = (400 - scaledWidth) / 2 + position.x * scale;
+            const drawY = (400 - scaledHeight) / 2 + position.y * scale;
+
+            ctx.drawImage(image, drawX, drawY, scaledWidth, scaledHeight);
+            ctx.restore();
+
+            canvas.toBlob((blob) => { blob ? resolve(blob) : reject(new Error('Failed to create image blob')); }, 'image/jpeg', 0.9);
+        });
+    };
+
+    const handleApply = async () => {
+        if (!image) return;
+        setSaving(true);
+        setError('');
+
+        try {
+            const blob = await getCroppedImage();
+            const userId = session?.user?.id;
+            if (!userId) throw new Error('Not authenticated');
+
+            const fileName = `${userId}/avatar-${Date.now()}.jpg`;
+            const { error: uploadError } = await window.supabaseClient.storage
+                .from('profile-banners')
+                .upload(fileName, blob, { upsert: true, contentType: 'image/jpeg' });
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = window.supabaseClient.storage
+                .from('profile-banners')
+                .getPublicUrl(fileName);
+
+            const avatarUrl = publicUrl + '?t=' + Date.now();
+            await onSave({ avatar_url: avatarUrl });
+            onClose();
+        } catch (err) {
+            console.error('Photo upload error:', err);
+            setError(err.message || 'Failed to upload photo');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to remove your profile photo?')) return;
+        setSaving(true);
+        try {
+            await onSave({ avatar_url: null });
+            onClose();
+        } catch (err) {
+            setError(err.message || 'Failed to remove photo');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('banner-editor-overlay')) onClose();
+    };
+
+    const getImageStyle = () => {
+        if (!image) return {};
+        const containerSize = containerRef.current?.offsetWidth || CROP_SIZE;
+        const scaleToFit = Math.max(containerSize / image.width, containerSize / image.height);
+        const width = image.width * scaleToFit * zoom;
+        const height = image.height * scaleToFit * zoom;
+        return {
+            width: `${width}px`,
+            height: `${height}px`,
+            transform: `translate(${position.x}px, ${position.y}px)`,
+            cursor: isDragging ? 'grabbing' : 'grab'
+        };
+    };
+
+    return html`
+        <div class="banner-editor-overlay" onClick=${handleBackdropClick}>
+            <div class="banner-editor-container photo-editor-container">
+                <div class="banner-editor-header">
+                    <h3>${t('edit.profilePhoto') || 'Profile Photo'}</h3>
+                    <button class="banner-editor-close" onClick=${onClose}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="banner-editor-crop-area photo-crop-area">
+                    <div
+                        class="photo-crop-container"
+                        ref=${containerRef}
+                        onMouseDown=${handleMouseDown}
+                        onMouseMove=${handleMouseMove}
+                        onMouseUp=${handleMouseUp}
+                        onMouseLeave=${handleMouseUp}
+                        onTouchStart=${handleTouchStart}
+                        onTouchMove=${handleTouchMove}
+                        onTouchEnd=${handleTouchEnd}
+                    >
+                        ${image ? html`
+                            <img src=${image.src} alt="Photo preview" class="banner-preview-image" style=${getImageStyle()} draggable="false" />
+                        ` : html`
+                            <div class="banner-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <p>Select a photo to upload</p>
+                            </div>
+                        `}
+                        <div class="photo-crop-frame"></div>
+                    </div>
+                </div>
+
+                ${error && html`<div class="banner-editor-error">${error}</div>`}
+
+                ${image && html`
+                    <div class="banner-editor-controls">
+                        <div class="banner-control-sliders">
+                            <div class="banner-slider-row">
+                                <span class="slider-label">Zoom</span>
+                                <div class="slider-container">
+                                    <button class="slider-btn" onClick=${() => setZoom(z => Math.max(1, z - 0.1))}>−</button>
+                                    <input type="range" min="1" max="3" step="0.1" value=${zoom} onChange=${(e) => setZoom(parseFloat(e.target.value))} class="banner-slider" />
+                                    <button class="slider-btn" onClick=${() => setZoom(z => Math.min(3, z + 0.1))}>+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `}
+
+                <div class="banner-editor-actions">
+                    <div class="banner-actions-left">
+                        ${hasExistingPhoto && html`
+                            <button class="btn-delete-banner" onClick=${handleDelete} disabled=${saving}>Delete photo</button>
+                        `}
+                    </div>
+                    <div class="banner-actions-right">
+                        <button class="btn-change-photo" onClick=${() => fileInputRef.current?.click()} disabled=${saving}>Change photo</button>
+                        <button class="btn-apply-banner" onClick=${handleApply} disabled=${saving || !image}>
+                            ${saving ? 'Applying...' : 'Apply'}
+                        </button>
+                    </div>
+                </div>
+
+                <input type="file" ref=${fileInputRef} accept="image/*" style=${{ display: 'none' }} onChange=${handleFileSelect} />
+                <canvas ref=${canvasRef} style=${{ display: 'none' }} />
+            </div>
+        </div>
     `;
 });
 
@@ -3289,6 +3849,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [coachServices, setCoachServices] = useState([]);
     const [editingService, setEditingService] = useState(null);
     const [editingCertification, setEditingCertification] = useState(null);
+    const [showPhotoEditor, setShowPhotoEditor] = useState(false);
+    const [showCoachProfileEditor, setShowCoachProfileEditor] = useState(false);
 
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
@@ -3842,8 +4404,11 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         const inlineEditableSections = ['name', 'title', 'about', 'languages', 'hourly_rate'];
 
         if (sectionName === 'banner') {
-            // Open the banner editor modal
             setShowBannerEditor(true);
+        } else if (sectionName === 'photo') {
+            setShowPhotoEditor(true);
+        } else if (sectionName === 'coach-profile') {
+            setShowCoachProfileEditor(true);
         } else if (inlineEditableSections.includes(sectionName)) {
             setEditingSection(sectionName);
         } else {
@@ -4623,6 +5188,25 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 <${EditEnglishProfileModal}
                     coach=${coach}
                     onClose=${() => setShowEnglishProfileEditor(false)}
+                    onSave=${saveCoachProfile}
+                />
+            `}
+
+            <!-- Profile Photo Editor Modal -->
+            ${showPhotoEditor && isOwnProfile && html`
+                <${ProfilePhotoEditorModal}
+                    coach=${coach}
+                    session=${session}
+                    onClose=${() => setShowPhotoEditor(false)}
+                    onSave=${saveCoachProfile}
+                />
+            `}
+
+            <!-- Edit Coach Profile Modal -->
+            ${showCoachProfileEditor && isOwnProfile && html`
+                <${EditCoachProfileModal}
+                    coach=${coach}
+                    onClose=${() => setShowCoachProfileEditor(false)}
                     onSave=${saveCoachProfile}
                 />
             `}
