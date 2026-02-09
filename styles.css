@@ -4088,6 +4088,7 @@ footer, .site-footer {
     display: flex;
     align-items: flex-start;
     gap: 12px;
+    width: 100%;
 }
 
 .coach-name-row .coach-name {
@@ -4097,7 +4098,7 @@ footer, .site-footer {
 
 /* Discovery button in name row - hidden on mobile, shown on desktop */
 .btn-discovery-top {
-    display: none;
+    display: none !important;
 }
 
 /* Coach Card - Desktop 2-Line Layout */
@@ -4211,10 +4212,12 @@ footer, .site-footer {
     .btn-discovery-top {
         display: flex !important;
         width: auto;
-        padding: 8px 14px;
+        padding: 17px 24px;
         font-size: 13px;
         white-space: nowrap;
         flex-shrink: 0;
+        position: absolute;
+        right: 20px;
     }
 
     /* Actions section in bottom row */
