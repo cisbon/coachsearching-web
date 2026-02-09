@@ -1,6 +1,6 @@
 /**
  * ReviewsPopup Component
- * Modal displaying coach reviews with ability to add new reviews
+ * Modal displaying coach recommendations with ability to add new recommendations
  */
 
 import htm from '../../vendor/htm.js';
@@ -90,12 +90,12 @@ export function ReviewsPopup({ coach, onClose, session }) {
 
     const handleSubmitReview = async () => {
         if (!session?.user?.id) {
-            setMessage(t('review.loginToReview') || 'Please log in to write a review');
+            setMessage(t('review.loginToReview') || 'Please log in to write a recommendation');
             return;
         }
 
         if (userHasReviewed) {
-            setMessage(t('review.errorAlreadyReviewed') || 'You have already reviewed this coach');
+            setMessage(t('review.errorAlreadyReviewed') || 'You have already recommended this coach');
             return;
         }
 
@@ -107,6 +107,11 @@ export function ReviewsPopup({ coach, onClose, session }) {
                 const reviewText = newReview.comment.trim() || null;
                 const reviewerName = newReview.name.trim() || null;
                 const userId = session.user.id;
+
+                // Ensure user exists in cs_users (may be missing if created before trigger)
+                await window.supabaseClient
+                    .from('cs_users')
+                    .upsert({ id: userId, email: session.user.email || '' }, { onConflict: 'id', ignoreDuplicates: true });
 
                 const { data, error } = await window.supabaseClient
                     .from('cs_reviews')
@@ -136,7 +141,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
                     })
                     .eq('id', coach.id);
 
-                setMessage(t('review.successMessage') || 'Your review has been submitted successfully.');
+                setMessage(t('review.successMessage') || 'Your recommendation has been submitted successfully.');
                 setNewReview({ rating: 5, name: '', comment: '' });
                 setShowAddReview(false);
                 setUserHasReviewed(true);
@@ -144,7 +149,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
             }
         } catch (err) {
             console.error('Error submitting review:', err);
-            setMessage((t('review.errorTitle') || 'Error') + ': ' + (err.message || t('review.errorGeneric') || 'Failed to submit review'));
+            setMessage((t('review.errorTitle') || 'Error') + ': ' + (err.message || t('review.errorGeneric') || 'Failed to submit recommendation'));
         }
         setSubmitting(false);
     };
@@ -159,7 +164,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
             <div class="reviews-popup-container">
                 <div class="reviews-popup-header">
                     <div class="reviews-header-info">
-                        <h3>${t('review.reviewsFor') || 'Reviews for'} ${coach.full_name}</h3>
+                        <h3>${t('review.reviewsFor') || 'Recommendations for'} ${coach.full_name}</h3>
                         <div class="reviews-summary">
                             <div class="reviews-avg-rating">
                                 <span class="big-rating">${reviewsCount > 0 ? rating.toFixed(1) : '—'}</span>
@@ -168,7 +173,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
                                         <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
                                     `)}
                                 </div>
-                                <span class="total-reviews">${reviewsCount} ${reviewsCount !== 1 ? (t('coach.reviews') || 'reviews') : (t('coach.review') || 'review')}</span>
+                                <span class="total-reviews">${reviewsCount} ${reviewsCount !== 1 ? (t('coach.reviews') || 'recommendations') : (t('coach.review') || 'recommendation')}</span>
                             </div>
                         </div>
                     </div>
@@ -185,16 +190,16 @@ export function ReviewsPopup({ coach, onClose, session }) {
                                 userHasReviewed ? html`
                                     <div class="already-reviewed-notice">
                                         <span class="check-icon">✓</span>
-                                        ${t('review.alreadyReviewed') || 'You have already reviewed this coach'}
+                                        ${t('review.alreadyReviewed') || 'You have already recommended this coach'}
                                     </div>
                                 ` : html`
                                     <button class="add-review-btn" onClick=${() => setShowAddReview(true)}>
-                                        ✏️ ${t('review.writeReview') || 'Write a Review'}
+                                        ✏️ ${t('review.writeReview') || 'Write a Recommendation'}
                                     </button>
                                 `
                             ) : html`
                                 <button class="add-review-btn login-to-review" onClick=${() => window.navigateTo ? window.navigateTo('/login') : window.location.hash = '#login'}>
-                                    🔒 ${t('review.loginToReview') || 'Log in to write a review'}
+                                    🔒 ${t('review.loginToReview') || 'Log in to write a recommendation'}
                                 </button>
                             `}
                         </div>
@@ -202,7 +207,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
 
                     ${showAddReview && html`
                         <div class="add-review-form">
-                            <h4>${t('review.title') || 'Write a Review'}</h4>
+                            <h4>${t('review.title') || 'Write a Recommendation'}</h4>
                             <div class="rating-select">
                                 <label>${t('review.yourRating') || 'Your Rating'}:</label>
                                 <div class="star-select">
@@ -226,7 +231,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
                                 <span class="form-hint">${t('review.anonymous') || 'Leave empty for anonymous'}</span>
                             </div>
                             <div class="form-group">
-                                <label>${t('review.yourReview') || 'Your Review'} <span class="optional-label">(${t('common.optional') || 'optional'})</span></label>
+                                <label>${t('review.yourReview') || 'Your Recommendation'} <span class="optional-label">(${t('common.optional') || 'optional'})</span></label>
                                 <textarea
                                     placeholder=${t('review.reviewPlaceholder') || 'Share your experience working with this coach...'}
                                     rows="4"
@@ -237,7 +242,7 @@ export function ReviewsPopup({ coach, onClose, session }) {
                             <div class="review-form-actions">
                                 <button class="btn-cancel" onClick=${() => setShowAddReview(false)}>${t('review.cancel') || 'Cancel'}</button>
                                 <button class="btn-submit" onClick=${handleSubmitReview} disabled=${submitting}>
-                                    ${submitting ? (t('review.submitting') || 'Submitting...') : (t('review.submit') || 'Submit Review')}
+                                    ${submitting ? (t('review.submitting') || 'Submitting...') : (t('review.submit') || 'Submit Recommendation')}
                                 </button>
                             </div>
                         </div>
@@ -248,8 +253,8 @@ export function ReviewsPopup({ coach, onClose, session }) {
                     ` : reviews.length === 0 ? html`
                         <div class="no-reviews">
                             <div class="no-reviews-icon">📝</div>
-                            <p>${t('review.noReviews') || 'No reviews yet'}</p>
-                            <p class="no-reviews-subtext">${t('review.beFirst') || 'Be the first to review this coach!'}</p>
+                            <p>${t('review.noReviews') || 'No recommendations yet'}</p>
+                            <p class="no-reviews-subtext">${t('review.beFirst') || 'Be the first to recommend this coach!'}</p>
                         </div>
                     ` : html`
                         <div class="reviews-list">

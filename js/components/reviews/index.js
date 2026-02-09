@@ -148,7 +148,7 @@ export const ReviewCard = ({ review, isCoach = false, onRespond }) => {
                             onClick=${() => setShowResponseForm(true)}
                             style=${{ padding: '6px 12px', fontSize: '14px' }}
                         >
-                            Respond to Review
+                            Respond to Recommendation
                         </button>
                     ` : html`
                         <div style=${{ marginTop: '12px' }}>
@@ -196,7 +196,7 @@ export const WriteReviewModal = ({ booking, onClose, onSubmit }) => {
 
     const handleSubmit = async () => {
         if (!content.trim()) {
-            alert('Please write your review');
+            alert('Please write your recommendation');
             return;
         }
 
@@ -211,7 +211,7 @@ export const WriteReviewModal = ({ booking, onClose, onSubmit }) => {
         <div class="booking-modal" onClick=${onClose}>
             <div class="booking-content" onClick=${(e) => e.stopPropagation()} style=${{ maxWidth: '600px' }}>
                 <div class="booking-header">
-                    <h2>Write a Review</h2>
+                    <h2>Write a Recommendation</h2>
                     <button class="modal-close-btn" onClick=${onClose}>×</button>
                 </div>
 
@@ -222,7 +222,7 @@ export const WriteReviewModal = ({ booking, onClose, onSubmit }) => {
                     </div>
 
                     <div class="form-group">
-                        <label>Review Title (Optional)</label>
+                        <label>Recommendation Title (Optional)</label>
                         <input
                             type="text"
                             class="form-control"
@@ -234,7 +234,7 @@ export const WriteReviewModal = ({ booking, onClose, onSubmit }) => {
                     </div>
 
                     <div class="form-group">
-                        <label>Your Review *</label>
+                        <label>Your Recommendation *</label>
                         <textarea
                             class="form-control"
                             rows="6"
@@ -253,7 +253,7 @@ export const WriteReviewModal = ({ booking, onClose, onSubmit }) => {
                             disabled=${submitting || !content.trim()}
                             style=${{ flex: 1 }}
                         >
-                            ${submitting ? 'Submitting...' : 'Submit Review'}
+                            ${submitting ? 'Submitting...' : 'Submit Recommendation'}
                         </button>
                         <button
                             class="btn-secondary"

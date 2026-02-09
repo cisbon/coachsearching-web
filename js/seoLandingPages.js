@@ -280,7 +280,7 @@ export const SEOLandingPage = ({
                             <ul class="benefits-list">
                                 <li>${t('seo.benefit1') || 'All coaches are verified and credentialed'}</li>
                                 <li>${t('seo.benefit2') || 'Watch video introductions before booking'}</li>
-                                <li>${t('seo.benefit3') || 'Compare prices and read authentic reviews'}</li>
+                                <li>${t('seo.benefit3') || 'Compare prices and read authentic recommendations'}</li>
                                 <li>${t('seo.benefit4') || 'Book sessions online or in-person'}</li>
                                 <li>${t('seo.benefit5') || 'Secure payment processing'}</li>
                             </ul>
@@ -495,7 +495,7 @@ function getFAQs(specialty, location, lang) {
     const baseFAQs = [
         {
             q: t('faq.q1') || 'How do I choose the right coach?',
-            a: t('faq.a1') || 'Start by watching coach introduction videos to get a sense of their style and approach. Review their credentials, specialties, and client reviews. Many coaches offer a free initial consultation to ensure a good fit.'
+            a: t('faq.a1') || 'Start by watching coach introduction videos to get a sense of their style and approach. Review their credentials, specialties, and client recommendations. Many coaches offer a free initial consultation to ensure a good fit.'
         },
         {
             q: t('faq.q2') || 'What\'s the difference between online and in-person coaching?',

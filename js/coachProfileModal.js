@@ -114,7 +114,7 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
         { id: 'overview', label: t('profile.overview') || 'Overview' },
         { id: 'credentials', label: t('profile.credentials') || 'Credentials', count: credentials.length },
         { id: 'services', label: t('profile.services') || 'Services', count: services.length },
-        { id: 'reviews', label: t('profile.reviews') || 'Reviews', count: reviewsCount }
+        { id: 'reviews', label: t('profile.reviews') || 'Recommendations', count: reviewsCount }
     ];
 
     const renderStars = (rating) => {
@@ -180,7 +180,7 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
                                     <div class="profile-rating">
                                         <div class="rating-stars">${renderStars(rating)}</div>
                                         <span class="rating-value">${rating.toFixed(1)}</span>
-                                        <span class="rating-count">(${reviewsCount} ${t('coach.reviews') || 'reviews'})</span>
+                                        <span class="rating-count">(${reviewsCount} ${t('coach.reviews') || 'recommendations'})</span>
                                     </div>
                                 `}
 
@@ -288,7 +288,7 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
                                                 <div class="why-choose-icon">⭐</div>
                                                 <div class="why-choose-text">
                                                     <strong>${t('why.highlyRated') || 'Highly Rated'}</strong>
-                                                    <span>${rating.toFixed(1)}/5 ${t('why.fromReviews') || 'from'} ${reviewsCount} ${t('why.reviews') || 'reviews'}</span>
+                                                    <span>${rating.toFixed(1)}/5 ${t('why.fromReviews') || 'from'} ${reviewsCount} ${t('why.reviews') || 'recommendations'}</span>
                                                 </div>
                                             </li>
                                         `}
@@ -382,15 +382,15 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
                                 ${reviews.length === 0 ? html`
                                     <div class="empty-state">
                                         <span class="empty-icon">⭐</span>
-                                        <p>${t('reviews.none') || 'No reviews yet.'}</p>
-                                        <p class="empty-hint">${t('reviews.beFirst') || 'Be the first to leave a review!'}</p>
+                                        <p>${t('reviews.none') || 'No recommendations yet.'}</p>
+                                        <p class="empty-hint">${t('reviews.beFirst') || 'Be the first to leave a recommendation!'}</p>
                                     </div>
                                 ` : html`
                                     <div class="reviews-summary">
                                         <div class="reviews-score">
                                             <span class="score-value">${rating.toFixed(1)}</span>
                                             <div class="score-stars">${renderStars(rating)}</div>
-                                            <span class="score-count">${reviewsCount} ${t('coach.reviews') || 'reviews'}</span>
+                                            <span class="score-count">${reviewsCount} ${t('coach.reviews') || 'recommendations'}</span>
                                         </div>
                                     </div>
                                     <div class="reviews-list">

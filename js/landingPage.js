@@ -274,7 +274,7 @@ export const TrustSection = () => {
         },
         {
             icon: '⭐',
-            title: t('trust.reviews') || 'Authentic Reviews',
+            title: t('trust.reviews') || 'Authentic Recommendations',
             description: t('trust.reviewsDesc') || 'Real feedback from verified clients'
         },
         {
@@ -358,7 +358,7 @@ export const CTASection = ({ onBecomeCoach }) => {
                         <ul class="cta-benefits">
                             <li>${t('cta.benefit1') || 'Manage your schedule easily'}</li>
                             <li>${t('cta.benefit2') || 'Get paid securely'}</li>
-                            <li>${t('cta.benefit3') || 'Build your reputation with reviews'}</li>
+                            <li>${t('cta.benefit3') || 'Build your reputation with recommendations'}</li>
                         </ul>
                     </div>
                     <div class="cta-action">

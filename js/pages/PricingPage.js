@@ -202,7 +202,7 @@ function PricingCard({ tier, isYearly, isHighlighted }) {
         t('pricing.card.profileListing') || 'Profile listing (photo, bio, credentials)',
         t('pricing.card.appearSearch') || 'Appear in search results',
         t('pricing.card.upTo3Specs') || 'Up to 3 specializations',
-        t('pricing.card.clientReviews') || 'Client reviews displayed',
+        t('pricing.card.clientReviews') || 'Client recommendations displayed',
         t('pricing.card.shareableLink') || 'Shareable profile link',
         t('pricing.card.oneSlotWeek') || '1 discovery call slot per week',
     ];

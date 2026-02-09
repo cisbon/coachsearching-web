@@ -167,7 +167,7 @@ export function DashboardSubscription({ session }) {
                     <li>✓ ${t('subscription.feature1') || 'Profile visible to all clients'}</li>
                     <li>✓ ${t('subscription.feature2') || 'Unlimited discovery call requests'}</li>
                     <li>✓ ${t('subscription.feature3') || 'Publish articles & insights'}</li>
-                    <li>✓ ${t('subscription.feature4') || 'Client reviews & ratings'}</li>
+                    <li>✓ ${t('subscription.feature4') || 'Client recommendations & ratings'}</li>
                     <li>✓ ${t('subscription.feature5') || 'Priority support'}</li>
                 </ul>
 

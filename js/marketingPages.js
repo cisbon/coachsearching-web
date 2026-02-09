@@ -57,7 +57,7 @@ export const AboutPage = () => {
                         <div class="value-card">
                             <div class="value-icon">✨</div>
                             <h3>${t('about.values.quality.title') || 'Quality'}</h3>
-                            <p>${t('about.values.quality.desc') || 'Our AI-powered matching system and verified reviews help you find coaches who truly fit your needs.'}</p>
+                            <p>${t('about.values.quality.desc') || 'Our AI-powered matching system and verified recommendations help you find coaches who truly fit your needs.'}</p>
                         </div>
                         <div class="value-card">
                             <div class="value-icon">🤝</div>
@@ -144,7 +144,7 @@ export const ForCoachesPage = ({ onSignUp }) => {
                         <div class="benefit-card">
                             <div class="benefit-icon">⭐</div>
                             <h3>${t('forCoaches.benefits.reputation.title') || 'Build Your Reputation'}</h3>
-                            <p>${t('forCoaches.benefits.reputation.desc') || 'Collect verified reviews from clients. Showcase your expertise with a professional profile.'}</p>
+                            <p>${t('forCoaches.benefits.reputation.desc') || 'Collect verified recommendations from clients. Showcase your expertise with a professional profile.'}</p>
                         </div>
                         <div class="benefit-card">
                             <div class="benefit-icon">🎥</div>
@@ -214,7 +214,7 @@ export const ForCoachesPage = ({ onSignUp }) => {
                                 <li>${t('forCoaches.pricing.feature3') || 'Video profile hosting'}</li>
                                 <li>${t('forCoaches.pricing.feature4') || 'AI-powered client matching'}</li>
                                 <li>${t('forCoaches.pricing.feature5') || 'Secure payment processing'}</li>
-                                <li>${t('forCoaches.pricing.feature6') || 'Review & rating system'}</li>
+                                <li>${t('forCoaches.pricing.feature6') || 'Recommendation & rating system'}</li>
                             </ul>
                             <p class="pricing-note">${t('forCoaches.pricing.note') || 'Standard rate: 15%. Lock in the founding rate by joining now!'}</p>
                             <button class="cta-button primary" onClick=${onSignUp}>
@@ -325,7 +325,7 @@ export const PricingPage = ({ onClientSignUp, onCoachSignUp }) => {
                                     </li>
                                     <li>
                                         <span class="check-icon">✓</span>
-                                        ${t('pricing.clients.feature4') || 'Read verified reviews'}
+                                        ${t('pricing.clients.feature4') || 'Read verified recommendations'}
                                     </li>
                                     <li>
                                         <span class="check-icon">✓</span>
@@ -378,7 +378,7 @@ export const PricingPage = ({ onClientSignUp, onCoachSignUp }) => {
                                     </li>
                                     <li>
                                         <span class="check-icon">✓</span>
-                                        ${t('pricing.coaches.feature6') || 'Review & rating collection'}
+                                        ${t('pricing.coaches.feature6') || 'Recommendation & rating collection'}
                                     </li>
                                     <li>
                                         <span class="check-icon">✓</span>
@@ -473,12 +473,12 @@ export const FAQPage = () => {
             {
                 id: 'c1',
                 q: t('faq.clients.q1') || 'How do I find the right coach?',
-                a: t('faq.clients.a1') || 'You can browse coaches by specialty, watch their video introductions, read reviews, and take our AI-powered matching quiz to get personalized recommendations based on your goals and preferences.'
+                a: t('faq.clients.a1') || 'You can browse coaches by specialty, watch their video introductions, read recommendations, and take our AI-powered matching quiz to get personalized suggestions based on your goals and preferences.'
             },
             {
                 id: 'c2',
                 q: t('faq.clients.q2') || 'Is it free to browse coaches?',
-                a: t('faq.clients.a2') || 'Yes! Browsing profiles, watching videos, reading reviews, and using our matching quiz is completely free. You only pay when you book a session.'
+                a: t('faq.clients.a2') || 'Yes! Browsing profiles, watching videos, reading recommendations, and using our matching quiz is completely free. You only pay when you book a session.'
             },
             {
                 id: 'c3',

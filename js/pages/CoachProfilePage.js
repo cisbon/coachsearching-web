@@ -64,7 +64,7 @@ const isUUID = (str) => {
 /**
  * Write Review Modal Component
  */
-const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
+const WriteRecommendationModal = ({ coach, onClose, onSubmit }) => {
     const [rating, setRating] = useState(5);
     const [hoverRating, setHoverRating] = useState(0);
     const [content, setContent] = useState('');
@@ -100,7 +100,7 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
             return;
         }
         if (!content.trim() || content.trim().length < 10) {
-            setError(t('review.errorContent') || 'Please write at least 10 characters');
+            setError(t('review.errorContent') || 'Please write at least 10 characters for your recommendation');
             return;
         }
 
@@ -112,7 +112,7 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
         if (result.success) {
             setSuccess(true);
         } else {
-            setError(result.error || t('review.errorGeneric') || 'Failed to submit review');
+            setError(result.error || t('review.errorGeneric') || 'Failed to submit recommendation');
         }
 
         setSubmitting(false);
@@ -123,13 +123,13 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
             <div class="review-modal-overlay" onClick=${handleBackdropClick}>
                 <div class="review-modal-container">
                     <div class="review-modal-header">
-                        <h3>${t('review.successTitle') || 'Review Submitted!'}</h3>
+                        <h3>${t('review.successTitle') || 'Recommendation Submitted!'}</h3>
                         <button class="review-modal-close" onClick=${onClose}>✕</button>
                     </div>
                     <div class="review-modal-content success-content">
                         <div class="success-icon">✓</div>
-                        <p>${t('review.successMessage') || 'Thank you for your review!'}</p>
-                        <p>${t('review.successPending') || 'Your review will be visible after moderation.'}</p>
+                        <p>${t('review.successMessage') || 'Thank you for your recommendation!'}</p>
+                        <p>${t('review.successPending') || 'Your recommendation will be visible after moderation.'}</p>
                         <button class="btn-primary" onClick=${onClose}>${t('review.close') || 'Close'}</button>
                     </div>
                 </div>
@@ -141,7 +141,7 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
         <div class="review-modal-overlay" onClick=${handleBackdropClick}>
             <div class="review-modal-container">
                 <div class="review-modal-header">
-                    <h3>${t('review.writeReview') || 'Write a Review'}</h3>
+                    <h3>${t('review.writeReview') || 'Write a Recommendation'}</h3>
                     <button class="review-modal-close" onClick=${onClose}>✕</button>
                 </div>
                 <div class="review-modal-content">
@@ -189,7 +189,7 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
                         </div>
 
                         <div class="form-group">
-                            <label>${t('review.yourReview') || 'Your Review'} *</label>
+                            <label>${t('review.yourReview') || 'Your Recommendation'} *</label>
                             <textarea
                                 placeholder=${t('review.contentPlaceholder') || 'Tell others about your experience...'}
                                 rows="5"
@@ -207,7 +207,7 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
                                 ${t('review.cancel') || 'Cancel'}
                             </button>
                             <button type="submit" class="btn-primary" disabled=${submitting}>
-                                ${submitting ? (t('review.submitting') || 'Submitting...') : (t('review.submit') || 'Submit Review')}
+                                ${submitting ? (t('review.submitting') || 'Submitting...') : (t('review.submit') || 'Submit Recommendation')}
                             </button>
                         </div>
                     </form>
@@ -220,7 +220,7 @@ const WriteReviewModal = ({ coach, onClose, onSubmit }) => {
 /**
  * Reviews Popup Component
  */
-const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasReviewed, isOwnProfile, onClose, onWriteReview, getReviewBreakdown }) => {
+const RecommendationsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasReviewed, isOwnProfile, onClose, onWriteReview, getReviewBreakdown }) => {
     useEffect(() => {
         const handleEscape = (e) => {
             if (e.key === 'Escape') onClose();
@@ -244,7 +244,7 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
         <div class="reviews-popup-overlay" onClick=${handleBackdropClick}>
             <div class="reviews-popup-container">
                 <div class="reviews-popup-header">
-                    <h3>${t('coach.reviews') || 'Client Reviews'}</h3>
+                    <h3>${t('coach.reviews') || 'Client Recommendations'}</h3>
                     <button class="reviews-popup-close" onClick=${onClose}>✕</button>
                 </div>
                 <div class="reviews-popup-content">
@@ -256,7 +256,7 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
                                     <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
                                 `)}
                             </div>
-                            <span class="review-count">${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'}</span>
+                            <span class="review-count">${reviewsCount} ${reviewsCount === 1 ? 'recommendation' : 'recommendations'}</span>
                         </div>
 
                         ${reviews.length >= 3 && html`
@@ -285,17 +285,17 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
                                 userHasReviewed ? html`
                                     <div class="already-reviewed">
                                         <span class="check-icon">✓</span>
-                                        ${t('review.alreadyReviewedShort') || 'You reviewed this coach'}
+                                        ${t('review.alreadyReviewed') || 'You recommended this coach'}
                                     </div>
                                 ` : html`
                                     <button class="btn-write-review-popup" onClick=${onWriteReview}>
-                                        ✏️ ${t('review.writeReview') || 'Write a Review'}
+                                        ✏️ ${t('review.writeReview') || 'Write a Recommendation'}
                                     </button>
                                 `
                             )
                         ) : html`
                             <button class="btn-write-review-popup btn-login" onClick=${() => { onClose(); window.navigateTo('/login'); }}>
-                                ${t('review.loginToReview') || 'Log in to write a review'}
+                                ${t('review.loginToReview') || 'Log in to write a recommendation'}
                             </button>
                         `}
                     </div>
@@ -315,13 +315,13 @@ const ReviewsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasRe
                                             `)}
                                         </div>
                                     </div>
-                                    <p class="review-content">${review.content}</p>
+                                    <p class="review-content">${review.text || review.content || ''}</p>
                                 </div>
                             `)}
                         </div>
                     ` : html`
                         <div class="popup-no-reviews">
-                            <p>${t('review.beFirstToReview') || 'Be the first to share your experience!'}</p>
+                            <p>${t('review.beFirstToReview') || 'Be the first to share your recommendation!'}</p>
                         </div>
                     `}
                 </div>
@@ -4180,7 +4180,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 .from('cs_reviews')
                 .select('*')
                 .eq('coach_id', coachId)
-                .eq('client_id', session.user.id)
+                .eq('user_id', session.user.id)
                 .maybeSingle();
 
             if (error) {
@@ -4201,26 +4201,30 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         }
 
         if (session.user.id === coach.user_id) {
-            return { success: false, error: t('review.cannotReviewSelf') || 'You cannot review yourself' };
+            return { success: false, error: t('review.cannotReviewSelf') || 'You cannot recommend yourself' };
         }
 
         try {
+            // Ensure user exists in cs_users (may be missing if created before trigger)
+            await window.supabaseClient
+                .from('cs_users')
+                .upsert({ id: session.user.id, email: session.user.email || '' }, { onConflict: 'id', ignoreDuplicates: true });
+
             const { data, error } = await window.supabaseClient
                 .from('cs_reviews')
                 .insert({
                     coach_id: coach.id,
-                    client_id: session.user.id,
+                    user_id: session.user.id,
                     rating: reviewData.rating,
-                    content: reviewData.content,
-                    reviewer_name: reviewData.name || session.user.email?.split('@')[0] || 'Anonymous',
-                    status: 'pending'
+                    text: reviewData.content,
+                    reviewer_name: reviewData.name || session.user.email?.split('@')[0] || 'Anonymous'
                 })
                 .select()
                 .single();
 
             if (error) {
                 if (error.code === '23505') {
-                    return { success: false, error: t('review.alreadyReviewed') || 'You have already reviewed this coach' };
+                    return { success: false, error: t('review.alreadyReviewed') || 'You have already recommended this coach' };
                 }
                 throw error;
             }
@@ -4232,7 +4236,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             return { success: true, data };
         } catch (err) {
             console.error('Failed to submit review:', err);
-            return { success: false, error: err.message || 'Failed to submit review' };
+            return { success: false, error: err.message || 'Failed to submit recommendation' };
         }
     };
 
@@ -4635,7 +4639,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         `)}
                                         ${reviews.length > 3 && html`
                                             <button class="btn-show-all" onClick=${() => setShowReviewsPopup(true)}>
-                                                ${t('coach.showAllReviews') || 'Show all reviews'} →
+                                                ${t('coach.showAllReviews') || 'Show all recommendations'} →
                                             </button>
                                         `}
                                     </div>
@@ -5040,18 +5044,18 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 />
             `}
 
-            <!-- Write Review Modal -->
+            <!-- Write Recommendation Modal -->
             ${showReviewModal && html`
-                <${WriteReviewModal}
+                <${WriteRecommendationModal}
                     coach=${coach}
                     onClose=${() => setShowReviewModal(false)}
                     onSubmit=${handleSubmitReview}
                 />
             `}
 
-            <!-- Reviews Popup -->
+            <!-- Recommendations Popup -->
             ${showReviewsPopup && html`
-                <${ReviewsPopup}
+                <${RecommendationsPopup}
                     coach=${coach}
                     reviews=${reviews}
                     rating=${rating}
