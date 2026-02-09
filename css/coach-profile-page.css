@@ -1098,16 +1098,19 @@
     position: relative;
 }
 
-.experience-item.editable {
+.experience-item.editable,
+.education-item.editable {
     cursor: pointer;
     transition: background 0.2s ease;
 }
 
-.experience-item.editable:hover {
+.experience-item.editable:hover,
+.education-item.editable:hover {
     background: #f0f1f3;
 }
 
-.experience-item .exp-edit-icon {
+.experience-item .exp-edit-icon,
+.education-item .edu-edit-icon {
     position: absolute;
     top: 12px;
     right: 12px;
@@ -1116,7 +1119,8 @@
     transition: opacity 0.2s ease;
 }
 
-.experience-item.editable:hover .exp-edit-icon {
+.experience-item.editable:hover .exp-edit-icon,
+.education-item.editable:hover .edu-edit-icon {
     opacity: 1;
 }
 
@@ -1181,11 +1185,26 @@
     color: var(--text-muted, #666);
 }
 
-.exp-description {
+.exp-description,
+.edu-description {
     margin: 10px 0 0;
     font-size: 0.9rem;
     color: var(--text-secondary, #4a5568);
     line-height: 1.5;
+}
+
+.edu-header {
+    margin-bottom: 4px;
+}
+
+.edu-dates {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.edu-location {
+    color: var(--text-muted, #6b7280);
 }
 
 /* Add section button (+ icon) */

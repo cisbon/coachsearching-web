@@ -1351,9 +1351,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
             case 'skills':
                 setFormData({ skills: (coach.skills || []).join(', ') });
                 break;
-            case 'education':
-                setFormData({ education: JSON.stringify(coach.education || [], null, 2) });
-                break;
             case 'languages':
                 setFormData({ primary_profile_language: coach.primary_profile_language || '' });
                 break;
@@ -1394,9 +1391,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                         skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean)
                     };
                     break;
-                case 'education':
-                    updateData = { education: JSON.parse(formData.education) };
-                    break;
                 case 'languages':
                     updateData = {
                         primary_profile_language: formData.primary_profile_language
@@ -1433,7 +1427,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
             title: t('edit.title') || 'Edit Title',
             about: t('edit.about') || 'Edit About',
             skills: t('edit.skills') || 'Edit Skills',
-            education: t('edit.education') || 'Edit Education',
             languages: t('edit.primaryLanguage') || 'Edit Primary Profile Language',
             hourly_rate: t('edit.hourlyRate') || 'Edit Hourly Rate'
         };
@@ -1547,20 +1540,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                             min="0"
                             step="5"
                         />
-                    </div>
-                `;
-            case 'education':
-                return html`
-                    <div class="form-group">
-                        <label>${(t('edit.educationJson') || 'Education (JSON format)')}</label>
-                        <textarea
-                            value=${formData[section] || '[]'}
-                            onChange=${(e) => handleChange(section, e.target.value)}
-                            placeholder='[{"title": "...", "company": "...", "duration": "..."}]'
-                            rows="8"
-                            class="json-textarea"
-                        ></textarea>
-                        <p class="form-hint">${t('edit.jsonHint') || 'Enter as JSON array. Each item can have: title, company/institution, duration/year, description'}</p>
                     </div>
                 `;
             default:
@@ -1843,6 +1822,251 @@ const EditExperienceModal = memo(function EditExperienceModal({ coach, experienc
 });
 
 /**
+ * Edit Education Modal Component
+ * Used for both adding new and editing existing education items
+ * Data is stored in cs_coach_educations table
+ */
+const EditEducationModal = memo(function EditEducationModal({ coach, education, onClose, onSaved }) {
+    const isEditing = !!education;
+    const [formData, setFormData] = useState({
+        institute: education?.institute || '',
+        degree: education?.degree || '',
+        field_of_study: education?.field_of_study || '',
+        field_of_study_en: education?.field_of_study_en || '',
+        start_date: education?.start_date || '',
+        end_date: education?.end_date || '',
+        location: education?.location || '',
+        description: education?.description || '',
+        description_en: education?.description_en || ''
+    });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        if (!formData.institute.trim()) {
+            setError(t('edit.instituteRequired') || 'Institute is required');
+            setSaving(false);
+            return;
+        }
+        if (!formData.field_of_study.trim()) {
+            setError(t('edit.fieldOfStudyRequired') || 'Field of study is required');
+            setSaving(false);
+            return;
+        }
+        if (!formData.start_date) {
+            setError(t('edit.startDateRequired') || 'Start date is required');
+            setSaving(false);
+            return;
+        }
+
+        try {
+            const payload = {
+                coach_id: coach.id,
+                institute: formData.institute.trim(),
+                degree: formData.degree.trim() || null,
+                field_of_study: formData.field_of_study.trim(),
+                field_of_study_en: formData.field_of_study_en.trim() || null,
+                start_date: formData.start_date,
+                end_date: formData.end_date || null,
+                location: formData.location.trim() || null,
+                description: formData.description.trim() || null,
+                description_en: formData.description_en.trim() || null
+            };
+
+            if (isEditing) {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_educations')
+                    .update(payload)
+                    .eq('id', education.id)
+                    .eq('coach_id', coach.id);
+                if (dbError) throw dbError;
+            } else {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_educations')
+                    .insert(payload);
+                if (dbError) throw dbError;
+            }
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Save education error:', err);
+            setError(err.message || 'Failed to save education');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!isEditing) return;
+        if (!confirm(t('edit.confirmDeleteEducation') || 'Are you sure you want to delete this education?')) return;
+
+        setSaving(true);
+        try {
+            const { error: dbError } = await window.supabaseClient
+                .from('cs_coach_educations')
+                .delete()
+                .eq('id', education.id)
+                .eq('coach_id', coach.id);
+            if (dbError) throw dbError;
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Delete education error:', err);
+            setError(err.message || 'Failed to delete education');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container edit-modal-wide">
+                <div class="edit-modal-header">
+                    <h3>${isEditing ? (t('edit.editEducation') || 'Edit Education') : (t('edit.addEducation') || 'Add Education')}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.institute') || 'Institute'} *</label>
+                                <input
+                                    type="text"
+                                    value=${formData.institute}
+                                    onChange=${(e) => handleChange('institute', e.target.value)}
+                                    placeholder=${t('edit.institutePlaceholder') || 'e.g., University of Oxford'}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.degree') || 'Degree'}</label>
+                                <input
+                                    type="text"
+                                    value=${formData.degree}
+                                    onChange=${(e) => handleChange('degree', e.target.value)}
+                                    placeholder=${t('edit.degreePlaceholder') || "e.g., Master's, Bachelor's, MBA"}
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.fieldOfStudy') || 'Field of Study'} *</label>
+                                <input
+                                    type="text"
+                                    value=${formData.field_of_study}
+                                    onChange=${(e) => handleChange('field_of_study', e.target.value)}
+                                    placeholder=${t('edit.fieldOfStudyPlaceholder') || 'e.g., Psychology, Business Administration'}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.fieldOfStudyEn') || 'Field of Study (English)'}</label>
+                                <input
+                                    type="text"
+                                    value=${formData.field_of_study_en}
+                                    onChange=${(e) => handleChange('field_of_study_en', e.target.value)}
+                                    placeholder=${t('edit.fieldOfStudyEnPlaceholder') || 'English translation'}
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.startDate') || 'Start Date'} *</label>
+                                <input
+                                    type="date"
+                                    value=${formData.start_date}
+                                    onChange=${(e) => handleChange('start_date', e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.endDate') || 'End Date'}</label>
+                                <input
+                                    type="date"
+                                    value=${formData.end_date}
+                                    onChange=${(e) => handleChange('end_date', e.target.value)}
+                                />
+                                <p class="form-hint">${t('edit.endDateHint') || 'Leave empty if currently studying'}</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.location') || 'Location'}</label>
+                            <input
+                                type="text"
+                                value=${formData.location}
+                                onChange=${(e) => handleChange('location', e.target.value)}
+                                placeholder=${t('edit.locationPlaceholder') || 'e.g., Berlin, Germany'}
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.description') || 'Description'}</label>
+                            <textarea
+                                value=${formData.description}
+                                onChange=${(e) => handleChange('description', e.target.value)}
+                                placeholder=${t('edit.eduDescriptionPlaceholder') || 'Describe your studies, achievements...'}
+                                rows="4"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.descriptionEn') || 'Description (English)'}</label>
+                            <textarea
+                                value=${formData.description_en}
+                                onChange=${(e) => handleChange('description_en', e.target.value)}
+                                placeholder=${t('edit.descriptionEnPlaceholder') || 'English translation of description...'}
+                                rows="4"
+                            ></textarea>
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions">
+                        ${isEditing && html`
+                            <button type="button" class="btn-delete" onClick=${handleDelete} disabled=${saving}>
+                                ${t('edit.delete') || 'Delete'}
+                            </button>
+                        `}
+                        <div class="edit-modal-actions-right">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>
+                                ${t('edit.cancel') || 'Cancel'}
+                            </button>
+                            <button type="submit" class="btn-primary" disabled=${saving}>
+                                ${saving ? (t('edit.saving') || 'Saving...') : (isEditing ? (t('edit.save') || 'Save Changes') : (t('edit.add') || 'Add Education'))}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
+/**
  * Edit English Profile Modal Component
  * Allows editing English-specific profile fields (title_en, bio_en)
  */
@@ -1948,6 +2172,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [reviews, setReviews] = useState([]);
     const [credentials, setCredentials] = useState([]);
     const [experiences, setExperiences] = useState([]);
+    const [educations, setEducations] = useState([]);
     const [similarCoaches, setSimilarCoaches] = useState([]);
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
@@ -1965,6 +2190,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [showBannerEditor, setShowBannerEditor] = useState(false);
     const [showEnglishProfileEditor, setShowEnglishProfileEditor] = useState(false);
     const [editingExperience, setEditingExperience] = useState(null); // null=closed, 'new'=add new, object=edit existing
+    const [editingEducation, setEditingEducation] = useState(null); // null=closed, 'new'=add new, object=edit existing
 
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
@@ -2024,6 +2250,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     loadReviews(data.id),
                     loadCredentials(data.id),
                     loadExperiences(data.id),
+                    loadEducations(data.id),
                     loadSimilarCoaches(data),
                     checkUserHasReviewed(data.id),
                 ]);
@@ -2088,6 +2315,19 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             setExperiences(data || []);
         } catch (err) {
             console.error('Failed to load experiences:', err);
+        }
+    };
+
+    const loadEducations = async (id) => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('cs_coach_educations')
+                .select('*')
+                .eq('coach_id', id)
+                .order('start_date', { ascending: false });
+            setEducations(data || []);
+        } catch (err) {
+            console.error('Failed to load educations:', err);
         }
     };
 
@@ -2417,7 +2657,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Handle edit section clicks - open inline edit modal
     const handleEditSection = (sectionName) => {
         // Sections that can be edited inline
-        const inlineEditableSections = ['name', 'title', 'about', 'skills', 'education', 'languages', 'hourly_rate'];
+        const inlineEditableSections = ['name', 'title', 'about', 'skills', 'languages', 'hourly_rate'];
 
         if (sectionName === 'banner') {
             // Open the banner editor modal
@@ -2435,7 +2675,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const hasOtherVisibleSections = (articles.length > 0 || isOwnProfile) || // featured/highlights
         hasActivityContent || // activity
         experiences.length > 0 || isOwnProfile || // experience
-        coach.education || isOwnProfile || // education
+        educations.length > 0 || isOwnProfile || // education
         credentials.length > 0 || isOwnProfile || // certifications
         (coach.specialties?.length > 0) || isOwnProfile; // skills
 
@@ -2710,7 +2950,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Education Section -->
-                        ${(coach.education || isOwnProfile) && html`
+                        ${(educations.length > 0 || isOwnProfile) && html`
                             <section class="profile-section education-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -2718,28 +2958,42 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         ${t('coach.education') || 'Education'}
                                     </h2>
                                     ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('education')} title="Edit education">
+                                        <button class="btn-add-section" onClick=${() => setEditingEducation('new')} title="Add education">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
                                             </svg>
                                         </button>
                                     `}
                                 </div>
-                                ${coach.education ? html`
+                                ${educations.length > 0 ? html`
                                     <div class="education-content">
-                                        ${(Array.isArray(coach.education) ? coach.education : [coach.education]).map((edu, i) => html`
-                                            <div key=${i} class="education-item">
-                                                ${typeof edu === 'object' ? html`
-                                                    <h4 class="edu-degree">${edu.degree || edu.title}</h4>
-                                                    ${edu.institution && html`<p class="edu-institution">${edu.institution}</p>`}
-                                                    ${edu.year && html`<span class="edu-year">${edu.year}</span>`}
-                                                ` : html`<p>${edu}</p>`}
+                                        ${educations.map(edu => html`
+                                            <div key=${edu.id} class="education-item ${isOwnProfile ? 'editable' : ''}" onClick=${isOwnProfile ? () => setEditingEducation(edu) : null}>
+                                                <div class="edu-header">
+                                                    <h4 class="edu-degree">${edu.degree ? `${edu.degree}, ${edu.field_of_study}` : edu.field_of_study}</h4>
+                                                    <p class="edu-institution">${edu.institute}</p>
+                                                    <div class="edu-dates">
+                                                        <span>${new Date(edu.start_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                                                        <span> - </span>
+                                                        <span>${edu.end_date ? new Date(edu.end_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : (t('coach.present') || 'Present')}</span>
+                                                        ${edu.location && html` · <span class="edu-location">${edu.location}</span>`}
+                                                    </div>
+                                                </div>
+                                                ${edu.description && html`<p class="edu-description">${edu.description}</p>`}
+                                                ${isOwnProfile && html`
+                                                    <span class="edu-edit-icon">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                        </svg>
+                                                    </span>
+                                                `}
                                             </div>
                                         `)}
                                     </div>
                                 ` : html`
-                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('education')}>
+                                    <div class="empty-section-prompt" onClick=${() => setEditingEducation('new')}>
                                         <span class="empty-icon">+</span>
                                         <p>${t('coach.addEducation') || 'Add your education and training'}</p>
                                     </div>
@@ -3004,6 +3258,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     experience=${editingExperience === 'new' ? null : editingExperience}
                     onClose=${() => setEditingExperience(null)}
                     onSaved=${() => loadExperiences(coach.id)}
+                />
+            `}
+
+            <!-- Edit Education Modal (add new / edit existing) -->
+            ${editingEducation && isOwnProfile && html`
+                <${EditEducationModal}
+                    coach=${coach}
+                    education=${editingEducation === 'new' ? null : editingEducation}
+                    onClose=${() => setEditingEducation(null)}
+                    onSaved=${() => loadEducations(coach.id)}
                 />
             `}
 
