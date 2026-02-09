@@ -1251,6 +1251,52 @@
     border: 1px solid rgba(0, 98, 102, 0.1);
 }
 
+.skill-tag.clickable {
+    cursor: pointer;
+}
+
+.skill-tag.clickable:hover {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+}
+
+/* Skill item with commendation */
+.skill-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-commend {
+    background: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.btn-commend:hover {
+    background: #f0f9ff;
+    border-color: var(--primary-petrol, #006266);
+}
+
+.btn-commend.commended {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-color: var(--primary-petrol, #006266);
+}
+
+.commendation-count {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
 .interest-tag {
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     color: #92400e;
@@ -3308,4 +3354,167 @@
     .btn-apply-banner {
         width: 100%;
     }
+}
+
+/* ==========================================================================
+   Volunteering Section
+   ========================================================================== */
+
+.volunteering-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.volunteering-item {
+    position: relative;
+    padding: 16px;
+    border-left: 3px solid var(--primary-petrol, #006266);
+    background: #fafbfc;
+    border-radius: 0 8px 8px 0;
+    transition: background 0.2s;
+}
+
+.volunteering-item.editable {
+    cursor: pointer;
+}
+
+.volunteering-item.editable:hover {
+    background: #f0f4f8;
+}
+
+.vol-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.vol-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin: 0;
+}
+
+.vol-organization {
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin: 0;
+}
+
+.vol-dates {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-top: 4px;
+}
+
+.vol-location {
+    color: #718096;
+}
+
+.vol-description {
+    font-size: 0.875rem;
+    color: #4a5568;
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+.vol-edit-icon {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: #718096;
+}
+
+.volunteering-item.editable:hover .vol-edit-icon {
+    opacity: 1;
+}
+
+/* ==========================================================================
+   Publications Section
+   ========================================================================== */
+
+.publications-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.publication-item {
+    position: relative;
+    padding: 16px;
+    border-left: 3px solid var(--primary-petrol, #006266);
+    background: #fafbfc;
+    border-radius: 0 8px 8px 0;
+    transition: background 0.2s;
+}
+
+.publication-item.editable {
+    cursor: pointer;
+}
+
+.publication-item.editable:hover {
+    background: #f0f4f8;
+}
+
+.pub-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pub-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin: 0;
+}
+
+.pub-title a {
+    color: var(--primary-petrol, #006266);
+    text-decoration: none;
+}
+
+.pub-title a:hover {
+    text-decoration: underline;
+}
+
+.pub-publisher {
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin: 0;
+}
+
+.pub-meta {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-top: 4px;
+    display: flex;
+    gap: 12px;
+}
+
+.pub-authors {
+    color: #718096;
+}
+
+.pub-description {
+    font-size: 0.875rem;
+    color: #4a5568;
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+.pub-edit-icon {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: #718096;
+}
+
+.publication-item.editable:hover .pub-edit-icon {
+    opacity: 1;
 }

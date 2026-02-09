@@ -1348,9 +1348,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                     coaching_approach: coach.coaching_approach || ''
                 });
                 break;
-            case 'skills':
-                setFormData({ skills: (coach.skills || []).join(', ') });
-                break;
             case 'languages':
                 setFormData({ primary_profile_language: coach.primary_profile_language || '' });
                 break;
@@ -1384,11 +1381,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                     updateData = {
                         bio: formData.bio,
                         coaching_approach: formData.coaching_approach
-                    };
-                    break;
-                case 'skills':
-                    updateData = {
-                        skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean)
                     };
                     break;
                 case 'languages':
@@ -1426,7 +1418,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
             name: t('edit.name') || 'Edit Name',
             title: t('edit.title') || 'Edit Title',
             about: t('edit.about') || 'Edit About',
-            skills: t('edit.skills') || 'Edit Skills',
             languages: t('edit.primaryLanguage') || 'Edit Primary Profile Language',
             hourly_rate: t('edit.hourlyRate') || 'Edit Hourly Rate'
         };
@@ -1481,19 +1472,6 @@ const EditSectionModal = memo(function EditSectionModal({ section, coach, onClos
                             placeholder="Describe your coaching methodology..."
                             rows="4"
                         ></textarea>
-                    </div>
-                `;
-            case 'skills':
-                return html`
-                    <div class="form-group">
-                        <label>${t('edit.skills') || 'Skills'}</label>
-                        <textarea
-                            value=${formData.skills || ''}
-                            onChange=${(e) => handleChange('skills', e.target.value)}
-                            placeholder="Enter skills separated by commas (e.g., Leadership, Communication, Time Management)"
-                            rows="3"
-                        ></textarea>
-                        <p class="form-hint">${t('edit.skillsHint') || 'Separate each skill with a comma'}</p>
                     </div>
                 `;
             case 'languages':
@@ -2067,6 +2045,605 @@ const EditEducationModal = memo(function EditEducationModal({ coach, education, 
 });
 
 /**
+ * Edit Skill Modal Component
+ * Used for both adding new and editing existing skill items
+ * Data is stored in cs_coach_skills table
+ */
+const EditSkillModal = memo(function EditSkillModal({ coach, skill, onClose, onSaved }) {
+    const isEditing = !!skill;
+    const [formData, setFormData] = useState({
+        skill: skill?.skill || '',
+        skill_en: skill?.skill_en || ''
+    });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        if (!formData.skill.trim()) {
+            setError(t('edit.skillRequired') || 'Skill name is required');
+            setSaving(false);
+            return;
+        }
+
+        try {
+            const payload = {
+                coach_id: coach.id,
+                skill: formData.skill.trim(),
+                skill_en: formData.skill_en.trim() || null
+            };
+
+            if (isEditing) {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_skills')
+                    .update(payload)
+                    .eq('id', skill.id)
+                    .eq('coach_id', coach.id);
+                if (dbError) throw dbError;
+            } else {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_skills')
+                    .insert(payload);
+                if (dbError) throw dbError;
+            }
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Save skill error:', err);
+            setError(err.message || 'Failed to save skill');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!isEditing) return;
+        if (!confirm(t('edit.confirmDeleteSkill') || 'Are you sure you want to delete this skill?')) return;
+
+        setSaving(true);
+        try {
+            const { error: dbError } = await window.supabaseClient
+                .from('cs_coach_skills')
+                .delete()
+                .eq('id', skill.id)
+                .eq('coach_id', coach.id);
+            if (dbError) throw dbError;
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Delete skill error:', err);
+            setError(err.message || 'Failed to delete skill');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container">
+                <div class="edit-modal-header">
+                    <h3>${isEditing ? (t('edit.editSkill') || 'Edit Skill') : (t('edit.addSkill') || 'Add Skill')}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+
+                        <div class="form-group">
+                            <label>${t('edit.skillName') || 'Skill'} *</label>
+                            <input
+                                type="text"
+                                value=${formData.skill}
+                                onChange=${(e) => handleChange('skill', e.target.value)}
+                                placeholder=${t('edit.skillPlaceholder') || 'e.g., Leadership Coaching'}
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.skillNameEn') || 'Skill (English)'}</label>
+                            <input
+                                type="text"
+                                value=${formData.skill_en}
+                                onChange=${(e) => handleChange('skill_en', e.target.value)}
+                                placeholder=${t('edit.skillEnPlaceholder') || 'English translation'}
+                            />
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions">
+                        ${isEditing && html`
+                            <button type="button" class="btn-delete" onClick=${handleDelete} disabled=${saving}>
+                                ${t('edit.delete') || 'Delete'}
+                            </button>
+                        `}
+                        <div class="edit-modal-actions-right">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>
+                                ${t('edit.cancel') || 'Cancel'}
+                            </button>
+                            <button type="submit" class="btn-primary" disabled=${saving}>
+                                ${saving ? (t('edit.saving') || 'Saving...') : (isEditing ? (t('edit.save') || 'Save Changes') : (t('edit.add') || 'Add Skill'))}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
+/**
+ * Edit Volunteering Modal Component
+ * Used for both adding new and editing existing volunteering items
+ * Data is stored in cs_coach_volunteering table
+ */
+const EditVolunteeringModal = memo(function EditVolunteeringModal({ coach, volunteering, onClose, onSaved }) {
+    const isEditing = !!volunteering;
+    const [formData, setFormData] = useState({
+        title: volunteering?.title || '',
+        title_en: volunteering?.title_en || '',
+        organization: volunteering?.organization || '',
+        start_date: volunteering?.start_date || '',
+        end_date: volunteering?.end_date || '',
+        location: volunteering?.location || '',
+        description: volunteering?.description || '',
+        description_en: volunteering?.description_en || ''
+    });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        if (!formData.title.trim()) {
+            setError(t('edit.titleRequired') || 'Title is required');
+            setSaving(false);
+            return;
+        }
+        if (!formData.organization.trim()) {
+            setError(t('edit.organizationRequired') || 'Organization is required');
+            setSaving(false);
+            return;
+        }
+        if (!formData.start_date) {
+            setError(t('edit.startDateRequired') || 'Start date is required');
+            setSaving(false);
+            return;
+        }
+
+        try {
+            const payload = {
+                coach_id: coach.id,
+                title: formData.title.trim(),
+                title_en: formData.title_en.trim() || null,
+                organization: formData.organization.trim(),
+                start_date: formData.start_date,
+                end_date: formData.end_date || null,
+                location: formData.location.trim() || null,
+                description: formData.description.trim() || null,
+                description_en: formData.description_en.trim() || null
+            };
+
+            if (isEditing) {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_volunteering')
+                    .update(payload)
+                    .eq('id', volunteering.id)
+                    .eq('coach_id', coach.id);
+                if (dbError) throw dbError;
+            } else {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_volunteering')
+                    .insert(payload);
+                if (dbError) throw dbError;
+            }
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Save volunteering error:', err);
+            setError(err.message || 'Failed to save volunteering');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!isEditing) return;
+        if (!confirm(t('edit.confirmDeleteVolunteering') || 'Are you sure you want to delete this volunteering entry?')) return;
+
+        setSaving(true);
+        try {
+            const { error: dbError } = await window.supabaseClient
+                .from('cs_coach_volunteering')
+                .delete()
+                .eq('id', volunteering.id)
+                .eq('coach_id', coach.id);
+            if (dbError) throw dbError;
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Delete volunteering error:', err);
+            setError(err.message || 'Failed to delete volunteering');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container edit-modal-wide">
+                <div class="edit-modal-header">
+                    <h3>${isEditing ? (t('edit.editVolunteering') || 'Edit Volunteering') : (t('edit.addVolunteering') || 'Add Volunteering')}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.role') || 'Role'} *</label>
+                                <input
+                                    type="text"
+                                    value=${formData.title}
+                                    onChange=${(e) => handleChange('title', e.target.value)}
+                                    placeholder=${t('edit.volunteerRolePlaceholder') || 'e.g., Mentor, Workshop Facilitator'}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.titleEn') || 'Role (English)'}</label>
+                                <input
+                                    type="text"
+                                    value=${formData.title_en}
+                                    onChange=${(e) => handleChange('title_en', e.target.value)}
+                                    placeholder=${t('edit.titleEnPlaceholder') || 'English translation'}
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.organization') || 'Organization'} *</label>
+                            <input
+                                type="text"
+                                value=${formData.organization}
+                                onChange=${(e) => handleChange('organization', e.target.value)}
+                                placeholder=${t('edit.organizationPlaceholder') || 'e.g., Organization Name'}
+                                required
+                            />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.startDate') || 'Start Date'} *</label>
+                                <input
+                                    type="date"
+                                    value=${formData.start_date}
+                                    onChange=${(e) => handleChange('start_date', e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.endDate') || 'End Date'}</label>
+                                <input
+                                    type="date"
+                                    value=${formData.end_date}
+                                    onChange=${(e) => handleChange('end_date', e.target.value)}
+                                />
+                                <p class="form-hint">${t('edit.endDateHint') || 'Leave empty if ongoing'}</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.location') || 'Location'}</label>
+                            <input
+                                type="text"
+                                value=${formData.location}
+                                onChange=${(e) => handleChange('location', e.target.value)}
+                                placeholder=${t('edit.locationPlaceholder') || 'e.g., Berlin, Germany'}
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.description') || 'Description'}</label>
+                            <textarea
+                                value=${formData.description}
+                                onChange=${(e) => handleChange('description', e.target.value)}
+                                placeholder=${t('edit.volunteerDescriptionPlaceholder') || 'Describe your volunteering activities...'}
+                                rows="4"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.descriptionEn') || 'Description (English)'}</label>
+                            <textarea
+                                value=${formData.description_en}
+                                onChange=${(e) => handleChange('description_en', e.target.value)}
+                                placeholder=${t('edit.descriptionEnPlaceholder') || 'English translation of description...'}
+                                rows="4"
+                            ></textarea>
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions">
+                        ${isEditing && html`
+                            <button type="button" class="btn-delete" onClick=${handleDelete} disabled=${saving}>
+                                ${t('edit.delete') || 'Delete'}
+                            </button>
+                        `}
+                        <div class="edit-modal-actions-right">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>
+                                ${t('edit.cancel') || 'Cancel'}
+                            </button>
+                            <button type="submit" class="btn-primary" disabled=${saving}>
+                                ${saving ? (t('edit.saving') || 'Saving...') : (isEditing ? (t('edit.save') || 'Save Changes') : (t('edit.add') || 'Add Volunteering'))}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
+/**
+ * Edit Publication Modal Component
+ * Used for both adding new and editing existing publication items
+ * Data is stored in cs_coach_publications table
+ */
+const EditPublicationModal = memo(function EditPublicationModal({ coach, publication, onClose, onSaved }) {
+    const isEditing = !!publication;
+    const [formData, setFormData] = useState({
+        title: publication?.title || '',
+        title_en: publication?.title_en || '',
+        publisher: publication?.publisher || '',
+        publication_date: publication?.publication_date || '',
+        authors: publication?.authors || '',
+        publication_url: publication?.publication_url || '',
+        description: publication?.description || '',
+        description_en: publication?.description_en || ''
+    });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('edit-modal-overlay')) {
+            onClose();
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+
+        if (!formData.title.trim()) {
+            setError(t('edit.titleRequired') || 'Title is required');
+            setSaving(false);
+            return;
+        }
+
+        try {
+            const payload = {
+                coach_id: coach.id,
+                title: formData.title.trim(),
+                title_en: formData.title_en.trim() || null,
+                publisher: formData.publisher.trim() || null,
+                publication_date: formData.publication_date || null,
+                authors: formData.authors.trim() || null,
+                publication_url: formData.publication_url.trim() || null,
+                description: formData.description.trim() || null,
+                description_en: formData.description_en.trim() || null
+            };
+
+            if (isEditing) {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_publications')
+                    .update(payload)
+                    .eq('id', publication.id)
+                    .eq('coach_id', coach.id);
+                if (dbError) throw dbError;
+            } else {
+                const { error: dbError } = await window.supabaseClient
+                    .from('cs_coach_publications')
+                    .insert(payload);
+                if (dbError) throw dbError;
+            }
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Save publication error:', err);
+            setError(err.message || 'Failed to save publication');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!isEditing) return;
+        if (!confirm(t('edit.confirmDeletePublication') || 'Are you sure you want to delete this publication?')) return;
+
+        setSaving(true);
+        try {
+            const { error: dbError } = await window.supabaseClient
+                .from('cs_coach_publications')
+                .delete()
+                .eq('id', publication.id)
+                .eq('coach_id', coach.id);
+            if (dbError) throw dbError;
+
+            await onSaved();
+            onClose();
+        } catch (err) {
+            console.error('Delete publication error:', err);
+            setError(err.message || 'Failed to delete publication');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return html`
+        <div class="edit-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="edit-modal-container edit-modal-wide">
+                <div class="edit-modal-header">
+                    <h3>${isEditing ? (t('edit.editPublication') || 'Edit Publication') : (t('edit.addPublication') || 'Add Publication')}</h3>
+                    <button class="edit-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <form onSubmit=${handleSubmit}>
+                    <div class="edit-modal-content">
+                        ${error && html`<div class="edit-error">${error}</div>`}
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.publicationTitle') || 'Title'} *</label>
+                                <input
+                                    type="text"
+                                    value=${formData.title}
+                                    onChange=${(e) => handleChange('title', e.target.value)}
+                                    placeholder=${t('edit.publicationTitlePlaceholder') || 'e.g., The Art of Executive Coaching'}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.titleEn') || 'Title (English)'}</label>
+                                <input
+                                    type="text"
+                                    value=${formData.title_en}
+                                    onChange=${(e) => handleChange('title_en', e.target.value)}
+                                    placeholder=${t('edit.titleEnPlaceholder') || 'English translation'}
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.publisher') || 'Publisher'}</label>
+                                <input
+                                    type="text"
+                                    value=${formData.publisher}
+                                    onChange=${(e) => handleChange('publisher', e.target.value)}
+                                    placeholder=${t('edit.publisherPlaceholder') || 'e.g., Springer, Harvard Business Review'}
+                                />
+                            </div>
+                            <div class="form-group form-group-flex">
+                                <label>${t('edit.publicationDate') || 'Publication Date'}</label>
+                                <input
+                                    type="date"
+                                    value=${formData.publication_date}
+                                    onChange=${(e) => handleChange('publication_date', e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.authors') || 'Authors'}</label>
+                            <input
+                                type="text"
+                                value=${formData.authors}
+                                onChange=${(e) => handleChange('authors', e.target.value)}
+                                placeholder=${t('edit.authorsPlaceholder') || 'e.g., John Smith, Jane Doe'}
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.publicationUrl') || 'Publication URL'}</label>
+                            <input
+                                type="url"
+                                value=${formData.publication_url}
+                                onChange=${(e) => handleChange('publication_url', e.target.value)}
+                                placeholder=${t('edit.publicationUrlPlaceholder') || 'https://...'}
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.description') || 'Description'}</label>
+                            <textarea
+                                value=${formData.description}
+                                onChange=${(e) => handleChange('description', e.target.value)}
+                                placeholder=${t('edit.publicationDescriptionPlaceholder') || 'Brief description of the publication...'}
+                                rows="4"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>${t('edit.descriptionEn') || 'Description (English)'}</label>
+                            <textarea
+                                value=${formData.description_en}
+                                onChange=${(e) => handleChange('description_en', e.target.value)}
+                                placeholder=${t('edit.descriptionEnPlaceholder') || 'English translation of description...'}
+                                rows="4"
+                            ></textarea>
+                        </div>
+                    </div>
+                    <div class="edit-modal-actions">
+                        ${isEditing && html`
+                            <button type="button" class="btn-delete" onClick=${handleDelete} disabled=${saving}>
+                                ${t('edit.delete') || 'Delete'}
+                            </button>
+                        `}
+                        <div class="edit-modal-actions-right">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>
+                                ${t('edit.cancel') || 'Cancel'}
+                            </button>
+                            <button type="submit" class="btn-primary" disabled=${saving}>
+                                ${saving ? (t('edit.saving') || 'Saving...') : (isEditing ? (t('edit.save') || 'Save Changes') : (t('edit.add') || 'Add Publication'))}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+});
+
+/**
  * Edit English Profile Modal Component
  * Allows editing English-specific profile fields (title_en, bio_en)
  */
@@ -2191,6 +2768,12 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [showEnglishProfileEditor, setShowEnglishProfileEditor] = useState(false);
     const [editingExperience, setEditingExperience] = useState(null); // null=closed, 'new'=add new, object=edit existing
     const [editingEducation, setEditingEducation] = useState(null); // null=closed, 'new'=add new, object=edit existing
+    const [coachSkills, setCoachSkills] = useState([]); // skills from cs_coach_skills table
+    const [editingSkill, setEditingSkill] = useState(null); // null=closed, 'new'=add new, object=edit existing
+    const [volunteering, setVolunteering] = useState([]);
+    const [editingVolunteering, setEditingVolunteering] = useState(null);
+    const [publications, setPublications] = useState([]);
+    const [editingPublication, setEditingPublication] = useState(null);
 
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
@@ -2251,6 +2834,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     loadCredentials(data.id),
                     loadExperiences(data.id),
                     loadEducations(data.id),
+                    loadCoachSkills(data.id),
+                    loadVolunteering(data.id),
+                    loadPublications(data.id),
                     loadSimilarCoaches(data),
                     checkUserHasReviewed(data.id),
                 ]);
@@ -2328,6 +2914,45 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             setEducations(data || []);
         } catch (err) {
             console.error('Failed to load educations:', err);
+        }
+    };
+
+    const loadCoachSkills = async (id) => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('cs_coach_skills')
+                .select('*, cs_coach_skills_commendations(id, commendation_user_id)')
+                .eq('coach_id', id)
+                .order('created_at', { ascending: true });
+            setCoachSkills(data || []);
+        } catch (err) {
+            console.error('Failed to load coach skills:', err);
+        }
+    };
+
+    const loadVolunteering = async (id) => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('cs_coach_volunteering')
+                .select('*')
+                .eq('coach_id', id)
+                .order('start_date', { ascending: false });
+            setVolunteering(data || []);
+        } catch (err) {
+            console.error('Failed to load volunteering:', err);
+        }
+    };
+
+    const loadPublications = async (id) => {
+        try {
+            const { data } = await window.supabaseClient
+                .from('cs_coach_publications')
+                .select('*')
+                .eq('coach_id', id)
+                .order('publication_date', { ascending: false });
+            setPublications(data || []);
+        } catch (err) {
+            console.error('Failed to load publications:', err);
         }
     };
 
@@ -2654,10 +3279,38 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         setPendingAuthAction(null);
     };
 
+    // Handle skill commendation toggle
+    const handleCommendSkill = async (skillId) => {
+        if (!session) return;
+        const userId = session.user.id;
+        const skill = coachSkills.find(s => s.id === skillId);
+        if (!skill) return;
+
+        const existing = (skill.cs_coach_skills_commendations || []).find(c => c.commendation_user_id === userId);
+
+        try {
+            if (existing) {
+                // Remove commendation
+                await window.supabaseClient
+                    .from('cs_coach_skills_commendations')
+                    .delete()
+                    .eq('id', existing.id);
+            } else {
+                // Add commendation
+                await window.supabaseClient
+                    .from('cs_coach_skills_commendations')
+                    .insert({ coach_skill_id: skillId, commendation_user_id: userId });
+            }
+            await loadCoachSkills(coach.id);
+        } catch (err) {
+            console.error('Commendation error:', err);
+        }
+    };
+
     // Handle edit section clicks - open inline edit modal
     const handleEditSection = (sectionName) => {
         // Sections that can be edited inline
-        const inlineEditableSections = ['name', 'title', 'about', 'skills', 'languages', 'hourly_rate'];
+        const inlineEditableSections = ['name', 'title', 'about', 'languages', 'hourly_rate'];
 
         if (sectionName === 'banner') {
             // Open the banner editor modal
@@ -2677,7 +3330,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         experiences.length > 0 || isOwnProfile || // experience
         educations.length > 0 || isOwnProfile || // education
         credentials.length > 0 || isOwnProfile || // certifications
-        (coach.specialties?.length > 0) || isOwnProfile; // skills
+        coachSkills.length > 0 || isOwnProfile || // skills
+        volunteering.length > 0 || isOwnProfile || // volunteering
+        publications.length > 0 || isOwnProfile; // publications
 
     return html`
         <div class="coach-profile-page linkedin-style">
@@ -3043,7 +3698,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Skills Section -->
-                        ${((coach.skills && coach.skills.length > 0) || isOwnProfile) && html`
+                        ${(coachSkills.length > 0 || isOwnProfile) && html`
                             <section class="profile-section skills-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -3051,22 +3706,38 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         ${t('coach.skills') || 'Skills'}
                                     </h2>
                                     ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('skills')} title="Edit skills">
+                                        <button class="btn-add-section" onClick=${() => setEditingSkill('new')} title="Add skill">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
                                             </svg>
                                         </button>
                                     `}
                                 </div>
-                                ${coach.skills && coach.skills.length > 0 ? html`
+                                ${coachSkills.length > 0 ? html`
                                     <div class="skills-list">
-                                        ${(Array.isArray(coach.skills) ? coach.skills : [coach.skills]).map((skill, i) => html`
-                                            <span key=${i} class="skill-tag">${skill}</span>
+                                        ${coachSkills.map(sk => html`
+                                            <div key=${sk.id} class="skill-item ${isOwnProfile ? 'editable' : ''}">
+                                                <span class="skill-tag ${isOwnProfile ? 'clickable' : ''}" onClick=${isOwnProfile ? () => setEditingSkill(sk) : null}>
+                                                    ${sk.skill}
+                                                </span>
+                                                ${!isOwnProfile && session && html`
+                                                    <button
+                                                        class="btn-commend ${(sk.cs_coach_skills_commendations || []).find(c => c.commendation_user_id === session.user.id) ? 'commended' : ''}"
+                                                        onClick=${() => handleCommendSkill(sk.id)}
+                                                        title=${(sk.cs_coach_skills_commendations || []).find(c => c.commendation_user_id === session.user.id) ? 'Remove endorsement' : 'Endorse this skill'}
+                                                    >
+                                                        👍
+                                                    </button>
+                                                `}
+                                                ${(sk.cs_coach_skills_commendations || []).length > 0 && html`
+                                                    <span class="commendation-count">${(sk.cs_coach_skills_commendations || []).length}</span>
+                                                `}
+                                            </div>
                                         `)}
                                     </div>
                                 ` : html`
-                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('skills')}>
+                                    <div class="empty-section-prompt" onClick=${() => setEditingSkill('new')}>
                                         <span class="empty-icon">+</span>
                                         <p>${t('coach.addSkills') || 'Add your coaching skills'}</p>
                                     </div>
@@ -3075,7 +3746,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Volunteering Section -->
-                        ${isOwnProfile && html`
+                        ${(volunteering.length > 0 || isOwnProfile) && html`
                             <section class="profile-section volunteering-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -3083,23 +3754,51 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         ${t('coach.volunteering') || 'Volunteering'}
                                     </h2>
                                     ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('volunteering')} title="Edit volunteering">
+                                        <button class="btn-add-section" onClick=${() => setEditingVolunteering('new')} title="Add volunteering">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
                                             </svg>
                                         </button>
                                     `}
                                 </div>
-                                <div class="empty-section-prompt" onClick=${() => handleEditSection('volunteering')}>
-                                    <span class="empty-icon">+</span>
-                                    <p>${t('coach.addVolunteering') || 'Add your volunteering experience'}</p>
-                                </div>
+                                ${volunteering.length > 0 ? html`
+                                    <div class="volunteering-content">
+                                        ${volunteering.map(vol => html`
+                                            <div key=${vol.id} class="volunteering-item ${isOwnProfile ? 'editable' : ''}" onClick=${isOwnProfile ? () => setEditingVolunteering(vol) : null}>
+                                                <div class="vol-header">
+                                                    <h4 class="vol-title">${vol.title}</h4>
+                                                    <p class="vol-organization">${vol.organization}</p>
+                                                    <div class="vol-dates">
+                                                        <span>${new Date(vol.start_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                                                        <span> - </span>
+                                                        <span>${vol.end_date ? new Date(vol.end_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : (t('coach.present') || 'Present')}</span>
+                                                        ${vol.location && html` · <span class="vol-location">${vol.location}</span>`}
+                                                    </div>
+                                                </div>
+                                                ${vol.description && html`<p class="vol-description">${vol.description}</p>`}
+                                                ${isOwnProfile && html`
+                                                    <span class="vol-edit-icon">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                        </svg>
+                                                    </span>
+                                                `}
+                                            </div>
+                                        `)}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => setEditingVolunteering('new')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addVolunteering') || 'Add your volunteering experience'}</p>
+                                    </div>
+                                `}
                             </section>
                         `}
 
                         <!-- Publications Section -->
-                        ${isOwnProfile && html`
+                        ${(publications.length > 0 || isOwnProfile) && html`
                             <section class="profile-section publications-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -3107,18 +3806,46 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         ${t('coach.publications') || 'Publications'}
                                     </h2>
                                     ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('publications')} title="Edit publications">
+                                        <button class="btn-add-section" onClick=${() => setEditingPublication('new')} title="Add publication">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
                                             </svg>
                                         </button>
                                     `}
                                 </div>
-                                <div class="empty-section-prompt" onClick=${() => handleEditSection('publications')}>
-                                    <span class="empty-icon">+</span>
-                                    <p>${t('coach.addPublications') || 'Add your publications'}</p>
-                                </div>
+                                ${publications.length > 0 ? html`
+                                    <div class="publications-content">
+                                        ${publications.map(pub => html`
+                                            <div key=${pub.id} class="publication-item ${isOwnProfile ? 'editable' : ''}" onClick=${isOwnProfile ? () => setEditingPublication(pub) : null}>
+                                                <div class="pub-header">
+                                                    <h4 class="pub-title">
+                                                        ${pub.publication_url ? html`<a href=${pub.publication_url} target="_blank" rel="noopener noreferrer" onClick=${(e) => e.stopPropagation()}>${pub.title}</a>` : pub.title}
+                                                    </h4>
+                                                    ${pub.publisher && html`<p class="pub-publisher">${pub.publisher}</p>`}
+                                                    <div class="pub-meta">
+                                                        ${pub.publication_date && html`<span class="pub-date">${new Date(pub.publication_date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>`}
+                                                        ${pub.authors && html`<span class="pub-authors">${pub.authors}</span>`}
+                                                    </div>
+                                                </div>
+                                                ${pub.description && html`<p class="pub-description">${pub.description}</p>`}
+                                                ${isOwnProfile && html`
+                                                    <span class="pub-edit-icon">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                        </svg>
+                                                    </span>
+                                                `}
+                                            </div>
+                                        `)}
+                                    </div>
+                                ` : html`
+                                    <div class="empty-section-prompt" onClick=${() => setEditingPublication('new')}>
+                                        <span class="empty-icon">+</span>
+                                        <p>${t('coach.addPublications') || 'Add your publications'}</p>
+                                    </div>
+                                `}
                             </section>
                         `}
                     </main>
@@ -3268,6 +3995,36 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     education=${editingEducation === 'new' ? null : editingEducation}
                     onClose=${() => setEditingEducation(null)}
                     onSaved=${() => loadEducations(coach.id)}
+                />
+            `}
+
+            <!-- Edit Skill Modal (add new / edit existing) -->
+            ${editingSkill && isOwnProfile && html`
+                <${EditSkillModal}
+                    coach=${coach}
+                    skill=${editingSkill === 'new' ? null : editingSkill}
+                    onClose=${() => setEditingSkill(null)}
+                    onSaved=${() => loadCoachSkills(coach.id)}
+                />
+            `}
+
+            <!-- Edit Volunteering Modal (add new / edit existing) -->
+            ${editingVolunteering && isOwnProfile && html`
+                <${EditVolunteeringModal}
+                    coach=${coach}
+                    volunteering=${editingVolunteering === 'new' ? null : editingVolunteering}
+                    onClose=${() => setEditingVolunteering(null)}
+                    onSaved=${() => loadVolunteering(coach.id)}
+                />
+            `}
+
+            <!-- Edit Publication Modal (add new / edit existing) -->
+            ${editingPublication && isOwnProfile && html`
+                <${EditPublicationModal}
+                    coach=${coach}
+                    publication=${editingPublication === 'new' ? null : editingPublication}
+                    onClose=${() => setEditingPublication(null)}
+                    onSaved=${() => loadPublications(coach.id)}
                 />
             `}
 
