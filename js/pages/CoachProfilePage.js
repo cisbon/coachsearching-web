@@ -61,10 +61,132 @@ const isUUID = (str) => {
     return uuidRegex.test(str);
 };
 
+// Helper function to validate video URLs
+const isValidVideoUrl = (url) => {
+    if (!url || url.trim() === '') return true;
+    const lowerUrl = url.toLowerCase();
+    return (
+        lowerUrl.includes('youtube.com') ||
+        lowerUrl.includes('youtu.be') ||
+        lowerUrl.includes('vimeo.com') ||
+        lowerUrl.includes('loom.com') ||
+        lowerUrl.includes('dailymotion.com') ||
+        lowerUrl.includes('dai.ly')
+    );
+};
+
+/**
+ * Service Request Modal Component
+ * Shown when a visitor clicks "Request" on a service line item
+ */
+const ServiceRequestModal = ({ coach, service, onClose }) => {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        const handleEscape = (e) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', handleEscape);
+        return () => { document.removeEventListener('keydown', handleEscape); document.body.style.overflow = ''; };
+    }, [onClose]);
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('discovery-modal-overlay')) onClose();
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!name.trim() || !email.trim()) {
+            setError(t('service.errorRequired') || 'Please fill in your name and email');
+            return;
+        }
+        setSubmitting(true);
+        setError('');
+        try {
+            if (window.supabaseClient) {
+                await window.supabaseClient.from('cs_discovery_requests').insert({
+                    coach_id: coach.id,
+                    client_name: name.trim(),
+                    client_email: email.trim(),
+                    message: `[${t('service.requestFor') || 'Service Request'}: ${service.name}] ${message.trim()}`,
+                    source: 'service_request'
+                });
+            }
+            setSuccess(true);
+        } catch (err) {
+            setError(err.message || 'Failed to send request');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (success) {
+        return html`
+            <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
+                <div class="discovery-modal-container">
+                    <div class="discovery-modal-header">
+                        <h3>${t('service.requestSent') || 'Request Sent!'}</h3>
+                        <button class="discovery-modal-close" onClick=${onClose}>✕</button>
+                    </div>
+                    <div class="discovery-modal-content success-content">
+                        <div class="success-icon">✓</div>
+                        <h4>${t('service.thankYou') || 'Thank you!'}</h4>
+                        <p>${(t('service.requestConfirmation') || '{coachName} will get back to you with more information about this service.').replace('{coachName}', coach.full_name)}</p>
+                        <button class="btn-primary" onClick=${onClose}>${t('common.close') || 'Close'}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return html`
+        <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
+            <div class="discovery-modal-container">
+                <div class="discovery-modal-header">
+                    <h3>${t('service.requestService') || 'Request Service'}</h3>
+                    <button class="discovery-modal-close" onClick=${onClose}>✕</button>
+                </div>
+                <div class="discovery-modal-content">
+                    <p class="discovery-intro">
+                        ${(t('service.requestIntro') || 'I would like to request the service <strong>{serviceName}</strong> and would like to receive additional information.').replace('{serviceName}', `<strong>${service.name}</strong>`)}
+                    </p>
+
+                    ${error && html`<div class="discovery-error">${error}</div>`}
+
+                    <form onSubmit=${handleSubmit}>
+                        <div class="form-group">
+                            <label>${t('service.yourName') || 'Your Name'} *</label>
+                            <input type="text" value=${name} onChange=${(e) => setName(e.target.value)} placeholder=${t('service.namePlaceholder') || 'Your full name'} required />
+                        </div>
+                        <div class="form-group">
+                            <label>${t('service.yourEmail') || 'Your Email'} *</label>
+                            <input type="email" value=${email} onChange=${(e) => setEmail(e.target.value)} placeholder=${t('service.emailPlaceholder') || 'your@email.com'} required />
+                        </div>
+                        <div class="form-group">
+                            <label>${t('service.additionalMessage') || 'Message'} (${t('review.optional') || 'optional'})</label>
+                            <textarea value=${message} onChange=${(e) => setMessage(e.target.value)} placeholder=${t('service.messagePlaceholder') || 'Any questions or additional information...'} rows="3"></textarea>
+                        </div>
+                        <div class="discovery-form-actions">
+                            <button type="button" class="btn-cancel" onClick=${onClose}>${t('common.cancel') || 'Cancel'}</button>
+                            <button type="submit" class="btn-primary" disabled=${submitting}>
+                                ${submitting ? (t('common.sending') || 'Sending...') : (t('service.sendRequest') || 'Send Request')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 /**
  * Write Review Modal Component
  */
-const WriteRecommendationModal = ({ coach, onClose, onSubmit }) => {
+const WriteRecommendationModal = ({ coach, onClose, onSubmit, userHasReviewed }) => {
     const [rating, setRating] = useState(5);
     const [hoverRating, setHoverRating] = useState(0);
     const [content, setContent] = useState('');
@@ -91,6 +213,25 @@ const WriteRecommendationModal = ({ coach, onClose, onSubmit }) => {
             onClose();
         }
     };
+
+    // C.2: If user has already reviewed, show message instead of form
+    if (userHasReviewed) {
+        return html`
+            <div class="review-modal-overlay" onClick=${handleBackdropClick}>
+                <div class="review-modal-container">
+                    <div class="review-modal-header">
+                        <h3>${t('review.alreadyReviewedTitle') || 'Already Recommended'}</h3>
+                        <button class="review-modal-close" onClick=${onClose}>✕</button>
+                    </div>
+                    <div class="review-modal-content success-content">
+                        <div class="success-icon">✓</div>
+                        <p>${t('review.alreadyReviewed') || 'You have already recommended this coach'}</p>
+                        <button class="btn-primary" onClick=${onClose}>${t('review.close') || 'Close'}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -221,6 +362,8 @@ const WriteRecommendationModal = ({ coach, onClose, onSubmit }) => {
  * Reviews Popup Component
  */
 const RecommendationsPopup = ({ coach, reviews, rating, reviewsCount, session, userHasReviewed, isOwnProfile, onClose, onWriteReview, getReviewBreakdown }) => {
+    const [starFilter, setStarFilter] = useState(0); // 0 = all stars
+
     useEffect(() => {
         const handleEscape = (e) => {
             if (e.key === 'Escape') onClose();
@@ -240,6 +383,12 @@ const RecommendationsPopup = ({ coach, reviews, rating, reviewsCount, session, u
         }
     };
 
+    // Filter reviews: only shown=true for visitors, then apply star filter
+    const visibleReviews = reviews.filter(r => r.shown !== false);
+    const filteredReviews = starFilter > 0
+        ? visibleReviews.filter(r => Math.round(r.rating) === starFilter)
+        : visibleReviews;
+
     return html`
         <div class="reviews-popup-overlay" onClick=${handleBackdropClick}>
             <div class="reviews-popup-container">
@@ -256,17 +405,17 @@ const RecommendationsPopup = ({ coach, reviews, rating, reviewsCount, session, u
                                     <span key=${star} class="star ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
                                 `)}
                             </div>
-                            <span class="review-count">${reviewsCount} ${reviewsCount === 1 ? 'recommendation' : 'recommendations'}</span>
+                            <span class="review-count">${visibleReviews.length} ${visibleReviews.length === 1 ? 'recommendation' : 'recommendations'}</span>
                         </div>
 
-                        ${reviews.length >= 3 && html`
+                        ${visibleReviews.length >= 3 && html`
                             <div class="popup-breakdown">
                                 ${[5,4,3,2,1].map(stars => {
                                     const breakdown = getReviewBreakdown();
                                     const count = breakdown[stars];
-                                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                                    const percentage = visibleReviews.length > 0 ? (count / visibleReviews.length) * 100 : 0;
                                     return html`
-                                        <div key=${stars} class="breakdown-row">
+                                        <div key=${stars} class="breakdown-row clickable ${starFilter === stars ? 'active-filter' : ''}" onClick=${() => setStarFilter(starFilter === stars ? 0 : stars)}>
                                             <span class="bar-label">${stars}★</span>
                                             <div class="bar-track">
                                                 <div class="bar-fill" style=${{ width: `${percentage}%` }}></div>
@@ -275,6 +424,11 @@ const RecommendationsPopup = ({ coach, reviews, rating, reviewsCount, session, u
                                         </div>
                                     `;
                                 })}
+                                ${starFilter > 0 && html`
+                                    <button class="btn-clear-filter" onClick=${() => setStarFilter(0)}>
+                                        ${t('review.clearFilter') || 'Clear filter'} ✕
+                                    </button>
+                                `}
                             </div>
                         `}
                     </div>
@@ -300,13 +454,13 @@ const RecommendationsPopup = ({ coach, reviews, rating, reviewsCount, session, u
                         `}
                     </div>
 
-                    ${reviews.length > 0 ? html`
+                    ${filteredReviews.length > 0 ? html`
                         <div class="popup-reviews-list">
-                            ${reviews.map(review => html`
+                            ${filteredReviews.map(review => html`
                                 <div key=${review.id} class="popup-review-item">
                                     <div class="review-header">
                                         <div class="reviewer-info">
-                                            <span class="reviewer-name">${review.reviewer_name || 'Anonymous'}</span>
+                                            <span class="reviewer-name">${review.reviewer_name || (t('review.anonymous') || 'Anonymous')}</span>
                                             <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
                                         </div>
                                         <div class="review-rating">
@@ -316,16 +470,109 @@ const RecommendationsPopup = ({ coach, reviews, rating, reviewsCount, session, u
                                         </div>
                                     </div>
                                     <p class="review-content">${review.text || review.content || ''}</p>
+                                    ${review.comment && html`
+                                        <div class="review-coach-comment popup-coach-comment">
+                                            <div class="coach-comment-header">
+                                                <strong>${coach.full_name}</strong>
+                                                <span class="coach-comment-label">${t('review.coachReply') || 'Coach Reply'}</span>
+                                            </div>
+                                            <p class="coach-comment-text">${review.comment}</p>
+                                        </div>
+                                    `}
                                 </div>
                             `)}
                         </div>
                     ` : html`
                         <div class="popup-no-reviews">
-                            <p>${t('review.beFirstToReview') || 'Be the first to share your recommendation!'}</p>
+                            <p>${starFilter > 0 ? (t('review.noMatchingReviews') || 'No recommendations with this rating.') : (t('review.beFirstToReview') || 'Be the first to share your recommendation!')}</p>
                         </div>
                     `}
                 </div>
             </div>
+        </div>
+    `;
+};
+
+/**
+ * ReviewItem Component
+ * Renders a single review with toggle (own profile), coach comment, and edit comment
+ */
+const ReviewItem = ({ review, isOwnProfile, coachName, onToggleShown, onSaveComment }) => {
+    const [editingComment, setEditingComment] = useState(false);
+    const [commentDraft, setCommentDraft] = useState(review.comment || '');
+
+    const isShown = review.shown !== false; // default true
+
+    const handleSaveComment = () => {
+        onSaveComment(review.id, commentDraft);
+        setEditingComment(false);
+    };
+
+    return html`
+        <div class="rating-review-item ${!isShown && isOwnProfile ? 'review-hidden' : ''}">
+            <div class="review-main-row">
+                <div class="review-left-column">
+                    <span class="reviewer-name">${review.reviewer_name || (t('review.anonymous') || 'Anonymous')}</span>
+                    <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
+                </div>
+                ${(review.text || review.content) && html`
+                    <div class="review-middle-column">
+                        <p class="review-text">${review.text || review.content}</p>
+                    </div>
+                `}
+                <div class="review-right-column">
+                    ${[1,2,3,4,5].map(star => html`
+                        <span key=${star} class="star-compact ${star <= review.rating ? 'filled' : ''}">★</span>
+                    `)}
+                    ${isOwnProfile && html`
+                        <div class="review-toggle-wrapper" title=${isShown ? (t('coach.hideReview') || 'Hide this review') : (t('coach.showReview') || 'Show this review')}>
+                            <div class="ios-toggle-switch ios-toggle-sm ${isShown ? 'active' : ''}" onClick=${() => onToggleShown(review.id, isShown)}>
+                                <div class="ios-toggle-knob"></div>
+                            </div>
+                        </div>
+                    `}
+                </div>
+            </div>
+
+            <!-- D.3.2: Display coach comment for all users -->
+            ${review.comment && !editingComment && html`
+                <div class="review-coach-comment">
+                    <div class="coach-comment-header">
+                        <strong>${coachName}</strong>
+                        <span class="coach-comment-label">${t('review.coachReply') || 'Coach Reply'}</span>
+                    </div>
+                    <p class="coach-comment-text">${review.comment}</p>
+                    ${isOwnProfile && html`
+                        <button class="btn-edit-comment" onClick=${() => { setCommentDraft(review.comment); setEditingComment(true); }}>
+                            ${t('review.editComment') || 'Edit'}
+                        </button>
+                    `}
+                </div>
+            `}
+
+            <!-- D.3: Coach can add comment (own profile) -->
+            ${isOwnProfile && !review.comment && !editingComment && html`
+                <button class="btn-add-comment" onClick=${() => setEditingComment(true)}>
+                    💬 ${t('review.addComment') || 'Add a reply'}
+                </button>
+            `}
+
+            <!-- D.3.1: Comment edit form -->
+            ${editingComment && html`
+                <div class="coach-comment-edit">
+                    <textarea
+                        class="comment-edit-textarea"
+                        value=${commentDraft}
+                        onChange=${(e) => setCommentDraft(e.target.value)}
+                        placeholder=${t('review.commentPlaceholder') || 'Thank you for your recommendation...'}
+                        rows="3"
+                    ></textarea>
+                    <div class="comment-edit-actions">
+                        <button class="btn-cancel btn-sm" onClick=${() => setEditingComment(false)}>${t('common.cancel') || 'Cancel'}</button>
+                        <button class="btn-primary btn-sm" onClick=${handleSaveComment}>${t('common.save') || 'Save'}</button>
+                    </div>
+                </div>
+            `}
         </div>
     `;
 };
@@ -591,6 +838,13 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="2" y1="12" x2="22" y2="12"></line>
                                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                            </svg>
+                        </a>
+                    `}
+                    ${coach.instagram_url && html`
+                        <a href=${coach.instagram_url} target="_blank" rel="noopener noreferrer" class="btn-external-link btn-instagram" title="Instagram">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
                             </svg>
                         </a>
                     `}
@@ -872,8 +1126,10 @@ const EditCoachProfileModal = memo(function EditCoachProfileModal({ coach, onClo
     const [formData, setFormData] = useState({
         full_name: coach.full_name || '',
         title: coach.title || '',
+        intro_video_url: coach.intro_video_url || '',
         linkedin_url: coach.linkedin_url || '',
         website_url: coach.website_url || '',
+        instagram_url: coach.instagram_url || '',
         city_id: coach.city_id || null,
         location_country: '',
         languages: coach.languages || [],
@@ -883,6 +1139,7 @@ const EditCoachProfileModal = memo(function EditCoachProfileModal({ coach, onClo
         session_types: coach.session_types || [],
         offers_free_discovery: coach.offers_free_discovery !== false
     });
+    const [videoUrlError, setVideoUrlError] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -963,8 +1220,10 @@ const EditCoachProfileModal = memo(function EditCoachProfileModal({ coach, onClo
             await onSave({
                 full_name: formData.full_name.trim(),
                 title: formData.title.trim() || null,
+                intro_video_url: isValidVideoUrl(formData.intro_video_url) ? (formData.intro_video_url.trim() || null) : null,
                 linkedin_url: formData.linkedin_url.trim() || null,
                 website_url: formData.website_url.trim() || null,
+                instagram_url: formData.instagram_url.trim() || null,
                 city_id: formData.city_id ? parseInt(formData.city_id) : null,
                 languages: formData.languages,
                 years_experience: parseInt(formData.years_experience) || 0,
@@ -1005,16 +1264,29 @@ const EditCoachProfileModal = memo(function EditCoachProfileModal({ coach, onClo
                             </div>
                         </div>
 
-                        <!-- LinkedIn & Website -->
-                        <div class="form-row">
-                            <div class="form-group form-group-flex">
-                                <label>LinkedIn URL</label>
-                                <input type="url" value=${formData.linkedin_url} onChange=${(e) => handleChange('linkedin_url', e.target.value)} placeholder="https://linkedin.com/in/..." />
+                        <!-- Intro Video URL (prominent) -->
+                        <div class="form-group intro-video-section">
+                            <div class="intro-video-promo">
+                                <span class="promo-badge">⭐ ${t('edit.recommended') || 'Highly Recommended'}</span>
                             </div>
-                            <div class="form-group form-group-flex">
-                                <label>Website URL</label>
-                                <input type="url" value=${formData.website_url} onChange=${(e) => handleChange('website_url', e.target.value)} placeholder="https://..." />
+                            <label class="form-label" style=${{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                🎥 ${t('edit.introVideo') || 'Introduction Video'}
+                            </label>
+                            <div class="form-hint">${t('edit.introVideoHint') || 'Add a short video (1-2 min) to introduce yourself. This is the #1 way to build trust with potential clients. Use YouTube, Vimeo, or Loom links.'}</div>
+                            <div style=${{ position: 'relative' }}>
+                                <input
+                                    type="url"
+                                    value=${formData.intro_video_url}
+                                    onChange=${(e) => {
+                                        handleChange('intro_video_url', e.target.value);
+                                        setVideoUrlError(e.target.value.trim() !== '' && !isValidVideoUrl(e.target.value));
+                                    }}
+                                    placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                                    style=${{ paddingLeft: '44px', borderColor: videoUrlError ? '#ef4444' : undefined }}
+                                />
+                                <span style=${{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px' }}>🔗</span>
                             </div>
+                            ${videoUrlError && html`<div class="form-error">${t('edit.invalidVideoUrl') || 'Please enter a valid YouTube, Vimeo, or Loom URL'}</div>`}
                         </div>
 
                         <!-- Location: Country & City -->
@@ -1122,15 +1394,36 @@ const EditCoachProfileModal = memo(function EditCoachProfileModal({ coach, onClo
                             </div>
                         </div>
 
-                        <!-- Free Discovery Call -->
+                        <!-- Free Discovery Call (iOS-style toggle) -->
                         <div class="form-group">
-                            <label class="checkbox-label discovery-toggle">
-                                <input type="checkbox" checked=${formData.offers_free_discovery} onChange=${(e) => handleChange('offers_free_discovery', e.target.checked)} />
-                                <div>
-                                    <span class="discovery-label-text">📞 ${t('edit.offerDiscoveryCall') || 'Offer Free Discovery Call'}</span>
-                                    <span class="discovery-hint">${t('edit.discoveryCallHint') || 'Allow potential clients to book a free introductory call'}</span>
+                            <div class="ios-toggle-row" onClick=${() => handleChange('offers_free_discovery', !formData.offers_free_discovery)}>
+                                <div class="ios-toggle-info">
+                                    <span class="ios-toggle-label">📞 ${t('edit.offerDiscoveryCall') || 'Offer Free Discovery Call'}</span>
+                                    <span class="ios-toggle-hint">${t('edit.discoveryCallHint') || 'Allow potential clients to book a free introductory call'}</span>
                                 </div>
-                            </label>
+                                <div class="ios-toggle-switch ${formData.offers_free_discovery ? 'active' : ''}">
+                                    <div class="ios-toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Social Links Section -->
+                        <div class="form-group social-links-section">
+                            <label class="section-label">🔗 ${t('edit.socialLinks') || 'Social Links'}</label>
+                            <div class="form-row">
+                                <div class="form-group form-group-flex">
+                                    <label>LinkedIn</label>
+                                    <input type="url" value=${formData.linkedin_url} onChange=${(e) => handleChange('linkedin_url', e.target.value)} placeholder="https://linkedin.com/in/..." />
+                                </div>
+                                <div class="form-group form-group-flex">
+                                    <label>${t('edit.website') || 'Website'}</label>
+                                    <input type="url" value=${formData.website_url} onChange=${(e) => handleChange('website_url', e.target.value)} placeholder="https://..." />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Instagram</label>
+                                <input type="url" value=${formData.instagram_url} onChange=${(e) => handleChange('instagram_url', e.target.value)} placeholder="https://instagram.com/..." />
+                            </div>
                         </div>
                     </div>
                     <div class="edit-modal-actions">
@@ -3659,7 +3952,7 @@ const EditServiceModal = memo(function EditServiceModal({ coach, service, onClos
  * Profile Services Sidebar Component
  * Shows coach services with pricing in the sidebar
  */
-const ProfileServicesSidebar = memo(function ProfileServicesSidebar({ coach, services, isOwnProfile, onAddService, onEditService }) {
+const ProfileServicesSidebar = memo(function ProfileServicesSidebar({ coach, services, isOwnProfile, onAddService, onEditService, onRequestService }) {
     const CURRENCY_SYMBOLS = { EUR: '\u20AC', USD: '$', GBP: '\u00A3', CHF: 'CHF' };
     const UNIT_LABELS = { hour: '/hr', day: '/day', session: '/session' };
 
@@ -3685,12 +3978,16 @@ const ProfileServicesSidebar = memo(function ProfileServicesSidebar({ coach, ser
                                     <span class="service-line-name">${svc.name}${!svc.active ? ' (inactive)' : ''}</span>
                                     <span class="service-line-price">${CURRENCY_SYMBOLS[svc.currency] || svc.currency}${parseFloat(svc.price).toFixed(0)}${UNIT_LABELS[svc.unit] || ''}</span>
                                 </div>
-                                ${isOwnProfile && html`
+                                ${isOwnProfile ? html`
                                     <button class="btn-edit-service" onClick=${() => onEditService(svc)} title="Edit service">
                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                         </svg>
+                                    </button>
+                                ` : html`
+                                    <button class="btn-request-service" onClick=${() => onRequestService && onRequestService(svc)}>
+                                        ${t('service.request') || 'Request'}
                                     </button>
                                 `}
                             </div>
@@ -3851,6 +4148,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [editingCertification, setEditingCertification] = useState(null);
     const [showPhotoEditor, setShowPhotoEditor] = useState(false);
     const [showCoachProfileEditor, setShowCoachProfileEditor] = useState(false);
+    const [requestingService, setRequestingService] = useState(null); // service object for request modal
 
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
@@ -3948,8 +4246,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 .from('cs_reviews')
                 .select('*')
                 .eq('coach_id', id)
-                .order('created_at', { ascending: false })
-                .limit(10);
+                .order('created_at', { ascending: false });
             setReviews(data || []);
         } catch (err) {
             console.error('Failed to load reviews:', err);
@@ -4217,7 +4514,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     user_id: session.user.id,
                     rating: reviewData.rating,
                     text: reviewData.content,
-                    reviewer_name: reviewData.name || session.user.email?.split('@')[0] || 'Anonymous'
+                    reviewer_name: reviewData.name || null
                 })
                 .select()
                 .single();
@@ -4237,6 +4534,33 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         } catch (err) {
             console.error('Failed to submit review:', err);
             return { success: false, error: err.message || 'Failed to submit recommendation' };
+        }
+    };
+
+    // D.1: Toggle review visibility (own profile)
+    const handleToggleReviewShown = async (reviewId, currentShown) => {
+        try {
+            const newShown = !currentShown;
+            await window.supabaseClient
+                .from('cs_reviews')
+                .update({ shown: newShown })
+                .eq('id', reviewId);
+            setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, shown: newShown } : r));
+        } catch (err) {
+            console.error('Failed to toggle review visibility:', err);
+        }
+    };
+
+    // D.3: Add or update coach comment on a review
+    const handleSaveCoachComment = async (reviewId, commentText) => {
+        try {
+            await window.supabaseClient
+                .from('cs_reviews')
+                .update({ comment: commentText.trim() || null })
+                .eq('id', reviewId);
+            setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, comment: commentText.trim() || null } : r));
+        } catch (err) {
+            console.error('Failed to save coach comment:', err);
         }
     };
 
@@ -4597,6 +4921,12 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         </div>
                                     </div>
                                 </div>
+                                ${isOwnProfile && html`
+                                    <div class="review-visibility-hint">
+                                        <span class="hint-icon">ℹ️</span>
+                                        ${t('coach.reviewVisibilityHint') || 'Only recommendations that are toggled ON are visible to visitors.'}
+                                    </div>
+                                `}
                                 <div class="ratings-overview">
                                     ${reviews.length >= 3 && html`
                                         <div class="ratings-summary">
@@ -4619,29 +4949,33 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         </div>
                                     `}
                                     <div class="ratings-reviews-list">
-                                        ${reviews.slice(0, 3).map(review => html`
-                                            <div key=${review.id} class="rating-review-item">
-                                                <div class="review-left-column">
-                                                    <span class="reviewer-name">${review.reviewer_name || 'Anonymous'}</span>
-                                                    <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
-                                                </div>
-                                                ${(review.text || review.comment || review.content) && html`
-                                                    <div class="review-middle-column">
-                                                        <p class="review-text">${review.text || review.comment || review.content}</p>
-                                                    </div>
+                                        ${(() => {
+                                            // D.2: For visitors, show only shown=true reviews (max 5)
+                                            // For own profile, show all reviews (coach can see and toggle)
+                                            const visibleReviews = isOwnProfile
+                                                ? reviews
+                                                : reviews.filter(r => r.shown !== false);
+                                            const displayReviews = isOwnProfile ? visibleReviews : visibleReviews.slice(0, 5);
+                                            const hasMore = !isOwnProfile && visibleReviews.length > 5;
+
+                                            return html`
+                                                ${displayReviews.map(review => html`
+                                                    <${ReviewItem}
+                                                        key=${review.id}
+                                                        review=${review}
+                                                        isOwnProfile=${isOwnProfile}
+                                                        coachName=${coach.full_name}
+                                                        onToggleShown=${handleToggleReviewShown}
+                                                        onSaveComment=${handleSaveCoachComment}
+                                                    />
+                                                `)}
+                                                ${hasMore && html`
+                                                    <button class="btn-show-all" onClick=${() => setShowReviewsPopup(true)}>
+                                                        ${t('coach.showAllReviews') || 'Show all recommendations'} (${visibleReviews.length}) →
+                                                    </button>
                                                 `}
-                                                <div class="review-right-column">
-                                                    ${[1,2,3,4,5].map(star => html`
-                                                        <span key=${star} class="star-compact ${star <= review.rating ? 'filled' : ''}">★</span>
-                                                    `)}
-                                                </div>
-                                            </div>
-                                        `)}
-                                        ${reviews.length > 3 && html`
-                                            <button class="btn-show-all" onClick=${() => setShowReviewsPopup(true)}>
-                                                ${t('coach.showAllReviews') || 'Show all recommendations'} →
-                                            </button>
-                                        `}
+                                            `;
+                                        })()}
                                     </div>
                                 </div>
                             </section>
@@ -4994,6 +5328,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     coach=${coach}
                                     services=${coachServices}
                                     isOwnProfile=${false}
+                                    onRequestService=${(svc) => setRequestingService(svc)}
                                 />
                             `}
 
@@ -5050,6 +5385,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     coach=${coach}
                     onClose=${() => setShowReviewModal(false)}
                     onSubmit=${handleSubmitReview}
+                    userHasReviewed=${userHasReviewed}
                 />
             `}
 
@@ -5212,6 +5548,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     coach=${coach}
                     onClose=${() => setShowCoachProfileEditor(false)}
                     onSave=${saveCoachProfile}
+                />
+            `}
+
+            <!-- Service Request Modal -->
+            ${requestingService && html`
+                <${ServiceRequestModal}
+                    coach=${coach}
+                    service=${requestingService}
+                    onClose=${() => setRequestingService(null)}
                 />
             `}
         </div>

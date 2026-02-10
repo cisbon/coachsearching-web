@@ -4301,3 +4301,332 @@
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+/* =============================================
+   REQUEST SERVICE BUTTON
+============================================= */
+.btn-request-service {
+    padding: 4px 12px;
+    background: var(--petrol-primary, #006266);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-request-service:hover {
+    background: var(--petrol-dark, #004A4D);
+}
+
+/* =============================================
+   iOS-STYLE TOGGLE SWITCH
+============================================= */
+.ios-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ios-toggle-row:hover {
+    background: #f3f4f6;
+}
+
+.ios-toggle-info {
+    flex: 1;
+}
+
+.ios-toggle-label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.ios-toggle-hint {
+    display: block;
+    font-size: 0.78rem;
+    color: #6b7280;
+    font-weight: 400;
+}
+
+.ios-toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 28px;
+    background: #d1d5db;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.25s ease;
+    flex-shrink: 0;
+}
+
+.ios-toggle-switch.active {
+    background: #34d399;
+}
+
+.ios-toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.25s ease;
+}
+
+.ios-toggle-switch.active .ios-toggle-knob {
+    transform: translateX(20px);
+}
+
+/* Small toggle (for review items) */
+.ios-toggle-switch.ios-toggle-sm {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+}
+
+.ios-toggle-switch.ios-toggle-sm .ios-toggle-knob {
+    width: 16px;
+    height: 16px;
+}
+
+.ios-toggle-switch.ios-toggle-sm.active .ios-toggle-knob {
+    transform: translateX(16px);
+}
+
+/* =============================================
+   INTRO VIDEO SECTION (Edit Modal)
+============================================= */
+.intro-video-section {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 8px;
+}
+
+.intro-video-promo {
+    margin-bottom: 8px;
+}
+
+.promo-badge {
+    display: inline-block;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.form-hint {
+    font-size: 0.82rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.form-error {
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+/* =============================================
+   SOCIAL LINKS SECTION (Edit Modal)
+============================================= */
+.social-links-section {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 16px;
+    margin-top: 8px;
+}
+
+.section-label {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: block;
+}
+
+/* =============================================
+   REVIEW VISIBILITY & COACH COMMENTS
+============================================= */
+.review-visibility-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    font-size: 0.83rem;
+    color: #1e40af;
+    margin-bottom: 16px;
+}
+
+.hint-icon {
+    flex-shrink: 0;
+}
+
+.review-main-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.review-toggle-wrapper {
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.rating-review-item.review-hidden {
+    opacity: 0.5;
+}
+
+/* Coach Comment */
+.review-coach-comment {
+    margin-top: 10px;
+    margin-left: 24px;
+    padding: 10px 14px;
+    background: #f9fafb;
+    border-left: 3px solid var(--petrol-primary, #006266);
+    border-radius: 0 8px 8px 0;
+}
+
+.popup-coach-comment {
+    margin-left: 0;
+    margin-top: 8px;
+}
+
+.coach-comment-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 0.82rem;
+}
+
+.coach-comment-label {
+    background: var(--petrol-bg, #E8F5F5);
+    color: var(--petrol-primary, #006266);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 10px;
+}
+
+.coach-comment-text {
+    font-size: 0.88rem;
+    color: #374151;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.btn-edit-comment {
+    background: none;
+    border: none;
+    color: var(--petrol-primary, #006266);
+    font-size: 0.78rem;
+    cursor: pointer;
+    padding: 2px 0;
+    margin-top: 4px;
+}
+
+.btn-edit-comment:hover {
+    text-decoration: underline;
+}
+
+.btn-add-comment {
+    background: none;
+    border: 1px dashed #d1d5db;
+    color: #6b7280;
+    font-size: 0.82rem;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin-top: 8px;
+    margin-left: 24px;
+    transition: all 0.15s ease;
+}
+
+.btn-add-comment:hover {
+    border-color: var(--petrol-primary, #006266);
+    color: var(--petrol-primary, #006266);
+    background: var(--petrol-bg, #E8F5F5);
+}
+
+.coach-comment-edit {
+    margin-top: 8px;
+    margin-left: 24px;
+}
+
+.comment-edit-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.comment-edit-textarea:focus {
+    outline: none;
+    border-color: var(--petrol-primary, #006266);
+    box-shadow: 0 0 0 2px var(--petrol-bg, #E8F5F5);
+}
+
+.comment-edit-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+
+.btn-sm {
+    padding: 4px 12px;
+    font-size: 0.82rem;
+}
+
+/* Star filter in popup */
+.breakdown-row.clickable {
+    cursor: pointer;
+    transition: background 0.15s ease;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.breakdown-row.clickable:hover {
+    background: #f3f4f6;
+}
+
+.breakdown-row.active-filter {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.btn-clear-filter {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 0.78rem;
+    cursor: pointer;
+    padding: 4px 0;
+    margin-top: 4px;
+}
+
+.btn-clear-filter:hover {
+    color: #1f2937;
+}
