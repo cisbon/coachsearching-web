@@ -25,7 +25,7 @@
     flex-direction: column;
     gap: 16px;
     position: sticky;
-    top: 80px;
+    top: 115px;
     max-height: calc(100vh - 80px);
     overflow-y: auto;
     padding-bottom: 24px;
@@ -62,7 +62,7 @@
     flex-direction: column;
     gap: 16px;
     position: sticky;
-    top: 80px;
+    top: 115px;
 }
 
 /* =============================================
