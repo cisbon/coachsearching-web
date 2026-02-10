@@ -6134,7 +6134,7 @@ const translations = {
         "coach.addLanguages": "Añade idiomas en los que das coaching",
         "coach.languagesDescription": "Idiomas en los que ofrezco coaching:",
         "coach.profileAvailable": "Perfil Disponible",
-        "coach.watchIntro": "Ver Intro"
+        "coach.watchIntro": "Ver Intro",
 // Common
 "common.cancel": "Cancelar",
 "common.close": "Cerrar",
