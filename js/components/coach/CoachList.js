@@ -11,7 +11,7 @@ import { FilterSidebar } from './FilterSidebar.js';
 import { useCities } from '../../context/AppContext.js';
 
 const React = window.React;
-const { useState, useEffect, useCallback, useMemo } = React;
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
 const html = htm.bind(React.createElement);
 
 // Mock data fallback
@@ -71,6 +71,30 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
     const [selectedCoach, setSelectedCoach] = useState(null);
     const [loading, setLoading] = useState(false);
     const [, forceUpdate] = useState({});
+
+    // Local search state (for the inline search bar)
+    const [localSearchTerm, setLocalSearchTerm] = useState(searchFilters?.searchTerm || '');
+    const [activeSearchTerm, setActiveSearchTerm] = useState(searchFilters?.searchTerm || '');
+    const searchInputRef = useRef(null);
+
+    // Sync with external searchFilters when they change
+    useEffect(() => {
+        if (searchFilters?.searchTerm !== undefined) {
+            setLocalSearchTerm(searchFilters.searchTerm);
+            setActiveSearchTerm(searchFilters.searchTerm);
+        }
+    }, [searchFilters?.searchTerm]);
+
+    const handleSearchSubmit = useCallback((e) => {
+        e && e.preventDefault();
+        setActiveSearchTerm(localSearchTerm.trim());
+    }, [localSearchTerm]);
+
+    const handleSearchClear = useCallback(() => {
+        setLocalSearchTerm('');
+        setActiveSearchTerm('');
+        if (searchInputRef.current) searchInputRef.current.focus();
+    }, []);
 
     // Get cities list to look up state info for coaches
     const { cities, getLocalizedCityName } = useCities();
@@ -151,20 +175,30 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         });
     };
 
+    // Helper: search across all relevant coach profile fields
+    const matchesSearch = useCallback((coach, term) => {
+        if (!term) return true;
+        const t = term.toLowerCase();
+        return (
+            coach.full_name?.toLowerCase().includes(t) ||
+            coach.title?.toLowerCase().includes(t) ||
+            coach.bio?.toLowerCase().includes(t) ||
+            coach.specialties?.some(s => s.toLowerCase().includes(t)) ||
+            coach.location?.toLowerCase().includes(t) ||
+            coach.location_city?.toLowerCase().includes(t) ||
+            coach.city?.toLowerCase().includes(t) ||
+            coach.languages?.some(l => l.toLowerCase().includes(t))
+        );
+    }, []);
+
     // Coaches filtered by everything EXCEPT budget (for budget histogram)
     const coachesExcludingBudget = useMemo(() => {
         let result = [...coaches];
 
-        // Text search filter
-        if (searchFilters && searchFilters.searchTerm) {
-            const term = searchFilters.searchTerm.toLowerCase();
-            result = result.filter(coach =>
-                coach.full_name?.toLowerCase().includes(term) ||
-                coach.title?.toLowerCase().includes(term) ||
-                coach.bio?.toLowerCase().includes(term) ||
-                coach.specialties?.some(s => s.toLowerCase().includes(term)) ||
-                coach.location?.toLowerCase().includes(term)
-            );
+        // Text search filter (use activeSearchTerm from inline search bar)
+        const searchTerm = activeSearchTerm || (searchFilters && searchFilters.searchTerm) || '';
+        if (searchTerm) {
+            result = result.filter(coach => matchesSearch(coach, searchTerm));
         }
 
         // Specialty filter
@@ -251,7 +285,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         }
 
         return result;
-    }, [searchFilters, coaches, filters.specialties, filters.languages, filters.hasVideo, filters.freeIntro, filters.hasCertification, filters.isVerified, filters.offersVirtual, filters.offersOnsite, filters.locationCountry, filters.locationCityId, filters.locationState, filters.experience, cities.list]);
+    }, [searchFilters, activeSearchTerm, coaches, filters.specialties, filters.languages, filters.hasVideo, filters.freeIntro, filters.hasCertification, filters.isVerified, filters.offersVirtual, filters.offersOnsite, filters.locationCountry, filters.locationCityId, filters.locationState, filters.experience, cities.list, matchesSearch]);
 
     // IDs of coaches matching all filters except budget (for histogram)
     const filteredCoachIdsForBudget = useMemo(() => {
@@ -262,16 +296,10 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
     const filteredCoaches = useMemo(() => {
         let result = [...coaches];
 
-        // Text search filter
-        if (searchFilters && searchFilters.searchTerm) {
-            const term = searchFilters.searchTerm.toLowerCase();
-            result = result.filter(coach =>
-                coach.full_name?.toLowerCase().includes(term) ||
-                coach.title?.toLowerCase().includes(term) ||
-                coach.bio?.toLowerCase().includes(term) ||
-                coach.specialties?.some(s => s.toLowerCase().includes(term)) ||
-                coach.location?.toLowerCase().includes(term)
-            );
+        // Text search filter (use activeSearchTerm from inline search bar)
+        const searchTerm = activeSearchTerm || (searchFilters && searchFilters.searchTerm) || '';
+        if (searchTerm) {
+            result = result.filter(coach => matchesSearch(coach, searchTerm));
         }
 
         // Price/Budget filters - now work via service prices loaded in FilterSidebar
@@ -475,7 +503,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         }
 
         return result;
-    }, [searchFilters, coaches, filters, cities.list]);
+    }, [searchFilters, activeSearchTerm, coaches, filters, cities.list, matchesSearch]);
 
     // Load coaches from Supabase
     const loadCoaches = useCallback(async () => {
@@ -557,11 +585,61 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
     return html`
     <div class="coaches-section">
         <div class="container" style=${{ marginTop: '40px', paddingBottom: '40px' }}>
-            <!-- Header with title and filter toggle -->
+            <!-- Mobile Search Bar (above filters on mobile) -->
+            <div class="coaches-search-mobile">
+                <form class="coaches-search-bar" onSubmit=${handleSearchSubmit}>
+                    <div class="coaches-search-input-wrapper">
+                        <span class="coaches-search-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            class="coaches-search-input"
+                            placeholder=${t('hero.searchPlaceholder') || 'Search coaches, specialties...'}
+                            value=${localSearchTerm}
+                            onInput=${(e) => setLocalSearchTerm(e.target.value)}
+                        />
+                        ${localSearchTerm && html`
+                            <button type="button" class="coaches-search-clear" onClick=${handleSearchClear}>×</button>
+                        `}
+                    </div>
+                    <button type="submit" class="coaches-search-btn">
+                        ${t('hero.searchBtn') || 'Search'}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Header with search bar and filter toggle -->
             <div class="coaches-header">
-                <h2 class="section-title">
-                    ${searchFilters?.searchTerm ? `${t('filter.searchResults') || 'Search Results'} (${filteredCoaches.length})` : t('coaches.topRated') || 'Top Rated Coaches'}
-                </h2>
+                <div class="coaches-search-desktop">
+                    <form class="coaches-search-bar" onSubmit=${handleSearchSubmit}>
+                        <div class="coaches-search-input-wrapper">
+                            <span class="coaches-search-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </span>
+                            <input
+                                ref=${searchInputRef}
+                                type="text"
+                                class="coaches-search-input"
+                                placeholder=${t('hero.searchPlaceholder') || 'Search coaches, specialties...'}
+                                value=${localSearchTerm}
+                                onInput=${(e) => setLocalSearchTerm(e.target.value)}
+                            />
+                            ${localSearchTerm && html`
+                                <button type="button" class="coaches-search-clear" onClick=${handleSearchClear}>×</button>
+                            `}
+                        </div>
+                        <button type="submit" class="coaches-search-btn">
+                            ${t('hero.searchBtn') || 'Search'}
+                        </button>
+                    </form>
+                </div>
                 <div class="header-actions">
                     <button
                         class="filter-toggle-btn ${showFilters ? 'active' : ''}"

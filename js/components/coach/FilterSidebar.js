@@ -6,6 +6,8 @@
 
 import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
+import { getCurrentCurrency, formatPrice } from '../../utils/formatting.js';
+import { CURRENCIES, DEFAULT_CURRENCY } from '../../utils/constants.js';
 import { useLookupOptions, useCities } from '../../context/AppContext.js';
 
 const React = window.React;
@@ -72,40 +74,67 @@ const COUNTRIES = [
 ];
 
 const NUM_BARS = 20;
+const SLIDER_MIN_EUR = 150;
+const SLIDER_MAX_EUR = 450;
 
 /**
  * BudgetSlider Component
- * Booking.com-style histogram budget slider
+ * Booking.com-style histogram budget slider with currency support
  */
 function BudgetSlider({ prices, minBudget, maxBudget, onChange }) {
     const trackRef = useRef(null);
     const [dragging, setDragging] = useState(null); // 'min' or 'max'
+    const [, forceUpdate] = useState({});
 
-    // Compute price range from available prices
+    // Listen for currency changes
+    useEffect(() => {
+        const handleCurrencyChange = () => forceUpdate({});
+        window.addEventListener('currencyChange', handleCurrencyChange);
+        return () => window.removeEventListener('currencyChange', handleCurrencyChange);
+    }, []);
+
+    // Get current currency config
+    const currencyCode = getCurrentCurrency();
+    const currencyConfig = CURRENCIES[currencyCode] || CURRENCIES[DEFAULT_CURRENCY];
+    const symbol = currencyConfig.symbol;
+    const rate = currencyConfig.rate;
+
+    // Convert EUR bounds to current currency
+    const sliderMinConverted = Math.round(SLIDER_MIN_EUR * rate);
+    const sliderMaxConverted = Math.round(SLIDER_MAX_EUR * rate);
+
+    // Compute price range from available prices, clamped to slider bounds
     const priceRange = useMemo(() => {
-        if (!prices || prices.length === 0) return { min: 0, max: 500, step: 25 };
-        const min = Math.floor(Math.min(...prices));
-        const max = Math.ceil(Math.max(...prices));
+        // Convert prices to current currency
+        const converted = (prices || []).map(p => Math.round(p * rate));
+        if (converted.length === 0) return { min: sliderMinConverted, max: sliderMaxConverted, step: Math.max(1, Math.round((sliderMaxConverted - sliderMinConverted) / NUM_BARS)) };
+
+        // Use slider bounds as the visible range, but allow prices outside
+        const dataMin = Math.min(...converted);
+        const dataMax = Math.max(...converted);
+        const min = Math.min(sliderMinConverted, dataMin);
+        const max = Math.max(sliderMaxConverted, dataMax);
         const range = max - min || 100;
         const step = Math.max(1, Math.round(range / NUM_BARS));
         return { min, max: min + step * NUM_BARS, step };
-    }, [prices]);
+    }, [prices, rate, sliderMinConverted, sliderMaxConverted]);
 
     // Build histogram bars
     const bars = useMemo(() => {
-        if (!prices || prices.length === 0) return Array(NUM_BARS).fill(0);
+        const converted = (prices || []).map(p => Math.round(p * rate));
+        if (converted.length === 0) return Array(NUM_BARS).fill(0);
         const { min, step } = priceRange;
         const buckets = Array(NUM_BARS).fill(0);
-        prices.forEach(p => {
+        converted.forEach(p => {
             const idx = Math.min(NUM_BARS - 1, Math.floor((p - min) / step));
             buckets[idx]++;
         });
         return buckets;
-    }, [prices, priceRange]);
+    }, [prices, rate, priceRange]);
 
     const maxCount = Math.max(1, ...bars);
 
-    // Current slider values (default to full range)
+    // Current slider values (default to slider bounds in current currency)
     const currentMin = minBudget !== '' && minBudget !== undefined ? Number(minBudget) : priceRange.min;
     const currentMax = maxBudget !== '' && maxBudget !== undefined ? Number(maxBudget) : priceRange.max;
 
@@ -172,6 +201,9 @@ function BudgetSlider({ prices, minBudget, maxBudget, onChange }) {
         return barStart < currentMax && barEnd > currentMin;
     };
 
+    // Format label with current currency symbol
+    const formatLabel = (val) => `${symbol}${val}`;
+
     return html`
         <div class="budget-slider-container">
             <!-- Histogram -->
@@ -208,8 +240,8 @@ function BudgetSlider({ prices, minBudget, maxBudget, onChange }) {
             </div>
             <!-- Labels -->
             <div class="budget-labels">
-                <span class="budget-label-min">€${currentMin}</span>
-                <span class="budget-label-max">${currentMax >= priceRange.max ? '€' + priceRange.max + '+' : '€' + currentMax}</span>
+                <span class="budget-label-min">${formatLabel(currentMin)}</span>
+                <span class="budget-label-max">${currentMax >= priceRange.max ? formatLabel(priceRange.max) + '+' : formatLabel(currentMax)}</span>
             </div>
         </div>
     `;

@@ -206,7 +206,9 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
                     <!-- Name Row with Discovery Button (desktop) -->
                     <div class="coach-name-row">
                         <h3 class="coach-name">
-                            ${coach.full_name}
+                            <a href="/coach/${coach.slug || coach.id}" class="coach-name-link">
+                                ${coach.full_name}
+                            </a>
                             ${(coach.is_verified || coach.verified) && html`<span class="verified-check" title="Verified Coach">✓</span>`}
                             ${coach.cs_coach_certifications?.length > 0 && html`
                                 <span class="certification-badges-inline">
