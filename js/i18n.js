@@ -4209,7 +4209,7 @@ const translations = {
         "coach.addLanguages": "Füge Sprachen hinzu, in denen du coachst",
         "coach.languagesDescription": "Sprachen, in denen ich coache:",
         "coach.profileAvailable": "Profil verfügbar",
-        "coach.watchIntro": "Intro ansehen"
+        "coach.watchIntro": "Intro ansehen",
 // Common
 "common.cancel": "Abbrechen",
 "common.close": "Schließen",
