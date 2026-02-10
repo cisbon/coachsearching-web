@@ -120,7 +120,7 @@ export function Auth({ onSuccess, skipNavigation, defaultMode } = {}) {
                     setTimeout(() => window.navigateTo('/onboarding'), 500);
                 } else {
                     setMessage({ type: 'success', text: 'Welcome! Redirecting...' });
-                    setTimeout(() => window.navigateTo('/coaches'), 500);
+                    setTimeout(() => window.navigateTo('/feed'), 500);
                 }
             } else {
                 // If onSuccess callback provided (modal context), call it instead of navigating
@@ -132,7 +132,7 @@ export function Auth({ onSuccess, skipNavigation, defaultMode } = {}) {
                 }
 
                 setMessage({ type: 'success', text: 'Welcome back! Loading...' });
-                setTimeout(() => window.navigateTo('/dashboard'), 500);
+                setTimeout(() => window.navigateTo('/feed'), 500);
             }
         } catch (error) {
             console.error('Auth Error:', error);

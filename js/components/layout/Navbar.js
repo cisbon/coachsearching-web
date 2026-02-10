@@ -235,6 +235,7 @@ export function Navbar({ session }) {
                 <nav class="nav-links ${menuOpen ? 'open' : ''}" role="navigation">
                     <a href="/coaches" class="nav-browse-link" onClick=${(e) => handleLinkClick(e, '/coaches')}>${t('nav.browseCoaches')}</a>
                     ${session ? html`
+                        <a href="/feed" onClick=${(e) => handleLinkClick(e, '/feed')}>${t('nav.feed') || 'Feed'}</a>
                         <a href="/dashboard" onClick=${(e) => handleLinkClick(e, '/dashboard')}>${t('nav.dashboard')}</a>
                         <a href="/signout" class="nav-auth-btn" onClick=${(e) => handleLinkClick(e, '/signout')}>${t('nav.signOut')}</a>
                     ` : html`

@@ -24,6 +24,7 @@ import { PricingPage } from './pages/PricingPage.js';
 import { Hero, CoachingCategoriesSection, HowItWorksSection } from './pages/HomePage.js';
 import { BlogPage } from './pages/BlogPage.js';
 import { AICouncilPage } from './pages/AICouncilPage.js';
+import { FeedPage } from './pages/FeedPage.js';
 
 // Conversion Optimization Components
 import {
@@ -436,6 +437,7 @@ const App = () => {
             case 'coaches': Component = () => html`<${CoachListWithModal} session=${session} />`; break;
             case 'login': Component = Auth; break;
             case 'onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
+            case 'feed': Component = () => html`<${FeedPage} session=${session} />`; break;
             case 'dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
             case 'quiz': Component = () => html`<${MatchingQuiz} session=${session} />`; break;
             case 'ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;
