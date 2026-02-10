@@ -8069,7 +8069,7 @@ const translations = {
         "coach.addLanguages": "Ajoutez les langues dans lesquelles vous coachez",
         "coach.languagesDescription": "Langues dans lesquelles j'offre du coaching:",
         "coach.profileAvailable": "Profil Disponible",
-        "coach.watchIntro": "Voir l'Intro"
+        "coach.watchIntro": "Voir l'Intro",
 
         // Common
         "common.cancel": "Annuler",
@@ -10006,7 +10006,7 @@ const translations = {
         "coach.addLanguages": "Aggiungi le lingue in cui fai coaching",
         "coach.languagesDescription": "Lingue in cui offro coaching:",
         "coach.profileAvailable": "Profilo Disponibile",
-        "coach.watchIntro": "Guarda l'Intro"
+        "coach.watchIntro": "Guarda l'Intro",
 
         // Common
         "common.cancel": "Annulla",
