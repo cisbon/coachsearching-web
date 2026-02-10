@@ -2576,7 +2576,6 @@
 /* Three-column review item layout */
 .rating-section .rating-review-item {
     display: grid;
-    grid-template-columns: 140px 1fr auto;
     gap: 16px;
     align-items: start;
     padding: 16px;
