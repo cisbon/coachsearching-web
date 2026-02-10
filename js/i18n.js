@@ -2163,7 +2163,7 @@ const translations = {
         "coach.addLanguages": "Add languages you coach in",
         "coach.languagesDescription": "Languages I provide coaching in:",
         "coach.profileAvailable": "Profile Available",
-        "coach.watchIntro": "Watch Intro"
+        "coach.watchIntro": "Watch Intro",
 // Common
 "common.cancel": "Cancel",
 "common.close": "Close",
