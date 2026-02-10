@@ -186,8 +186,8 @@
 /* Edit Photo Button */
 .btn-edit-photo {
     position: absolute;
-    bottom: 0;
-    right: 0;
+    bottom: 10px;
+    right: 10px;
     width: 32px;
     height: 32px;
     background: var(--primary-petrol, #006266);
