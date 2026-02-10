@@ -4197,6 +4197,7 @@
     cursor: pointer;
     font-size: 0.8rem;
     transition: all 0.2s;
+    word-break: break-word;
 }
 
 .specialty-option-inline:hover:not(:disabled) {
