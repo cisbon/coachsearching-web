@@ -53,6 +53,7 @@ export function ClientFeed({ session }) {
                     setUserProfile({
                         full_name: data.full_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
                         avatar_url: data.avatar_url || session.user.user_metadata?.avatar_url,
+                        banner_url: data.banner_url || null,
                         title: data.title || null,
                         slug: null,
                     });
@@ -173,7 +174,7 @@ export function ClientFeed({ session }) {
         <div class="feed-left-column">
             <!-- My Profile Preview -->
             <div class="feed-card feed-profile-preview">
-                <div class="feed-profile-banner"></div>
+                <div class="feed-profile-banner" style=${userProfile?.banner_url ? { backgroundImage: `url(${userProfile.banner_url})` } : {}}></div>
                 <img src=${avatarUrl} alt="" class="feed-profile-avatar" />
                 <h3 class="feed-profile-name">${displayName}</h3>
                 <p class="feed-profile-title">${userProfile?.title || (t('feed.clientMember') || 'Member')}</p>

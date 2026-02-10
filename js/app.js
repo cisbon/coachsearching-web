@@ -433,7 +433,15 @@ const App = () => {
         switch (baseRoute) {
             case 'home':
             case '':
-                Component = () => html`<${Home} session=${session} />`; break;
+                if (session) {
+                    Component = () => {
+                        useEffect(() => { window.navigateTo('/feed'); }, []);
+                        return html`<div class="feed-loading"><div class="feed-loading-spinner"></div></div>`;
+                    };
+                } else {
+                    Component = () => html`<${Home} session=${session} />`;
+                }
+                break;
             case 'coaches': Component = () => html`<${CoachListWithModal} session=${session} />`; break;
             case 'login': Component = Auth; break;
             case 'onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;

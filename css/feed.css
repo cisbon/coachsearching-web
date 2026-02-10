@@ -26,6 +26,28 @@
     gap: 16px;
     position: sticky;
     top: 80px;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    padding-bottom: 24px;
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+}
+
+.feed-left-column::-webkit-scrollbar {
+    width: 4px;
+}
+
+.feed-left-column::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.feed-left-column::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+.feed-left-column::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
 }
 
 .feed-center-column {
@@ -82,6 +104,8 @@
     height: 60px;
     background: linear-gradient(135deg, var(--petrol-primary, #006266) 0%, var(--petrol-dark, #004A4D) 100%);
     border-radius: 12px 12px 0 0;
+    background-size: cover;
+    background-position: center;
 }
 
 .feed-profile-avatar {

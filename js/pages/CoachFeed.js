@@ -169,7 +169,7 @@ export function CoachFeed({ session }) {
         <div class="feed-left-column">
             <!-- My Profile Preview -->
             <div class="feed-card feed-profile-preview">
-                <div class="feed-profile-banner"></div>
+                <div class="feed-profile-banner" style=${coachProfile?.banner_url ? { backgroundImage: `url(${coachProfile.banner_url})` } : {}}></div>
                 <img src=${coachProfile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(coachProfile?.full_name || 'C')}&background=006266&color=fff`} alt="" class="feed-profile-avatar" />
                 <h3 class="feed-profile-name">
                     <a href=${profileUrl}>${coachProfile?.full_name || session?.user?.email?.split('@')[0] || ''}</a>
