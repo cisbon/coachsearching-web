@@ -265,13 +265,7 @@ export function PostEditor({ session, userProfile, onPostCreated, onClose, initi
             <div class="post-editor-modal">
                 <!-- Header -->
                 <div class="post-editor-header">
-                    <h3>${t('feed.createPost') || 'Create a post'}</h3>
-                    <button class="post-editor-close" onClick=${onClose}>✕</button>
-                </div>
-
-                <!-- Scrollable body -->
-                <div class="post-editor-body">
-                    <!-- Author info -->
+                     <!-- Author info -->
                     <div class="post-editor-author">
                         <img src=${avatarUrl} alt="" />
                         <div>
@@ -279,7 +273,11 @@ export function PostEditor({ session, userProfile, onPostCreated, onClose, initi
                             ${userProfile?.title && html`<div class="post-editor-author-title">${userProfile.title}</div>`}
                         </div>
                     </div>
+                    <button class="post-editor-close" onClick=${onClose}>✕</button>
+                </div>
 
+                <!-- Scrollable body -->
+                <div class="post-editor-body">
                     <!-- Text area -->
                     <textarea
                         ref=${textareaRef}
