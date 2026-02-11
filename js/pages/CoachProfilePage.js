@@ -23,10 +23,19 @@ import { DiscoveryCallModal } from '../components/coach/DiscoveryCallModal.js';
 import { AuthModal } from '../components/auth/AuthModal.js';
 import { useCities, useLookupOptions, useCertifications } from '../context/AppContext.js';
 import { FeedPost } from '../components/feed/FeedPost.js';
+import { queryClient } from '../config/queryClient.js';
+import { QUERY_KEYS, STALE_TIMES } from '../config/queryConfig.js';
 
 const React = window.React;
 const { useState, useEffect, useCallback, memo, useMemo } = React;
 const html = htm.bind(React.createElement);
+
+/**
+ * Cached fetch helper — wraps queryClient.fetchQuery so repeated profile visits
+ * return data from TanStack Query cache instead of hitting Supabase again.
+ */
+const cachedFetch = (queryKey, queryFn, staleTime) =>
+    queryClient.fetchQuery({ queryKey, queryFn, staleTime });
 
 // Language to Country Code Mapping (for flag images)
 const LANGUAGE_TO_COUNTRY = {
@@ -4186,28 +4195,22 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         setError(null);
         try {
             if (window.supabaseClient) {
-                let data, fetchError;
+                // Fetch coach profile through TanStack Query cache
+                const qKey = isUUID(identifier)
+                    ? QUERY_KEYS.coachById(identifier)
+                    : QUERY_KEYS.coachBySlug(identifier);
 
-                if (isUUID(identifier)) {
-                    const result = await window.supabaseClient
+                const data = await cachedFetch(qKey, async () => {
+                    const field = isUUID(identifier) ? 'id' : 'slug';
+                    const { data: d, error } = await window.supabaseClient
                         .from('cs_coaches')
                         .select('*, cs_coach_certifications(*, cs_certifications(*))')
-                        .eq('id', identifier)
+                        .eq(field, identifier)
                         .single();
-                    data = result.data;
-                    fetchError = result.error;
-                } else {
-                    const result = await window.supabaseClient
-                        .from('cs_coaches')
-                        .select('*, cs_coach_certifications(*, cs_certifications(*))')
-                        .eq('slug', identifier)
-                        .single();
-                    data = result.data;
-                    fetchError = result.error;
-                }
-
-                if (fetchError) throw fetchError;
-                if (!data) throw new Error('Coach not found');
+                    if (error) throw error;
+                    if (!d) throw new Error('Coach not found');
+                    return d;
+                }, STALE_TIMES.coachProfile);
 
                 setCoach(data);
 
@@ -4355,14 +4358,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadArticles = async (id) => {
         try {
-            const { data } = await window.supabaseClient
-                .from('cs_articles')
-                .select('*')
-                .eq('coach_id', id)
-                .eq('status', 'published')
-                .order('created_at', { ascending: false })
-                .limit(10);
-            setArticles(data || []);
+            const data = await cachedFetch(QUERY_KEYS.coachArticles(id), async () => {
+                const { data: d, error } = await window.supabaseClient
+                    .from('cs_articles').select('*')
+                    .eq('coach_id', id).eq('status', 'published')
+                    .order('created_at', { ascending: false }).limit(10);
+                if (error) throw error;
+                return d || [];
+            }, STALE_TIMES.coachArticles);
+            setArticles(data);
         } catch (err) {
             console.error('Failed to load articles:', err);
         }
@@ -4370,12 +4374,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadReviews = async (id) => {
         try {
-            const { data } = await window.supabaseClient
-                .from('cs_reviews')
-                .select('*')
-                .eq('coach_id', id)
-                .order('created_at', { ascending: false });
-            setReviews(data || []);
+            const data = await cachedFetch(QUERY_KEYS.coachReviews(id), async () => {
+                const { data: d, error } = await window.supabaseClient
+                    .from('cs_reviews').select('*')
+                    .eq('coach_id', id)
+                    .order('created_at', { ascending: false });
+                if (error) throw error;
+                return d || [];
+            }, STALE_TIMES.coachReviews);
+            setReviews(data);
         } catch (err) {
             console.error('Failed to load reviews:', err);
         }
@@ -4383,12 +4390,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadCredentials = async (id) => {
         try {
-            const { data } = await window.supabaseClient
-                .from('v_coach_certifications')
-                .select('*')
-                .eq('coach_id', id)
-                .order('is_verified', { ascending: false });
-            setCredentials(data || []);
+            const data = await cachedFetch(QUERY_KEYS.coachCertifications(id), async () => {
+                const { data: d, error } = await window.supabaseClient
+                    .from('v_coach_certifications').select('*')
+                    .eq('coach_id', id)
+                    .order('is_verified', { ascending: false });
+                if (error) throw error;
+                return d || [];
+            }, STALE_TIMES.coachCertifications);
+            setCredentials(data);
         } catch (err) {
             console.error('Failed to load credentials:', err);
         }
@@ -4396,12 +4406,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadExperiences = async (id) => {
         try {
-            const { data } = await window.supabaseClient
-                .from('cs_coach_experiences')
-                .select('*')
-                .eq('coach_id', id)
-                .order('start_date', { ascending: false });
-            setExperiences(data || []);
+            const data = await cachedFetch(QUERY_KEYS.coachExperiences(id), async () => {
+                const { data: d, error } = await window.supabaseClient
+                    .from('cs_coach_experiences').select('*')
+                    .eq('coach_id', id)
+                    .order('start_date', { ascending: false });
+                if (error) throw error;
+                return d || [];
+            }, STALE_TIMES.coachExperiences);
+            setExperiences(data);
         } catch (err) {
             console.error('Failed to load experiences:', err);
         }
@@ -4409,12 +4422,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadEducations = async (id) => {
         try {
-            const { data } = await window.supabaseClient
-                .from('cs_coach_educations')
-                .select('*')
-                .eq('coach_id', id)
-                .order('start_date', { ascending: false });
-            setEducations(data || []);
+            const data = await cachedFetch(QUERY_KEYS.coachEducations(id), async () => {
+                const { data: d, error } = await window.supabaseClient
+                    .from('cs_coach_educations').select('*')
+                    .eq('coach_id', id)
+                    .order('start_date', { ascending: false });
+                if (error) throw error;
+                return d || [];
+            }, STALE_TIMES.coachEducations);
+            setEducations(data);
         } catch (err) {
             console.error('Failed to load educations:', err);
         }
@@ -4422,12 +4438,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadCoachSkills = async (id) => {
         try {
-            const { data } = await window.supabaseClient
-                .from('cs_coach_skills')
-                .select('*, cs_coach_skills_commendations(id, commendation_user_id)')
-                .eq('coach_id', id)
-                .order('created_at', { ascending: true });
-            setCoachSkills(data || []);
+            const data = await cachedFetch(QUERY_KEYS.coachSkills(id), async () => {
+                const { data: d, error } = await window.supabaseClient
+                    .from('cs_coach_skills')
+                    .select('*, cs_coach_skills_commendations(id, commendation_user_id)')
+                    .eq('coach_id', id)
+                    .order('created_at', { ascending: true });
+                if (error) throw error;
+                return d || [];
+            }, STALE_TIMES.coachSkills);
+            setCoachSkills(data);
         } catch (err) {
             console.error('Failed to load coach skills:', err);
         }
@@ -4435,12 +4455,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadVolunteering = async (id) => {
         try {
-            const { data } = await window.supabaseClient
-                .from('cs_coach_volunteering')
-                .select('*')
-                .eq('coach_id', id)
-                .order('start_date', { ascending: false });
-            setVolunteering(data || []);
+            const data = await cachedFetch(QUERY_KEYS.coachVolunteering(id), async () => {
+                const { data: d, error } = await window.supabaseClient
+                    .from('cs_coach_volunteering').select('*')
+                    .eq('coach_id', id)
+                    .order('start_date', { ascending: false });
+                if (error) throw error;
+                return d || [];
+            }, STALE_TIMES.coachVolunteering);
+            setVolunteering(data);
         } catch (err) {
             console.error('Failed to load volunteering:', err);
         }
@@ -4448,12 +4471,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadPublications = async (id) => {
         try {
-            const { data } = await window.supabaseClient
-                .from('cs_coach_publications')
-                .select('*')
-                .eq('coach_id', id)
-                .order('publication_date', { ascending: false });
-            setPublications(data || []);
+            const data = await cachedFetch(QUERY_KEYS.coachPublications(id), async () => {
+                const { data: d, error } = await window.supabaseClient
+                    .from('cs_coach_publications').select('*')
+                    .eq('coach_id', id)
+                    .order('publication_date', { ascending: false });
+                if (error) throw error;
+                return d || [];
+            }, STALE_TIMES.coachPublications);
+            setPublications(data);
         } catch (err) {
             console.error('Failed to load publications:', err);
         }
@@ -4461,12 +4487,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     const loadCoachServices = async (id) => {
         try {
-            const { data } = await window.supabaseClient
-                .from('cs_coach_services')
-                .select('*')
-                .eq('coach_id', id)
-                .order('created_at', { ascending: true });
-            setCoachServices(data || []);
+            const data = await cachedFetch(QUERY_KEYS.coachServices(id), async () => {
+                const { data: d, error } = await window.supabaseClient
+                    .from('cs_coach_services').select('*')
+                    .eq('coach_id', id)
+                    .order('created_at', { ascending: true });
+                if (error) throw error;
+                return d || [];
+            }, STALE_TIMES.coachServices);
+            setCoachServices(data);
         } catch (err) {
             console.error('Failed to load coach services:', err);
         }
@@ -4572,6 +4601,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
         // Update local state with new data
         setCoach(prev => ({ ...prev, ...data }));
+
+        // Invalidate TanStack Query cache so next visit re-fetches
+        queryClient.invalidateQueries({ queryKey: ['coach', 'profile'] });
 
         return data;
     };

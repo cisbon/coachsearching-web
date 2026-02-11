@@ -111,6 +111,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
 
+    <!-- Import map: bridge UMD React globals for ESM CDN packages -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "./js/vendor/react-shim.js",
+            "react-dom": "./js/vendor/react-dom-shim.js"
+        }
+    }
+    </script>
+
     <!-- Application Entry -->
     <script type="module" src="./js/app.js"></script>
 

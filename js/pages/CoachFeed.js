@@ -6,72 +6,24 @@
 import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
 import { FeedLayout } from '../components/feed/FeedLayout.js';
+import { useMyCoachProfileQuery, useCoachAnalyticsQuery } from '../hooks/useSupabaseQuery.js';
 
 const React = window.React;
-const { useState, useEffect } = React;
+const { useState } = React;
 const html = htm.bind(React.createElement);
 
 export function CoachFeed({ session }) {
-    const [coachProfile, setCoachProfile] = useState(null);
     const [recommendationLink, setRecommendationLink] = useState('');
     const [linkCopied, setLinkCopied] = useState(false);
     const [inviteLink] = useState(`${window.location.origin}/onboarding`);
     const [inviteCopied, setInviteCopied] = useState(false);
-    const [analytics, setAnalytics] = useState({ views: 0, searches: 0, discoveryRequests: 0 });
 
-    // Load coach profile
-    useEffect(() => {
-        if (!session?.user?.id) return;
-        const loadProfile = async () => {
-            try {
-                const supabase = window.supabaseClient;
-                if (!supabase) return;
-                const { data } = await supabase
-                    .from('cs_coaches')
-                    .select('*')
-                    .eq('user_id', session.user.id)
-                    .single();
-                if (data) setCoachProfile(data);
-            } catch (err) {
-                console.error('Failed to load coach profile:', err);
-            }
-        };
-        loadProfile();
-    }, [session]);
+    // Cached coach profile via TanStack Query
+    const { data: coachProfile } = useMyCoachProfileQuery(session?.user?.id);
 
-    // Load analytics
-    useEffect(() => {
-        if (!coachProfile?.id) return;
-        const loadAnalytics = async () => {
-            try {
-                const supabase = window.supabaseClient;
-                if (!supabase) return;
-
-                const thirtyDaysAgo = new Date();
-                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-                const [viewsRes, discoveryRes] = await Promise.all([
-                    supabase.from('cs_profile_views')
-                        .select('id', { count: 'exact', head: true })
-                        .eq('coach_id', coachProfile.id)
-                        .gte('created_at', thirtyDaysAgo.toISOString()),
-                    supabase.from('cs_discovery_requests')
-                        .select('id', { count: 'exact', head: true })
-                        .eq('coach_id', coachProfile.id)
-                        .gte('created_at', thirtyDaysAgo.toISOString()),
-                ]);
-
-                setAnalytics({
-                    views: viewsRes.count || 0,
-                    searches: 0,
-                    discoveryRequests: discoveryRes.count || 0
-                });
-            } catch (err) {
-                console.error('Failed to load analytics:', err);
-            }
-        };
-        loadAnalytics();
-    }, [coachProfile]);
+    // Cached analytics via TanStack Query
+    const { data: analytics } = useCoachAnalyticsQuery(coachProfile?.id);
+    const analyticsData = analytics || { views: 0, searches: 0, discoveryRequests: 0 };
 
     const handleGenerateRecommendationLink = () => {
         if (!coachProfile) return;
@@ -102,11 +54,11 @@ export function CoachFeed({ session }) {
                 <div class="feed-profile-stats">
                     <div class="feed-profile-stat">
                         <span class="feed-profile-stat-label">${t('feed.profileViews') || 'Profile views'}</span>
-                        <span class="feed-profile-stat-value">${analytics.views}</span>
+                        <span class="feed-profile-stat-value">${analyticsData.views}</span>
                     </div>
                     <div class="feed-profile-stat">
                         <span class="feed-profile-stat-label">${t('feed.discoveryRequests') || 'Discovery requests'}</span>
-                        <span class="feed-profile-stat-value">${analytics.discoveryRequests}</span>
+                        <span class="feed-profile-stat-value">${analyticsData.discoveryRequests}</span>
                     </div>
                 </div>
                 <a href=${profileUrl} class="feed-profile-link">${t('feed.viewMyProfile') || 'View my profile'}</a>

@@ -6,6 +6,7 @@ import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
 import { CoachFeed } from './CoachFeed.js';
 import { ClientFeed } from './ClientFeed.js';
+import { useOnboardingStatusQuery } from '../hooks/useSupabaseQuery.js';
 
 const React = window.React;
 const { useState, useEffect } = React;
@@ -15,52 +16,34 @@ export function FeedPage({ session, sessionLoaded }) {
     const [userType, setUserType] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const type = session?.user?.user_metadata?.user_type || 'client';
+    const isCoach = type === 'coach';
+
+    // Cached onboarding check via TanStack Query (only for coaches)
+    const { data: onboardingData, isLoading: onboardingLoading } = useOnboardingStatusQuery(
+        isCoach ? session?.user?.id : null
+    );
+
     useEffect(() => {
         if (!session?.user) {
-            // Session not yet loaded - wait for auth state to resolve
             if (!sessionLoaded) return;
-            // Session loaded but no user - redirect to login
             window.navigateTo('/login');
             return;
         }
 
-        const type = session.user.user_metadata?.user_type || 'client';
-
-        // For coaches, verify they completed onboarding
-        if (type === 'coach') {
-            const checkOnboarding = async () => {
-                try {
-                    const supabase = window.supabaseClient;
-                    if (!supabase) {
-                        setUserType(type);
-                        setLoading(false);
-                        return;
-                    }
-
-                    const { data, error } = await supabase
-                        .from('cs_coaches')
-                        .select('onboarding_completed')
-                        .eq('user_id', session.user.id)
-                        .single();
-
-                    if (error || !data?.onboarding_completed) {
-                        window.navigateTo('/onboarding');
-                        return;
-                    }
-
-                    setUserType('coach');
-                    setLoading(false);
-                } catch {
-                    setUserType(type);
-                    setLoading(false);
-                }
-            };
-            checkOnboarding();
+        if (isCoach) {
+            if (onboardingLoading) return;
+            if (!onboardingData?.onboarding_completed) {
+                window.navigateTo('/onboarding');
+                return;
+            }
+            setUserType('coach');
+            setLoading(false);
         } else {
             setUserType(type);
             setLoading(false);
         }
-    }, [session, sessionLoaded]);
+    }, [session, sessionLoaded, isCoach, onboardingData, onboardingLoading]);
 
     if (loading) {
         return html`

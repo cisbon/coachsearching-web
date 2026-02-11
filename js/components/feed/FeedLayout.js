@@ -13,6 +13,8 @@ import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
 import { FeedPost } from './FeedPost.js';
 import { CreatePost } from './CreatePost.js';
+import { queryClient } from '../../config/queryClient.js';
+import { QUERY_KEYS, STALE_TIMES } from '../../config/queryConfig.js';
 
 const React = window.React;
 const { useState, useEffect, useCallback, useRef } = React;
@@ -28,19 +30,25 @@ export function FeedLayout({ session, userProfile, leftColumn, rightColumn }) {
     const [showMobileSections, setShowMobileSections] = useState(false);
     const sentinelRef = useRef(null);
 
-    // Load feed posts
+    // Load feed posts (cached via TanStack Query)
     const loadPosts = useCallback(async (offset = 0) => {
         try {
             const supabase = window.supabaseClient;
             if (!supabase) return;
 
-            const { data, error } = await supabase
-                .from('cs_posts')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .range(offset, offset + PAGE_SIZE - 1);
-
-            if (error) throw error;
+            const data = await queryClient.fetchQuery({
+                queryKey: QUERY_KEYS.feedPosts(offset),
+                queryFn: async () => {
+                    const { data: d, error } = await supabase
+                        .from('cs_posts')
+                        .select('*')
+                        .order('created_at', { ascending: false })
+                        .range(offset, offset + PAGE_SIZE - 1);
+                    if (error) throw error;
+                    return d || [];
+                },
+                staleTime: STALE_TIMES.feedPosts,
+            });
 
             // Check which posts current user has liked, highlighted, reposted
             if (data && data.length > 0 && session?.user?.id) {

@@ -1,21 +1,20 @@
 /**
  * App Context
  * Manages global application state (currency, language, UI state, lookup options, cities)
+ * Lookup data (options, cities, certifications) is now powered by TanStack Query
+ * for automatic caching, deduplication, and stale-time management.
  */
 
 import htm from '../vendor/htm.js';
 import { CONFIG } from '../config.js';
 import { getCurrentLang } from '../i18n.js';
+import { useLookupOptionsQuery, useCitiesQuery, useCertificationsQuery } from '../hooks/useSupabaseQuery.js';
+import { useQueryClient } from '../config/queryClient.js';
+import { QUERY_KEYS } from '../config/queryConfig.js';
 
 const React = window.React;
-const { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } = React;
+const { createContext, useContext, useState, useEffect, useCallback, useMemo } = React;
 const html = htm.bind(React.createElement);
-
-// Cache configuration
-const LOOKUP_CACHE_KEY = 'cs_lookup_options';
-const CITIES_CACHE_KEY = 'cs_cities';
-const CERTIFICATIONS_CACHE_KEY = 'cs_certifications';
-const LOOKUP_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 // Create context
 const AppContext = createContext(null);
@@ -39,64 +38,22 @@ export function AppProvider({ children }) {
     const [isLoading, setIsLoading] = useState(false);
     const [notification, setNotification] = useState(null);
 
-    // Lookup options state (specialties, languages, session formats)
-    const [lookupOptions, setLookupOptions] = useState(() => {
-        // Try to load from cache on initial render
-        try {
-            const cached = localStorage.getItem(LOOKUP_CACHE_KEY);
-            if (cached) {
-                const { data, timestamp } = JSON.parse(cached);
-                if (Date.now() - timestamp < LOOKUP_CACHE_TTL) {
-                    return data;
-                }
-            }
-        } catch (e) {
-            console.warn('AppContext: Failed to load lookup cache', e);
-        }
-        return {
-            specialties: [],
-            languages: [],
-            sessionFormats: [],
-            isLoaded: false
-        };
-    });
-    const lookupFetchRef = useRef(false); // Prevent duplicate fetches
+    // ─── TanStack Query for lookup data ─────────────────────────────
+    const queryClientInstance = useQueryClient();
 
-    // Cities state (coaching locations)
-    const [cities, setCities] = useState(() => {
-        // Try to load from cache on initial render
-        try {
-            const cached = localStorage.getItem(CITIES_CACHE_KEY);
-            if (cached) {
-                const { data, timestamp } = JSON.parse(cached);
-                if (Date.now() - timestamp < LOOKUP_CACHE_TTL) {
-                    return { list: data, isLoaded: true };
-                }
-            }
-        } catch (e) {
-            console.warn('AppContext: Failed to load cities cache', e);
-        }
-        return { list: [], isLoaded: false };
-    });
-    const citiesFetchRef = useRef(false); // Prevent duplicate fetches
+    const { data: lookupData } = useLookupOptionsQuery();
+    const lookupOptions = lookupData || {
+        specialties: [],
+        languages: [],
+        sessionFormats: [],
+        isLoaded: false,
+    };
 
-    // Certifications state (coaching certifications lookup table)
-    const [certifications, setCertifications] = useState(() => {
-        // Try to load from cache on initial render
-        try {
-            const cached = localStorage.getItem(CERTIFICATIONS_CACHE_KEY);
-            if (cached) {
-                const { data, timestamp } = JSON.parse(cached);
-                if (Date.now() - timestamp < LOOKUP_CACHE_TTL) {
-                    return { list: data, isLoaded: true };
-                }
-            }
-        } catch (e) {
-            console.warn('AppContext: Failed to load certifications cache', e);
-        }
-        return { list: [], isLoaded: false };
-    });
-    const certificationsFetchRef = useRef(false); // Prevent duplicate fetches
+    const { data: citiesData } = useCitiesQuery();
+    const cities = citiesData || { list: [], isLoaded: false };
+
+    const { data: certificationsData } = useCertificationsQuery();
+    const certifications = certificationsData || { list: [], isLoaded: false };
 
     // Current route
     const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#home');
@@ -112,183 +69,6 @@ export function AppProvider({ children }) {
         return () => window.removeEventListener('hashchange', handleHashChange);
     }, []);
 
-    // Fetch lookup options on mount (if not cached)
-    useEffect(() => {
-        const fetchLookupOptions = async () => {
-            // Prevent duplicate fetches
-            if (lookupFetchRef.current) return;
-
-            // Skip if already loaded from cache
-            if (lookupOptions.isLoaded) return;
-
-            lookupFetchRef.current = true;
-
-            try {
-                // Wait for supabase client to be available (initialized in App component)
-                let attempts = 0;
-                while (!window.supabaseClient && attempts < 50) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    attempts++;
-                }
-
-                if (!window.supabaseClient) {
-                    lookupFetchRef.current = false; // Allow retry
-                    return;
-                }
-
-                const { data: options, error } = await window.supabaseClient
-                    .from('cs_lookup_options')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('sort_order', { ascending: true });
-
-                if (error) {
-                    lookupFetchRef.current = false; // Allow retry
-                    return;
-                }
-
-                // Group by type
-                const grouped = {
-                    specialties: options?.filter(o => o.type === 'specialty') || [],
-                    languages: options?.filter(o => o.type === 'language') || [],
-                    sessionFormats: options?.filter(o => o.type === 'session_format') || [],
-                    isLoaded: true
-                };
-
-                // Update state
-                setLookupOptions(grouped);
-
-                // Save to localStorage cache
-                try {
-                    localStorage.setItem(LOOKUP_CACHE_KEY, JSON.stringify({
-                        data: grouped,
-                        timestamp: Date.now()
-                    }));
-                } catch {
-                    // Silently ignore cache errors
-                }
-            } catch {
-                lookupFetchRef.current = false; // Allow retry
-            }
-        };
-
-        fetchLookupOptions();
-    }, [lookupOptions.isLoaded]);
-
-    // Fetch cities on mount (if not cached)
-    useEffect(() => {
-        const fetchCities = async () => {
-            // Prevent duplicate fetches
-            if (citiesFetchRef.current) return;
-
-            // Skip if already loaded from cache
-            if (cities.isLoaded) return;
-
-            citiesFetchRef.current = true;
-
-            try {
-                // Wait for supabase client to be available
-                let attempts = 0;
-                while (!window.supabaseClient && attempts < 50) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    attempts++;
-                }
-
-                if (!window.supabaseClient) {
-                    citiesFetchRef.current = false; // Allow retry
-                    return;
-                }
-
-                const { data: cityList, error } = await window.supabaseClient
-                    .from('cs_cities')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('sort_order', { ascending: true });
-
-                if (error) {
-                    console.warn('AppContext: Failed to fetch cities', error);
-                    citiesFetchRef.current = false; // Allow retry
-                    return;
-                }
-
-                // Update state
-                setCities({ list: cityList || [], isLoaded: true });
-
-                // Save to localStorage cache
-                try {
-                    localStorage.setItem(CITIES_CACHE_KEY, JSON.stringify({
-                        data: cityList || [],
-                        timestamp: Date.now()
-                    }));
-                } catch {
-                    // Silently ignore cache errors
-                }
-            } catch (err) {
-                console.warn('AppContext: Cities fetch error', err);
-                citiesFetchRef.current = false; // Allow retry
-            }
-        };
-
-        fetchCities();
-    }, [cities.isLoaded]);
-
-    // Fetch certifications on mount (if not cached)
-    useEffect(() => {
-        const fetchCertifications = async () => {
-            // Prevent duplicate fetches
-            if (certificationsFetchRef.current) return;
-
-            // Skip if already loaded from cache
-            if (certifications.isLoaded) return;
-
-            certificationsFetchRef.current = true;
-
-            try {
-                // Wait for supabase client to be available
-                let attempts = 0;
-                while (!window.supabaseClient && attempts < 50) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    attempts++;
-                }
-
-                if (!window.supabaseClient) {
-                    certificationsFetchRef.current = false; // Allow retry
-                    return;
-                }
-
-                const { data: certList, error } = await window.supabaseClient
-                    .from('cs_certifications')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('sort_order', { ascending: true });
-
-                if (error) {
-                    console.warn('AppContext: Failed to fetch certifications', error);
-                    certificationsFetchRef.current = false; // Allow retry
-                    return;
-                }
-
-                // Update state
-                setCertifications({ list: certList || [], isLoaded: true });
-
-                // Save to localStorage cache
-                try {
-                    localStorage.setItem(CERTIFICATIONS_CACHE_KEY, JSON.stringify({
-                        data: certList || [],
-                        timestamp: Date.now()
-                    }));
-                } catch {
-                    // Silently ignore cache errors
-                }
-            } catch (err) {
-                console.warn('AppContext: Certifications fetch error', err);
-                certificationsFetchRef.current = false; // Allow retry
-            }
-        };
-
-        fetchCertifications();
-    }, [certifications.isLoaded]);
-
     // Helper to get localized name from lookup option
     const getLocalizedName = useCallback((option, lang = null) => {
         const currentLang = lang || getCurrentLang() || language || 'en';
@@ -301,31 +81,20 @@ export function AppProvider({ children }) {
         return option?.[`description_${currentLang}`] || option?.description_en || '';
     }, [language]);
 
-    // Force refresh lookup options (clears cache)
+    // Force refresh lookup options (invalidates TanStack Query cache)
     const refreshLookupOptions = useCallback(() => {
-        localStorage.removeItem(LOOKUP_CACHE_KEY);
-        lookupFetchRef.current = false;
-        setLookupOptions({
-            specialties: [],
-            languages: [],
-            sessionFormats: [],
-            isLoaded: false
-        });
-    }, []);
+        queryClientInstance.invalidateQueries({ queryKey: QUERY_KEYS.lookupOptions });
+    }, [queryClientInstance]);
 
-    // Force refresh cities (clears cache)
+    // Force refresh cities (invalidates TanStack Query cache)
     const refreshCities = useCallback(() => {
-        localStorage.removeItem(CITIES_CACHE_KEY);
-        citiesFetchRef.current = false;
-        setCities({ list: [], isLoaded: false });
-    }, []);
+        queryClientInstance.invalidateQueries({ queryKey: QUERY_KEYS.cities });
+    }, [queryClientInstance]);
 
-    // Force refresh certifications (clears cache)
+    // Force refresh certifications (invalidates TanStack Query cache)
     const refreshCertifications = useCallback(() => {
-        localStorage.removeItem(CERTIFICATIONS_CACHE_KEY);
-        certificationsFetchRef.current = false;
-        setCertifications({ list: [], isLoaded: false });
-    }, []);
+        queryClientInstance.invalidateQueries({ queryKey: QUERY_KEYS.certifications });
+    }, [queryClientInstance]);
 
     // Helper to find certification by id
     const getCertificationById = useCallback((id) => {

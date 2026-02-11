@@ -73,6 +73,9 @@ import { MatchingQuiz, AIMatchPage, getQuizQuestions } from './components/matchi
 // Context Provider
 import { AppProvider } from './context/AppContext.js';
 
+// TanStack Query
+import { queryClient, QueryClientProvider } from './config/queryClient.js';
+
 
 const html = htm.bind(React.createElement);
 
@@ -478,6 +481,6 @@ const App = () => {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     React.createElement(ErrorBoundary, null,
-        html`<${AppProvider}><${App} /></${AppProvider}>`
+        html`<${QueryClientProvider} client=${queryClient}><${AppProvider}><${App} /></${AppProvider}></${QueryClientProvider}>`
     )
 );

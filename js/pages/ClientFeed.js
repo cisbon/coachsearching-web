@@ -6,9 +6,10 @@
 import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
 import { FeedLayout } from '../components/feed/FeedLayout.js';
+import { useUserProfileQuery, useSuggestedCoachesQuery } from '../hooks/useSupabaseQuery.js';
 
 const React = window.React;
-const { useState, useEffect } = React;
+const { useMemo } = React;
 const html = htm.bind(React.createElement);
 
 const COACHING_CATEGORIES = [
@@ -23,72 +24,33 @@ const COACHING_CATEGORIES = [
 ];
 
 export function ClientFeed({ session }) {
-    const [userProfile, setUserProfile] = useState(null);
-    const [suggestedCoaches, setSuggestedCoaches] = useState([]);
+    // Cached user profile via TanStack Query
+    const { data: userData } = useUserProfileQuery(session?.user?.id);
 
-    // Load user profile
-    useEffect(() => {
-        if (!session?.user?.id) return;
-        const loadProfile = async () => {
-            try {
-                const supabase = window.supabaseClient;
-                if (!supabase) return;
+    const userProfile = useMemo(() => {
+        if (userData) {
+            return {
+                full_name: userData.full_name || session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0],
+                avatar_url: userData.avatar_url || session?.user?.user_metadata?.avatar_url,
+                banner_url: userData.banner_url || null,
+                title: userData.title || null,
+                slug: null,
+            };
+        }
+        if (session?.user) {
+            return {
+                full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+                avatar_url: session.user.user_metadata?.avatar_url,
+                title: null,
+                slug: null,
+            };
+        }
+        return null;
+    }, [userData, session]);
 
-                const { data } = await supabase
-                    .from('cs_users')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (data) {
-                    setUserProfile({
-                        full_name: data.full_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-                        avatar_url: data.avatar_url || session.user.user_metadata?.avatar_url,
-                        banner_url: data.banner_url || null,
-                        title: data.title || null,
-                        slug: null,
-                    });
-                } else {
-                    setUserProfile({
-                        full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-                        avatar_url: session.user.user_metadata?.avatar_url,
-                        title: null,
-                        slug: null,
-                    });
-                }
-            } catch {
-                setUserProfile({
-                    full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-                    avatar_url: null,
-                    title: null,
-                    slug: null,
-                });
-            }
-        };
-        loadProfile();
-    }, [session]);
-
-    // Load suggested coaches
-    useEffect(() => {
-        const loadSuggested = async () => {
-            try {
-                const supabase = window.supabaseClient;
-                if (!supabase) return;
-
-                const { data } = await supabase
-                    .from('cs_coaches')
-                    .select('id, full_name, slug, title, avatar_url, rating_average, rating_count')
-                    .eq('onboarding_completed', true)
-                    .order('rating_average', { ascending: false })
-                    .limit(5);
-
-                setSuggestedCoaches(data || []);
-            } catch (err) {
-                console.error('Failed to load suggested coaches:', err);
-            }
-        };
-        loadSuggested();
-    }, []);
+    // Cached suggested coaches via TanStack Query
+    const { data: suggestedCoaches } = useSuggestedCoachesQuery();
+    const coaches = suggestedCoaches || [];
 
     const displayName = userProfile?.full_name || session?.user?.email?.split('@')[0] || '';
     const avatarUrl = userProfile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=006266&color=fff`;
@@ -133,9 +95,9 @@ export function ClientFeed({ session }) {
                     <h4 class="feed-card-title">✨ ${t('feed.coachesForYou') || 'Coaches you might like'}</h4>
                 </div>
                 <div class="feed-card-body">
-                    ${suggestedCoaches.length > 0 ? html`
+                    ${coaches.length > 0 ? html`
                         <div class="suggested-coaches-list">
-                            ${suggestedCoaches.map(coach => html`
+                            ${coaches.map(coach => html`
                                 <div key=${coach.id} class="suggested-coach-item" onClick=${() => window.navigateTo(`/coach/${coach.slug || coach.id}`)}>
                                     <img
                                         src=${coach.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(coach.full_name)}&background=006266&color=fff`}

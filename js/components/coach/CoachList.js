@@ -9,6 +9,8 @@ import { CoachCard } from './CoachCard.js';
 import { CoachCardSkeleton } from './CoachCardSkeleton.js';
 import { FilterSidebar } from './FilterSidebar.js';
 import { useCities } from '../../context/AppContext.js';
+import { queryClient } from '../../config/queryClient.js';
+import { QUERY_KEYS, STALE_TIMES } from '../../config/queryConfig.js';
 
 const React = window.React;
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
@@ -505,7 +507,7 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         return result;
     }, [searchFilters, activeSearchTerm, coaches, filters, cities.list, matchesSearch]);
 
-    // Load coaches from Supabase
+    // Load coaches from Supabase (cached via TanStack Query)
     const loadCoaches = useCallback(async () => {
         setLoading(true);
 
@@ -513,30 +515,38 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
 
         if (window.supabaseClient) {
             try {
-                const { data: supabaseCoaches, error } = await window.supabaseClient
-                    .from('cs_coaches')
-                    .select(`
-                        *,
-                        cs_coach_certifications (
-                            id,
-                            certification_id,
-                            date_acquired,
-                            certificate_url,
-                            certificate_file_path,
-                            is_verified,
-                            cs_certifications (
-                                id,
-                                code,
-                                name,
-                                short_name,
-                                badge_url,
-                                sort_order
-                            )
-                        )
-                    `)
-                    .order('created_at', { ascending: false });
+                const supabaseCoaches = await queryClient.fetchQuery({
+                    queryKey: QUERY_KEYS.coachList('all'),
+                    queryFn: async () => {
+                        const { data, error } = await window.supabaseClient
+                            .from('cs_coaches')
+                            .select(`
+                                *,
+                                cs_coach_certifications (
+                                    id,
+                                    certification_id,
+                                    date_acquired,
+                                    certificate_url,
+                                    certificate_file_path,
+                                    is_verified,
+                                    cs_certifications (
+                                        id,
+                                        code,
+                                        name,
+                                        short_name,
+                                        badge_url,
+                                        sort_order
+                                    )
+                                )
+                            `)
+                            .order('created_at', { ascending: false });
+                        if (error) throw error;
+                        return data || [];
+                    },
+                    staleTime: STALE_TIMES.coachList,
+                });
 
-                if (!error && supabaseCoaches && supabaseCoaches.length > 0) {
+                if (supabaseCoaches && supabaseCoaches.length > 0) {
                     setCoaches(supabaseCoaches);
                     loadedSuccessfully = true;
                 }
