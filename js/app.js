@@ -301,6 +301,7 @@ const App = () => {
     const initialRoute = handleGitHubPagesRedirect() || migrateHashRoute() || getCurrentRoute();
     const [route, setRoute] = useState(initialRoute);
     const [session, setSession] = useState(null);
+    const [sessionLoaded, setSessionLoaded] = useState(false);
     const [legalModal, setLegalModal] = useState({ isOpen: false, type: null });
     const [configLoaded, setConfigLoaded] = useState(false);
     const [languageVersion, setLanguageVersion] = useState(0);
@@ -314,6 +315,7 @@ const App = () => {
 
                     window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
                         setSession(session);
+                        setSessionLoaded(true);
                     });
 
                     window.supabaseClient.auth.onAuthStateChange((_event, session) => {
@@ -445,7 +447,7 @@ const App = () => {
             case 'coaches': Component = () => html`<${CoachListWithModal} session=${session} />`; break;
             case 'login': Component = Auth; break;
             case 'onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
-            case 'feed': Component = () => html`<${FeedPage} session=${session} />`; break;
+            case 'feed': Component = () => html`<${FeedPage} session=${session} sessionLoaded=${sessionLoaded} />`; break;
             case 'dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
             case 'quiz': Component = () => html`<${MatchingQuiz} session=${session} />`; break;
             case 'ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;

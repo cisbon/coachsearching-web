@@ -11,13 +11,15 @@ const React = window.React;
 const { useState, useEffect } = React;
 const html = htm.bind(React.createElement);
 
-export function FeedPage({ session }) {
+export function FeedPage({ session, sessionLoaded }) {
     const [userType, setUserType] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!session?.user) {
-            // Not logged in - redirect to login
+            // Session not yet loaded - wait for auth state to resolve
+            if (!sessionLoaded) return;
+            // Session loaded but no user - redirect to login
             window.navigateTo('/login');
             return;
         }
@@ -58,7 +60,7 @@ export function FeedPage({ session }) {
             setUserType(type);
             setLoading(false);
         }
-    }, [session]);
+    }, [session, sessionLoaded]);
 
     if (loading) {
         return html`
