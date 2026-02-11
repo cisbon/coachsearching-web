@@ -14,10 +14,9 @@ const React = window.React;
 const { useState, useEffect, useRef, useCallback } = React;
 const html = htm.bind(React.createElement);
 
-const CROP_W = 720;
-const CROP_H = 540; // 4:3
 const OUTPUT_W = 1200;
 const OUTPUT_H = 900;
+const ASPECT = OUTPUT_W / OUTPUT_H; // 4:3
 
 export function ImageEditor({ imageFile, onDone, onClose }) {
     const [image, setImage] = useState(null);
@@ -28,7 +27,7 @@ export function ImageEditor({ imageFile, onDone, onClose }) {
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const canvasRef = useRef(null);
+    const cropRef = useRef(null);
 
     // Load the image file
     useEffect(() => {
@@ -48,8 +47,38 @@ export function ImageEditor({ imageFile, onDone, onClose }) {
         return () => { document.body.style.overflow = ''; };
     }, []);
 
+    // Compute the fitScale that makes the image cover the crop area
+    const getCropRect = () => {
+        const el = cropRef.current;
+        if (!el) return { w: 600, h: 450 };
+        return { w: el.offsetWidth, h: el.offsetHeight };
+    };
+
+    const getFitScale = (cropW, cropH) => {
+        if (!image) return 1;
+        return Math.max(cropW / image.width, cropH / image.height);
+    };
+
+    /**
+     * getCroppedImage replicates the exact same transform pipeline used by CSS
+     * to render the preview, so the output matches 1:1.
+     *
+     * Visual pipeline (CSS):
+     *   1. image natural size → scaled by fitScale * zoom → displayed size
+     *   2. centered in crop area via `left/top` offset
+     *   3. translated by position.x / position.y
+     *   4. rotated by `rotation` degrees around the image center
+     *
+     * Canvas pipeline (here):
+     *   We render into OUTPUT_W x OUTPUT_H canvas, which maps to the crop
+     *   area. We apply the same transforms, scaled by outputScale = OUTPUT_W / cropW.
+     */
     const getCroppedImage = useCallback(() => {
         return new Promise((resolve) => {
+            const { w: cropW, h: cropH } = getCropRect();
+            const fitScale = getFitScale(cropW, cropH);
+            const outputScale = OUTPUT_W / cropW;
+
             const canvas = document.createElement('canvas');
             canvas.width = OUTPUT_W;
             canvas.height = OUTPUT_H;
@@ -58,22 +87,30 @@ export function ImageEditor({ imageFile, onDone, onClose }) {
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, OUTPUT_W, OUTPUT_H);
 
-            const scale = OUTPUT_W / CROP_W;
+            // The displayed image dimensions in CSS pixels
+            const dispW = image.width * fitScale * zoom;
+            const dispH = image.height * fitScale * zoom;
+
+            // CSS positions the image so its center aligns with the crop center
+            // then offsets by position.x/y. The image CSS `left` and `top` are:
+            //   left = (cropW - dispW) / 2
+            //   top  = (cropH - dispH) / 2
+            // Then translate(position.x, position.y) is applied, and rotate around center.
+            //
+            // The center of the image in crop-area coordinates:
+            const imgCenterX = cropW / 2 + position.x;
+            const imgCenterY = cropH / 2 + position.y;
+
+            // Scale everything to output canvas coordinates
             ctx.save();
-            ctx.translate(OUTPUT_W / 2, OUTPUT_H / 2);
+            ctx.translate(imgCenterX * outputScale, imgCenterY * outputScale);
             ctx.rotate((rotation * Math.PI) / 180);
-            ctx.scale(zoom * scale, zoom * scale);
-
-            const drawW = image.width;
-            const drawH = image.height;
-            const fitScale = Math.max(CROP_W / drawW, CROP_H / drawH);
-
             ctx.drawImage(
                 image,
-                position.x / (zoom * fitScale) - drawW / 2,
-                position.y / (zoom * fitScale) - drawH / 2,
-                drawW,
-                drawH
+                -(dispW * outputScale) / 2,
+                -(dispH * outputScale) / 2,
+                dispW * outputScale,
+                dispH * outputScale
             );
             ctx.restore();
 
@@ -143,20 +180,21 @@ export function ImageEditor({ imageFile, onDone, onClose }) {
         };
     }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
-    // Compute image style in crop area
+    // Compute image style in crop area — this is the visual truth
     const getImageStyle = () => {
         if (!image) return {};
-        const fitScale = Math.max(CROP_W / image.width, CROP_H / image.height);
+        const { w: cropW, h: cropH } = getCropRect();
+        const fitScale = getFitScale(cropW, cropH);
         const w = image.width * fitScale * zoom;
         const h = image.height * fitScale * zoom;
         return {
             width: `${w}px`,
             height: `${h}px`,
+            position: 'absolute',
+            left: `calc(50% - ${w / 2}px)`,
+            top: `calc(50% - ${h / 2}px)`,
             transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
             cursor: isDragging ? 'grabbing' : 'grab',
-            position: 'absolute',
-            left: `${(CROP_W - w) / 2}px`,
-            top: `${(CROP_H - h) / 2}px`,
             userSelect: 'none',
             pointerEvents: 'auto',
         };
@@ -176,14 +214,12 @@ export function ImageEditor({ imageFile, onDone, onClose }) {
 
                 <div class="image-editor-body">
                     ${image ? html`
-                        <div class="image-crop-area"
-                            style=${{ width: '100%', maxWidth: `${CROP_W}px`, aspectRatio: '4/3', margin: '0 auto' }}
+                        <div class="image-crop-area" ref=${cropRef}
+                            style=${{ width: '100%', maxWidth: '720px', aspectRatio: '4/3', margin: '0 auto', position: 'relative', overflow: 'hidden', background: '#000', borderRadius: '4px' }}
                             onMouseDown=${handleMouseDown}
                             onTouchStart=${handleTouchStart}
                         >
-                            <div class="image-crop-frame" style=${{ width: '100%', height: '100%' }}>
-                                <img src=${image.src} alt="" style=${getImageStyle()} draggable="false" />
-                            </div>
+                            <img src=${image.src} alt="" style=${getImageStyle()} draggable="false" />
                         </div>
 
                         <div class="image-editor-controls">

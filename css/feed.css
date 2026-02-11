@@ -1604,3 +1604,96 @@
         flex: 1;
     }
 }
+
+/* =============================================
+   HIGHLIGHT STAR (top-right of feed post)
+============================================= */
+.feed-post-header {
+    position: relative;
+}
+
+.feed-post-highlight-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.feed-post-highlight-btn:hover {
+    background: #f3f4f6;
+    transform: scale(1.15);
+}
+
+.feed-post-highlight-btn.highlighted:hover {
+    background: #fef3c7;
+}
+
+/* =============================================
+   REPOST BUTTON ACTIVE STATE
+============================================= */
+.feed-post-action-btn.reposted {
+    color: var(--petrol-primary, #006266);
+    font-weight: 600;
+}
+
+.feed-post-action-btn.reposted svg {
+    stroke: var(--petrol-primary, #006266);
+}
+
+/* =============================================
+   SHARE FEEDBACK
+============================================= */
+.feed-share-feedback {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--petrol-primary, #006266);
+    text-align: center;
+    min-height: 16px;
+    padding: 0 16px;
+}
+
+/* =============================================
+   PROFILE FEED POSTS (on coach profile page)
+============================================= */
+.profile-feed-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-feed-posts .feed-card {
+    margin: 0;
+    border-radius: 8px;
+}
+
+.btn-show-more-posts {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--petrol-primary, #006266);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-show-more-posts:hover {
+    background: var(--petrol-bg, #E8F5F5);
+    border-color: var(--petrol-primary, #006266);
+}
+
+.btn-show-more-posts:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

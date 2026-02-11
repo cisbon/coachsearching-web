@@ -22,6 +22,7 @@ import { VideoPopup } from '../components/coach/VideoPopup.js';
 import { DiscoveryCallModal } from '../components/coach/DiscoveryCallModal.js';
 import { AuthModal } from '../components/auth/AuthModal.js';
 import { useCities, useLookupOptions, useCertifications } from '../context/AppContext.js';
+import { FeedPost } from '../components/feed/FeedPost.js';
 
 const React = window.React;
 const { useState, useEffect, useCallback, memo, useMemo } = React;
@@ -4150,6 +4151,13 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [showCoachProfileEditor, setShowCoachProfileEditor] = useState(false);
     const [requestingService, setRequestingService] = useState(null); // service object for request modal
 
+    // Feed posts on profile
+    const [highlightedPosts, setHighlightedPosts] = useState([]);
+    const [activityPosts, setActivityPosts] = useState([]);
+    const [activityPostsPage, setActivityPostsPage] = useState(0);
+    const [hasMoreActivityPosts, setHasMoreActivityPosts] = useState(false);
+    const [loadingMorePosts, setLoadingMorePosts] = useState(false);
+
     // Viewers also viewed coaches (for own profile)
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
     const [loadingViewersAlsoViewed, setLoadingViewersAlsoViewed] = useState(false);
@@ -4215,6 +4223,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     loadCoachServices(data.id),
                     loadSimilarCoaches(data),
                     checkUserHasReviewed(data.id),
+                    loadHighlightedPosts(data.user_id),
+                    loadActivityPosts(data.user_id, 0),
                 ]);
             }
         } catch (err) {
@@ -4222,6 +4232,124 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             setError(err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Load highlighted posts for this coach's user_id
+    const loadHighlightedPosts = async (userId) => {
+        try {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+
+            // Get post IDs that this user highlighted
+            const { data: highlights } = await supabase
+                .from('cs_post_highlights')
+                .select('post_id')
+                .eq('user_id', userId)
+                .order('highlighted_at', { ascending: false });
+
+            if (!highlights || highlights.length === 0) {
+                setHighlightedPosts([]);
+                return;
+            }
+
+            const postIds = highlights.map(h => h.post_id);
+            const { data: posts } = await supabase
+                .from('cs_posts')
+                .select('*')
+                .in('id', postIds);
+
+            if (posts) {
+                // Preserve highlight order
+                const postMap = {};
+                posts.forEach(p => { postMap[p.id] = p; });
+                const ordered = postIds.map(id => postMap[id]).filter(Boolean);
+
+                // Mark as highlighted and check likes/reposts for current viewer
+                if (session?.user?.id) {
+                    const [likesRes, highlightsRes, repostsRes] = await Promise.all([
+                        supabase.from('cs_post_likes').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                        supabase.from('cs_post_highlights').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                        supabase.from('cs_post_reposts').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                    ]);
+                    const likedSet = new Set((likesRes.data || []).map(l => l.post_id));
+                    const highlightedSet = new Set((highlightsRes.data || []).map(h => h.post_id));
+                    const repostedSet = new Set((repostsRes.data || []).map(r => r.post_id));
+                    ordered.forEach(p => {
+                        p._userLiked = likedSet.has(p.id);
+                        p._userHighlighted = highlightedSet.has(p.id);
+                        p._userReposted = repostedSet.has(p.id);
+                    });
+                } else {
+                    ordered.forEach(p => { p._userHighlighted = true; }); // They are all highlighted by the coach
+                }
+
+                setHighlightedPosts(ordered);
+            }
+        } catch (err) {
+            console.error('Failed to load highlighted posts:', err);
+        }
+    };
+
+    // Load activity posts (the coach's own posts) using user_id
+    const ACTIVITY_PAGE_SIZE = 3;
+    const loadActivityPosts = async (userId, page) => {
+        try {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+
+            const offset = page * ACTIVITY_PAGE_SIZE;
+            const { data: posts } = await supabase
+                .from('cs_posts')
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .range(offset, offset + ACTIVITY_PAGE_SIZE - 1);
+
+            if (posts) {
+                // Check likes/highlights/reposts for current viewer
+                if (session?.user?.id && posts.length > 0) {
+                    const postIds = posts.map(p => p.id);
+                    const [likesRes, highlightsRes, repostsRes] = await Promise.all([
+                        supabase.from('cs_post_likes').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                        supabase.from('cs_post_highlights').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                        supabase.from('cs_post_reposts').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                    ]);
+                    const likedSet = new Set((likesRes.data || []).map(l => l.post_id));
+                    const highlightedSet = new Set((highlightsRes.data || []).map(h => h.post_id));
+                    const repostedSet = new Set((repostsRes.data || []).map(r => r.post_id));
+                    posts.forEach(p => {
+                        p._userLiked = likedSet.has(p.id);
+                        p._userHighlighted = highlightedSet.has(p.id);
+                        p._userReposted = repostedSet.has(p.id);
+                    });
+                }
+
+                if (page === 0) {
+                    setActivityPosts(posts);
+                } else {
+                    setActivityPosts(prev => [...prev, ...posts]);
+                }
+                setHasMoreActivityPosts(posts.length >= ACTIVITY_PAGE_SIZE);
+                setActivityPostsPage(page);
+            }
+        } catch (err) {
+            console.error('Failed to load activity posts:', err);
+        }
+    };
+
+    const handleLoadMoreActivityPosts = async () => {
+        if (!coach?.user_id || loadingMorePosts) return;
+        setLoadingMorePosts(true);
+        await loadActivityPosts(coach.user_id, activityPostsPage + 1);
+        setLoadingMorePosts(false);
+    };
+
+    // Handle highlight toggle from FeedPost on the profile page
+    const handleHighlightToggle = (postId, isHighlighted) => {
+        if (!isHighlighted) {
+            // Remove from highlighted posts list
+            setHighlightedPosts(prev => prev.filter(p => p.id !== postId));
         }
     };
 
@@ -4746,8 +4874,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     };
 
     // Check if there are other visible sections besides recommendations-ratings
-    const hasActivityContent = articles.length > 0 || hasVideo;
-    const hasOtherVisibleSections = (articles.length > 0 || isOwnProfile) || // featured/highlights
+    const hasActivityContent = activityPosts.length > 0 || hasVideo;
+    const hasOtherVisibleSections = highlightedPosts.length > 0 || // featured/highlights
         hasActivityContent || // activity
         experiences.length > 0 || isOwnProfile || // experience
         educations.length > 0 || isOwnProfile || // education
@@ -4777,57 +4905,29 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                             />
                         </section>
 
-                        <!-- Featured Section -->
-                        ${(articles.length > 0 || isOwnProfile) && html`
+                        <!-- Featured / Highlighted Posts Section -->
+                        ${highlightedPosts.length > 0 && html`
                             <section class="profile-section featured-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
                                         <span class="section-icon">⭐</span>
                                         ${t('coach.highlights') || 'Highlights'}
                                     </h2>
-                                    ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('featured')} title="Edit featured">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                            </svg>
-                                        </button>
-                                    `}
                                 </div>
-                                ${articles.length > 0 ? html`
-                                    <div class="featured-grid">
-                                        ${articles.slice(0, 3).map(article => html`
-                                            <article
-                                                key=${article.id}
-                                                class="featured-card"
-                                                onClick=${() => setSelectedArticle(article)}
-                                            >
-                                                ${article.featured_image && html`
-                                                    <div class="featured-image">
-                                                        <img src=${article.featured_image} alt=${article.title} loading="lazy" />
-                                                    </div>
-                                                `}
-                                                <div class="featured-content">
-                                                    <h3 class="featured-title">${article.title}</h3>
-                                                    <p class="featured-excerpt">
-                                                        ${article.excerpt || (article.content_html
-                                                            ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 80) + '...'
-                                                            : '')}
-                                                    </p>
-                                                </div>
-                                            </article>
-                                        `)}
-                                    </div>
-                                ` : html`
-                                    <div class="empty-section-prompt" onClick=${() => handleEditSection('featured')}>
-                                        <span class="empty-icon">+</span>
-                                        <p>${t('coach.addFeatured') || 'Add featured content to highlight your work'}</p>
-                                    </div>
-                                `}
+                                <div class="profile-feed-posts">
+                                    ${highlightedPosts.map(post => html`
+                                        <${FeedPost}
+                                            key=${post.id}
+                                            post=${post}
+                                            session=${session}
+                                            onHighlightToggle=${isOwnProfile ? handleHighlightToggle : null}
+                                        />
+                                    `)}
+                                </div>
                             </section>
                         `}
 
-                        <!-- Activity Section - only show when there is activity content -->
+                        <!-- Activity Section - coach's own posts -->
                         ${hasActivityContent && html`
                             <section class="profile-section activity-section">
                                 <div class="section-header-editable">
@@ -4835,56 +4935,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                         <span class="section-icon">📊</span>
                                         ${t('coach.activity') || 'Activity'}
                                     </h2>
-                                    ${isOwnProfile && html`
-                                        <button class="btn-edit-section" onClick=${() => handleEditSection('activity')} title="Add content">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                                            </svg>
-                                        </button>
-                                    `}
                                 </div>
 
-                                <!-- Activity tabs commented out for now - not enough content to separate -->
-                                <!-- <${ActivityTabs}
-                                    activeTab=${activeActivityTab}
-                                    onTabChange=${setActiveActivityTab}
-                                    articles=${articles}
-                                    coach=${coach}
-                                /> -->
-
                                 <div class="activity-content">
-                                    <!-- Posts -->
-                                    ${articles.length > 0 && html`
-                                        <div class="activity-posts">
-                                            ${articles.slice(0, 3).map(article => html`
-                                                <article key=${article.id} class="activity-post" onClick=${() => setSelectedArticle(article)}>
-                                                    <div class="post-author">
-                                                        <img src=${coach.avatar_url} alt=${coach.full_name} class="author-avatar" />
-                                                        <div class="author-info">
-                                                            <span class="author-name">${coach.full_name}</span>
-                                                            <span class="post-date">${new Date(article.created_at).toLocaleDateString()}</span>
-                                                        </div>
-                                                    </div>
-                                                    <h3 class="post-title">${article.title}</h3>
-                                                    <p class="post-excerpt">
-                                                        ${article.excerpt || (article.content_html
-                                                            ? article.content_html.replace(/<[^>]*>/g, '').substring(0, 150) + '...'
-                                                            : '')}
-                                                    </p>
-                                                    ${article.featured_image && html`
-                                                        <img src=${article.featured_image} alt=${article.title} class="post-image" loading="lazy" />
-                                                    `}
-                                                </article>
-                                            `)}
-                                            ${articles.length > 3 && html`
-                                                <button class="btn-show-all">
-                                                    ${t('coach.showAllPosts') || 'Show all posts'} →
-                                                </button>
-                                            `}
-                                        </div>
-                                    `}
-
                                     <!-- Videos -->
                                     ${hasVideo && html`
                                         <div class="activity-videos">
@@ -4899,6 +4952,26 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                                 </div>
                                             </div>
                                         </div>
+                                    `}
+
+                                    <!-- Feed Posts -->
+                                    ${activityPosts.length > 0 && html`
+                                        <div class="profile-feed-posts">
+                                            ${activityPosts.map(post => html`
+                                                <${FeedPost}
+                                                    key=${post.id}
+                                                    post=${post}
+                                                    session=${session}
+                                                />
+                                            `)}
+                                        </div>
+                                        ${hasMoreActivityPosts && html`
+                                            <button class="btn-show-more-posts" onClick=${handleLoadMoreActivityPosts} disabled=${loadingMorePosts}>
+                                                ${loadingMorePosts
+                                                    ? (t('feed.loading') || 'Loading...')
+                                                    : (t('coach.showMorePosts') || 'Show more posts')}
+                                            </button>
+                                        `}
                                     `}
                                 </div>
                             </section>

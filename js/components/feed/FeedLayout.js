@@ -42,17 +42,23 @@ export function FeedLayout({ session, userProfile, leftColumn, rightColumn }) {
 
             if (error) throw error;
 
-            // Check which posts current user has liked
+            // Check which posts current user has liked, highlighted, reposted
             if (data && data.length > 0 && session?.user?.id) {
                 const postIds = data.map(p => p.id);
-                const { data: likes } = await supabase
-                    .from('cs_post_likes')
-                    .select('post_id')
-                    .eq('user_id', session.user.id)
-                    .in('post_id', postIds);
+                const [likesRes, highlightsRes, repostsRes] = await Promise.all([
+                    supabase.from('cs_post_likes').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                    supabase.from('cs_post_highlights').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                    supabase.from('cs_post_reposts').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                ]);
 
-                const likedSet = new Set((likes || []).map(l => l.post_id));
-                data.forEach(p => { p._userLiked = likedSet.has(p.id); });
+                const likedSet = new Set((likesRes.data || []).map(l => l.post_id));
+                const highlightedSet = new Set((highlightsRes.data || []).map(h => h.post_id));
+                const repostedSet = new Set((repostsRes.data || []).map(r => r.post_id));
+                data.forEach(p => {
+                    p._userLiked = likedSet.has(p.id);
+                    p._userHighlighted = highlightedSet.has(p.id);
+                    p._userReposted = repostedSet.has(p.id);
+                });
             }
 
             if (offset === 0) {
