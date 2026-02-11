@@ -4938,22 +4938,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 </div>
 
                                 <div class="activity-content">
-                                    <!-- Videos -->
-                                    ${hasVideo && html`
-                                        <div class="activity-videos">
-                                            <div class="video-card" onClick=${() => setShowVideoPopup(true)}>
-                                                <div class="video-thumbnail">
-                                                    <img src=${coach.video_thumbnail_url || coach.avatar_url} alt="Intro Video" />
-                                                    <div class="video-play-btn">▶</div>
-                                                </div>
-                                                <div class="video-info">
-                                                    <h4>${t('coach.introVideo') || 'Introduction Video'}</h4>
-                                                    <p>${t('coach.meetCoach') || 'Get to know'} ${coach.full_name.split(' ')[0]}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `}
-
+                                
                                     <!-- Feed Posts -->
                                     ${activityPosts.length > 0 && html`
                                         <div class="profile-feed-posts">
