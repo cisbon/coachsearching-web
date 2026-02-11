@@ -252,6 +252,7 @@
 
 .recommendation-link-url {
     display: flex;
+    flex-direction: column;
     gap: 6px;
     margin-top: 10px;
 }
