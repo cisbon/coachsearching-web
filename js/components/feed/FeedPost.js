@@ -4,6 +4,7 @@
  */
 import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
+import { parseVideoUrl } from './PostEditor.js';
 
 const React = window.React;
 const { useState, useCallback } = React;
@@ -104,6 +105,25 @@ export function FeedPost({ post, session }) {
             ${post.image_url && html`
                 <img src=${post.image_url} alt="" class="feed-post-image" />
             `}
+
+            ${post.video_url && (() => {
+                const embed = parseVideoUrl(post.video_url);
+                return embed ? html`
+                    <div class="feed-post-video">
+                        <iframe
+                            src=${embed.embedUrl}
+                            class="feed-post-video-iframe"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                ` : html`
+                    <a href=${post.video_url} target="_blank" rel="noopener noreferrer" class="feed-post-video-link">
+                        🎥 ${post.video_url}
+                    </a>
+                `;
+            })()}
 
             ${(likesCount > 0 || post.comments_count > 0) && html`
                 <div class="feed-post-stats">
