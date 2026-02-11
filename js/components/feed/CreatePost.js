@@ -89,16 +89,15 @@ export function CreatePost({ session, userProfile, onPostCreated }) {
             <div class="create-post-modal-overlay" onClick=${handleBackdropClick}>
                 <div class="create-post-modal">
                     <div class="create-post-modal-header">
-                        <h3>${t('feed.createPost') || 'Create a post'}</h3>
-                        <button class="create-post-modal-close" onClick=${() => setShowModal(false)}>✕</button>
-                    </div>
-                    <div class="create-post-modal-body">
                         <div class="create-post-modal-author">
                             <img src=${avatarUrl} alt="" />
                             <div>
                                 <div class="create-post-modal-author-name">${displayName}</div>
                             </div>
                         </div>
+                        <button class="create-post-modal-close" onClick=${() => setShowModal(false)}>✕</button>
+                    </div>
+                    <div class="create-post-modal-body">
                         <textarea
                             ref=${textareaRef}
                             class="create-post-textarea"
