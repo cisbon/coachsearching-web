@@ -1337,7 +1337,7 @@
     padding: 20px;
     box-shadow: var(--shadow-sm);
     position: sticky;
-    top: 115px;
+    top: 80px;
     height: fit-content;
     max-height: calc(100vh - 100px);
     overflow-y: auto;
