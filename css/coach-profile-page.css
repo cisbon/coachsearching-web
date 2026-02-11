@@ -4482,6 +4482,7 @@
     display: flex;
     gap: 12px;
     align-items: flex-start;
+    justify-content: space-between;
 }
 
 .review-toggle-wrapper {
