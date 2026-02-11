@@ -41,6 +41,11 @@ export function Navbar({ session }) {
             /* Desktop navbar - 10px consistent spacing, petrol background matching hero */
             header[role="banner"] { background: #006266; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
             header[role="banner"] .nav-flex { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px; }
+            header[role="banner"].signed-in .nav-flex { height: 25px; }
+            header[role="banner"].signed-in .logo { font-size: 0.85rem; }
+            header[role="banner"].signed-in .nav-links > a,
+            header[role="banner"].signed-in .nav-links > .nav-auth-btn { font-size: 0.8rem; padding: 4px 10px !important; }
+            header[role="banner"].signed-in .nav-browse-link { padding: 4px 10px; font-size: 0.8rem; }
             header[role="banner"] .nav-links { display: flex; align-items: center; gap: 10px; }
             header[role="banner"] .nav-links > * { margin: 0; }
             header[role="banner"] .logo { color: white !important; }
@@ -63,6 +68,14 @@ export function Navbar({ session }) {
                 gap: 5px;
                 z-index: 1001;
             }
+            .signed-in .hamburger-btn {
+                padding: 2px 10px;
+                gap: 3px;
+            }
+            .signed-in .hamburger-btn span {
+                width: 20px;
+                height: 2px;
+            }
             .hamburger-btn span {
                 display: block;
                 width: 24px;
@@ -74,6 +87,8 @@ export function Navbar({ session }) {
             .hamburger-btn.open span:nth-child(1) { transform: rotate(45deg) translate(6px, 6px); }
             .hamburger-btn.open span:nth-child(2) { opacity: 0; }
             .hamburger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
+            .signed-in .hamburger-btn.open span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
+            .signed-in .hamburger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
 
             /* Mobile selector styles - inline expandable */
             .mobile-selector {
@@ -169,7 +184,7 @@ export function Navbar({ session }) {
             }
 
             /* Mobile styles */
-            @media (max-width: 1200px) {
+            @media (max-width: 1190px) {
                 .hamburger-btn { display: flex !important; }
 
                 header[role="banner"] .nav-links {
@@ -189,11 +204,19 @@ export function Navbar({ session }) {
                     z-index: 999;
                 }
 
+                header[role="banner"].signed-in .nav-links {
+                    top: 25px;
+                }
+
                 header[role="banner"] .nav-links.open {
                     max-height: calc(100vh - 60px);
                     overflow-y: auto;
                     opacity: 1;
                     padding: 16px 20px;
+                }
+
+                header[role="banner"].signed-in .nav-links.open {
+                    max-height: calc(100vh - 25px);
                 }
 
                 header[role="banner"] .nav-links > a,
@@ -222,7 +245,7 @@ export function Navbar({ session }) {
     }, []);
 
     return html`
-        <header role="banner">
+        <header role="banner" class="${session ? 'signed-in' : ''}">
             <div class="container nav-flex">
                 <a href="/" class="logo" onClick=${(e) => { e.preventDefault(); handleLinkClick(e, session ? '/feed' : '/home'); }}>coach<span>searching</span>.com</a>
 
