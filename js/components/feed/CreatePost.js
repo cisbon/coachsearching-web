@@ -80,7 +80,7 @@ export function CreatePost({ session, userProfile, onPostCreated }) {
                 </button>
                 <button class="create-post-action" onClick=${() => setShowModal(true)}>
                     <span class="create-post-action-icon">📝</span>
-                    <span>${t('feed.article') || 'Article'}</span>
+                    <span>${t('feed.article') || 'Text'}</span>
                 </button>
             </div>
         </div>
