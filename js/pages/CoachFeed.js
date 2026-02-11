@@ -112,23 +112,6 @@ export function CoachFeed({ session }) {
                 <a href=${profileUrl} class="feed-profile-link">${t('feed.viewMyProfile') || 'View my profile'}</a>
             </div>
 
-            <!-- Profile Analytics -->
-            <div class="feed-card feed-analytics feed-desktop-only">
-                <div class="feed-card-header">
-                    <h4 class="feed-card-title">${t('feed.analytics') || 'Profile Analytics'}</h4>
-                </div>
-                <div class="feed-card-body">
-                    <div class="analytics-stat-row">
-                        <span class="analytics-stat-label">${t('feed.profileViews30d') || 'Profile views (30d)'}</span>
-                        <span class="analytics-stat-value">${analytics.views}</span>
-                    </div>
-                    <div class="analytics-stat-row">
-                        <span class="analytics-stat-label">${t('feed.discoveryRequests30d') || 'Discovery requests (30d)'}</span>
-                        <span class="analytics-stat-value">${analytics.discoveryRequests}</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Recommendation Link -->
             <div class="feed-card recommendation-link-section">
                 <div class="feed-card-header">
