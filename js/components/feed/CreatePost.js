@@ -71,16 +71,16 @@ export function CreatePost({ session, userProfile, onPostCreated }) {
             </div>
             <div class="create-post-actions">
                 <button class="create-post-action" onClick=${() => setShowModal(true)}>
-                    <span class="create-post-action-icon">📝</span>
-                    <span>${t('feed.article') || 'Article'}</span>
-                </button>
-                <button class="create-post-action" onClick=${() => setShowModal(true)}>
                     <span class="create-post-action-icon">📷</span>
                     <span>${t('feed.photo') || 'Photo'}</span>
                 </button>
                 <button class="create-post-action" onClick=${() => setShowModal(true)}>
                     <span class="create-post-action-icon">🎥</span>
                     <span>${t('feed.video') || 'Video'}</span>
+                </button>
+                <button class="create-post-action" onClick=${() => setShowModal(true)}>
+                    <span class="create-post-action-icon">📝</span>
+                    <span>${t('feed.article') || 'Article'}</span>
                 </button>
             </div>
         </div>
