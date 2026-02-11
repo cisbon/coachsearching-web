@@ -238,10 +238,6 @@ function CreatePostCard({ avatarUrl, onText, onPhoto, onVideo }) {
                 </button>
             </div>
             <div class="create-post-actions">
-                <button class="create-post-action" onClick=${onText}>
-                    <span class="create-post-action-icon">📝</span>
-                    <span>${t('feed.article') || 'Text'}</span>
-                </button>
                 <button class="create-post-action" onClick=${onPhoto}>
                     <span class="create-post-action-icon">📷</span>
                     <span>${t('feed.photo') || 'Photo'}</span>
@@ -249,6 +245,10 @@ function CreatePostCard({ avatarUrl, onText, onPhoto, onVideo }) {
                 <button class="create-post-action" onClick=${onVideo}>
                     <span class="create-post-action-icon">🎥</span>
                     <span>${t('feed.video') || 'Video'}</span>
+                </button>
+                <button class="create-post-action" onClick=${onText}>
+                    <span class="create-post-action-icon">📝</span>
+                    <span>${t('feed.article') || 'Text'}</span>
                 </button>
             </div>
         </div>
