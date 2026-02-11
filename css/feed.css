@@ -449,7 +449,6 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 12px;
 }
 
 .create-post-modal-author img {
@@ -466,6 +465,7 @@
 
 .create-post-textarea {
     width: 100%;
+    padding: 10px;
     min-height: 150px;
     border: none;
     outline: none;
