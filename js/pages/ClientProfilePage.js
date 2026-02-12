@@ -395,10 +395,11 @@ const ClientProfileEditorModal = memo(function ClientProfileEditorModal({ client
 /* ─── Main ClientProfilePage ────────────────────────────────────── */
 export function ClientProfilePage({ clientSlug, session }) {
     const [client, setClient] = useState(null);
-    const [posts, setPosts] = useState([]);
+    const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [postsLoading, setPostsLoading] = useState(false);
+    const [activityLoading, setActivityLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [activityPage, setActivityPage] = useState(0);
     const [error, setError] = useState(null);
 
     // Edit modals
@@ -437,56 +438,128 @@ export function ClientProfilePage({ clientSlug, session }) {
         }
     }, [clientSlug]);
 
-    const loadPosts = useCallback(async (offset = 0) => {
+    const loadActivity = useCallback(async (page = 0) => {
         if (!client?.user_id) return;
         const supabase = window.supabaseClient;
         if (!supabase) return;
 
-        setPostsLoading(true);
+        setActivityLoading(true);
         try {
             const data = await queryClient.fetchQuery({
-                queryKey: QUERY_KEYS.clientPosts(client.user_id, offset),
+                queryKey: QUERY_KEYS.clientPosts(client.user_id, page),
                 queryFn: async () => {
-                    const { data, error } = await supabase
-                        .from('cs_posts')
-                        .select('*')
-                        .eq('user_id', client.user_id)
-                        .order('created_at', { ascending: false })
-                        .range(offset, offset + PAGE_SIZE - 1);
-                    if (error) throw error;
-                    return data || [];
+                    const userId = client.user_id;
+
+                    // Fetch all activity types in parallel
+                    const [ownPostsRes, likesRes, repostsRes, commentsRes] = await Promise.all([
+                        // Own posts
+                        supabase
+                            .from('cs_posts')
+                            .select('*')
+                            .eq('user_id', userId)
+                            .order('created_at', { ascending: false })
+                            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
+                        // Liked posts — get like records with post data
+                        supabase
+                            .from('cs_post_likes')
+                            .select('post_id, created_at, cs_posts(*)')
+                            .eq('user_id', userId)
+                            .order('created_at', { ascending: false })
+                            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
+                        // Reposted posts
+                        supabase
+                            .from('cs_post_reposts')
+                            .select('post_id, created_at, cs_posts(*)')
+                            .eq('user_id', userId)
+                            .order('created_at', { ascending: false })
+                            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
+                        // Commented posts — get distinct posts commented on
+                        supabase
+                            .from('cs_post_comments')
+                            .select('post_id, created_at, cs_posts(*)')
+                            .eq('user_id', userId)
+                            .order('created_at', { ascending: false })
+                            .range(page * PAGE_SIZE * 2, (page + 1) * PAGE_SIZE * 2 - 1),
+                    ]);
+
+                    // Build activity items with type labels
+                    const activityItems = [];
+                    const seenPostIds = new Set();
+
+                    // Own posts
+                    (ownPostsRes.data || []).forEach(post => {
+                        activityItems.push({ post, activityType: 'posted', activityTime: post.created_at });
+                        seenPostIds.add(post.id);
+                    });
+
+                    // Likes
+                    (likesRes.data || []).forEach(like => {
+                        if (like.cs_posts && !seenPostIds.has(like.post_id)) {
+                            activityItems.push({ post: like.cs_posts, activityType: 'liked', activityTime: like.created_at });
+                            seenPostIds.add(like.post_id);
+                        }
+                    });
+
+                    // Reposts
+                    (repostsRes.data || []).forEach(repost => {
+                        if (repost.cs_posts && !seenPostIds.has(repost.post_id)) {
+                            activityItems.push({ post: repost.cs_posts, activityType: 'reposted', activityTime: repost.created_at });
+                            seenPostIds.add(repost.post_id);
+                        }
+                    });
+
+                    // Comments (deduplicate by post_id — show latest comment time)
+                    const commentsByPost = new Map();
+                    (commentsRes.data || []).forEach(comment => {
+                        if (comment.cs_posts && !seenPostIds.has(comment.post_id)) {
+                            if (!commentsByPost.has(comment.post_id)) {
+                                commentsByPost.set(comment.post_id, { post: comment.cs_posts, activityType: 'commented', activityTime: comment.created_at });
+                            }
+                        }
+                    });
+                    commentsByPost.forEach(item => {
+                        activityItems.push(item);
+                        seenPostIds.add(item.post.id);
+                    });
+
+                    // Sort by activity time (most recent first)
+                    activityItems.sort((a, b) => new Date(b.activityTime) - new Date(a.activityTime));
+
+                    // Trim to page size
+                    return activityItems.slice(0, PAGE_SIZE);
                 },
                 staleTime: STALE_TIMES.clientPosts,
             });
 
-            // Check user interactions for this batch
+            // Enrich posts with current user's interaction status
             if (data.length > 0 && session?.user?.id) {
-                const postIds = data.map(p => p.id);
-                const [likesRes, highlightsRes, repostsRes] = await Promise.all([
+                const postIds = data.map(a => a.post.id);
+                const [uLikes, uHighlights, uReposts] = await Promise.all([
                     supabase.from('cs_post_likes').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
                     supabase.from('cs_post_highlights').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
                     supabase.from('cs_post_reposts').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
                 ]);
-                const likedSet = new Set((likesRes.data || []).map(l => l.post_id));
-                const highlightedSet = new Set((highlightsRes.data || []).map(h => h.post_id));
-                const repostedSet = new Set((repostsRes.data || []).map(r => r.post_id));
-                data.forEach(p => {
-                    p._userLiked = likedSet.has(p.id);
-                    p._userHighlighted = highlightedSet.has(p.id);
-                    p._userReposted = repostedSet.has(p.id);
+                const likedSet = new Set((uLikes.data || []).map(l => l.post_id));
+                const highlightedSet = new Set((uHighlights.data || []).map(h => h.post_id));
+                const repostedSet = new Set((uReposts.data || []).map(r => r.post_id));
+                data.forEach(a => {
+                    a.post._userLiked = likedSet.has(a.post.id);
+                    a.post._userHighlighted = highlightedSet.has(a.post.id);
+                    a.post._userReposted = repostedSet.has(a.post.id);
                 });
             }
 
-            if (offset === 0) {
-                setPosts(data);
+            if (page === 0) {
+                setActivities(data);
             } else {
-                setPosts(prev => [...prev, ...data]);
+                setActivities(prev => [...prev, ...data]);
             }
             setHasMore(data.length >= PAGE_SIZE);
+            setActivityPage(page);
         } catch (err) {
-            console.error('Failed to load posts:', err);
+            console.error('Failed to load activity:', err);
         } finally {
-            setPostsLoading(false);
+            setActivityLoading(false);
         }
     }, [client, session]);
 
@@ -515,8 +588,8 @@ export function ClientProfilePage({ clientSlug, session }) {
     }, [loadClient]);
 
     useEffect(() => {
-        if (client) loadPosts(0);
-    }, [client, loadPosts]);
+        if (client) loadActivity(0);
+    }, [client, loadActivity]);
 
     if (loading) {
         return html`
@@ -614,36 +687,54 @@ export function ClientProfilePage({ clientSlug, session }) {
                     </div>
                 </div>
 
-                <!-- Posts Section -->
+                <!-- Activity Section -->
                 <div class="client-profile-posts-section">
                     <h3 class="client-profile-section-title">
-                        ${t('client.posts') || 'Posts'}
-                        ${posts.length > 0 ? ` (${posts.length}${hasMore ? '+' : ''})` : ''}
+                        ${t('client.activity') || 'Activity'}
+                        ${activities.length > 0 ? ` (${activities.length}${hasMore ? '+' : ''})` : ''}
                     </h3>
 
-                    ${posts.length === 0 && !postsLoading ? html`
+                    ${activities.length === 0 && !activityLoading ? html`
                         <div class="client-profile-no-posts">
                             <p>${isOwnProfile
-                                ? (t('client.noPostsOwn') || 'You haven\'t posted anything yet. Share your thoughts on the feed!')
-                                : (t('client.noPosts') || 'No posts yet.')}</p>
+                                ? (t('client.noActivityOwn') || 'No activity yet. Like, comment, or share posts on the feed!')
+                                : (t('client.noActivity') || 'No activity yet.')}</p>
                         </div>
                     ` : html`
                         <div class="client-profile-posts-list">
-                            ${posts.map(post => html`
-                                <${FeedPost} key=${post.id} post=${post} session=${session} />
+                            ${activities.map(({ post, activityType }) => html`
+                                <div key=${post.id + '-' + activityType} class="client-activity-item">
+                                    ${activityType !== 'posted' && html`
+                                        <div class="client-activity-label client-activity-${activityType}">
+                                            ${activityType === 'liked' && html`
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                                            `}
+                                            ${activityType === 'reposted' && html`
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 23l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                                            `}
+                                            ${activityType === 'commented' && html`
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                            `}
+                                            <span>${activityType === 'liked' ? (t('client.activityLiked') || 'Liked')
+                                                : activityType === 'reposted' ? (t('client.activityReposted') || 'Reposted')
+                                                : (t('client.activityCommented') || 'Commented on')}</span>
+                                        </div>
+                                    `}
+                                    <${FeedPost} post=${post} session=${session} />
+                                </div>
                             `)}
                         </div>
                     `}
 
-                    ${postsLoading && html`
+                    ${activityLoading && html`
                         <div class="client-profile-posts-loading">
                             <div class="feed-loading-spinner"></div>
                         </div>
                     `}
 
-                    ${hasMore && posts.length > 0 && !postsLoading && html`
-                        <button class="btn-show-more-posts" onClick=${() => loadPosts(posts.length)}>
-                            ${t('client.loadMorePosts') || 'Load more posts'}
+                    ${hasMore && activities.length > 0 && !activityLoading && html`
+                        <button class="btn-show-more-posts" onClick=${() => loadActivity(activityPage + 1)}>
+                            ${t('client.loadMoreActivity') || 'Load more activity'}
                         </button>
                     `}
                 </div>

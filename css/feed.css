@@ -2034,6 +2034,39 @@
     border: 1px solid #e5e7eb;
 }
 
+/* Activity item wrapper */
+.client-activity-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.client-activity-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #6b7280;
+    border-bottom: none;
+}
+
+.client-activity-label svg {
+    flex-shrink: 0;
+}
+
+.client-activity-liked {
+    color: #2563eb;
+}
+
+.client-activity-reposted {
+    color: #059669;
+}
+
+.client-activity-commented {
+    color: #7c3aed;
+}
+
 .client-profile-no-posts {
     text-align: center;
     padding: 24px;
