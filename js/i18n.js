@@ -2432,6 +2432,14 @@ const translations = {
 "feed.postPlaceholder": "What do you want to talk about?",
 "feed.posting": "Posting...",
 "feed.post": "Post",
+"feed.repost": "Repost",
+"feed.reposted": "Reposted",
+"feed.highlighted": "Highlighted",
+"feed.highlightRemoved": "Highlight removed",
+"feed.addComment": "Write a comment...",
+"feed.showMoreComments": "Show more comments",
+"feed.reply": "Reply",
+"feed.deleteComment": "Delete",
 
 // Premium Onboarding
 "onboard.premium.back": "Back",
@@ -4478,6 +4486,14 @@ const translations = {
 "feed.postPlaceholder": "Worüber möchtest du sprechen?",
 "feed.posting": "Wird gepostet...",
 "feed.post": "Posten",
+"feed.repost": "Teilen",
+"feed.reposted": "Geteilt",
+"feed.highlighted": "Hervorgehoben",
+"feed.highlightRemoved": "Hervorhebung entfernt",
+"feed.addComment": "Kommentar schreiben...",
+"feed.showMoreComments": "Weitere Kommentare anzeigen",
+"feed.reply": "Antworten",
+"feed.deleteComment": "Löschen",
 
 // Premium Onboarding
 "onboard.premium.back": "Zurück",
@@ -6403,6 +6419,14 @@ const translations = {
 "feed.postPlaceholder": "¿De qué quieres hablar?",
 "feed.posting": "Publicando...",
 "feed.post": "Publicar",
+"feed.repost": "Compartir",
+"feed.reposted": "Compartido",
+"feed.highlighted": "Destacado",
+"feed.highlightRemoved": "Destacado eliminado",
+"feed.addComment": "Escribe un comentario...",
+"feed.showMoreComments": "Mostrar más comentarios",
+"feed.reply": "Responder",
+"feed.deleteComment": "Eliminar",
 
 // Premium Onboarding
 "onboard.premium.back": "Atrás",
@@ -8340,6 +8364,14 @@ const translations = {
         "feed.postPlaceholder": "De quoi voulez-vous parler ?",
         "feed.posting": "Publication en cours...",
         "feed.post": "Publier",
+        "feed.repost": "Partager",
+        "feed.reposted": "Partagé",
+        "feed.highlighted": "Mis en avant",
+        "feed.highlightRemoved": "Mis en avant retiré",
+        "feed.addComment": "Écrire un commentaire...",
+        "feed.showMoreComments": "Afficher plus de commentaires",
+        "feed.reply": "Répondre",
+        "feed.deleteComment": "Supprimer",
 
         // Premium Onboarding
         "onboard.premium.back": "Retour",
@@ -10277,6 +10309,14 @@ const translations = {
         "feed.postPlaceholder": "Di cosa vuoi parlare?",
         "feed.posting": "Pubblicazione...",
         "feed.post": "Pubblica",
+        "feed.repost": "Condividi",
+        "feed.reposted": "Condiviso",
+        "feed.highlighted": "In evidenza",
+        "feed.highlightRemoved": "Evidenza rimossa",
+        "feed.addComment": "Scrivi un commento...",
+        "feed.showMoreComments": "Mostra altri commenti",
+        "feed.reply": "Rispondi",
+        "feed.deleteComment": "Elimina",
 
         // Premium Onboarding
         "onboard.premium.back": "Indietro",

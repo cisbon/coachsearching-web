@@ -42,6 +42,9 @@ export const STALE_TIMES = {
     blogPosts:          5 * 60 * 1000,          // 5 minutes
     blogPost:           10 * 60 * 1000,        // 10 minutes
 
+    // Comments
+    postComments:       2 * 60 * 1000,          // 2 minutes
+
     // Feed & Posts
     feedPosts:          2 * 60 * 1000,          // 2 minutes
     userPostLikes:      5 * 60 * 1000,          // 5 minutes
@@ -95,6 +98,9 @@ export const QUERY_KEYS = {
     coachArticles:      (coachId) => ['coach', coachId, 'articles'],
     blogPosts:          (lang) => ['blog', 'posts', lang || 'all'],
     blogPost:           (lang, slug) => ['blog', 'post', lang, slug],
+
+    // Comments
+    postComments:       (postId) => ['post', postId, 'comments'],
 
     // Feed & Posts
     feedPosts:          (offset) => ['feed', 'posts', offset || 0],

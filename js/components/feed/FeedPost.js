@@ -13,10 +13,10 @@ import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
 import { parseVideoUrl } from './PostEditor.js';
 import { queryClient } from '../../config/queryClient.js';
-import { QUERY_KEYS } from '../../config/queryConfig.js';
+import { QUERY_KEYS, STALE_TIMES } from '../../config/queryConfig.js';
 
 const React = window.React;
-const { useState, useCallback, useEffect } = React;
+const { useState, useCallback, useEffect, useRef } = React;
 const html = htm.bind(React.createElement);
 
 /**
@@ -42,12 +42,201 @@ function timeAgo(dateStr) {
 
 const CONTENT_TRUNCATE_LENGTH = 300;
 
+/* ─── Toast notification helper ─────────────────────────────────── */
+let toastTimeout = null;
+function showToast(message) {
+    let container = document.getElementById('feed-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'feed-toast-container';
+        container.className = 'feed-toast-container';
+        document.body.appendChild(container);
+    }
+    container.textContent = message;
+    container.classList.add('visible');
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        container.classList.remove('visible');
+    }, 3000);
+}
+
+/* ─── PostComments sub-component ────────────────────────────────── */
+function PostComments({ postId, session, commentsCount }) {
+    const [comments, setComments] = useState([]);
+    const [showAll, setShowAll] = useState(false);
+    const [commentText, setCommentText] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [loaded, setLoaded] = useState(false);
+    const [totalCount, setTotalCount] = useState(commentsCount || 0);
+    const scrollRef = useRef(null);
+
+    const loadComments = useCallback(async () => {
+        const supabase = window.supabaseClient;
+        if (!supabase) return;
+
+        const cached = queryClient.getQueryData(QUERY_KEYS.postComments(postId));
+        if (cached) {
+            setComments(cached);
+            setTotalCount(cached.length);
+            setLoaded(true);
+            return;
+        }
+
+        const { data, error } = await supabase
+            .from('cs_post_comments')
+            .select('*')
+            .eq('post_id', postId)
+            .order('created_at', { ascending: true });
+
+        if (!error && data) {
+            queryClient.setQueryData(QUERY_KEYS.postComments(postId), data);
+            setComments(data);
+            setTotalCount(data.length);
+        }
+        setLoaded(true);
+    }, [postId]);
+
+    // Load comments on mount
+    useEffect(() => {
+        loadComments();
+    }, [loadComments]);
+
+    const handleSubmit = useCallback(async (e) => {
+        e.preventDefault();
+        if (!session?.user?.id || !commentText.trim() || submitting) return;
+        setSubmitting(true);
+
+        try {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+
+            const userName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
+            const userAvatar = session.user.user_metadata?.avatar_url || null;
+
+            const { data, error } = await supabase
+                .from('cs_post_comments')
+                .insert({
+                    post_id: postId,
+                    user_id: session.user.id,
+                    content: commentText.trim(),
+                    author_name: userName,
+                    author_avatar: userAvatar
+                })
+                .select()
+                .single();
+
+            if (!error && data) {
+                setComments(prev => [...prev, data]);
+                setTotalCount(prev => prev + 1);
+                setCommentText('');
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postComments(postId) });
+                queryClient.invalidateQueries({ queryKey: ['feed'] });
+            }
+        } catch (err) {
+            console.error('Comment submit error:', err);
+        } finally {
+            setSubmitting(false);
+        }
+    }, [commentText, postId, session, submitting]);
+
+    const handleDelete = useCallback(async (commentId) => {
+        if (!session?.user?.id) return;
+        try {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+
+            const { error } = await supabase
+                .from('cs_post_comments')
+                .delete()
+                .eq('id', commentId)
+                .eq('user_id', session.user.id);
+
+            if (!error) {
+                setComments(prev => prev.filter(c => c.id !== commentId));
+                setTotalCount(prev => Math.max(0, prev - 1));
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postComments(postId) });
+                queryClient.invalidateQueries({ queryKey: ['feed'] });
+            }
+        } catch (err) {
+            console.error('Comment delete error:', err);
+        }
+    }, [postId, session]);
+
+    const visibleComments = showAll ? comments : comments.slice(-1);
+    const hasMore = comments.length > 1 && !showAll;
+
+    return html`
+        <div class="feed-comments-section">
+            ${loaded && comments.length > 0 && html`
+                <div class="feed-comments-list">
+                    ${hasMore && html`
+                        <button class="feed-comments-show-more" onClick=${() => setShowAll(true)}>
+                            ${t('feed.showMoreComments') || 'Show more comments'} (${totalCount})
+                        </button>
+                    `}
+                    <div class="feed-comments-scroll ${showAll && comments.length > 4 ? 'scrollable' : ''}" ref=${scrollRef}>
+                        ${visibleComments.map(comment => html`
+                            <div class="feed-comment" key=${comment.id}>
+                                <img
+                                    src=${comment.author_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.author_name || 'User')}&background=006266&color=fff&size=32`}
+                                    alt=${comment.author_name}
+                                    class="feed-comment-avatar"
+                                />
+                                <div class="feed-comment-body">
+                                    <div class="feed-comment-bubble">
+                                        <span class="feed-comment-author">${comment.author_name || 'User'}</span>
+                                        <span class="feed-comment-text">${comment.content}</span>
+                                    </div>
+                                    <div class="feed-comment-meta">
+                                        <span class="feed-comment-time">${timeAgo(comment.created_at)}</span>
+                                        ${session?.user?.id === comment.user_id && html`
+                                            <button class="feed-comment-delete" onClick=${() => handleDelete(comment.id)}>
+                                                ${t('feed.deleteComment') || 'Delete'}
+                                            </button>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        `)}
+                    </div>
+                </div>
+            `}
+            ${session?.user?.id && html`
+                <form class="feed-comment-form" onSubmit=${handleSubmit}>
+                    <img
+                        src=${session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || 'U')}&background=006266&color=fff&size=32`}
+                        alt="You"
+                        class="feed-comment-avatar"
+                    />
+                    <input
+                        type="text"
+                        class="feed-comment-input"
+                        placeholder=${t('feed.addComment') || 'Write a comment...'}
+                        value=${commentText}
+                        onInput=${(e) => setCommentText(e.target.value)}
+                        disabled=${submitting}
+                    />
+                    ${commentText.trim() && html`
+                        <button type="submit" class="feed-comment-submit" disabled=${submitting}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    `}
+                </form>
+            `}
+        </div>
+    `;
+}
+
 export function FeedPost({ post, session, onHighlightToggle, compact }) {
     const [expanded, setExpanded] = useState(false);
     const [liked, setLiked] = useState(post._userLiked || false);
     const [likesCount, setLikesCount] = useState(post.likes_count || 0);
     const [highlighted, setHighlighted] = useState(post._userHighlighted || false);
     const [reposted, setReposted] = useState(post._userReposted || false);
+    const [showComments, setShowComments] = useState(false);
 
     // Sync from prop changes (e.g. when post list refreshes)
     useEffect(() => {
@@ -113,6 +302,7 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
             queryClient.invalidateQueries({ queryKey: ['feed'] });
             queryClient.invalidateQueries({ queryKey: ['posts', 'highlighted'] });
             if (onHighlightToggle) onHighlightToggle(post.id, newHighlighted);
+            showToast(newHighlighted ? (t('feed.highlighted') || 'Highlighted') : (t('feed.highlightRemoved') || 'Highlight removed'));
         } catch (err) {
             setHighlighted(!newHighlighted);
             console.error('Highlight error:', err);
@@ -141,6 +331,9 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
                     .eq('user_id', session.user.id);
             }
             queryClient.invalidateQueries({ queryKey: ['feed'] });
+            if (newReposted) {
+                showToast(t('feed.reposted') || 'Reposted');
+            }
         } catch (err) {
             setReposted(!newReposted);
             console.error('Repost error:', err);
@@ -153,9 +346,7 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
             navigator.share({ title: post.author_name, text: post.content?.slice(0, 100), url });
         } else {
             navigator.clipboard.writeText(url).then(() => {
-                // Simple feedback
-                const el = document.getElementById(`share-feedback-${post.id}`);
-                if (el) { el.textContent = t('feed.linkCopied') || 'Link copied!'; setTimeout(() => { el.textContent = ''; }, 2000); }
+                showToast(t('feed.linkCopied') || 'Link copied!');
             });
         }
     }, [post]);
@@ -164,6 +355,10 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
         if (post.author_slug) {
             window.navigateTo(`/coach/${post.author_slug}`);
         }
+    };
+
+    const handleCommentClick = () => {
+        setShowComments(prev => !prev);
     };
 
     const content = post.content || '';
@@ -221,7 +416,7 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
                     </div>
                 ` : html`
                     <a href=${post.video_url} target="_blank" rel="noopener noreferrer" class="feed-post-video-link">
-                        🎥 ${post.video_url}
+                        ${post.video_url}
                     </a>
                 `;
             })()}
@@ -238,7 +433,7 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
                     <span>👍</span>
                     <span>${t('feed.likeAction') || 'Like'}</span>
                 </button>
-                <button class="feed-post-action-btn">
+                <button class="feed-post-action-btn ${showComments ? 'active' : ''}" onClick=${handleCommentClick}>
                     <span>💬</span>
                     <span>${t('feed.commentAction') || 'Comment'}</span>
                 </button>
@@ -259,7 +454,10 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
                     <span>${t('feed.share') || 'Share'}</span>
                 </button>
             </div>
-            <span id="share-feedback-${post.id}" class="feed-share-feedback"></span>
+
+            ${showComments && html`
+                <${PostComments} postId=${post.id} session=${session} commentsCount=${post.comments_count} />
+            `}
         </div>
     `;
 }

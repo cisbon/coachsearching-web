@@ -1697,3 +1697,206 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* =============================================
+   COMMENT BUTTON ACTIVE STATE
+============================================= */
+.feed-post-action-btn.active {
+    color: var(--petrol-primary, #006266);
+}
+
+/* =============================================
+   COMMENTS SECTION
+============================================= */
+.feed-comments-section {
+    padding: 8px 16px 12px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.feed-comments-list {
+    margin-bottom: 8px;
+}
+
+.feed-comments-show-more {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 0;
+    margin-bottom: 6px;
+}
+
+.feed-comments-show-more:hover {
+    color: var(--petrol-primary, #006266);
+    text-decoration: underline;
+}
+
+.feed-comments-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.feed-comments-scroll.scrollable {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.feed-comments-scroll.scrollable::-webkit-scrollbar {
+    width: 4px;
+}
+
+.feed-comments-scroll.scrollable::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+.feed-comment {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.feed-comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.feed-comment-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.feed-comment-bubble {
+    background: #f3f4f6;
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.feed-comment-author {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.feed-comment-text {
+    font-size: 0.82rem;
+    color: #374151;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.feed-comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 2px 12px;
+}
+
+.feed-comment-time {
+    font-size: 0.72rem;
+    color: #9ca3af;
+}
+
+.feed-comment-delete {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 0.72rem;
+    cursor: pointer;
+    padding: 0;
+}
+
+.feed-comment-delete:hover {
+    color: #ef4444;
+}
+
+/* Comment input form */
+.feed-comment-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.feed-comment-input {
+    flex: 1;
+    padding: 8px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    background: #f9fafb;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.feed-comment-input:focus {
+    border-color: var(--petrol-primary, #006266);
+    background: #fff;
+}
+
+.feed-comment-submit {
+    background: none;
+    border: none;
+    color: var(--petrol-primary, #006266);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.15s ease;
+}
+
+.feed-comment-submit:hover {
+    background: var(--petrol-bg, #E8F5F5);
+}
+
+.feed-comment-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =============================================
+   TOAST NOTIFICATION
+============================================= */
+.feed-toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    background: #1f2937;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
+.feed-toast-container.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+    .feed-toast-container {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        text-align: center;
+    }
+}
