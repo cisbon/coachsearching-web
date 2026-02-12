@@ -2066,3 +2066,241 @@
         font-size: 1.15rem;
     }
 }
+
+/* =============================================
+   CLIENT PROFILE EDIT BUTTONS
+============================================= */
+.client-profile-banner {
+    position: relative;
+}
+
+.client-btn-edit-banner {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+}
+
+.client-btn-edit-banner:hover {
+    background: white;
+    transform: scale(1.05);
+}
+
+.client-btn-edit-banner svg {
+    color: var(--petrol-primary, #006266);
+}
+
+.client-profile-avatar-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.client-btn-edit-photo {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.client-btn-edit-photo:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.client-btn-edit-photo svg {
+    color: var(--petrol-primary, #006266);
+}
+
+.client-profile-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.client-btn-edit-inline {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #9ca3af;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+}
+
+.client-btn-edit-inline:hover {
+    color: var(--petrol-primary, #006266);
+    background: var(--petrol-bg, #E8F5F5);
+}
+
+/* =============================================
+   CLIENT MODALS
+============================================= */
+.client-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+}
+
+.client-modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 440px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.client-modal-wide {
+    max-width: 660px;
+}
+
+.client-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.client-modal-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.client-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.client-modal-close:hover {
+    color: #1f2937;
+}
+
+.client-modal-body {
+    padding: 20px;
+}
+
+.client-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* ─── Form elements ─────────────────────────────────────────────── */
+.client-form-group {
+    margin-bottom: 16px;
+}
+
+.client-form-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.client-form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #1f2937;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.15s ease;
+    box-sizing: border-box;
+}
+
+.client-form-input:focus {
+    border-color: var(--petrol-primary, #006266);
+    box-shadow: 0 0 0 2px rgba(0, 98, 102, 0.1);
+}
+
+/* ─── Buttons ───────────────────────────────────────────────────── */
+.client-btn-primary {
+    padding: 10px 20px;
+    background: var(--petrol-primary, #006266);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.client-btn-primary:hover {
+    background: var(--petrol-dark, #004A4D);
+}
+
+.client-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.client-btn-secondary {
+    padding: 10px 20px;
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.client-btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+@media (max-width: 768px) {
+    .client-modal {
+        max-width: 100%;
+        margin: 0 8px;
+    }
+
+    .client-modal-wide {
+        max-width: 100%;
+    }
+}
