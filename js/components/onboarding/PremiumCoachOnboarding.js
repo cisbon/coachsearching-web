@@ -12,6 +12,7 @@
 
 import htm from '../../vendor/htm.js';
 import { t, getCurrentLang } from '../../i18n.js';
+import { queryClient } from '../../config/queryClient.js';
 import { useLookupOptions, useCities, useCertifications } from '../../context/AppContext.js';
 
 const React = window.React;
@@ -501,6 +502,11 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     // Don't block onboarding completion for certification errors
                 }
             }
+
+            // Invalidate coach-related caches
+            await queryClient.invalidateQueries({ queryKey: ['coach'] });
+            await queryClient.invalidateQueries({ queryKey: ['coaches'] });
+            await queryClient.invalidateQueries({ queryKey: ['user'] });
 
             // Clear saved progress
             localStorage.removeItem(`premium_onboarding_${userId}`);

@@ -2499,6 +2499,7 @@ const EditExperienceModal = memo(function EditExperienceModal({ coach, experienc
                 if (dbError) throw dbError;
             }
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachExperiences(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -2522,6 +2523,7 @@ const EditExperienceModal = memo(function EditExperienceModal({ coach, experienc
                 .eq('coach_id', coach.id);
             if (dbError) throw dbError;
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachExperiences(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -2747,6 +2749,7 @@ const EditEducationModal = memo(function EditEducationModal({ coach, education, 
                 if (dbError) throw dbError;
             }
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachEducations(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -2770,6 +2773,7 @@ const EditEducationModal = memo(function EditEducationModal({ coach, education, 
                 .eq('coach_id', coach.id);
             if (dbError) throw dbError;
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachEducations(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -2968,6 +2972,7 @@ const EditSkillModal = memo(function EditSkillModal({ coach, skill, onClose, onS
                 if (dbError) throw dbError;
             }
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachSkills(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -2991,6 +2996,7 @@ const EditSkillModal = memo(function EditSkillModal({ coach, skill, onClose, onS
                 .eq('coach_id', coach.id);
             if (dbError) throw dbError;
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachSkills(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -3137,6 +3143,7 @@ const EditVolunteeringModal = memo(function EditVolunteeringModal({ coach, volun
                 if (dbError) throw dbError;
             }
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachVolunteering(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -3160,6 +3167,7 @@ const EditVolunteeringModal = memo(function EditVolunteeringModal({ coach, volun
                 .eq('coach_id', coach.id);
             if (dbError) throw dbError;
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachVolunteering(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -3359,6 +3367,7 @@ const EditPublicationModal = memo(function EditPublicationModal({ coach, publica
                 if (dbError) throw dbError;
             }
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachPublications(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -3382,6 +3391,7 @@ const EditPublicationModal = memo(function EditPublicationModal({ coach, publica
                 .eq('coach_id', coach.id);
             if (dbError) throw dbError;
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachPublications(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -3586,6 +3596,8 @@ const EditCertificationModal = memo(function EditCertificationModal({ coach, cre
                 if (dbError) throw dbError;
             }
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachCertifications(coach.id) });
+            queryClient.invalidateQueries({ queryKey: ['coach', 'profile'] });
             await onSaved();
             onClose();
         } catch (err) {
@@ -3613,6 +3625,8 @@ const EditCertificationModal = memo(function EditCertificationModal({ coach, cre
                 .eq('coach_id', coach.id);
             if (dbError) throw dbError;
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachCertifications(coach.id) });
+            queryClient.invalidateQueries({ queryKey: ['coach', 'profile'] });
             await onSaved();
             onClose();
         } catch (err) {
@@ -3795,6 +3809,7 @@ const EditServiceModal = memo(function EditServiceModal({ coach, service, onClos
                 if (dbError) throw dbError;
             }
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachServices(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -3818,6 +3833,7 @@ const EditServiceModal = memo(function EditServiceModal({ coach, service, onClos
                 .eq('coach_id', coach.id);
             if (dbError) throw dbError;
 
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachServices(coach.id) });
             await onSaved();
             onClose();
         } catch (err) {
@@ -4688,6 +4704,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
             setUserHasReviewed(true);
             setUserExistingReview(data);
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachReviews(coach.id) });
+            queryClient.invalidateQueries({ queryKey: ['coach', 'profile'] });
             await loadReviews(coach.id);
 
             return { success: true, data };
@@ -4705,6 +4723,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 .from('cs_reviews')
                 .update({ shown: newShown })
                 .eq('id', reviewId);
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachReviews(coach.id) });
             setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, shown: newShown } : r));
         } catch (err) {
             console.error('Failed to toggle review visibility:', err);
@@ -4718,6 +4737,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 .from('cs_reviews')
                 .update({ comment: commentText.trim() || null })
                 .eq('id', reviewId);
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachReviews(coach.id) });
             setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, comment: commentText.trim() || null } : r));
         } catch (err) {
             console.error('Failed to save coach comment:', err);
@@ -4880,6 +4900,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     .from('cs_coach_skills_commendations')
                     .insert({ coach_skill_id: skillId, commendation_user_id: userId });
             }
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachSkills(coach.id) });
             await loadCoachSkills(coach.id);
         } catch (err) {
             console.error('Commendation error:', err);

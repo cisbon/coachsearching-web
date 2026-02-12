@@ -13,6 +13,7 @@
 import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
 import { ImageEditor } from './ImageEditor.js';
+import { queryClient } from '../../config/queryClient.js';
 
 const React = window.React;
 const { useState, useEffect, useRef, useCallback } = React;
@@ -220,6 +221,10 @@ export function PostEditor({ session, userProfile, onPostCreated, onClose, initi
             }).select().single();
 
             if (error) throw error;
+
+            // Invalidate feed cache so the new post appears
+            queryClient.invalidateQueries({ queryKey: ['feed'] });
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
 
             // Cleanup
             if (attachedImage?.previewUrl) URL.revokeObjectURL(attachedImage.previewUrl);

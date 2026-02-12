@@ -6,6 +6,7 @@
 
 import htm from '../../vendor/htm.js';
 import { t, getCurrentLang } from '../../i18n.js';
+import { queryClient } from '../../config/queryClient.js';
 
 const React = window.React;
 const { useState, useEffect, useRef } = React;
@@ -164,6 +165,7 @@ const ArticleEditor = ({ session, article, onClose, existingArticleGroupId = nul
             }
 
             console.log('Article saved successfully!', result.data);
+            queryClient.invalidateQueries({ queryKey: ['coach'] });
             setMessage(publishNow ? 'Article published successfully!' : 'Article saved as draft!');
             setTimeout(() => {
                 setMessage('');
@@ -428,6 +430,7 @@ export const DashboardArticles = ({ session }) => {
                 .eq('id', articleId);
 
             if (!error) {
+                queryClient.invalidateQueries({ queryKey: ['coach'] });
                 await loadArticles();
             }
         } catch (error) {
@@ -445,6 +448,7 @@ export const DashboardArticles = ({ session }) => {
                 .eq('id', article.id);
 
             if (!error) {
+                queryClient.invalidateQueries({ queryKey: ['coach'] });
                 await loadArticles();
             }
         } catch (error) {

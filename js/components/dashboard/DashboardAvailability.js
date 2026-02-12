@@ -4,6 +4,7 @@
  */
 
 import htm from '../../vendor/htm.js';
+import { queryClient } from '../../config/queryClient.js';
 
 const React = window.React;
 const { useState, useEffect } = React;
@@ -174,6 +175,7 @@ export const DashboardAvailability = ({ session }) => {
             }
 
             setMessage('Availability updated successfully!');
+            await queryClient.invalidateQueries({ queryKey: ['coach'] });
             await loadAvailability(); // Reload to get IDs
             setTimeout(() => setMessage(''), 3000);
 

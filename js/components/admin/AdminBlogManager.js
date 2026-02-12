@@ -6,6 +6,7 @@
 import htm from '../../vendor/htm.js';
 import { t, getCurrentLang } from '../../i18n.js';
 import { AdminBlogEditor } from './AdminBlogEditor.js';
+import { queryClient } from '../../config/queryClient.js';
 
 const React = window.React;
 const { useState, useEffect } = React;
@@ -247,6 +248,7 @@ export const AdminBlogManager = ({ session }) => {
                 .eq('id', post.id);
 
             if (!error) {
+                await queryClient.invalidateQueries({ queryKey: ['blog'] });
                 await loadPosts();
             } else {
                 alert('Failed to delete post: ' + error.message);

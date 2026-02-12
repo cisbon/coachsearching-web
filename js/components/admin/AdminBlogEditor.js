@@ -6,6 +6,7 @@
 
 import htm from '../../vendor/htm.js';
 import { t, getCurrentLang } from '../../i18n.js';
+import { queryClient } from '../../config/queryClient.js';
 
 const React = window.React;
 const { useState, useEffect, useRef, useCallback } = React;
@@ -531,6 +532,7 @@ export const AdminBlogEditor = ({ session, post = null, onSave, onCancel }) => {
 
             if (result.error) throw result.error;
 
+            await queryClient.invalidateQueries({ queryKey: ['blog'] });
             setMessage(publish ? 'Post published successfully!' : 'Post saved as draft!');
 
             if (onSave) {

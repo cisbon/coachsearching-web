@@ -4,6 +4,7 @@
  */
 
 import htm from '../../vendor/htm.js';
+import { queryClient } from '../../config/queryClient.js';
 
 const React = window.React;
 const { useState, useEffect } = React;
@@ -303,6 +304,7 @@ export const DashboardBookings = ({ session, userType }) => {
             }
 
             console.log('Booking accepted successfully');
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             setMessage('Booking accepted and confirmed!');
             setAcceptingBooking(null);
             await loadBookings();
@@ -334,6 +336,7 @@ export const DashboardBookings = ({ session, userType }) => {
             }
 
             setMessage('Booking cancelled successfully');
+            await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             await loadBookings();
             setTimeout(() => setMessage(''), 3000);
         } catch (error) {

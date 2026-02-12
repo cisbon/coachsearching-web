@@ -5,6 +5,8 @@
 
 import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
+import { queryClient } from '../../config/queryClient.js';
+import { QUERY_KEYS } from '../../config/queryConfig.js';
 
 const React = window.React;
 const { useState, useEffect } = React;
@@ -141,6 +143,9 @@ export function ReviewsPopup({ coach, onClose, session }) {
                     })
                     .eq('id', coach.id);
 
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.coachReviews(coach.id) });
+                queryClient.invalidateQueries({ queryKey: ['coach', 'profile'] });
+                queryClient.invalidateQueries({ queryKey: ['coaches'] });
                 setMessage(t('review.successMessage') || 'Your recommendation has been submitted successfully.');
                 setNewReview({ rating: 5, name: '', comment: '' });
                 setShowAddReview(false);

@@ -12,6 +12,8 @@
 import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
 import { parseVideoUrl } from './PostEditor.js';
+import { queryClient } from '../../config/queryClient.js';
+import { QUERY_KEYS } from '../../config/queryConfig.js';
 
 const React = window.React;
 const { useState, useCallback, useEffect } = React;
@@ -78,6 +80,7 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
                     .eq('post_id', post.id)
                     .eq('user_id', session.user.id);
             }
+            queryClient.invalidateQueries({ queryKey: ['feed'] });
         } catch (err) {
             setLiked(!newLiked);
             setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
@@ -107,6 +110,8 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
                     .eq('user_id', session.user.id);
             }
 
+            queryClient.invalidateQueries({ queryKey: ['feed'] });
+            queryClient.invalidateQueries({ queryKey: ['posts', 'highlighted'] });
             if (onHighlightToggle) onHighlightToggle(post.id, newHighlighted);
         } catch (err) {
             setHighlighted(!newHighlighted);
@@ -135,6 +140,7 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
                     .eq('post_id', post.id)
                     .eq('user_id', session.user.id);
             }
+            queryClient.invalidateQueries({ queryKey: ['feed'] });
         } catch (err) {
             setReposted(!newReposted);
             console.error('Repost error:', err);

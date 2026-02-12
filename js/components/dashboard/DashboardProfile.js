@@ -5,6 +5,7 @@
 
 import htm from '../../vendor/htm.js';
 import { useCities } from '../../context/AppContext.js';
+import { queryClient } from '../../config/queryClient.js';
 
 const React = window.React;
 const { useState, useEffect, useMemo } = React;
@@ -200,6 +201,9 @@ export const DashboardProfile = ({ session, userType }) => {
                 .from('cs_coaches')
                 .update({ [field]: value, updated_at: new Date().toISOString() })
                 .eq('id', coachId);
+            queryClient.invalidateQueries({ queryKey: ['coach', 'profile'] });
+            queryClient.invalidateQueries({ queryKey: ['coaches'] });
+            queryClient.invalidateQueries({ queryKey: ['user', 'coachProfile'] });
         } catch (err) {
             console.error('Save failed:', err);
         }
@@ -242,6 +246,9 @@ export const DashboardProfile = ({ session, userType }) => {
 
             if (error) throw error;
 
+            queryClient.invalidateQueries({ queryKey: ['coach', 'profile'] });
+            queryClient.invalidateQueries({ queryKey: ['coaches'] });
+            queryClient.invalidateQueries({ queryKey: ['user', 'coachProfile'] });
             setMessage('Profile saved!');
             setEditSection(null);
             setTimeout(() => setMessage(''), 2000);
