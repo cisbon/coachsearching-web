@@ -131,6 +131,8 @@ function PostComments({ postId, session, commentsCount }) {
                 setCommentText('');
                 queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postComments(postId) });
                 queryClient.invalidateQueries({ queryKey: ['feed'] });
+                queryClient.invalidateQueries({ queryKey: ['client', 'posts'] });
+                queryClient.invalidateQueries({ queryKey: ['posts', 'activity'] });
             }
         } catch (err) {
             console.error('Comment submit error:', err);
@@ -156,6 +158,8 @@ function PostComments({ postId, session, commentsCount }) {
                 setTotalCount(prev => Math.max(0, prev - 1));
                 queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postComments(postId) });
                 queryClient.invalidateQueries({ queryKey: ['feed'] });
+                queryClient.invalidateQueries({ queryKey: ['client', 'posts'] });
+                queryClient.invalidateQueries({ queryKey: ['posts', 'activity'] });
             }
         } catch (err) {
             console.error('Comment delete error:', err);
@@ -270,6 +274,8 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
                     .eq('user_id', session.user.id);
             }
             queryClient.invalidateQueries({ queryKey: ['feed'] });
+            queryClient.invalidateQueries({ queryKey: ['client', 'posts'] });
+            queryClient.invalidateQueries({ queryKey: ['posts', 'activity'] });
         } catch (err) {
             setLiked(!newLiked);
             setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
@@ -301,6 +307,8 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
 
             queryClient.invalidateQueries({ queryKey: ['feed'] });
             queryClient.invalidateQueries({ queryKey: ['posts', 'highlighted'] });
+            queryClient.invalidateQueries({ queryKey: ['client', 'posts'] });
+            queryClient.invalidateQueries({ queryKey: ['posts', 'activity'] });
             if (onHighlightToggle) onHighlightToggle(post.id, newHighlighted);
             showToast(newHighlighted ? (t('feed.highlighted') || 'Highlighted') : (t('feed.highlightRemoved') || 'Highlight removed'));
         } catch (err) {
@@ -331,6 +339,8 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
                     .eq('user_id', session.user.id);
             }
             queryClient.invalidateQueries({ queryKey: ['feed'] });
+            queryClient.invalidateQueries({ queryKey: ['client', 'posts'] });
+            queryClient.invalidateQueries({ queryKey: ['posts', 'activity'] });
             if (newReposted) {
                 showToast(t('feed.reposted') || 'Reposted');
             }
