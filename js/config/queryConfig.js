@@ -56,6 +56,8 @@ export const STALE_TIMES = {
     // User profiles
     userProfile:        5 * 60 * 1000,          // 5 minutes
     myCoachProfile:     5 * 60 * 1000,          // 5 minutes
+    clientProfile:      5 * 60 * 1000,          // 5 minutes
+    clientPosts:        2 * 60 * 1000,          // 2 minutes
 
     // Dashboard data
     coachAnalytics:     5 * 60 * 1000,          // 5 minutes
@@ -113,6 +115,9 @@ export const QUERY_KEYS = {
     // User profiles
     userProfile:        (userId) => ['user', 'profile', userId],
     myCoachProfile:     (userId) => ['user', 'coachProfile', userId],
+    clientBySlug:       (slug) => ['client', 'profile', 'slug', slug],
+    clientByUserId:     (userId) => ['client', 'profile', userId],
+    clientPosts:        (userId, page) => ['client', 'posts', userId, page || 0],
 
     // Dashboard
     coachAnalytics:     (coachId) => ['dashboard', 'analytics', coachId],

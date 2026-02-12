@@ -6,10 +6,11 @@
 import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
 import { FeedLayout } from '../components/feed/FeedLayout.js';
-import { useUserProfileQuery, useSuggestedCoachesQuery } from '../hooks/useSupabaseQuery.js';
+import { useUserProfileQuery, useSuggestedCoachesQuery, useClientProfileQuery } from '../hooks/useSupabaseQuery.js';
+import { ensureClientProfile } from '../utils/clientProfile.js';
 
 const React = window.React;
-const { useMemo } = React;
+const { useMemo, useEffect, useRef } = React;
 const html = htm.bind(React.createElement);
 
 const COACHING_CATEGORIES = [
@@ -26,27 +27,38 @@ const COACHING_CATEGORIES = [
 export function ClientFeed({ session }) {
     // Cached user profile via TanStack Query
     const { data: userData } = useUserProfileQuery(session?.user?.id);
+    const { data: clientData, refetch: refetchClient } = useClientProfileQuery(session?.user?.id);
+
+    // Auto-create cs_clients record if missing
+    const ensuredRef = useRef(false);
+    useEffect(() => {
+        if (session?.user?.id && !clientData && !ensuredRef.current) {
+            ensuredRef.current = true;
+            ensureClientProfile(session).then(() => refetchClient());
+        }
+    }, [session, clientData, refetchClient]);
 
     const userProfile = useMemo(() => {
+        const clientSlug = clientData?.slug ? `u/${clientData.slug}` : null;
         if (userData) {
             return {
-                full_name: userData.full_name || session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0],
-                avatar_url: userData.avatar_url || session?.user?.user_metadata?.avatar_url,
-                banner_url: userData.banner_url || null,
+                full_name: clientData?.full_name || userData.full_name || session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0],
+                avatar_url: clientData?.avatar_url || userData.avatar_url || session?.user?.user_metadata?.avatar_url,
+                banner_url: clientData?.banner_url || userData.banner_url || null,
                 title: userData.title || null,
-                slug: null,
+                slug: clientSlug,
             };
         }
         if (session?.user) {
             return {
-                full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-                avatar_url: session.user.user_metadata?.avatar_url,
+                full_name: clientData?.full_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+                avatar_url: clientData?.avatar_url || session.user.user_metadata?.avatar_url,
                 title: null,
-                slug: null,
+                slug: clientSlug,
             };
         }
         return null;
-    }, [userData, session]);
+    }, [userData, clientData, session]);
 
     // Cached suggested coaches via TanStack Query
     const { data: suggestedCoaches } = useSuggestedCoachesQuery();
@@ -62,8 +74,9 @@ export function ClientFeed({ session }) {
             <div class="feed-card feed-profile-preview">
                 <div class="feed-profile-banner" style=${userProfile?.banner_url ? { backgroundImage: `url(${userProfile.banner_url})` } : {}}></div>
                 <img src=${avatarUrl} alt="" class="feed-profile-avatar" />
-                <h3 class="feed-profile-name">${displayName}</h3>
+                <h3 class="feed-profile-name" style=${{ cursor: clientData?.slug ? 'pointer' : 'default' }} onClick=${() => clientData?.slug && window.navigateTo(`/u/${clientData.slug}`)}>${displayName}</h3>
                 <p class="feed-profile-title">${userProfile?.title || (t('feed.clientMember') || 'Member')}</p>
+                ${clientData?.slug && html`<a href="/u/${clientData.slug}" class="feed-profile-link">${t('client.viewProfile') || 'View Profile'}</a>`}
                 <a href="/coaches" class="feed-profile-link">${t('feed.browseCoaches') || 'Browse Coaches'}</a>
             </div>
 

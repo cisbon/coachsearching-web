@@ -353,7 +353,11 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
 
     const handleAuthorClick = () => {
         if (post.author_slug) {
-            window.navigateTo(`/coach/${post.author_slug}`);
+            if (post.author_slug.startsWith('u/')) {
+                window.navigateTo(`/${post.author_slug}`);
+            } else {
+                window.navigateTo(`/coach/${post.author_slug}`);
+            }
         }
     };
 

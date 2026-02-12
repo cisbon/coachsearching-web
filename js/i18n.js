@@ -2441,6 +2441,17 @@ const translations = {
 "feed.reply": "Reply",
 "feed.deleteComment": "Delete",
 
+// Client Profile
+"client.profileNotFound": "Profile not found",
+"client.profileNotFoundDesc": "This profile does not exist or has been removed.",
+"client.backToFeed": "Back to Feed",
+"client.memberSince": "Member since",
+"client.posts": "Posts",
+"client.noPostsOwn": "You haven't posted anything yet. Share your thoughts on the feed!",
+"client.noPosts": "No posts yet.",
+"client.loadMorePosts": "Load more posts",
+"client.viewProfile": "View Profile",
+
 // Premium Onboarding
 "onboard.premium.back": "Back",
 "onboard.premium.continue": "Continue",
@@ -4495,6 +4506,17 @@ const translations = {
 "feed.reply": "Antworten",
 "feed.deleteComment": "Löschen",
 
+// Client Profile
+"client.profileNotFound": "Profil nicht gefunden",
+"client.profileNotFoundDesc": "Dieses Profil existiert nicht oder wurde entfernt.",
+"client.backToFeed": "Zurück zum Feed",
+"client.memberSince": "Mitglied seit",
+"client.posts": "Beiträge",
+"client.noPostsOwn": "Du hast noch nichts gepostet. Teile deine Gedanken im Feed!",
+"client.noPosts": "Noch keine Beiträge.",
+"client.loadMorePosts": "Mehr Beiträge laden",
+"client.viewProfile": "Profil ansehen",
+
 // Premium Onboarding
 "onboard.premium.back": "Zurück",
 "onboard.premium.continue": "Weiter",
@@ -6427,6 +6449,17 @@ const translations = {
 "feed.showMoreComments": "Mostrar más comentarios",
 "feed.reply": "Responder",
 "feed.deleteComment": "Eliminar",
+
+// Client Profile
+"client.profileNotFound": "Perfil no encontrado",
+"client.profileNotFoundDesc": "Este perfil no existe o ha sido eliminado.",
+"client.backToFeed": "Volver al Feed",
+"client.memberSince": "Miembro desde",
+"client.posts": "Publicaciones",
+"client.noPostsOwn": "Aún no has publicado nada. ¡Comparte tus ideas en el feed!",
+"client.noPosts": "Aún no hay publicaciones.",
+"client.loadMorePosts": "Cargar más publicaciones",
+"client.viewProfile": "Ver perfil",
 
 // Premium Onboarding
 "onboard.premium.back": "Atrás",
@@ -8373,6 +8406,17 @@ const translations = {
         "feed.reply": "Répondre",
         "feed.deleteComment": "Supprimer",
 
+        // Client Profile
+        "client.profileNotFound": "Profil introuvable",
+        "client.profileNotFoundDesc": "Ce profil n'existe pas ou a été supprimé.",
+        "client.backToFeed": "Retour au fil",
+        "client.memberSince": "Membre depuis",
+        "client.posts": "Publications",
+        "client.noPostsOwn": "Vous n'avez encore rien publié. Partagez vos idées dans le fil !",
+        "client.noPosts": "Pas encore de publications.",
+        "client.loadMorePosts": "Charger plus de publications",
+        "client.viewProfile": "Voir le profil",
+
         // Premium Onboarding
         "onboard.premium.back": "Retour",
         "onboard.premium.continue": "Continuer",
@@ -10317,6 +10361,17 @@ const translations = {
         "feed.showMoreComments": "Mostra altri commenti",
         "feed.reply": "Rispondi",
         "feed.deleteComment": "Elimina",
+
+        // Client Profile
+        "client.profileNotFound": "Profilo non trovato",
+        "client.profileNotFoundDesc": "Questo profilo non esiste o è stato rimosso.",
+        "client.backToFeed": "Torna al feed",
+        "client.memberSince": "Membro dal",
+        "client.posts": "Post",
+        "client.noPostsOwn": "Non hai ancora pubblicato nulla. Condividi i tuoi pensieri nel feed!",
+        "client.noPosts": "Nessun post ancora.",
+        "client.loadMorePosts": "Carica altri post",
+        "client.viewProfile": "Vedi profilo",
 
         // Premium Onboarding
         "onboard.premium.back": "Indietro",

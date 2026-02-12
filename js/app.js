@@ -25,6 +25,7 @@ import { Hero, CoachingCategoriesSection, HowItWorksSection } from './pages/Home
 import { BlogPage } from './pages/BlogPage.js';
 import { AICouncilPage } from './pages/AICouncilPage.js';
 import { FeedPage } from './pages/FeedPage.js';
+import { ClientProfilePage } from './pages/ClientProfilePage.js';
 
 // Conversion Optimization Components
 import {
@@ -433,6 +434,9 @@ const App = () => {
         // Coach profile pages - supports both UUID and slug
         // Example: /coach/john-smith-life-coach or /coach/277530d3-627d-4057-b115-985719a1f59c
         Component = () => html`<${CoachProfilePage} coachIdOrSlug=${routeParam} session=${session} />`;
+    } else if (baseRoute === 'u' && routeParam) {
+        // Client profile pages: /u/{slug}
+        Component = () => html`<${ClientProfilePage} clientSlug=${routeParam} session=${session} />`;
     } else {
         // Static routes
         switch (baseRoute) {

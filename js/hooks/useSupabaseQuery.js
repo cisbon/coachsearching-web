@@ -449,6 +449,27 @@ export function useUserProfileQuery(userId) {
     });
 }
 
+// ─── CLIENT PROFILE HOOKS ───────────────────────────────────────────
+
+export function useClientProfileQuery(userId) {
+    return useQuery({
+        queryKey: QUERY_KEYS.clientByUserId(userId),
+        queryFn: async () => {
+            const supabase = getSupabase();
+            if (!supabase) throw new Error('Supabase not ready');
+            const { data, error } = await supabase
+                .from('cs_clients')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+            if (error) throw error;
+            return data;
+        },
+        staleTime: STALE_TIMES.clientProfile,
+        enabled: !!userId && !!getSupabase(),
+    });
+}
+
 // ─── DASHBOARD HOOKS ────────────────────────────────────────────────
 
 export function useCoachAnalyticsQuery(coachId) {
