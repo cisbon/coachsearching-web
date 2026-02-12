@@ -483,44 +483,56 @@ export function ClientProfilePage({ clientSlug, session }) {
                     ]);
 
                     // Build activity items with type labels
-                    const activityItems = [];
-                    const seenPostIds = new Set();
+                    // Priority: posted > reposted > commented > liked
+                    // If a post has multiple interactions, only show the highest priority one
+                    const activityByPost = new Map();
+                    const PRIORITY = { posted: 4, reposted: 3, commented: 2, liked: 1 };
+
+                    const addActivity = (postId, post, activityType, activityTime) => {
+                        if (!post) return;
+                        const existing = activityByPost.get(postId);
+                        if (!existing || PRIORITY[activityType] > PRIORITY[existing.activityType]) {
+                            activityByPost.set(postId, { post, activityType, activityTime });
+                        } else if (existing && PRIORITY[activityType] === PRIORITY[existing.activityType]) {
+                            // Same priority — keep the most recent time
+                            if (new Date(activityTime) > new Date(existing.activityTime)) {
+                                existing.activityTime = activityTime;
+                            }
+                        }
+                    };
 
                     // Own posts
                     (ownPostsRes.data || []).forEach(post => {
-                        activityItems.push({ post, activityType: 'posted', activityTime: post.created_at });
-                        seenPostIds.add(post.id);
-                    });
-
-                    // Likes
-                    (likesRes.data || []).forEach(like => {
-                        if (like.cs_posts && !seenPostIds.has(like.post_id)) {
-                            activityItems.push({ post: like.cs_posts, activityType: 'liked', activityTime: like.created_at });
-                            seenPostIds.add(like.post_id);
-                        }
+                        addActivity(post.id, post, 'posted', post.created_at);
                     });
 
                     // Reposts
                     (repostsRes.data || []).forEach(repost => {
-                        if (repost.cs_posts && !seenPostIds.has(repost.post_id)) {
-                            activityItems.push({ post: repost.cs_posts, activityType: 'reposted', activityTime: repost.created_at });
-                            seenPostIds.add(repost.post_id);
+                        if (repost.cs_posts) {
+                            addActivity(repost.post_id, repost.cs_posts, 'reposted', repost.created_at);
                         }
                     });
 
-                    // Comments (deduplicate by post_id — show latest comment time)
-                    const commentsByPost = new Map();
+                    // Comments (deduplicate by post_id — use latest comment time)
+                    const commentTimeByPost = new Map();
                     (commentsRes.data || []).forEach(comment => {
-                        if (comment.cs_posts && !seenPostIds.has(comment.post_id)) {
-                            if (!commentsByPost.has(comment.post_id)) {
-                                commentsByPost.set(comment.post_id, { post: comment.cs_posts, activityType: 'commented', activityTime: comment.created_at });
+                        if (comment.cs_posts) {
+                            const existing = commentTimeByPost.get(comment.post_id);
+                            if (!existing || new Date(comment.created_at) > new Date(existing)) {
+                                commentTimeByPost.set(comment.post_id, comment.created_at);
                             }
+                            addActivity(comment.post_id, comment.cs_posts, 'commented', commentTimeByPost.get(comment.post_id));
                         }
                     });
-                    commentsByPost.forEach(item => {
-                        activityItems.push(item);
-                        seenPostIds.add(item.post.id);
+
+                    // Likes
+                    (likesRes.data || []).forEach(like => {
+                        if (like.cs_posts) {
+                            addActivity(like.post_id, like.cs_posts, 'liked', like.created_at);
+                        }
                     });
+
+                    const activityItems = Array.from(activityByPost.values());
 
                     // Sort by activity time (most recent first)
                     activityItems.sort((a, b) => new Date(b.activityTime) - new Date(a.activityTime));

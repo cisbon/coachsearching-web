@@ -4310,7 +4310,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         }
     };
 
-    // Load activity posts (the coach's own posts) using user_id
+    // Load activity posts (own posts + reposts + comments + likes) using user_id
     const ACTIVITY_PAGE_SIZE = 3;
     const loadActivityPosts = async (userId, page) => {
         try {
@@ -4318,40 +4318,84 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             if (!supabase) return;
 
             const offset = page * ACTIVITY_PAGE_SIZE;
-            const { data: posts } = await supabase
-                .from('cs_posts')
-                .select('*')
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false })
-                .range(offset, offset + ACTIVITY_PAGE_SIZE - 1);
+            const fetchSize = ACTIVITY_PAGE_SIZE * 2; // Fetch extra to account for dedup
 
-            if (posts) {
-                // Check likes/highlights/reposts for current viewer
-                if (session?.user?.id && posts.length > 0) {
-                    const postIds = posts.map(p => p.id);
-                    const [likesRes, highlightsRes, repostsRes] = await Promise.all([
-                        supabase.from('cs_post_likes').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
-                        supabase.from('cs_post_highlights').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
-                        supabase.from('cs_post_reposts').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
-                    ]);
-                    const likedSet = new Set((likesRes.data || []).map(l => l.post_id));
-                    const highlightedSet = new Set((highlightsRes.data || []).map(h => h.post_id));
-                    const repostedSet = new Set((repostsRes.data || []).map(r => r.post_id));
-                    posts.forEach(p => {
-                        p._userLiked = likedSet.has(p.id);
-                        p._userHighlighted = highlightedSet.has(p.id);
-                        p._userReposted = repostedSet.has(p.id);
-                    });
-                }
+            const [ownPostsRes, repostsRes, commentsRes, likesRes] = await Promise.all([
+                supabase.from('cs_posts').select('*').eq('user_id', userId)
+                    .order('created_at', { ascending: false }).range(offset, offset + fetchSize - 1),
+                supabase.from('cs_post_reposts').select('post_id, created_at, cs_posts(*)').eq('user_id', userId)
+                    .order('created_at', { ascending: false }).range(offset, offset + fetchSize - 1),
+                supabase.from('cs_post_comments').select('post_id, created_at, cs_posts(*)').eq('user_id', userId)
+                    .order('created_at', { ascending: false }).range(offset, offset + fetchSize * 2 - 1),
+                supabase.from('cs_post_likes').select('post_id, created_at, cs_posts(*)').eq('user_id', userId)
+                    .order('created_at', { ascending: false }).range(offset, offset + fetchSize - 1),
+            ]);
 
-                if (page === 0) {
-                    setActivityPosts(posts);
-                } else {
-                    setActivityPosts(prev => [...prev, ...posts]);
+            // Build activity items with priority dedup: posted > reposted > commented > liked
+            const activityByPost = new Map();
+            const PRIORITY = { posted: 4, reposted: 3, commented: 2, liked: 1 };
+
+            const addActivity = (postId, post, activityType, activityTime) => {
+                if (!post) return;
+                const existing = activityByPost.get(postId);
+                if (!existing || PRIORITY[activityType] > PRIORITY[existing.activityType]) {
+                    activityByPost.set(postId, { post, activityType, activityTime });
+                } else if (existing && PRIORITY[activityType] === PRIORITY[existing.activityType]) {
+                    if (new Date(activityTime) > new Date(existing.activityTime)) {
+                        existing.activityTime = activityTime;
+                    }
                 }
-                setHasMoreActivityPosts(posts.length >= ACTIVITY_PAGE_SIZE);
-                setActivityPostsPage(page);
+            };
+
+            (ownPostsRes.data || []).forEach(post => {
+                addActivity(post.id, post, 'posted', post.created_at);
+            });
+            (repostsRes.data || []).forEach(r => {
+                if (r.cs_posts) addActivity(r.post_id, r.cs_posts, 'reposted', r.created_at);
+            });
+            const commentTimeByPost = new Map();
+            (commentsRes.data || []).forEach(c => {
+                if (c.cs_posts) {
+                    const existing = commentTimeByPost.get(c.post_id);
+                    if (!existing || new Date(c.created_at) > new Date(existing)) {
+                        commentTimeByPost.set(c.post_id, c.created_at);
+                    }
+                    addActivity(c.post_id, c.cs_posts, 'commented', commentTimeByPost.get(c.post_id));
+                }
+            });
+            (likesRes.data || []).forEach(l => {
+                if (l.cs_posts) addActivity(l.post_id, l.cs_posts, 'liked', l.created_at);
+            });
+
+            let activityItems = Array.from(activityByPost.values());
+            activityItems.sort((a, b) => new Date(b.activityTime) - new Date(a.activityTime));
+            activityItems = activityItems.slice(0, ACTIVITY_PAGE_SIZE);
+
+            // Enrich with current viewer's interaction status
+            if (session?.user?.id && activityItems.length > 0) {
+                const postIds = activityItems.map(a => a.post.id);
+                const [uLikes, uHighlights, uReposts] = await Promise.all([
+                    supabase.from('cs_post_likes').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                    supabase.from('cs_post_highlights').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                    supabase.from('cs_post_reposts').select('post_id').eq('user_id', session.user.id).in('post_id', postIds),
+                ]);
+                const likedSet = new Set((uLikes.data || []).map(l => l.post_id));
+                const highlightedSet = new Set((uHighlights.data || []).map(h => h.post_id));
+                const repostedSet = new Set((uReposts.data || []).map(r => r.post_id));
+                activityItems.forEach(a => {
+                    a.post._userLiked = likedSet.has(a.post.id);
+                    a.post._userHighlighted = highlightedSet.has(a.post.id);
+                    a.post._userReposted = repostedSet.has(a.post.id);
+                });
             }
+
+            if (page === 0) {
+                setActivityPosts(activityItems);
+            } else {
+                setActivityPosts(prev => [...prev, ...activityItems]);
+            }
+            setHasMoreActivityPosts(activityItems.length >= ACTIVITY_PAGE_SIZE);
+            setActivityPostsPage(page);
         } catch (err) {
             console.error('Failed to load activity posts:', err);
         }
@@ -4995,13 +5039,31 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                     <!-- Feed Posts -->
                                     ${activityPosts.length > 0 && html`
                                         <div class="profile-feed-posts">
-                                            ${activityPosts.map(post => html`
-                                                <${FeedPost}
-                                                    key=${post.id}
-                                                    post=${post}
-                                                    session=${session}
-                                                />
-                                            `)}
+                                            ${activityPosts.map(item => {
+                                                const post = item.post || item;
+                                                const activityType = item.activityType || 'posted';
+                                                return html`
+                                                    <div key=${post.id + '-' + activityType} class="coach-activity-item">
+                                                        ${activityType !== 'posted' && html`
+                                                            <div class="client-activity-label client-activity-${activityType}">
+                                                                ${activityType === 'liked' && html`
+                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                                                                `}
+                                                                ${activityType === 'reposted' && html`
+                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 23l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                                                                `}
+                                                                ${activityType === 'commented' && html`
+                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                                                `}
+                                                                <span>${activityType === 'liked' ? (t('client.activityLiked') || 'Liked')
+                                                                    : activityType === 'reposted' ? (t('client.activityReposted') || 'Reposted')
+                                                                    : (t('client.activityCommented') || 'Commented on')}</span>
+                                                            </div>
+                                                        `}
+                                                        <${FeedPost} post=${post} session=${session} />
+                                                    </div>
+                                                `;
+                                            })}
                                         </div>
                                         ${hasMoreActivityPosts && html`
                                             <button class="btn-show-more-posts" onClick=${handleLoadMoreActivityPosts} disabled=${loadingMorePosts}>
