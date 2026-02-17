@@ -67,6 +67,10 @@ export const STALE_TIMES = {
 
     // Onboarding check
     onboardingStatus:   10 * 60 * 1000,        // 10 minutes
+
+    // Notifications
+    notifications:      30 * 1000,              // 30 seconds
+    notificationCount:  30 * 1000,              // 30 seconds
 };
 
 // ─── QUERY KEYS ─────────────────────────────────────────────────────
@@ -127,6 +131,10 @@ export const QUERY_KEYS = {
 
     // Onboarding
     onboardingStatus:   (userId) => ['onboarding', 'status', userId],
+
+    // Notifications
+    notifications:      (userId) => ['notifications', 'list', userId],
+    notificationCount:  (userId) => ['notifications', 'count', userId],
 };
 
 // ─── DEFAULT QUERY OPTIONS ──────────────────────────────────────────

@@ -504,6 +504,33 @@ export function useCoachAnalyticsQuery(coachId) {
     });
 }
 
+// ─── NOTIFICATION HOOKS ─────────────────────────────────────────────
+
+/**
+ * Count unread notifications (pending connection requests + recent activity)
+ */
+export function useNotificationCountQuery(userId) {
+    return useQuery({
+        queryKey: QUERY_KEYS.notificationCount(userId),
+        queryFn: async () => {
+            const supabase = getSupabase();
+            if (!supabase) throw new Error('Supabase not ready');
+
+            // Count pending connection requests where I'm the recipient
+            const { count, error } = await supabase
+                .from('cs_connections')
+                .select('*', { count: 'exact', head: true })
+                .eq('coach_id', userId)
+                .eq('status', 'pending');
+            if (error) throw error;
+            return count || 0;
+        },
+        staleTime: STALE_TIMES.notificationCount,
+        enabled: !!userId && !!getSupabase(),
+        refetchInterval: 30000,
+    });
+}
+
 export function useOnboardingStatusQuery(userId) {
     return useQuery({
         queryKey: QUERY_KEYS.onboardingStatus(userId),

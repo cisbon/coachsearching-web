@@ -27,6 +27,7 @@ import { AICouncilPage } from './pages/AICouncilPage.js';
 import { FeedPage } from './pages/FeedPage.js';
 import { ClientProfilePage } from './pages/ClientProfilePage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
+import { NotificationsPage } from './pages/NotificationsPage.js';
 
 // Conversion Optimization Components
 import {
@@ -456,6 +457,7 @@ const App = () => {
             case 'login': Component = Auth; break;
             case 'onboarding': Component = () => html`<${CoachOnboarding} session=${session} />`; break;
             case 'feed': Component = () => html`<${FeedPage} session=${session} sessionLoaded=${sessionLoaded} />`; break;
+            case 'notifications': Component = () => html`<${NotificationsPage} session=${session} />`; break;
             case 'dashboard': Component = () => html`<${Dashboard} session=${session} />`; break;
             case 'quiz': Component = () => html`<${MatchingQuiz} session=${session} />`; break;
             case 'ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;

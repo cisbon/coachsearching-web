@@ -8,6 +8,7 @@ import { t } from '../../i18n.js';
 import { CurrencySelector } from '../ui/CurrencySelector.js';
 import { LanguageSelector } from '../ui/LanguageSelector.js';
 import { NavbarUserMenu } from '../ui/NavbarUserMenu.js';
+import { NotificationBell } from '../ui/NotificationBell.js';
 
 const React = window.React;
 const { useState, useEffect } = React;
@@ -247,6 +248,7 @@ export function Navbar({ session }) {
                 <nav class="nav-links ${menuOpen ? 'open' : ''}" role="navigation">
                     <a href="/coaches" class="nav-browse-link" onClick=${(e) => handleLinkClick(e, '/coaches')}>${t('nav.browseCoaches')}</a>
                     ${session ? html`
+                        <${NotificationBell} session=${session} />
                         <${NavbarUserMenu} session=${session} onNavigate=${handleNavigation} />
                     ` : html`
                         <a href="/login?mode=register" class="nav-auth-btn nav-register-btn" onClick=${(e) => handleLinkClick(e, '/login?mode=register')}>${t('nav.register')}</a>

@@ -2644,7 +2644,32 @@ const translations = {
         "settings.savePrivacy": "Save Privacy Settings",
         "settings.signInRequired": "Sign In Required",
         "settings.signInRequiredDesc": "Please sign in to access your settings.",
-        "settings.signIn": "Sign In"
+        "settings.signIn": "Sign In",
+
+        // Notifications
+        "notifications.title": "Notifications",
+        "notifications.loading": "Loading notifications...",
+        "notifications.empty": "No notifications yet",
+        "notifications.emptyDesc": "When you get notifications, they will show up here.",
+        "notifications.signInRequired": "Sign in to view notifications",
+        "notifications.manage": "Manage notifications",
+        "notifications.manageDesc": "Stay up to date with your coaching network activity.",
+        "notifications.filterAll": "All",
+        "notifications.filterConnections": "Connections",
+        "notifications.filterLikes": "Likes",
+        "notifications.filterComments": "Comments",
+        "notifications.filterReposts": "Reposts",
+        "notifications.connectionRequest": "sent you a connection request",
+        "notifications.connectionAccepted": "is now connected with you",
+        "notifications.likedPost": "liked your post",
+        "notifications.commentedPost": "commented on your post",
+        "notifications.repostedPost": "reposted your post",
+        "notifications.accept": "Accept",
+        "notifications.accepting": "Accepting...",
+        "notifications.decline": "Decline",
+        "notifications.connected": "Connected",
+        "notifications.someone": "Someone",
+        "notifications.justNow": "just now"
     },
     de: {
         // Navigation
@@ -4811,7 +4836,32 @@ const translations = {
         "settings.savePrivacy": "Datenschutzeinstellungen speichern",
         "settings.signInRequired": "Anmeldung erforderlich",
         "settings.signInRequiredDesc": "Bitte melden Sie sich an, um auf Ihre Einstellungen zuzugreifen.",
-        "settings.signIn": "Anmelden"
+        "settings.signIn": "Anmelden",
+
+        // Benachrichtigungen
+        "notifications.title": "Benachrichtigungen",
+        "notifications.loading": "Benachrichtigungen werden geladen...",
+        "notifications.empty": "Noch keine Benachrichtigungen",
+        "notifications.emptyDesc": "Wenn Sie Benachrichtigungen erhalten, werden sie hier angezeigt.",
+        "notifications.signInRequired": "Melden Sie sich an, um Benachrichtigungen zu sehen",
+        "notifications.manage": "Benachrichtigungen verwalten",
+        "notifications.manageDesc": "Bleiben Sie mit Ihrem Coaching-Netzwerk auf dem Laufenden.",
+        "notifications.filterAll": "Alle",
+        "notifications.filterConnections": "Verbindungen",
+        "notifications.filterLikes": "Likes",
+        "notifications.filterComments": "Kommentare",
+        "notifications.filterReposts": "Reposts",
+        "notifications.connectionRequest": "hat Ihnen eine Verbindungsanfrage gesendet",
+        "notifications.connectionAccepted": "ist jetzt mit Ihnen verbunden",
+        "notifications.likedPost": "hat Ihren Beitrag geliked",
+        "notifications.commentedPost": "hat Ihren Beitrag kommentiert",
+        "notifications.repostedPost": "hat Ihren Beitrag geteilt",
+        "notifications.accept": "Annehmen",
+        "notifications.accepting": "Wird angenommen...",
+        "notifications.decline": "Ablehnen",
+        "notifications.connected": "Verbunden",
+        "notifications.someone": "Jemand",
+        "notifications.justNow": "gerade eben"
     },
     es: {
         // Navigation
@@ -6857,7 +6907,32 @@ const translations = {
         "settings.savePrivacy": "Guardar Configuración de Privacidad",
         "settings.signInRequired": "Inicio de Sesión Requerido",
         "settings.signInRequiredDesc": "Por favor inicia sesión para acceder a tu configuración.",
-        "settings.signIn": "Iniciar Sesión"
+        "settings.signIn": "Iniciar Sesión",
+
+        // Notificaciones
+        "notifications.title": "Notificaciones",
+        "notifications.loading": "Cargando notificaciones...",
+        "notifications.empty": "Sin notificaciones aún",
+        "notifications.emptyDesc": "Cuando recibas notificaciones, aparecerán aquí.",
+        "notifications.signInRequired": "Inicia sesión para ver las notificaciones",
+        "notifications.manage": "Gestionar notificaciones",
+        "notifications.manageDesc": "Mantente al día con la actividad de tu red de coaching.",
+        "notifications.filterAll": "Todas",
+        "notifications.filterConnections": "Conexiones",
+        "notifications.filterLikes": "Me gusta",
+        "notifications.filterComments": "Comentarios",
+        "notifications.filterReposts": "Reposts",
+        "notifications.connectionRequest": "te envió una solicitud de conexión",
+        "notifications.connectionAccepted": "ahora está conectado contigo",
+        "notifications.likedPost": "le gustó tu publicación",
+        "notifications.commentedPost": "comentó en tu publicación",
+        "notifications.repostedPost": "compartió tu publicación",
+        "notifications.accept": "Aceptar",
+        "notifications.accepting": "Aceptando...",
+        "notifications.decline": "Rechazar",
+        "notifications.connected": "Conectado",
+        "notifications.someone": "Alguien",
+        "notifications.justNow": "ahora mismo"
     },
     fr: {
         // Navigation
@@ -8915,7 +8990,32 @@ const translations = {
         "settings.savePrivacy": "Enregistrer les Paramètres de Confidentialité",
         "settings.signInRequired": "Connexion Requise",
         "settings.signInRequiredDesc": "Veuillez vous connecter pour accéder à vos paramètres.",
-        "settings.signIn": "Se Connecter"
+        "settings.signIn": "Se Connecter",
+
+        // Notifications
+        "notifications.title": "Notifications",
+        "notifications.loading": "Chargement des notifications...",
+        "notifications.empty": "Aucune notification pour le moment",
+        "notifications.emptyDesc": "Lorsque vous recevrez des notifications, elles apparaîtront ici.",
+        "notifications.signInRequired": "Connectez-vous pour voir les notifications",
+        "notifications.manage": "Gérer les notifications",
+        "notifications.manageDesc": "Restez informé de l'activité de votre réseau de coaching.",
+        "notifications.filterAll": "Toutes",
+        "notifications.filterConnections": "Connexions",
+        "notifications.filterLikes": "J'aime",
+        "notifications.filterComments": "Commentaires",
+        "notifications.filterReposts": "Partages",
+        "notifications.connectionRequest": "vous a envoyé une demande de connexion",
+        "notifications.connectionAccepted": "est maintenant connecté avec vous",
+        "notifications.likedPost": "a aimé votre publication",
+        "notifications.commentedPost": "a commenté votre publication",
+        "notifications.repostedPost": "a partagé votre publication",
+        "notifications.accept": "Accepter",
+        "notifications.accepting": "Acceptation...",
+        "notifications.decline": "Refuser",
+        "notifications.connected": "Connecté",
+        "notifications.someone": "Quelqu'un",
+        "notifications.justNow": "à l'instant"
     },
     it: {
         // Navigation
@@ -10973,7 +11073,32 @@ const translations = {
         "settings.savePrivacy": "Salva Impostazioni di Privacy",
         "settings.signInRequired": "Accesso Richiesto",
         "settings.signInRequiredDesc": "Effettua l'accesso per accedere alle tue impostazioni.",
-        "settings.signIn": "Accedi"
+        "settings.signIn": "Accedi",
+
+        // Notifiche
+        "notifications.title": "Notifiche",
+        "notifications.loading": "Caricamento notifiche...",
+        "notifications.empty": "Nessuna notifica ancora",
+        "notifications.emptyDesc": "Quando riceverai notifiche, appariranno qui.",
+        "notifications.signInRequired": "Accedi per vedere le notifiche",
+        "notifications.manage": "Gestisci notifiche",
+        "notifications.manageDesc": "Rimani aggiornato sulle attività della tua rete di coaching.",
+        "notifications.filterAll": "Tutte",
+        "notifications.filterConnections": "Connessioni",
+        "notifications.filterLikes": "Mi piace",
+        "notifications.filterComments": "Commenti",
+        "notifications.filterReposts": "Condivisioni",
+        "notifications.connectionRequest": "ti ha inviato una richiesta di connessione",
+        "notifications.connectionAccepted": "è ora connesso con te",
+        "notifications.likedPost": "ha messo mi piace al tuo post",
+        "notifications.commentedPost": "ha commentato il tuo post",
+        "notifications.repostedPost": "ha condiviso il tuo post",
+        "notifications.accept": "Accetta",
+        "notifications.accepting": "Accettazione...",
+        "notifications.decline": "Rifiuta",
+        "notifications.connected": "Connesso",
+        "notifications.someone": "Qualcuno",
+        "notifications.justNow": "proprio ora"
     }
 };
 
