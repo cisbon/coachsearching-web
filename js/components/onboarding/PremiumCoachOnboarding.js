@@ -14,6 +14,7 @@ import htm from '../../vendor/htm.js';
 import { t, getCurrentLang } from '../../i18n.js';
 import { queryClient } from '../../config/queryClient.js';
 import { useLookupOptions, useCities, useCertifications } from '../../context/AppContext.js';
+import { useCitiesQuery, useCertificationsQuery } from '../../hooks/useSupabaseQuery.js';
 
 const React = window.React;
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
@@ -170,10 +171,72 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
     const { lookupOptions, getLocalizedName, getLocalizedDescription } = useLookupOptions();
 
     // Get cities from global context (cached)
-    const { cities, getLocalizedCityName } = useCities();
+    const { cities: contextCities, getLocalizedCityName } = useCities();
 
     // Get certifications from global context (cached)
-    const { certifications, getCertificationById, getCertificationByCode } = useCertifications();
+    const { certifications: contextCertifications, getCertificationById: contextGetCertById, getCertificationByCode } = useCertifications();
+
+    // Direct TanStack Query hooks as primary data source
+    // These fire reliably because this component only renders after supabase is initialized
+    const { data: citiesQueryData } = useCitiesQuery();
+    const { data: certsQueryData } = useCertificationsQuery();
+
+    // Fallback: fetch directly from Supabase if TanStack Query hooks haven't loaded data
+    const [fallbackCities, setFallbackCities] = useState(null);
+    const [fallbackCertifications, setFallbackCertifications] = useState(null);
+
+    useEffect(() => {
+        const supabase = window.supabaseClient;
+        if (!supabase) return;
+
+        // Fetch cities if not available from any source
+        if (!citiesQueryData?.list?.length && !contextCities?.list?.length && !fallbackCities) {
+            supabase
+                .from('cs_cities')
+                .select('*')
+                .eq('is_active', true)
+                .order('sort_order', { ascending: true })
+                .then(({ data: rows, error }) => {
+                    if (!error && rows) {
+                        setFallbackCities({ list: rows, isLoaded: true });
+                    }
+                });
+        }
+
+        // Fetch certifications if not available from any source
+        if (!certsQueryData?.list?.length && !contextCertifications?.list?.length && !fallbackCertifications) {
+            supabase
+                .from('cs_certifications')
+                .select('*')
+                .eq('is_active', true)
+                .order('sort_order', { ascending: true })
+                .then(({ data: rows, error }) => {
+                    if (!error && rows) {
+                        setFallbackCertifications({ list: rows, isLoaded: true });
+                    }
+                });
+        }
+    }, [citiesQueryData, contextCities, certsQueryData, contextCertifications, fallbackCities, fallbackCertifications]);
+
+    // Merge data sources: prefer TanStack Query > context > fallback
+    const cities = useMemo(() => {
+        if (citiesQueryData?.list?.length) return citiesQueryData;
+        if (contextCities?.list?.length) return contextCities;
+        if (fallbackCities?.list?.length) return fallbackCities;
+        return { list: [], isLoaded: false };
+    }, [citiesQueryData, contextCities, fallbackCities]);
+
+    const certifications = useMemo(() => {
+        if (certsQueryData?.list?.length) return certsQueryData;
+        if (contextCertifications?.list?.length) return contextCertifications;
+        if (fallbackCertifications?.list?.length) return fallbackCertifications;
+        return { list: [], isLoaded: false };
+    }, [certsQueryData, contextCertifications, fallbackCertifications]);
+
+    // Helper to find certification by ID (uses merged data)
+    const getCertificationById = useCallback((id) => {
+        return certifications.list.find(c => c.id === id);
+    }, [certifications.list]);
 
     // Get unique countries from cities list
     const countriesFromCities = useMemo(() => {
