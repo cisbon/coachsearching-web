@@ -269,7 +269,7 @@
 
 .welcome-fullscreen {
     position: fixed;
-    top: 70px; /* Account for navbar height */
+    top: 60px; /* Account for navbar height */
     left: 0;
     right: 0;
     bottom: 0;
