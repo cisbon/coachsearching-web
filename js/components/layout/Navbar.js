@@ -7,6 +7,7 @@ import htm from '../../vendor/htm.js';
 import { t } from '../../i18n.js';
 import { CurrencySelector } from '../ui/CurrencySelector.js';
 import { LanguageSelector } from '../ui/LanguageSelector.js';
+import { NavbarUserMenu } from '../ui/NavbarUserMenu.js';
 
 const React = window.React;
 const { useState, useEffect } = React;
@@ -30,6 +31,16 @@ export function Navbar({ session }) {
         }
     };
 
+    // Navigation handler for NavbarUserMenu (no event object)
+    const handleNavigation = (path) => {
+        setMenuOpen(false);
+        if (window.navigateTo) {
+            window.navigateTo(path);
+        } else {
+            window.location.hash = path.replace('/', '#');
+        }
+    };
+
     // Inject responsive navbar CSS
     useEffect(() => {
         const existingStyle = document.getElementById('responsive-navbar-css');
@@ -38,11 +49,9 @@ export function Navbar({ session }) {
         const style = document.createElement('style');
         style.id = 'responsive-navbar-css';
         style.textContent = `
-            /* Desktop navbar - 10px consistent spacing, petrol background matching hero */
+            /* Desktop navbar */
             header[role="banner"] { background: #006266; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
             header[role="banner"] .nav-flex { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px; }
-            header[role="banner"].signed-in .nav-flex { height: 25px; }
-            header[role="banner"].signed-in .nav-links > a,
             header[role="banner"] .nav-links { display: flex; align-items: center; gap: 10px; }
             header[role="banner"] .nav-links > * { margin: 0; }
             header[role="banner"] .logo { color: white !important; }
@@ -65,16 +74,6 @@ export function Navbar({ session }) {
                 gap: 5px;
                 z-index: 1001;
             }
-            .signed-in .hamburger-btn {
-                padding: 2px 10px;
-                gap: 3px;
-                position: relative;
-                bottom: 10px;
-            }
-            .signed-in .hamburger-btn span {
-                width: 20px;
-                height: 2px;
-            }
             .hamburger-btn span {
                 display: block;
                 width: 24px;
@@ -86,8 +85,6 @@ export function Navbar({ session }) {
             .hamburger-btn.open span:nth-child(1) { transform: rotate(45deg) translate(6px, 6px); }
             .hamburger-btn.open span:nth-child(2) { opacity: 0; }
             .hamburger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
-            .signed-in .hamburger-btn.open span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
-            .signed-in .hamburger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
 
             /* Mobile selector styles - inline expandable */
             .mobile-selector {
@@ -186,8 +183,6 @@ export function Navbar({ session }) {
             @media (max-width: 1190px) {
                 .hamburger-btn { display: flex !important; }
 
-                header[role="banner"].signed-in .logo { position: relative; bottom: 10px; }
-
                 header[role="banner"] .nav-links {
                     position: fixed;
                     top: 60px;
@@ -205,19 +200,11 @@ export function Navbar({ session }) {
                     z-index: 999;
                 }
 
-                header[role="banner"].signed-in .nav-links {
-                    top: 25px;
-                }
-
                 header[role="banner"] .nav-links.open {
                     max-height: calc(100vh - 60px);
                     overflow-y: auto;
                     opacity: 1;
                     padding: 16px 20px;
-                }
-
-                header[role="banner"].signed-in .nav-links.open {
-                    max-height: calc(100vh - 25px);
                 }
 
                 header[role="banner"] .nav-links > a,
@@ -235,7 +222,8 @@ export function Navbar({ session }) {
                 .nav-signin-btn { background: rgba(255,255,255,0.2) !important; color: white !important; }
 
                 header[role="banner"] .nav-links .currency-selector,
-                header[role="banner"] .nav-links .lang-selector {
+                header[role="banner"] .nav-links .lang-selector,
+                header[role="banner"] .nav-links .nav-user-menu {
                     width: 100%;
                     justify-content: center;
                     margin-top: 8px;
@@ -246,7 +234,7 @@ export function Navbar({ session }) {
     }, []);
 
     return html`
-        <header role="banner" class="${session ? 'signed-in' : ''}">
+        <header role="banner">
             <div class="container nav-flex">
                 <a href="/" class="logo" onClick=${(e) => { e.preventDefault(); handleLinkClick(e, session ? '/feed' : '/home'); }}>coach<span>searching</span>.com</a>
 
@@ -259,8 +247,7 @@ export function Navbar({ session }) {
                 <nav class="nav-links ${menuOpen ? 'open' : ''}" role="navigation">
                     <a href="/coaches" class="nav-browse-link" onClick=${(e) => handleLinkClick(e, '/coaches')}>${t('nav.browseCoaches')}</a>
                     ${session ? html`
-                        <a href="/dashboard" onClick=${(e) => handleLinkClick(e, '/dashboard')}>${t('nav.dashboard')}</a>
-                        <a href="/signout" class="nav-auth-btn" onClick=${(e) => handleLinkClick(e, '/signout')}>${t('nav.signOut')}</a>
+                        <${NavbarUserMenu} session=${session} onNavigate=${handleNavigation} />
                     ` : html`
                         <a href="/login?mode=register" class="nav-auth-btn nav-register-btn" onClick=${(e) => handleLinkClick(e, '/login?mode=register')}>${t('nav.register')}</a>
                         <a href="/login" class="nav-auth-btn nav-signin-btn" onClick=${(e) => handleLinkClick(e, '/login')}>${t('nav.signIn')}</a>
