@@ -122,7 +122,7 @@ const loadSavedProgress = (userId) => {
         const sanitizedData = { ...DEFAULT_DATA };
         const stringFields = ['full_name', 'professional_title', 'bio', 'intro_video_url', 'avatar_url', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
         const numberFields = ['city_id']; // city_id is a reference to cs_cities.id
-        const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations', 'certifications'];
+        const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations', 'services', 'certifications'];
 
         stringFields.forEach(field => {
             if (parsed.data[field] !== undefined) {
@@ -531,16 +531,18 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             // Check if coach profile exists
             const { data: existingCoach } = await supabase
                 .from('cs_coaches')
-                .select('id')
+                .select('id, slug')
                 .eq('user_id', userId)
                 .single();
 
             let coachId = null;
+            let coachSlug = slug; // Default to newly generated slug
 
             if (existingCoach) {
                 // Update existing - don't update slug
                 coachId = existingCoach.id;
-                const { slug, ...updateData } = coachData;
+                coachSlug = existingCoach.slug || slug;
+                const { slug: _slug, ...updateData } = coachData;
                 const { error } = await supabase
                     .from('cs_coaches')
                     .update(updateData)
@@ -551,10 +553,11 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 const { data: newCoach, error } = await supabase
                     .from('cs_coaches')
                     .insert(coachData)
-                    .select('id')
+                    .select('id, slug')
                     .single();
                 if (error) throw error;
                 coachId = newCoach?.id;
+                coachSlug = newCoach?.slug || slug;
             }
 
             // Handle referral code if valid - insert into cs_referral_code_usage
@@ -597,12 +600,16 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                         active: svc.active !== false
                     }));
 
+                    console.log('[Onboarding] Saving services:', servicesToInsert);
+
                     const { error: svcError } = await supabase
                         .from('cs_coach_services')
                         .insert(servicesToInsert);
 
                     if (svcError) {
                         console.error('[Onboarding] Failed to insert services:', svcError);
+                    } else {
+                        console.log('[Onboarding] Services saved successfully');
                     }
                 } catch (svcErr) {
                     console.error('[Onboarding] Failed to save services:', svcErr);
@@ -661,9 +668,9 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 onComplete({ completed: true, data: coachData });
             }
 
-            // Navigate to dashboard
+            // Navigate to the coach's new profile
             setTimeout(() => {
-                window.navigateTo('/dashboard');
+                window.navigateTo(`/coach/${coachSlug}`);
             }, 2000);
 
         } catch {
@@ -888,6 +895,15 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     background: white;
                     color: var(--petrol, #2d6a6a);
                     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+                .billing-toggle-btn.yearly-btn {
+                    color: #ea580c;
+                    font-weight: 700;
+                }
+                .billing-toggle-btn.yearly-btn.active {
+                    background: linear-gradient(135deg, #f97316, #ea580c);
+                    color: white;
+                    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.35);
                 }
                 .billing-save-badge {
                     display: inline-block;
@@ -2329,7 +2345,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                             >Monthly</button>
                             <button
                                 type="button"
-                                class=${`billing-toggle-btn${billingCycle === 'yearly' ? ' active' : ''}`}
+                                class=${`billing-toggle-btn yearly-btn${billingCycle === 'yearly' ? ' active' : ''}`}
                                 onClick=${() => setBillingCycle('yearly')}
                             >Yearly <span class="billing-save-badge">SAVE 21%</span></button>
                         </div>
