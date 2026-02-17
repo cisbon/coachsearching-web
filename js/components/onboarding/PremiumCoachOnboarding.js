@@ -104,6 +104,8 @@ const DEFAULT_DATA = {
     referral_code: '',
     referral_code_valid: false,
     referrer_id: null,
+    referral_benefit_type: null,
+    referral_code_id: null,
     certifications: [] // Array of { id, name, date_acquired, certificate_url, certificate_file }
 };
 
@@ -166,6 +168,10 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
     const [currentStep, setCurrentStep] = useState(savedProgress ? savedProgress.step : 0);
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState(savedProgress ? savedProgress.data : DEFAULT_DATA);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastVisible, setToastVisible] = useState(false);
+    const [validationAttempted, setValidationAttempted] = useState(false);
+    const toastTimerRef = useRef(null);
 
     // Get lookup options from global context (cached)
     const { lookupOptions, getLocalizedName, getLocalizedDescription } = useLookupOptions();
@@ -272,7 +278,9 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             setData(prev => ({
                 ...prev,
                 referral_code_valid: false,
-                referrer_id: null
+                referrer_id: null,
+                referral_benefit_type: null,
+                referral_code_id: null
             }));
             return;
         }
@@ -281,7 +289,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             const supabase = window.supabaseClient;
             const { data: codeData, error } = await supabase
                 .from('cs_referral_codes')
-                .select('code, user_id')
+                .select('id, code, user_id, benefit_type')
                 .eq('code', code.trim().toUpperCase())
                 .eq('is_active', true)
                 .single();
@@ -290,13 +298,17 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 setData(prev => ({
                     ...prev,
                     referral_code_valid: false,
-                    referrer_id: null
+                    referrer_id: null,
+                    referral_benefit_type: null,
+                    referral_code_id: null
                 }));
             } else {
                 setData(prev => ({
                     ...prev,
                     referral_code_valid: true,
                     referrer_id: codeData.user_id,
+                    referral_benefit_type: codeData.benefit_type || null,
+                    referral_code_id: codeData.id,
                     plan_type: 'premium' // Auto-select premium when valid code entered
                 }));
             }
@@ -304,7 +316,9 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             setData(prev => ({
                 ...prev,
                 referral_code_valid: false,
-                referrer_id: null
+                referrer_id: null,
+                referral_benefit_type: null,
+                referral_code_id: null
             }));
         }
     }, []);
@@ -350,8 +364,53 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
         });
     }, [currentStep, saveProgress]);
 
+    // Toast notification helper
+    const showToast = useCallback((message) => {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        setToastMessage(message);
+        setToastVisible(true);
+        toastTimerRef.current = setTimeout(() => {
+            setToastVisible(false);
+        }, 4000);
+    }, []);
+
+    // Get list of invalid fields for the current step (for red border highlighting)
+    const getInvalidFields = useCallback((stepIndex) => {
+        const invalid = [];
+        switch (stepIndex) {
+            case 0:
+                if (!data.full_name?.trim()) invalid.push('full_name');
+                if (!data.professional_title?.trim()) invalid.push('professional_title');
+                if (!data.city_id) invalid.push('city_id');
+                if (!data.location_country) invalid.push('location_country');
+                break;
+            case 1:
+                if ((data.specialties?.length || 0) < 1) invalid.push('specialties');
+                if ((data.languages?.length || 0) < 1) invalid.push('languages');
+                break;
+            case 2:
+                if ((data.session_formats?.length || 0) < 1) invalid.push('session_formats');
+                break;
+            case 3:
+                break;
+        }
+        return invalid;
+    }, [data]);
+
     // Navigation
     const goToStep = (step) => {
+        // Only validate when moving forward
+        if (step > currentStep) {
+            // Validate all steps from current to target
+            for (let i = currentStep; i < step; i++) {
+                if (!isStepValid(i)) {
+                    setValidationAttempted(true);
+                    showToast('Please fill in all required fields');
+                    return;
+                }
+            }
+        }
+        setValidationAttempted(false);
         setCurrentStep(step);
         saveProgress(step, data, false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -359,13 +418,24 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
 
     const nextStep = () => {
         if (currentStep < STEPS.length - 1) {
-            goToStep(currentStep + 1);
+            if (!isStepValid(currentStep)) {
+                setValidationAttempted(true);
+                showToast('Please fill in all required fields');
+                return;
+            }
+            setValidationAttempted(false);
+            setCurrentStep(currentStep + 1);
+            saveProgress(currentStep + 1, data, false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
     const prevStep = () => {
         if (currentStep > 0) {
-            goToStep(currentStep - 1);
+            setValidationAttempted(false);
+            setCurrentStep(currentStep - 1);
+            saveProgress(currentStep - 1, data, false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
@@ -487,13 +557,25 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 coachId = newCoach?.id;
             }
 
-            // Handle referral code if valid
-            if (data.referral_code_valid && data.referral_code) {
+            // Handle referral code if valid - insert into cs_referral_code_usage
+            if (data.referral_code_valid && data.referral_code && data.referral_code_id) {
                 try {
-                    await supabase.from('cs_referral_uses').insert({
-                        code: data.referral_code,
+                    await supabase.from('cs_referral_code_usage').insert({
+                        referral_code_id: data.referral_code_id,
                         used_by_user_id: userId,
-                        used_at: new Date().toISOString()
+                        benefit_applied: true,
+                        benefit_applied_at: new Date().toISOString(),
+                        notes: `Applied during onboarding. Benefit type: ${data.referral_benefit_type || 'free_year_premium'}`
+                    });
+                    // Also increment current_uses on the referral code
+                    await supabase.rpc('increment_referral_uses', { code_id: data.referral_code_id }).catch(() => {
+                        // Fallback: manual increment if RPC doesn't exist
+                        supabase
+                            .from('cs_referral_codes')
+                            .update({ current_uses: (data.referral_current_uses || 0) + 1 })
+                            .eq('id', data.referral_code_id)
+                            .then(() => {})
+                            .catch(() => {});
                     });
                 } catch {
                     // Silently skip referral tracking errors
@@ -604,6 +686,9 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
         return html`<${WelcomeScreen} onStart=${startOnboarding} onSkip=${skipOnboarding} />`;
     }
 
+    // Compute invalid fields for current step
+    const invalidFields = validationAttempted ? getInvalidFields(currentStep) : [];
+
     // Render step content
     const renderStep = () => {
         switch (currentStep) {
@@ -617,6 +702,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     getLocalizedCityName=${getLocalizedCityName}
                     certifications=${certifications}
                     getCertificationById=${getCertificationById}
+                    invalidFields=${invalidFields}
                 />`;
             case 1:
                 return html`<${StepExpertise}
@@ -625,6 +711,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     specialties=${lookupOptions.specialties}
                     languages=${lookupOptions.languages}
                     getLocalizedName=${getLocalizedName}
+                    invalidFields=${invalidFields}
                 />`;
             case 2:
                 return html`<${StepServices}
@@ -633,6 +720,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     sessionFormats=${lookupOptions.sessionFormats}
                     getLocalizedName=${getLocalizedName}
                     getLocalizedDescription=${getLocalizedDescription}
+                    invalidFields=${invalidFields}
                 />`;
             case 3:
                 return html`<${StepLaunch}
@@ -688,8 +776,6 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                             <button
                                 class="btn-primary"
                                 onClick=${nextStep}
-                                disabled=${!canContinue}
-                                style=${{ opacity: canContinue ? 1 : 0.5, cursor: canContinue ? 'pointer' : 'not-allowed' }}
                             >
                                 ${t('onboard.premium.continue')} →
                             </button>
@@ -697,6 +783,125 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     `}
                 </div>
             </div>
+
+            <!-- Toast notification -->
+            ${toastVisible && html`
+                <div class="onboarding-toast" style=${{
+                    position: 'fixed',
+                    bottom: '24px',
+                    right: '24px',
+                    background: '#dc2626',
+                    color: 'white',
+                    fontWeight: 700,
+                    padding: '14px 24px',
+                    borderRadius: '10px',
+                    boxShadow: '0 4px 20px rgba(220, 38, 38, 0.4)',
+                    zIndex: 10002,
+                    fontSize: '0.95rem',
+                    animation: 'toast-slide-in 0.3s ease-out',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <span>⚠</span> ${toastMessage}
+                </div>
+            `}
+
+            <style>
+                ${`
+                @keyframes toast-slide-in {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                .onboarding-validation-error {
+                    border-color: #dc2626 !important;
+                    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2) !important;
+                }
+                .onboarding-validation-error-group {
+                    border: 2px solid #dc2626 !important;
+                    border-radius: 12px;
+                    padding: 8px;
+                }
+                /* iOS-style toggle switch */
+                .ios-toggle {
+                    position: relative;
+                    width: 52px;
+                    height: 30px;
+                    flex-shrink: 0;
+                }
+                .ios-toggle input {
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+                .ios-toggle-slider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: #cbd5e1;
+                    transition: 0.3s;
+                    border-radius: 30px;
+                }
+                .ios-toggle-slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 24px;
+                    width: 24px;
+                    left: 3px;
+                    bottom: 3px;
+                    background-color: white;
+                    transition: 0.3s;
+                    border-radius: 50%;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                }
+                .ios-toggle input:checked + .ios-toggle-slider {
+                    background-color: var(--petrol, #2d6a6a);
+                }
+                .ios-toggle input:checked + .ios-toggle-slider:before {
+                    transform: translateX(22px);
+                }
+                /* Billing toggle */
+                .billing-toggle-container {
+                    display: flex;
+                    justify-content: center;
+                    background: #f1f5f9;
+                    border-radius: 8px;
+                    padding: 3px;
+                    margin-bottom: 1rem;
+                }
+                .billing-toggle-btn {
+                    flex: 1;
+                    padding: 6px 12px;
+                    border: none;
+                    background: transparent;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    color: #64748b;
+                    transition: all 0.2s ease;
+                }
+                .billing-toggle-btn.active {
+                    background: white;
+                    color: var(--petrol, #2d6a6a);
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+                .billing-save-badge {
+                    display: inline-block;
+                    background: #10b981;
+                    color: white;
+                    font-size: 0.65rem;
+                    padding: 1px 5px;
+                    border-radius: 4px;
+                    margin-left: 4px;
+                    vertical-align: middle;
+                    font-weight: 700;
+                }
+                `}
+            </style>
         </div>
     `;
 };
@@ -1128,7 +1333,7 @@ const CertificationsSection = ({ data, updateData, session, certifications = { l
     `;
 };
 
-const StepProfile = ({ data, updateData, session, cities = [], countries = COUNTRIES, getLocalizedCityName, certifications, getCertificationById }) => {
+const StepProfile = ({ data, updateData, session, cities = [], countries = COUNTRIES, getLocalizedCityName, certifications, getCertificationById, invalidFields = [] }) => {
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
@@ -1263,7 +1468,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                     </label>
                     <input
                         type="text"
-                        class="premium-input"
+                        class=${`premium-input${invalidFields.includes('full_name') ? ' onboarding-validation-error' : ''}`}
                         placeholder="e.g., Sarah Johnson"
                         value=${String(data.full_name || '')}
                         onInput=${(e) => updateData('full_name', e.target.value)}
@@ -1276,7 +1481,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                     </label>
                     <input
                         type="text"
-                        class="premium-input"
+                        class=${`premium-input${invalidFields.includes('professional_title') ? ' onboarding-validation-error' : ''}`}
                         placeholder="e.g., Certified Life Coach"
                         value=${String(data.professional_title || '')}
                         onInput=${(e) => updateData('professional_title', e.target.value)}
@@ -1399,7 +1604,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                             ${t('onboard.premium.country')} <span class="required">*</span>
                         </label>
                         <select
-                            class="premium-input"
+                            class=${`premium-input${invalidFields.includes('location_country') ? ' onboarding-validation-error' : ''}`}
                             value=${String(data.location_country || '')}
                             onChange=${(e) => {
                                 // Clear city_id when country changes
@@ -1418,7 +1623,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                             ${t('onboard.premium.city')} <span class="required">*</span>
                         </label>
                         <select
-                            class="premium-input"
+                            class=${`premium-input${invalidFields.includes('city_id') ? ' onboarding-validation-error' : ''}`}
                             value=${String(data.city_id || '')}
                             onChange=${(e) => {
                                 const cityId = e.target.value ? parseInt(e.target.value, 10) : null;
@@ -1459,7 +1664,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
 // STEP 2: EXPERTISE
 // ============================================================================
 
-const StepExpertise = ({ data, updateData, specialties = [], languages = [], getLocalizedName }) => {
+const StepExpertise = ({ data, updateData, specialties = [], languages = [], getLocalizedName, invalidFields = [] }) => {
     const toggleSpecialty = (code) => {
         const current = data.specialties || [];
         const newSpecialties = current.includes(code)
@@ -1524,8 +1729,8 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                 </div>
             </div>
 
-            <div class="form-section">
-                <div class="form-section-title">🎯 ${t('onboard.premium.specialties')}</div>
+            <div class=${`form-section${invalidFields.includes('specialties') ? ' onboarding-validation-error-group' : ''}`}>
+                <div class="form-section-title">🎯 ${t('onboard.premium.specialties')} <span class="required">*</span></div>
                 <div class="form-hint">
                     ${t('onboard.premium.specialtiesHint')}
                 </div>
@@ -1586,8 +1791,8 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
                 ` : null}
             </div>
 
-            <div class="form-section">
-                <div class="form-section-title">🌍 ${t('onboard.premium.languages')}</div>
+            <div class=${`form-section${invalidFields.includes('languages') ? ' onboarding-validation-error-group' : ''}`}>
+                <div class="form-section-title">🌍 ${t('onboard.premium.languages')} <span class="required">*</span></div>
                 <div class="form-hint">
                     ${t('onboard.premium.languagesHint')}
                 </div>
@@ -1627,7 +1832,7 @@ const StepExpertise = ({ data, updateData, specialties = [], languages = [], get
 // STEP 3: SERVICES & PRICING
 // ============================================================================
 
-const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName, getLocalizedDescription }) => {
+const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName, getLocalizedDescription, invalidFields = [] }) => {
     // Filter out chat, hybrid, and phone formats - only show video and in-person
     const EXCLUDED_FORMATS = ['chat', 'hybrid', 'phone'];
     const filteredFormats = sessionFormats.filter(f => !EXCLUDED_FORMATS.includes(f.code));
@@ -1669,8 +1874,8 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                 </p>
             </div>
 
-            <div class="form-section">
-                <div class="form-section-title">💬 ${t('onboard.premium.sessionFormats')}</div>
+            <div class=${`form-section${invalidFields.includes('session_formats') ? ' onboarding-validation-error-group' : ''}`}>
+                <div class="form-section-title">💬 ${t('onboard.premium.sessionFormats')} <span class="required">*</span></div>
                 <div class="form-hint">
                     ${t('onboard.premium.sessionFormatsHint')}
                 </div>
@@ -1700,24 +1905,18 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                     ${t('onboard.premium.discoveryCallHint')}
                 </div>
 
-                <label class="discovery-checkbox-wrapper" style=${{
+                <div class="discovery-toggle-wrapper" style=${{
                     display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '12px',
+                    alignItems: 'center',
+                    gap: '16px',
                     padding: '16px',
                     background: data.offers_free_discovery ? 'var(--petrol-50, #e8f4f3)' : '#f8f9fa',
                     borderRadius: '12px',
                     cursor: 'pointer',
                     border: data.offers_free_discovery ? '2px solid var(--petrol)' : '2px solid #e0e0e0',
                     transition: 'all 0.2s ease'
-                }}>
-                    <input
-                        type="checkbox"
-                        checked=${data.offers_free_discovery}
-                        onChange=${(e) => updateData('offers_free_discovery', e.target.checked)}
-                        style=${{ width: '20px', height: '20px', marginTop: '2px', accentColor: 'var(--petrol)' }}
-                    />
-                    <div>
+                }} onClick=${() => updateData('offers_free_discovery', !data.offers_free_discovery)}>
+                    <div style=${{ flex: 1 }}>
                         <div style=${{ fontWeight: 600, marginBottom: '4px' }}>
                             ${t('onboard.premium.discoveryCallLabel')}
                         </div>
@@ -1725,7 +1924,15 @@ const StepServices = ({ data, updateData, sessionFormats = [], getLocalizedName,
                             ${t('onboard.premium.discoveryCallDesc')}
                         </div>
                     </div>
-                </label>
+                    <label class="ios-toggle" onClick=${(e) => e.stopPropagation()}>
+                        <input
+                            type="checkbox"
+                            checked=${data.offers_free_discovery}
+                            onChange=${(e) => updateData('offers_free_discovery', e.target.checked)}
+                        />
+                        <span class="ios-toggle-slider"></span>
+                    </label>
+                </div>
 
                 ${!data.offers_free_discovery ? html`
                     <div class="discovery-disabled-notice" style=${{
@@ -2025,6 +2232,8 @@ const OnboardingServiceModal = ({ service, onClose, onSave }) => {
 // ============================================================================
 
 const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralChange, languages = [], getLocalizedName }) => {
+    const [billingCycle, setBillingCycle] = useState('monthly');
+
     const FREE_FEATURES = [
         'plan.free.feature1',
         'plan.free.feature2',
@@ -2111,6 +2320,20 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                             position: 'relative'
                         }}
                     >
+                        <!-- Billing cycle toggle inside the card -->
+                        <div class="billing-toggle-container" onClick=${(e) => e.stopPropagation()}>
+                            <button
+                                type="button"
+                                class=${`billing-toggle-btn${billingCycle === 'monthly' ? ' active' : ''}`}
+                                onClick=${() => setBillingCycle('monthly')}
+                            >Monthly</button>
+                            <button
+                                type="button"
+                                class=${`billing-toggle-btn${billingCycle === 'yearly' ? ' active' : ''}`}
+                                onClick=${() => setBillingCycle('yearly')}
+                            >Yearly <span class="billing-save-badge">SAVE 21%</span></button>
+                        </div>
+
                         <div style=${{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                             <span style=${{ fontSize: '1.5rem' }}>⭐</span>
                             <h3 style=${{ margin: 0, fontSize: '1.25rem' }}>${t('plan.premium.name') || 'PREMIUM'}</h3>
@@ -2120,6 +2343,9 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                                 <span style=${{ textDecoration: 'line-through', color: '#999', fontSize: '1.5rem' }}>€19</span>
                                 <span style=${{ color: '#10b981' }}> €0</span>
                                 <span style=${{ fontSize: '1rem', fontWeight: 400 }}>/year</span>
+                            ` : billingCycle === 'yearly' ? html`
+                                €15<span style=${{ fontSize: '1rem', fontWeight: 400 }}>/month</span>
+                                <div style=${{ fontSize: '0.8rem', fontWeight: 400, color: '#64748b', marginTop: '2px' }}>€180 billed now</div>
                             ` : html`
                                 €19<span style=${{ fontSize: '1rem', fontWeight: 400 }}>/month</span>
                             `}
@@ -2161,11 +2387,17 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                         ` : null}
                     </div>
                     ${data.referral_code_valid ? html`
-                        <div style=${{ marginTop: '1rem', padding: '1rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <span style=${{ fontSize: '1.5rem' }}>🎉</span>
+                        <div style=${{ marginTop: '1rem', padding: '1rem', background: data.referral_benefit_type === 'free_lifetime_premium' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #10b981, #059669)', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style=${{ fontSize: '1.5rem' }}>${data.referral_benefit_type === 'free_lifetime_premium' ? '👑' : '🎉'}</span>
                             <div style=${{ textAlign: 'left' }}>
-                                <div style=${{ fontWeight: 600 }}>${t('onboard.premium.referralApplied')}</div>
-                                <div style=${{ fontSize: '0.875rem', opacity: 0.9 }}>${t('onboard.premium.referralAppliedDesc')}</div>
+                                <div style=${{ fontWeight: 600 }}>
+                                    ${data.referral_benefit_type === 'free_lifetime_premium'
+                                        ? 'Referral Code Applied! You unlocked free lifetime Premium!'
+                                        : t('onboard.premium.referralApplied')}
+                                </div>
+                                ${data.referral_benefit_type !== 'free_lifetime_premium' ? html`
+                                    <div style=${{ fontSize: '0.875rem', opacity: 0.9 }}>${t('onboard.premium.referralAppliedDesc')}</div>
+                                ` : null}
                             </div>
                         </div>
                     ` : null}
