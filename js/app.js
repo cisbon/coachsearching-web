@@ -318,6 +318,7 @@ const App = () => {
             .then(config => {
                 if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
                     window.supabaseClient = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+                    window.dispatchEvent(new Event('supabaseReady'));
 
                     window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
                         setSession(session);

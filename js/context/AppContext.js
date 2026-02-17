@@ -23,6 +23,17 @@ const AppContext = createContext(null);
  * App Provider Component
  */
 export function AppProvider({ children }) {
+    // Track supabase readiness to trigger query hooks
+    const [, setSupabaseReady] = useState(!!window.supabaseClient);
+    useEffect(() => {
+        if (window.supabaseClient) return;
+        const handler = () => setSupabaseReady(true);
+        window.addEventListener('supabaseReady', handler);
+        // Also check immediately in case event already fired
+        if (window.supabaseClient) setSupabaseReady(true);
+        return () => window.removeEventListener('supabaseReady', handler);
+    }, []);
+
     // Currency state
     const [currency, setCurrencyState] = useState(() => {
         return localStorage.getItem('currency') || CONFIG.DEFAULT_CURRENCY;
