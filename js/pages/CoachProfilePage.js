@@ -683,7 +683,7 @@ const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall, sess
  * Profile Coach Card Component
  * Embedded coach card for the profile page with overlapping profile image and banner
  */
-const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, onWriteReview, onConnect, connectionStatus, session, isOwnProfile, onEditSection, hasOtherVisibleSections, showMainInfo = true, showAvatarBanner = true }) {
+const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, onWriteReview, onConnect, onRemoveConnection, connectionStatus, session, isOwnProfile, onEditSection, hasOtherVisibleSections, showMainInfo = true, showAvatarBanner = true }) {
     const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
     const { cities, getLocalizedCityName } = useCities();
     const { lookupOptions, getLocalizedName } = useLookupOptions();
@@ -944,9 +944,9 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                     <!-- Connect Button -->
                     ${!isOwnProfile && html`
                         <button
-                            class="btn-connect ${connectionStatus === 'pending' ? 'btn-connect-pending' : connectionStatus === 'granted' ? 'btn-connect-granted' : ''}"
-                            onClick=${onConnect}
-                            disabled=${connectionStatus === 'pending' || connectionStatus === 'granted'}
+                            class="btn-connect ${connectionStatus === 'pending' ? 'btn-connect-pending' : connectionStatus === 'granted' ? 'btn-connect-granted' : connectionStatus === 'denied' ? 'btn-connect-denied' : ''}"
+                            onClick=${connectionStatus === 'granted' ? onRemoveConnection : connectionStatus === 'denied' ? onConnect : connectionStatus === 'pending' ? null : onConnect}
+                            disabled=${connectionStatus === 'pending'}
                         >
                             ${connectionStatus === 'pending' ? html`
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -961,6 +961,14 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                                 </svg>
                                 <span>${t('connect.connected') || 'Connected'}</span>
+                            ` : connectionStatus === 'denied' ? html`
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                                </svg>
+                                <span>${t('connect.connect') || 'Connect'}</span>
                             ` : html`
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -992,9 +1000,11 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                                 ▶ ${t('coach.watchIntro') || 'Watch Intro'}
                             </button>
                         `}
-                        <button class="btn-message" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
-                            💬 ${t('coach.sendMessage') || 'Message'}
-                        </button>
+                        ${!isOwnProfile && html`
+                            <button class="btn-message" onClick=${() => window.navigateTo(`/contact/${coach.id}`)}>
+                                💬 ${t('coach.sendMessage') || 'Message'}
+                            </button>
+                        `}
                     </div>
                     ${!isOwnProfile && html`
                         <button class="btn-recommendation" onClick=${onWriteReview}>
@@ -4228,6 +4238,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [showPhotoEditor, setShowPhotoEditor] = useState(false);
     const [showCoachProfileEditor, setShowCoachProfileEditor] = useState(false);
     const [requestingService, setRequestingService] = useState(null); // service object for request modal
+    const [showRemoveConnectionModal, setShowRemoveConnectionModal] = useState(false);
+    const [showOwnProfileCallModal, setShowOwnProfileCallModal] = useState(false);
 
     // Feed posts on profile
     const [highlightedPosts, setHighlightedPosts] = useState([]);
@@ -5038,6 +5050,14 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         const supabase = window.supabaseClient;
         if (!supabase) return;
         try {
+            // If previously denied, delete the old record first
+            if (connectionStatus === 'denied') {
+                await supabase
+                    .from('cs_connections')
+                    .delete()
+                    .eq('user_id', session.user.id)
+                    .eq('coach_id', coach.user_id);
+            }
             const { error } = await supabase
                 .from('cs_connections')
                 .insert({
@@ -5053,8 +5073,41 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         }
     };
 
+    // Handle remove connection
+    const handleRemoveConnection = () => {
+        setShowRemoveConnectionModal(true);
+    };
+
+    const confirmRemoveConnection = async () => {
+        const supabase = window.supabaseClient;
+        if (!supabase || !session?.user?.id || !coach?.user_id) return;
+        try {
+            // Delete connection in direction: viewer -> coach
+            await supabase
+                .from('cs_connections')
+                .delete()
+                .eq('user_id', session.user.id)
+                .eq('coach_id', coach.user_id);
+            // Also try reverse direction
+            await supabase
+                .from('cs_connections')
+                .delete()
+                .eq('user_id', coach.user_id)
+                .eq('coach_id', session.user.id);
+            setConnectionStatus(null);
+            setIsConnectedWithCoach(false);
+            setShowRemoveConnectionModal(false);
+        } catch (err) {
+            console.error('Remove connection error:', err);
+        }
+    };
+
     // Handle discovery button click - check auth status first
     const handleDiscoveryClick = () => {
+        if (isOwnProfile) {
+            setShowOwnProfileCallModal(true);
+            return;
+        }
         if (session) {
             setShowDiscoveryModal(true);
         } else {
@@ -5162,6 +5215,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 onVideoClick=${() => setShowVideoPopup(true)}
                                 onWriteReview=${handleWriteReviewClick}
                                 onConnect=${handleConnectClick}
+                                onRemoveConnection=${handleRemoveConnection}
                                 connectionStatus=${connectionStatus}
                                 session=${session}
                                 isOwnProfile=${isOwnProfile}
@@ -5724,6 +5778,95 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         ? (t('auth.signInToConnectSubtitle') || 'Create an account or sign in to connect with {coachName}').replace('{coachName}', coach.full_name)
                         : (t('auth.signInToBookSubtitle') || 'Create an account or sign in to book a free discovery call with {coachName}').replace('{coachName}', coach.full_name)}
                 />
+            `}
+
+            <!-- Remove Connection Confirmation Modal -->
+            ${showRemoveConnectionModal && html`
+                <div class="article-modal-overlay" onClick=${() => setShowRemoveConnectionModal(false)}>
+                    <div class="article-modal" onClick=${(e) => e.stopPropagation()} style=${{
+                        maxWidth: '420px',
+                        padding: '32px',
+                        borderRadius: '16px',
+                        textAlign: 'center',
+                    }}>
+                        <h3 style=${{ margin: '0 0 12px', fontSize: '1.1rem', fontWeight: '700', color: '#1f2937' }}>
+                            ${t('connect.removeConnectionTitle') || 'Remove Connection'}
+                        </h3>
+                        <p style=${{ margin: '0 0 24px', color: '#6b7280', fontSize: '0.9rem' }}>
+                            ${t('connect.removeConnectionConfirm') || 'Are you sure you want to remove this connection?'}
+                        </p>
+                        <div style=${{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                            <button
+                                onClick=${() => setShowRemoveConnectionModal(false)}
+                                style=${{
+                                    padding: '8px 24px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #d1d5db',
+                                    background: 'white',
+                                    color: '#374151',
+                                    fontSize: '0.9rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                ${t('connect.cancel') || 'Cancel'}
+                            </button>
+                            <button
+                                onClick=${confirmRemoveConnection}
+                                style=${{
+                                    padding: '8px 24px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background: '#ef4444',
+                                    color: 'white',
+                                    fontSize: '0.9rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                ${t('connect.confirm') || 'Remove'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `}
+
+            <!-- Own Profile Chemistry Call Modal -->
+            ${showOwnProfileCallModal && html`
+                <div class="article-modal-overlay" onClick=${() => setShowOwnProfileCallModal(false)}>
+                    <div class="article-modal" onClick=${(e) => e.stopPropagation()} style=${{
+                        maxWidth: '420px',
+                        padding: '32px',
+                        borderRadius: '16px',
+                        textAlign: 'center',
+                    }}>
+                        <div style=${{ fontSize: '2.5rem', marginBottom: '12px' }}>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#006266" strokeWidth="1.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        <p style=${{ margin: '0 0 24px', color: '#6b7280', fontSize: '0.95rem' }}>
+                            ${t('connect.ownProfileChemistryCall') || 'This is your own profile'}
+                        </p>
+                        <button
+                            onClick=${() => setShowOwnProfileCallModal(false)}
+                            style=${{
+                                padding: '8px 32px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: '#006266',
+                                color: 'white',
+                                fontSize: '0.9rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
             `}
 
             <!-- Write Recommendation Modal -->

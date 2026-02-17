@@ -2575,6 +2575,14 @@ const translations = {
         // Connect
         "connect.connect": "Connect",
         "connect.connected": "Connected",
+        "connect.pending": "Pending",
+        "connect.denied": "Denied",
+        "connect.removeConnectionTitle": "Remove Connection",
+        "connect.removeConnectionConfirm": "Are you sure you want to remove this connection?",
+        "connect.connectionRemoved": "Connection removed",
+        "connect.ownProfileChemistryCall": "This is your own profile",
+        "connect.cancel": "Cancel",
+        "connect.confirm": "Remove",
 
         // Settings & Privacy
         "settings.title": "Settings & Privacy",
@@ -4771,6 +4779,14 @@ const translations = {
         // Connect
         "connect.connect": "Vernetzen",
         "connect.connected": "Vernetzt",
+        "connect.pending": "Ausstehend",
+        "connect.denied": "Abgelehnt",
+        "connect.removeConnectionTitle": "Verbindung entfernen",
+        "connect.removeConnectionConfirm": "Möchten Sie diese Verbindung wirklich entfernen?",
+        "connect.connectionRemoved": "Verbindung entfernt",
+        "connect.ownProfileChemistryCall": "Dies ist Ihr eigenes Profil",
+        "connect.cancel": "Abbrechen",
+        "connect.confirm": "Entfernen",
 
         // Settings & Privacy
         "settings.title": "Einstellungen & Datenschutz",
@@ -6846,6 +6862,14 @@ const translations = {
         // Connect
         "connect.connect": "Conectar",
         "connect.connected": "Conectado",
+        "connect.pending": "Pendiente",
+        "connect.denied": "Rechazado",
+        "connect.removeConnectionTitle": "Eliminar conexión",
+        "connect.removeConnectionConfirm": "¿Estás seguro de que quieres eliminar esta conexión?",
+        "connect.connectionRemoved": "Conexión eliminada",
+        "connect.ownProfileChemistryCall": "Este es tu propio perfil",
+        "connect.cancel": "Cancelar",
+        "connect.confirm": "Eliminar",
 
         // Settings & Privacy
         "settings.title": "Configuración y Privacidad",
@@ -8933,6 +8957,14 @@ const translations = {
         // Connect
         "connect.connect": "Se connecter",
         "connect.connected": "Connecté",
+        "connect.pending": "En attente",
+        "connect.denied": "Refusé",
+        "connect.removeConnectionTitle": "Supprimer la connexion",
+        "connect.removeConnectionConfirm": "Êtes-vous sûr de vouloir supprimer cette connexion ?",
+        "connect.connectionRemoved": "Connexion supprimée",
+        "connect.ownProfileChemistryCall": "Ceci est votre propre profil",
+        "connect.cancel": "Annuler",
+        "connect.confirm": "Supprimer",
 
         // Settings & Privacy
         "settings.title": "Paramètres et Confidentialité",
@@ -11020,6 +11052,14 @@ const translations = {
         // Connect
         "connect.connect": "Collegati",
         "connect.connected": "Collegato",
+        "connect.pending": "In attesa",
+        "connect.denied": "Rifiutato",
+        "connect.removeConnectionTitle": "Rimuovi connessione",
+        "connect.removeConnectionConfirm": "Sei sicuro di voler rimuovere questa connessione?",
+        "connect.connectionRemoved": "Connessione rimossa",
+        "connect.ownProfileChemistryCall": "Questo è il tuo profilo",
+        "connect.cancel": "Annulla",
+        "connect.confirm": "Rimuovi",
 
         // Settings & Privacy
         "settings.title": "Impostazioni e Privacy",

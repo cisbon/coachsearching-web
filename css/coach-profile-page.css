@@ -684,6 +684,17 @@
 .btn-connect-granted {
     background: #22c55e;
     box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+    cursor: pointer;
+}
+
+.btn-connect-granted:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-connect-denied {
+    background: #006266;
+    box-shadow: 0 2px 8px rgba(0, 98, 102, 0.25);
 }
 
 /* Discovery Call Button - Very Prominent */

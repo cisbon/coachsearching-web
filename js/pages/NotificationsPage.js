@@ -80,6 +80,13 @@ export function NotificationsPage({ session }) {
     const userId = session?.user?.id;
     const { refetch: refetchCount } = useNotificationCountQuery(userId);
 
+    // Reset notification badge to 0 when user visits this page
+    useEffect(() => {
+        if (userId) {
+            queryClient.setQueryData(QUERY_KEYS.notificationCount(userId), 0);
+        }
+    }, [userId]);
+
     const loadNotifications = useCallback(async () => {
         const supabase = window.supabaseClient;
         if (!supabase || !userId) return;
