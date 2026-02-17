@@ -4708,6 +4708,28 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         }
     }, [coach, session]);
 
+    // Check existing connection status (must be before early returns to follow Rules of Hooks)
+    useEffect(() => {
+        const isOwn = session?.user?.id && coach?.user_id && session.user.id === coach.user_id;
+        if (!session?.user?.id || !coach?.user_id || isOwn) return;
+        const checkConnection = async () => {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+            try {
+                const { data } = await supabase
+                    .from('cs_connections')
+                    .select('status')
+                    .eq('user_id', session.user.id)
+                    .eq('coach_id', coach.user_id)
+                    .single();
+                if (data) setConnectionStatus(data.status);
+            } catch {
+                // No existing connection
+            }
+        };
+        checkConnection();
+    }, [session?.user?.id, coach?.user_id]);
+
     const getReviewBreakdown = () => {
         const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
         reviews.forEach(review => {
@@ -4923,27 +4945,6 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     // Check if this is the user's own profile
     const isOwnProfile = session?.user?.id && coach.user_id && session.user.id === coach.user_id;
-
-    // Check existing connection status
-    useEffect(() => {
-        if (!session?.user?.id || !coach.user_id || isOwnProfile) return;
-        const checkConnection = async () => {
-            const supabase = window.supabaseClient;
-            if (!supabase) return;
-            try {
-                const { data } = await supabase
-                    .from('cs_connections')
-                    .select('status')
-                    .eq('user_id', session.user.id)
-                    .eq('coach_id', coach.user_id)
-                    .single();
-                if (data) setConnectionStatus(data.status);
-            } catch {
-                // No existing connection
-            }
-        };
-        checkConnection();
-    }, [session?.user?.id, coach.user_id, isOwnProfile]);
 
     // Handle connect button click
     const handleConnectClick = async () => {
