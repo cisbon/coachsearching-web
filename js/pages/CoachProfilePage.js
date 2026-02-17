@@ -683,7 +683,7 @@ const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall, sess
  * Profile Coach Card Component
  * Embedded coach card for the profile page with overlapping profile image and banner
  */
-const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, onWriteReview, onConnect, connectionStatus, session, isOwnProfile, onEditSection, hasOtherVisibleSections }) {
+const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, onWriteReview, onConnect, connectionStatus, session, isOwnProfile, onEditSection, hasOtherVisibleSections, showMainInfo = true, showAvatarBanner = true }) {
     const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
     const { cities, getLocalizedCityName } = useCities();
     const { lookupOptions, getLocalizedName } = useLookupOptions();
@@ -765,11 +765,15 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
         <div class="profile-coach-card">
             <!-- Banner Image inside card -->
             <div class="profile-card-banner">
-                <img
-                    src=${coach.banner_url || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=300&fit=crop'}
-                    alt="Profile Banner"
-                    class="card-banner-image"
-                />
+                ${showAvatarBanner ? html`
+                    <img
+                        src=${coach.banner_url || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=300&fit=crop'}
+                        alt="Profile Banner"
+                        class="card-banner-image"
+                    />
+                ` : html`
+                    <div class="card-banner-image" style=${{ background: 'linear-gradient(135deg, #e0e7ee 0%, #c9d6e3 100%)', width: '100%', height: '200px' }}></div>
+                `}
                 ${isOwnProfile && html`
                     <button class="btn-edit-banner" onClick=${() => onEditSection('banner')} title="Edit banner">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -783,18 +787,24 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
             <!-- Profile Image with Name beside it -->
             <div class="profile-card-header-row">
                 <div class="profile-card-image-section">
-                    <div class="profile-image-wrapper-card ${hasVideo ? 'has-video' : ''}" onClick=${hasVideo ? onVideoClick : null}>
-                        <img
-                            src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name) + '&size=200'}
-                            alt=${coach.full_name}
-                            class="profile-image-card"
-                        />
-                        ${hasVideo && html`
+                    <div class="profile-image-wrapper-card ${hasVideo && showAvatarBanner ? 'has-video' : ''}" onClick=${hasVideo && showAvatarBanner ? onVideoClick : null}>
+                        ${showAvatarBanner ? html`
+                            <img
+                                src=${coach.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.full_name) + '&size=200'}
+                                alt=${coach.full_name}
+                                class="profile-image-card"
+                            />
+                        ` : html`
+                            <div class="profile-image-card" style=${{ background: '#c9d6e3', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', width: '150px', height: '150px', fontSize: '3rem', color: '#6b7280' }}>
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                        `}
+                        ${hasVideo && showAvatarBanner && html`
                             <div class="video-play-overlay-card">
                                 <div class="play-icon">▶</div>
                             </div>
                         `}
-                        ${hasVideo && html`
+                        ${hasVideo && showAvatarBanner && html`
                             <span class="trust-badge badge-video badge-on-image" title="Has Video">🎬</span>
                         `}
                     </div>
@@ -873,47 +883,57 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
             <!-- Main Card Content -->
             <div class="profile-card-content">
                 <div class="profile-card-main">
-                    <!-- Location and Languages Row -->
-                    <div class="profile-meta-row">
-                        ${location && html`<span class="meta-location">📍 ${location}</span>`}
-                        <${LanguageFlags} languages=${languages} />
-                        ${coach.years_experience > 0 && html`
-                            <span class="meta-experience">🏆 ${coach.years_experience}+ ${t('coach.yearsExperience') || 'years'}</span>
-                        `}
-                    </div>
-
-                    <!-- Session Formats & Rating Row -->
-                    <div class="profile-session-formats">
-                        ${offersVideo && html`<span class="format-tag">💻 Video Call</span>`}
-                        ${offersInPerson && html`<span class="format-tag">🤝 In-Person</span>`}
-                        ${reviewsCount > 0 && hasOtherVisibleSections && html`
-                            <span class="format-tag rating-tag clickable" onClick=${() => {
-                                const el = document.getElementById('recommendations-ratings-section');
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }}>
-                                ${[1,2,3,4,5].map(star => html`
-                                    <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
-                                `)}
-                                <span class="rating-value">${rating.toFixed(1)}</span>
-                                <span class="rating-count">(${reviewsCount})</span>
-                            </span>
-                        `}
-                    </div>
-
-                    <!-- Bio -->
-                    ${bio && html`
-                        <div class="profile-bio">
-                            <p>${bio}</p>
+                    ${showMainInfo ? html`
+                        <!-- Location and Languages Row -->
+                        <div class="profile-meta-row">
+                            ${location && html`<span class="meta-location">📍 ${location}</span>`}
+                            <${LanguageFlags} languages=${languages} />
+                            ${coach.years_experience > 0 && html`
+                                <span class="meta-experience">🏆 ${coach.years_experience}+ ${t('coach.yearsExperience') || 'years'}</span>
+                            `}
                         </div>
-                    `}
 
-                    <!-- Specialties -->
-                    ${localizedSpecialties.length > 0 && html`
-                        <div class="profile-specialties">
-                            ${localizedSpecialties.slice(0, 6).map(s => html`
-                                <span key=${s.code} class="specialty-tag">${s.name}</span>
-                            `)}
-                            ${localizedSpecialties.length > 6 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 6}</span>` : ''}
+                        <!-- Session Formats & Rating Row -->
+                        <div class="profile-session-formats">
+                            ${offersVideo && html`<span class="format-tag">💻 Video Call</span>`}
+                            ${offersInPerson && html`<span class="format-tag">🤝 In-Person</span>`}
+                            ${reviewsCount > 0 && hasOtherVisibleSections && html`
+                                <span class="format-tag rating-tag clickable" onClick=${() => {
+                                    const el = document.getElementById('recommendations-ratings-section');
+                                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }}>
+                                    ${[1,2,3,4,5].map(star => html`
+                                        <span key=${star} class="star-compact ${star <= Math.round(rating) ? 'filled' : ''}">★</span>
+                                    `)}
+                                    <span class="rating-value">${rating.toFixed(1)}</span>
+                                    <span class="rating-count">(${reviewsCount})</span>
+                                </span>
+                            `}
+                        </div>
+
+                        <!-- Bio -->
+                        ${bio && html`
+                            <div class="profile-bio">
+                                <p>${bio}</p>
+                            </div>
+                        `}
+
+                        <!-- Specialties -->
+                        ${localizedSpecialties.length > 0 && html`
+                            <div class="profile-specialties">
+                                ${localizedSpecialties.slice(0, 6).map(s => html`
+                                    <span key=${s.code} class="specialty-tag">${s.name}</span>
+                                `)}
+                                ${localizedSpecialties.length > 6 ? html`<span class="specialty-tag more">+${localizedSpecialties.length - 6}</span>` : ''}
+                            </div>
+                        `}
+                    ` : html`
+                        <div class="privacy-restricted-notice" style=${{ padding: '12px 0', color: '#6b7280', fontSize: '0.88rem', fontStyle: 'italic' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style=${{ verticalAlign: 'middle', marginRight: '6px' }}>
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            ${t('privacy.connectToSeeDetails') || 'Connect with this coach to see more details'}
                         </div>
                     `}
                 </div>
@@ -4220,6 +4240,11 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [viewersAlsoViewed, setViewersAlsoViewed] = useState([]);
     const [loadingViewersAlsoViewed, setLoadingViewersAlsoViewed] = useState(false);
 
+    // Privacy settings for the coach being viewed
+    const [privacySettings, setPrivacySettings] = useState(null);
+    // Whether the viewer is connected (granted) with this coach in either direction
+    const [isConnectedWithCoach, setIsConnectedWithCoach] = useState(false);
+
     // Load coach data
     useEffect(() => {
         if (identifier) {
@@ -4277,6 +4302,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     checkUserHasReviewed(data.id),
                     loadHighlightedPosts(data.user_id),
                     loadActivityPosts(data.user_id, 0),
+                    loadPrivacySettings(data.user_id),
                 ]);
             }
         } catch (err) {
@@ -4594,6 +4620,21 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         }
     };
 
+    const loadPrivacySettings = async (coachUserId) => {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('cs_privacy')
+                .select('*')
+                .eq('user_id', coachUserId)
+                .single();
+            if (!error && data) {
+                setPrivacySettings(data);
+            }
+        } catch {
+            // No privacy settings = default to 'all' (handled in canViewSection)
+        }
+    };
+
     const loadSimilarCoaches = async (coachData) => {
         try {
             const specialties = coachData.specialties || [];
@@ -4709,22 +4750,46 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     }, [coach, session]);
 
     // Check existing connection status (must be before early returns to follow Rules of Hooks)
+    // Also checks reverse direction for privacy visibility enforcement
     useEffect(() => {
         const isOwn = session?.user?.id && coach?.user_id && session.user.id === coach.user_id;
-        if (!session?.user?.id || !coach?.user_id || isOwn) return;
+        if (!session?.user?.id || !coach?.user_id || isOwn) {
+            // Own profile = always connected
+            if (isOwn) setIsConnectedWithCoach(true);
+            return;
+        }
         const checkConnection = async () => {
             const supabase = window.supabaseClient;
             if (!supabase) return;
             try {
-                const { data } = await supabase
+                // Check connection in direction: viewer -> coach
+                const { data: sentData } = await supabase
                     .from('cs_connections')
                     .select('status')
                     .eq('user_id', session.user.id)
                     .eq('coach_id', coach.user_id)
                     .single();
-                if (data) setConnectionStatus(data.status);
+                if (sentData) {
+                    setConnectionStatus(sentData.status);
+                    if (sentData.status === 'granted') setIsConnectedWithCoach(true);
+                    return;
+                }
             } catch {
-                // No existing connection
+                // No connection in this direction
+            }
+            try {
+                // Check connection in reverse direction: coach -> viewer
+                const { data: receivedData } = await supabase
+                    .from('cs_connections')
+                    .select('status')
+                    .eq('user_id', coach.user_id)
+                    .eq('coach_id', session.user.id)
+                    .single();
+                if (receivedData && receivedData.status === 'granted') {
+                    setIsConnectedWithCoach(true);
+                }
+            } catch {
+                // No connection in reverse direction either
             }
         };
         checkConnection();
@@ -4946,6 +5011,23 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Check if this is the user's own profile
     const isOwnProfile = session?.user?.id && coach.user_id && session.user.id === coach.user_id;
 
+    /**
+     * Check if a profile section is visible based on privacy settings.
+     * @param {string} visibilityKey - e.g. 'visibility_experience', 'visibility_skills'
+     * @returns {boolean} true if the viewer can see this section
+     */
+    const canViewSection = (visibilityKey) => {
+        // Own profile: always visible
+        if (isOwnProfile) return true;
+        // No privacy settings loaded yet = default to 'all' (visible)
+        if (!privacySettings) return true;
+        const setting = privacySettings[visibilityKey] || 'all';
+        if (setting === 'all') return true;
+        if (setting === 'members') return !!session?.user;
+        if (setting === 'connections') return isConnectedWithCoach;
+        return true;
+    };
+
     // Handle connect button click
     const handleConnectClick = async () => {
         if (!session) {
@@ -5055,14 +5137,15 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
     // Check if there are other visible sections besides recommendations-ratings
     const hasActivityContent = activityPosts.length > 0 || hasVideo;
-    const hasOtherVisibleSections = highlightedPosts.length > 0 || // featured/highlights
-        hasActivityContent || // activity
-        experiences.length > 0 || isOwnProfile || // experience
-        educations.length > 0 || isOwnProfile || // education
-        credentials.length > 0 || isOwnProfile || // certifications
-        coachSkills.length > 0 || isOwnProfile || // skills
-        volunteering.length > 0 || isOwnProfile || // volunteering
-        publications.length > 0 || isOwnProfile; // publications
+    const hasOtherVisibleSections =
+        (highlightedPosts.length > 0 && canViewSection('visibility_highlights')) ||
+        (hasActivityContent && canViewSection('visibility_activities')) ||
+        ((experiences.length > 0 || isOwnProfile) && canViewSection('visibility_experience')) ||
+        ((educations.length > 0 || isOwnProfile) && canViewSection('visibility_education')) ||
+        ((credentials.length > 0 || isOwnProfile) && canViewSection('visibility_certifications')) ||
+        ((coachSkills.length > 0 || isOwnProfile) && canViewSection('visibility_skills')) ||
+        ((volunteering.length > 0 || isOwnProfile) && canViewSection('visibility_volunteering')) ||
+        ((publications.length > 0 || isOwnProfile) && canViewSection('visibility_publications'));
 
     return html`
         <div class="coach-profile-page linkedin-style">
@@ -5084,11 +5167,13 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 isOwnProfile=${isOwnProfile}
                                 onEditSection=${handleEditSection}
                                 hasOtherVisibleSections=${hasOtherVisibleSections}
+                                showMainInfo=${canViewSection('visibility_main_info')}
+                                showAvatarBanner=${canViewSection('visibility_avatar_banner')}
                             />
                         </section>
 
                         <!-- Featured / Highlighted Posts Section -->
-                        ${highlightedPosts.length > 0 && html`
+                        ${highlightedPosts.length > 0 && canViewSection('visibility_highlights') && html`
                             <section class="profile-section featured-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -5110,7 +5195,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Activity Section - coach's own posts -->
-                        ${hasActivityContent && html`
+                        ${hasActivityContent && canViewSection('visibility_activities') && html`
                             <section class="profile-section activity-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -5163,7 +5248,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Recommendations & Ratings Section - only show when there are ratings -->
-                        ${reviews.length > 0 && html`
+                        ${reviews.length > 0 && canViewSection('visibility_recommendations') && html`
                             <section id="recommendations-ratings-section" class="profile-section rating-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -5240,7 +5325,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Experience Section -->
-                        ${(experiences.length > 0 || isOwnProfile) && html`
+                        ${(experiences.length > 0 || isOwnProfile) && canViewSection('visibility_experience') && html`
                             <section class="profile-section experience-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -5295,7 +5380,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Education Section -->
-                        ${(educations.length > 0 || isOwnProfile) && html`
+                        ${(educations.length > 0 || isOwnProfile) && canViewSection('visibility_education') && html`
                             <section class="profile-section education-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -5347,7 +5432,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Certifications Section -->
-                        ${(credentials.length > 0 || isOwnProfile) && html`
+                        ${(credentials.length > 0 || isOwnProfile) && canViewSection('visibility_certifications') && html`
                             <section class="profile-section certifications-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -5397,7 +5482,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Skills Section -->
-                        ${(coachSkills.length > 0 || isOwnProfile) && html`
+                        ${(coachSkills.length > 0 || isOwnProfile) && canViewSection('visibility_skills') && html`
                             <section class="profile-section skills-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -5445,7 +5530,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Volunteering Section -->
-                        ${(volunteering.length > 0 || isOwnProfile) && html`
+                        ${(volunteering.length > 0 || isOwnProfile) && canViewSection('visibility_volunteering') && html`
                             <section class="profile-section volunteering-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">
@@ -5497,7 +5582,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         `}
 
                         <!-- Publications Section -->
-                        ${(publications.length > 0 || isOwnProfile) && html`
+                        ${(publications.length > 0 || isOwnProfile) && canViewSection('visibility_publications') && html`
                             <section class="profile-section publications-section">
                                 <div class="section-header-editable">
                                     <h2 class="section-title">

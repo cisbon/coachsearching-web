@@ -2661,6 +2661,7 @@ const translations = {
         "notifications.filterReposts": "Reposts",
         "notifications.connectionRequest": "sent you a connection request",
         "notifications.connectionAccepted": "is now connected with you",
+        "notifications.connectionYouAccepted": "accepted your connection request",
         "notifications.likedPost": "liked your post",
         "notifications.commentedPost": "commented on your post",
         "notifications.repostedPost": "reposted your post",
@@ -2669,7 +2670,10 @@ const translations = {
         "notifications.decline": "Decline",
         "notifications.connected": "Connected",
         "notifications.someone": "Someone",
-        "notifications.justNow": "just now"
+        "notifications.justNow": "just now",
+        "privacy.connectToSeeDetails": "Connect with this coach to see more details",
+        "privacy.signInToSeeDetails": "Sign in to see more details",
+        "privacy.sectionHidden": "This section is only visible to connections"
     },
     de: {
         // Navigation
@@ -4853,6 +4857,7 @@ const translations = {
         "notifications.filterReposts": "Reposts",
         "notifications.connectionRequest": "hat Ihnen eine Verbindungsanfrage gesendet",
         "notifications.connectionAccepted": "ist jetzt mit Ihnen verbunden",
+        "notifications.connectionYouAccepted": "hat Ihre Verbindungsanfrage angenommen",
         "notifications.likedPost": "hat Ihren Beitrag geliked",
         "notifications.commentedPost": "hat Ihren Beitrag kommentiert",
         "notifications.repostedPost": "hat Ihren Beitrag geteilt",
@@ -4861,7 +4866,10 @@ const translations = {
         "notifications.decline": "Ablehnen",
         "notifications.connected": "Verbunden",
         "notifications.someone": "Jemand",
-        "notifications.justNow": "gerade eben"
+        "notifications.justNow": "gerade eben",
+        "privacy.connectToSeeDetails": "Verbinden Sie sich mit diesem Coach, um mehr Details zu sehen",
+        "privacy.signInToSeeDetails": "Melden Sie sich an, um mehr Details zu sehen",
+        "privacy.sectionHidden": "Dieser Bereich ist nur für Kontakte sichtbar"
     },
     es: {
         // Navigation
@@ -6924,6 +6932,7 @@ const translations = {
         "notifications.filterReposts": "Reposts",
         "notifications.connectionRequest": "te envió una solicitud de conexión",
         "notifications.connectionAccepted": "ahora está conectado contigo",
+        "notifications.connectionYouAccepted": "aceptó tu solicitud de conexión",
         "notifications.likedPost": "le gustó tu publicación",
         "notifications.commentedPost": "comentó en tu publicación",
         "notifications.repostedPost": "compartió tu publicación",
@@ -6932,7 +6941,10 @@ const translations = {
         "notifications.decline": "Rechazar",
         "notifications.connected": "Conectado",
         "notifications.someone": "Alguien",
-        "notifications.justNow": "ahora mismo"
+        "notifications.justNow": "ahora mismo",
+        "privacy.connectToSeeDetails": "Conéctate con este coach para ver más detalles",
+        "privacy.signInToSeeDetails": "Inicia sesión para ver más detalles",
+        "privacy.sectionHidden": "Esta sección solo es visible para conexiones"
     },
     fr: {
         // Navigation
@@ -9007,6 +9019,7 @@ const translations = {
         "notifications.filterReposts": "Partages",
         "notifications.connectionRequest": "vous a envoyé une demande de connexion",
         "notifications.connectionAccepted": "est maintenant connecté avec vous",
+        "notifications.connectionYouAccepted": "a accepté votre demande de connexion",
         "notifications.likedPost": "a aimé votre publication",
         "notifications.commentedPost": "a commenté votre publication",
         "notifications.repostedPost": "a partagé votre publication",
@@ -9015,7 +9028,10 @@ const translations = {
         "notifications.decline": "Refuser",
         "notifications.connected": "Connecté",
         "notifications.someone": "Quelqu'un",
-        "notifications.justNow": "à l'instant"
+        "notifications.justNow": "à l'instant",
+        "privacy.connectToSeeDetails": "Connectez-vous avec ce coach pour voir plus de détails",
+        "privacy.signInToSeeDetails": "Connectez-vous pour voir plus de détails",
+        "privacy.sectionHidden": "Cette section est visible uniquement par les connexions"
     },
     it: {
         // Navigation
@@ -11090,6 +11106,7 @@ const translations = {
         "notifications.filterReposts": "Condivisioni",
         "notifications.connectionRequest": "ti ha inviato una richiesta di connessione",
         "notifications.connectionAccepted": "è ora connesso con te",
+        "notifications.connectionYouAccepted": "ha accettato la tua richiesta di connessione",
         "notifications.likedPost": "ha messo mi piace al tuo post",
         "notifications.commentedPost": "ha commentato il tuo post",
         "notifications.repostedPost": "ha condiviso il tuo post",
@@ -11098,7 +11115,10 @@ const translations = {
         "notifications.decline": "Rifiuta",
         "notifications.connected": "Connesso",
         "notifications.someone": "Qualcuno",
-        "notifications.justNow": "proprio ora"
+        "notifications.justNow": "proprio ora",
+        "privacy.connectToSeeDetails": "Collegati con questo coach per vedere più dettagli",
+        "privacy.signInToSeeDetails": "Accedi per vedere più dettagli",
+        "privacy.sectionHidden": "Questa sezione è visibile solo ai collegamenti"
     }
 };
 

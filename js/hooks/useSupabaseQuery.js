@@ -507,7 +507,7 @@ export function useCoachAnalyticsQuery(coachId) {
 // ─── NOTIFICATION HOOKS ─────────────────────────────────────────────
 
 /**
- * Count unread notifications (pending connection requests + recent activity)
+ * Count unread notifications (pending connections + likes + comments + reposts on my posts)
  */
 export function useNotificationCountQuery(userId) {
     return useQuery({
@@ -516,14 +516,62 @@ export function useNotificationCountQuery(userId) {
             const supabase = getSupabase();
             if (!supabase) throw new Error('Supabase not ready');
 
-            // Count pending connection requests where I'm the recipient
-            const { count, error } = await supabase
-                .from('cs_connections')
-                .select('*', { count: 'exact', head: true })
-                .eq('coach_id', userId)
-                .eq('status', 'pending');
-            if (error) throw error;
-            return count || 0;
+            // Cutoff: only count activity from last 30 days
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 30);
+            const cutoff = cutoffDate.toISOString();
+
+            // First, get my post IDs for activity counting
+            const { data: myPosts } = await supabase
+                .from('cs_posts')
+                .select('id')
+                .eq('user_id', userId);
+            const myPostIds = (myPosts || []).map(p => p.id);
+
+            // Count all notification sources in parallel
+            const queries = [
+                // Pending connection requests where I'm the recipient
+                supabase
+                    .from('cs_connections')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('coach_id', userId)
+                    .eq('status', 'pending'),
+            ];
+
+            if (myPostIds.length > 0) {
+                queries.push(
+                    // Likes on my posts
+                    supabase
+                        .from('cs_post_likes')
+                        .select('*', { count: 'exact', head: true })
+                        .in('post_id', myPostIds)
+                        .neq('user_id', userId)
+                        .gte('created_at', cutoff),
+                    // Comments on my posts
+                    supabase
+                        .from('cs_post_comments')
+                        .select('*', { count: 'exact', head: true })
+                        .in('post_id', myPostIds)
+                        .neq('user_id', userId)
+                        .gte('created_at', cutoff),
+                    // Reposts of my posts
+                    supabase
+                        .from('cs_post_reposts')
+                        .select('*', { count: 'exact', head: true })
+                        .in('post_id', myPostIds)
+                        .neq('user_id', userId)
+                        .gte('reposted_at', cutoff),
+                );
+            }
+
+            const results = await Promise.all(queries);
+
+            let total = 0;
+            for (const res of results) {
+                if (res.error) throw res.error;
+                total += (res.count || 0);
+            }
+            return total;
         },
         staleTime: STALE_TIMES.notificationCount,
         enabled: !!userId && !!getSupabase(),

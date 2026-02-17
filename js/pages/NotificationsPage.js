@@ -92,6 +92,7 @@ export function NotificationsPage({ session }) {
             // Fetch all notification sources in parallel
             const [
                 connectionsRes,
+                myAcceptedConnectionsRes,
                 myPostsRes,
             ] = await Promise.all([
                 // 1. Pending + recently granted connection requests TO me
@@ -102,7 +103,15 @@ export function NotificationsPage({ session }) {
                     .in('status', ['pending', 'granted'])
                     .order('connected_at', { ascending: false })
                     .limit(50),
-                // 2. My posts (to find likes/comments/reposts on them)
+                // 2. Connection requests I sent that were accepted (granted)
+                supabase
+                    .from('cs_connections')
+                    .select('id, user_id, coach_id, connected_at, status')
+                    .eq('user_id', userId)
+                    .eq('status', 'granted')
+                    .order('connected_at', { ascending: false })
+                    .limit(50),
+                // 3. My posts (to find likes/comments/reposts on them)
                 supabase
                     .from('cs_posts')
                     .select('id, content, created_at')
@@ -112,6 +121,7 @@ export function NotificationsPage({ session }) {
             ]);
 
             const connections = connectionsRes.data || [];
+            const myAcceptedConnections = myAcceptedConnectionsRes.data || [];
             const myPosts = myPostsRes.data || [];
             const myPostIds = myPosts.map(p => p.id);
             const myPostMap = {};
@@ -154,6 +164,7 @@ export function NotificationsPage({ session }) {
             // Collect all user IDs that need profile resolution
             const userIdsToResolve = new Set();
             connections.forEach(c => userIdsToResolve.add(c.user_id));
+            myAcceptedConnections.forEach(c => userIdsToResolve.add(c.coach_id));
             likes.forEach(l => userIdsToResolve.add(l.user_id));
             reposts.forEach(r => userIdsToResolve.add(r.user_id));
             // Comments already have author_name/author_avatar
@@ -179,6 +190,23 @@ export function NotificationsPage({ session }) {
                     message: c.status === 'pending'
                         ? (t('notifications.connectionRequest') || 'sent you a connection request')
                         : (t('notifications.connectionAccepted') || 'is now connected with you'),
+                });
+            });
+
+            // My connection requests that were accepted (show to the requester)
+            myAcceptedConnections.forEach(c => {
+                const profile = profiles[c.coach_id] || {};
+                allNotifications.push({
+                    id: `connection-accepted-${c.id}`,
+                    type: 'connection',
+                    connectionId: c.id,
+                    status: 'granted',
+                    actorId: c.coach_id,
+                    actorName: profile.full_name || (t('notifications.someone') || 'Someone'),
+                    actorAvatar: profile.avatar_url,
+                    actorSlug: profile.type === 'client' ? `u/${profile.slug}` : (profile.type === 'coach' ? `coach/${profile.slug}` : null),
+                    timestamp: c.connected_at,
+                    message: t('notifications.connectionYouAccepted') || 'accepted your connection request',
                 });
             });
 
