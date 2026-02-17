@@ -384,15 +384,6 @@ export const DashboardProfile = ({ session, userType }) => {
         }
     }, []);
 
-    // Debug logging
-    console.log('[PROFILE DEBUG] Rendering with formData:', {
-        full_name: formData.full_name,
-        specialties_type: typeof formData.specialties,
-        specialties_isArray: Array.isArray(formData.specialties),
-        languages_type: typeof formData.languages,
-        languages_isArray: Array.isArray(formData.languages)
-    });
-
     // Simple client profile
     if (userType !== 'coach') {
         return html`
