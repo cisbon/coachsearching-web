@@ -683,7 +683,7 @@ const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall, sess
  * Profile Coach Card Component
  * Embedded coach card for the profile page with overlapping profile image and banner
  */
-const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, onWriteReview, session, isOwnProfile, onEditSection, hasOtherVisibleSections }) {
+const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall, onVideoClick, onWriteReview, onConnect, connectionStatus, session, isOwnProfile, onEditSection, hasOtherVisibleSections }) {
     const [liveReviewsData, setLiveReviewsData] = useState({ rating: 0, count: 0, loaded: false });
     const { cities, getLocalizedCityName } = useCities();
     const { lookupOptions, getLocalizedName } = useLookupOptions();
@@ -920,6 +920,38 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
 
                 <!-- Price and CTA Section -->
                 <div class="profile-card-actions">
+
+                    <!-- Connect Button -->
+                    ${!isOwnProfile && html`
+                        <button
+                            class="btn-connect ${connectionStatus === 'pending' ? 'btn-connect-pending' : connectionStatus === 'granted' ? 'btn-connect-granted' : ''}"
+                            onClick=${onConnect}
+                            disabled=${connectionStatus === 'pending' || connectionStatus === 'granted'}
+                        >
+                            ${connectionStatus === 'pending' ? html`
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                <span>${t('connect.pending') || 'Pending'}</span>
+                            ` : connectionStatus === 'granted' ? html`
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                                <span>${t('connect.connected') || 'Connected'}</span>
+                            ` : html`
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                                </svg>
+                                <span>${t('connect.connect') || 'Connect'}</span>
+                            `}
+                        </button>
+                    `}
 
                     <!-- Primary CTA: Discovery Call - Very Prominent -->
                     <button class="btn-discovery-prominent" onClick=${onDiscoveryCall}>
@@ -4149,6 +4181,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [pendingAuthAction, setPendingAuthAction] = useState(null);
+    const [connectionStatus, setConnectionStatus] = useState(null); // null, 'pending', 'granted', 'denied'
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [showReviewsPopup, setShowReviewsPopup] = useState(false);
@@ -4891,6 +4924,52 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Check if this is the user's own profile
     const isOwnProfile = session?.user?.id && coach.user_id && session.user.id === coach.user_id;
 
+    // Check existing connection status
+    useEffect(() => {
+        if (!session?.user?.id || !coach.user_id || isOwnProfile) return;
+        const checkConnection = async () => {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+            try {
+                const { data } = await supabase
+                    .from('cs_connections')
+                    .select('status')
+                    .eq('user_id', session.user.id)
+                    .eq('coach_id', coach.user_id)
+                    .single();
+                if (data) setConnectionStatus(data.status);
+            } catch {
+                // No existing connection
+            }
+        };
+        checkConnection();
+    }, [session?.user?.id, coach.user_id, isOwnProfile]);
+
+    // Handle connect button click
+    const handleConnectClick = async () => {
+        if (!session) {
+            setPendingAuthAction('connect');
+            setShowAuthModal(true);
+            return;
+        }
+        const supabase = window.supabaseClient;
+        if (!supabase) return;
+        try {
+            const { error } = await supabase
+                .from('cs_connections')
+                .insert({
+                    user_id: session.user.id,
+                    coach_id: coach.user_id,
+                    status: 'pending'
+                });
+            if (!error) {
+                setConnectionStatus('pending');
+            }
+        } catch (err) {
+            console.error('Connection error:', err);
+        }
+    };
+
     // Handle discovery button click - check auth status first
     const handleDiscoveryClick = () => {
         if (session) {
@@ -4914,7 +4993,10 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
     // Handle successful auth - close auth modal and open the pending modal
     const handleAuthSuccess = () => {
         setShowAuthModal(false);
-        if (pendingAuthAction === 'review') {
+        if (pendingAuthAction === 'connect') {
+            // After auth, trigger the connect action
+            handleConnectClick();
+        } else if (pendingAuthAction === 'review') {
             setShowReviewModal(true);
         } else {
             setShowDiscoveryModal(true);
@@ -4995,6 +5077,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                 onDiscoveryCall=${handleDiscoveryClick}
                                 onVideoClick=${() => setShowVideoPopup(true)}
                                 onWriteReview=${handleWriteReviewClick}
+                                onConnect=${handleConnectClick}
+                                connectionStatus=${connectionStatus}
                                 session=${session}
                                 isOwnProfile=${isOwnProfile}
                                 onEditSection=${handleEditSection}
@@ -5542,13 +5626,17 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 <${DiscoveryCallModal} coach=${coach} onClose=${() => setShowDiscoveryModal(false)} />
             `}
 
-            <!-- Auth Modal (for non-logged-in users booking discovery calls) -->
+            <!-- Auth Modal (for non-logged-in users) -->
             ${showAuthModal && html`
                 <${AuthModal}
                     onClose=${() => setShowAuthModal(false)}
                     onSuccess=${handleAuthSuccess}
-                    title=${t('auth.signInToBook') || 'Sign in to book your call'}
-                    subtitle=${(t('auth.signInToBookSubtitle') || 'Create an account or sign in to book a free discovery call with {coachName}').replace('{coachName}', coach.full_name)}
+                    title=${pendingAuthAction === 'connect'
+                        ? (t('auth.signInToConnect') || 'Sign in to connect')
+                        : (t('auth.signInToBook') || 'Sign in to book your call')}
+                    subtitle=${pendingAuthAction === 'connect'
+                        ? (t('auth.signInToConnectSubtitle') || 'Create an account or sign in to connect with {coachName}').replace('{coachName}', coach.full_name)
+                        : (t('auth.signInToBookSubtitle') || 'Create an account or sign in to book a free discovery call with {coachName}').replace('{coachName}', coach.full_name)}
                 />
             `}
 

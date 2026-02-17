@@ -26,6 +26,7 @@ import { BlogPage } from './pages/BlogPage.js';
 import { AICouncilPage } from './pages/AICouncilPage.js';
 import { FeedPage } from './pages/FeedPage.js';
 import { ClientProfilePage } from './pages/ClientProfilePage.js';
+import { SettingsPage } from './pages/SettingsPage.js';
 
 // Conversion Optimization Components
 import {
@@ -460,6 +461,7 @@ const App = () => {
             case 'ai-match': Component = () => html`<${AIMatchPage} session=${session} />`; break;
             case 'ai-council': Component = () => html`<${AICouncilPage} session=${session} />`; break;
             case 'signout': Component = SignOut; break;
+            case 'settings': Component = () => html`<${SettingsPage} session=${session} />`; break;
             // Content pages
             case 'faq': Component = () => html`<${FAQPage} />`; break;
             case 'categories': Component = () => html`<${CategoriesIndexPage} />`; break;

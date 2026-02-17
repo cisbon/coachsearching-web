@@ -646,6 +646,46 @@
     color: var(--text-main, #1a1a1a);
 }
 
+/* Connect Button */
+.btn-connect {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 24px;
+    background: var(--primary-petrol, #006266);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 98, 102, 0.25);
+    box-sizing: border-box;
+}
+
+.btn-connect:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 98, 102, 0.35);
+}
+
+.btn-connect:disabled {
+    cursor: default;
+    opacity: 0.85;
+}
+
+.btn-connect-pending {
+    background: #f59e0b;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.btn-connect-granted {
+    background: #22c55e;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+}
+
 /* Discovery Call Button - Very Prominent */
 .btn-discovery-prominent {
     display: flex;
