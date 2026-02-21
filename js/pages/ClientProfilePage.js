@@ -469,14 +469,14 @@ export function ClientProfilePage({ clientSlug, session }) {
                         // Reposted posts
                         supabase
                             .from('cs_post_reposts')
-                            .select('post_id, created_at, cs_posts(*)')
+                            .select('post_id, reposted_at, cs_posts(*)')
                             .eq('user_id', userId)
-                            .order('created_at', { ascending: false })
+                            .order('reposted_at', { ascending: false })
                             .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
                         // Commented posts — get distinct posts commented on
                         supabase
                             .from('cs_post_comments')
-                            .select('post_id, created_at, cs_posts(*)')
+                            .select('id, post_id, content, author_name, author_avatar, created_at, cs_posts(*)')
                             .eq('user_id', userId)
                             .order('created_at', { ascending: false })
                             .range(page * PAGE_SIZE * 2, (page + 1) * PAGE_SIZE * 2 - 1),
@@ -488,16 +488,17 @@ export function ClientProfilePage({ clientSlug, session }) {
                     const activityByPost = new Map();
                     const PRIORITY = { posted: 4, reposted: 3, commented: 2, liked: 1 };
 
-                    const addActivity = (postId, post, activityType, activityTime) => {
+                    const addActivity = (postId, post, activityType, activityTime, extra) => {
                         if (!post) return;
                         const existing = activityByPost.get(postId);
                         if (!existing || PRIORITY[activityType] > PRIORITY[existing.activityType]) {
-                            activityByPost.set(postId, { post, activityType, activityTime });
+                            activityByPost.set(postId, { post, activityType, activityTime, ...extra });
                         } else if (existing && PRIORITY[activityType] === PRIORITY[existing.activityType]) {
                             // Same priority — keep the most recent time
                             if (new Date(activityTime) > new Date(existing.activityTime)) {
                                 existing.activityTime = activityTime;
                             }
+                            if (extra) Object.assign(existing, extra);
                         }
                     };
 
@@ -509,19 +510,27 @@ export function ClientProfilePage({ clientSlug, session }) {
                     // Reposts
                     (repostsRes.data || []).forEach(repost => {
                         if (repost.cs_posts) {
-                            addActivity(repost.post_id, repost.cs_posts, 'reposted', repost.created_at);
+                            addActivity(repost.post_id, repost.cs_posts, 'reposted', repost.reposted_at);
                         }
                     });
 
-                    // Comments (deduplicate by post_id — use latest comment time)
-                    const commentTimeByPost = new Map();
+                    // Comments (deduplicate by post_id — use latest comment, store user comment data)
+                    const commentsByPost = new Map();
                     (commentsRes.data || []).forEach(comment => {
                         if (comment.cs_posts) {
-                            const existing = commentTimeByPost.get(comment.post_id);
-                            if (!existing || new Date(comment.created_at) > new Date(existing)) {
-                                commentTimeByPost.set(comment.post_id, comment.created_at);
+                            const existing = commentsByPost.get(comment.post_id);
+                            if (!existing || new Date(comment.created_at) > new Date(existing.created_at)) {
+                                commentsByPost.set(comment.post_id, {
+                                    id: comment.id,
+                                    content: comment.content,
+                                    author_name: comment.author_name,
+                                    author_avatar: comment.author_avatar,
+                                    created_at: comment.created_at,
+                                });
                             }
-                            addActivity(comment.post_id, comment.cs_posts, 'commented', commentTimeByPost.get(comment.post_id));
+                            addActivity(comment.post_id, comment.cs_posts, 'commented', commentsByPost.get(comment.post_id).created_at, {
+                                userComment: commentsByPost.get(comment.post_id),
+                            });
                         }
                     });
 
@@ -714,7 +723,9 @@ export function ClientProfilePage({ clientSlug, session }) {
                         </div>
                     ` : html`
                         <div class="client-profile-posts-list">
-                            ${activities.map(({ post, activityType }) => html`
+                            ${activities.map((item) => {
+                                const { post, activityType, userComment } = item;
+                                return html`
                                 <div key=${post.id + '-' + activityType} class="client-activity-item">
                                     ${activityType !== 'posted' && html`
                                         <div class="client-activity-label client-activity-${activityType}">
@@ -733,8 +744,27 @@ export function ClientProfilePage({ clientSlug, session }) {
                                         </div>
                                     `}
                                     <${FeedPost} post=${post} session=${session} />
+                                    ${activityType === 'commented' && userComment && html`
+                                        <div class="feed-comments-section" style=${{ borderTop: '1px solid #f0f0f0' }}>
+                                            <div class="feed-comments-list">
+                                                <div class="feed-comment">
+                                                    <img
+                                                        src=${userComment.author_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userComment.author_name || 'User')}&background=006266&color=fff&size=32`}
+                                                        alt=${userComment.author_name}
+                                                        class="feed-comment-avatar"
+                                                    />
+                                                    <div class="feed-comment-body">
+                                                        <div class="feed-comment-bubble">
+                                                            <span class="feed-comment-author">${userComment.author_name || 'User'}</span>
+                                                            <span class="feed-comment-text">${userComment.content}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `}
                                 </div>
-                            `)}
+                            `; })}
                         </div>
                     `}
 

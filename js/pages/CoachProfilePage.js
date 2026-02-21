@@ -4394,9 +4394,9 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             const [ownPostsRes, repostsRes, commentsRes, likesRes] = await Promise.all([
                 supabase.from('cs_posts').select('*').eq('user_id', userId)
                     .order('created_at', { ascending: false }).range(offset, offset + fetchSize - 1),
-                supabase.from('cs_post_reposts').select('post_id, created_at, cs_posts(*)').eq('user_id', userId)
-                    .order('created_at', { ascending: false }).range(offset, offset + fetchSize - 1),
-                supabase.from('cs_post_comments').select('post_id, created_at, cs_posts(*)').eq('user_id', userId)
+                supabase.from('cs_post_reposts').select('post_id, reposted_at, cs_posts(*)').eq('user_id', userId)
+                    .order('reposted_at', { ascending: false }).range(offset, offset + fetchSize - 1),
+                supabase.from('cs_post_comments').select('id, post_id, content, author_name, author_avatar, created_at, cs_posts(*)').eq('user_id', userId)
                     .order('created_at', { ascending: false }).range(offset, offset + fetchSize * 2 - 1),
                 supabase.from('cs_post_likes').select('post_id, created_at, cs_posts(*)').eq('user_id', userId)
                     .order('created_at', { ascending: false }).range(offset, offset + fetchSize - 1),
@@ -4406,15 +4406,16 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             const activityByPost = new Map();
             const PRIORITY = { posted: 4, reposted: 3, commented: 2, liked: 1 };
 
-            const addActivity = (postId, post, activityType, activityTime) => {
+            const addActivity = (postId, post, activityType, activityTime, extra) => {
                 if (!post) return;
                 const existing = activityByPost.get(postId);
                 if (!existing || PRIORITY[activityType] > PRIORITY[existing.activityType]) {
-                    activityByPost.set(postId, { post, activityType, activityTime });
+                    activityByPost.set(postId, { post, activityType, activityTime, ...extra });
                 } else if (existing && PRIORITY[activityType] === PRIORITY[existing.activityType]) {
                     if (new Date(activityTime) > new Date(existing.activityTime)) {
                         existing.activityTime = activityTime;
                     }
+                    if (extra) Object.assign(existing, extra);
                 }
             };
 
@@ -4422,16 +4423,25 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 addActivity(post.id, post, 'posted', post.created_at);
             });
             (repostsRes.data || []).forEach(r => {
-                if (r.cs_posts) addActivity(r.post_id, r.cs_posts, 'reposted', r.created_at);
+                if (r.cs_posts) addActivity(r.post_id, r.cs_posts, 'reposted', r.reposted_at);
             });
-            const commentTimeByPost = new Map();
+            // Collect user's comments per post (most recent comment per post)
+            const commentsByPost = new Map();
             (commentsRes.data || []).forEach(c => {
                 if (c.cs_posts) {
-                    const existing = commentTimeByPost.get(c.post_id);
-                    if (!existing || new Date(c.created_at) > new Date(existing)) {
-                        commentTimeByPost.set(c.post_id, c.created_at);
+                    const existing = commentsByPost.get(c.post_id);
+                    if (!existing || new Date(c.created_at) > new Date(existing.created_at)) {
+                        commentsByPost.set(c.post_id, {
+                            id: c.id,
+                            content: c.content,
+                            author_name: c.author_name,
+                            author_avatar: c.author_avatar,
+                            created_at: c.created_at,
+                        });
                     }
-                    addActivity(c.post_id, c.cs_posts, 'commented', commentTimeByPost.get(c.post_id));
+                    addActivity(c.post_id, c.cs_posts, 'commented', commentsByPost.get(c.post_id).created_at, {
+                        userComment: commentsByPost.get(c.post_id),
+                    });
                 }
             });
             (likesRes.data || []).forEach(l => {
@@ -5285,6 +5295,25 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                                                             </div>
                                                         `}
                                                         <${FeedPost} post=${post} session=${session} />
+                                                        ${activityType === 'commented' && item.userComment && html`
+                                                            <div class="feed-comments-section" style=${{ borderTop: '1px solid #f0f0f0' }}>
+                                                                <div class="feed-comments-list">
+                                                                    <div class="feed-comment">
+                                                                        <img
+                                                                            src=${item.userComment.author_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.userComment.author_name || 'User')}&background=006266&color=fff&size=32`}
+                                                                            alt=${item.userComment.author_name}
+                                                                            class="feed-comment-avatar"
+                                                                        />
+                                                                        <div class="feed-comment-body">
+                                                                            <div class="feed-comment-bubble">
+                                                                                <span class="feed-comment-author">${item.userComment.author_name || 'User'}</span>
+                                                                                <span class="feed-comment-text">${item.userComment.content}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        `}
                                                     </div>
                                                 `;
                                             })}
