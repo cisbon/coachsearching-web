@@ -52,7 +52,7 @@ export function Navbar({ session }) {
         style.textContent = `
             /* Desktop navbar */
             header[role="banner"] { background: #006266; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-            header[role="banner"] .nav-flex { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px; }
+            header[role="banner"] .nav-flex { display: flex; justify-content: space-between; align-items: center; height: 25px; padding: 0 20px; }
             header[role="banner"] .nav-links { display: flex; align-items: center; gap: 10px; }
             header[role="banner"] .nav-links > * { margin: 0; }
             header[role="banner"] .logo { color: white !important; }
