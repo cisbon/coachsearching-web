@@ -186,7 +186,7 @@ export function Navbar({ session }) {
 
                 header[role="banner"] .nav-links {
                     position: fixed;
-                    top: 60px;
+                    top: 45px;
                     left: 0;
                     right: 0;
                     background: #006266;
