@@ -792,7 +792,7 @@ const ProfileCoachCard = memo(function ProfileCoachCard({ coach, onDiscoveryCall
                                 class="profile-image-card"
                             />
                         ` : html`
-                            <div class="profile-image-card" style=${{ background: '#c9d6e3', marginLeft: '12px', marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', width: '150px', height: '150px', fontSize: '3rem', color: '#6b7280' }}>
+                            <div class="profile-image-card" style=${{ background: '#c9d6e3', marginLeft: '10%', marginTop: '10%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', width: '80%', height: '80%', fontSize: '3rem', color: '#6b7280' }}>
                                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </div>
                         `}
