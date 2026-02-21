@@ -1617,7 +1617,7 @@
     border: none;
     cursor: pointer;
     padding: 4px;
-    border-radius: 50%;
+    border-radius: 20%;
     display: flex;
     align-items: center;
     justify-content: center;
