@@ -3378,9 +3378,6 @@ footer, .site-footer {
 
 /* iPad Optimizations */
 @media (max-width: 1024px) {
-    .nav-flex {
-        flex-wrap: wrap;
-    }
     
     .nav-links {
         width: 100%;
