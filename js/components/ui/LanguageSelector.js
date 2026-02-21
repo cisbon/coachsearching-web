@@ -30,7 +30,7 @@ export function LanguageSelector() {
     // Detect mobile viewport
     useEffect(() => {
         const checkMobile = () => {
-            setIsMobile(window.innerWidth <= 768);
+            setIsMobile(window.innerWidth <= 1190);
         };
         checkMobile();
         window.addEventListener('resize', checkMobile);
