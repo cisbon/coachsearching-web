@@ -1,7 +1,7 @@
 /**
  * NotificationsPage - Displays user notifications in a feed-like layout.
  * Shows connect requests (with accept/decline), likes, comments, reposts,
- * messages, and reviews received.
+ * messages, reviews received, and chemistry call requests.
  */
 import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
@@ -83,7 +83,7 @@ export function NotificationsPage({ session }) {
     // Reset notification badge to 0 when user visits this page
     useEffect(() => {
         if (userId) {
-            queryClient.setQueryData(QUERY_KEYS.notificationCount(userId), 0);
+            queryClient.setQueryData(QUERY_KEYS.notificationCount(userId), { total: 0, hasChemistryCall: false });
         }
     }, [userId]);
 
@@ -101,6 +101,7 @@ export function NotificationsPage({ session }) {
                 connectionsRes,
                 myAcceptedConnectionsRes,
                 myPostsRes,
+                chemistryCallsRes,
             ] = await Promise.all([
                 // 1. Pending + recently granted connection requests TO me
                 supabase
@@ -125,11 +126,19 @@ export function NotificationsPage({ session }) {
                     .eq('user_id', userId)
                     .order('created_at', { ascending: false })
                     .limit(100),
+                // 4. Chemistry call requests TO me (as coach)
+                supabase
+                    .from('cs_chemistry_call_requests')
+                    .select('id, user_id, coach_id, name, phone, email, specialties, goal, status, created_at')
+                    .eq('coach_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(50),
             ]);
 
             const connections = connectionsRes.data || [];
             const myAcceptedConnections = myAcceptedConnectionsRes.data || [];
             const myPosts = myPostsRes.data || [];
+            const chemistryCalls = chemistryCallsRes.data || [];
             const myPostIds = myPosts.map(p => p.id);
             const myPostMap = {};
             myPosts.forEach(p => { myPostMap[p.id] = p; });
@@ -270,6 +279,30 @@ export function NotificationsPage({ session }) {
                 });
             });
 
+            // Chemistry call requests to me
+            chemistryCalls.forEach(cc => {
+                allNotifications.push({
+                    id: `chemistry-${cc.id}`,
+                    type: 'chemistry_call',
+                    actorId: cc.user_id,
+                    actorName: cc.name || (t('notifications.someone') || 'Someone'),
+                    actorAvatar: null,
+                    actorSlug: null,
+                    timestamp: cc.created_at,
+                    status: cc.status,
+                    message: t('notifications.chemistryCallRequest') || 'requested a chemistry call',
+                    chemistryCall: {
+                        id: cc.id,
+                        name: cc.name,
+                        phone: cc.phone,
+                        email: cc.email,
+                        specialties: cc.specialties || [],
+                        goal: cc.goal,
+                        status: cc.status,
+                    },
+                });
+            });
+
             // Sort by timestamp descending
             allNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
@@ -374,6 +407,7 @@ export function NotificationsPage({ session }) {
             case 'like': return html`<svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
             case 'comment': return html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
             case 'repost': return html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
+            case 'chemistry_call': return html`<svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
             default: return html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`;
         }
     };
@@ -382,9 +416,9 @@ export function NotificationsPage({ session }) {
     if (!session?.user) {
         return html`
             <div class="feed-page">
-                <div style=${{ textAlign: 'center', padding: '60px 20px' }}>
+                <div class="notif-signin">
                     <h2>${t('notifications.signInRequired') || 'Sign in to view notifications'}</h2>
-                    <button class="btn-primary" style=${{ marginTop: '16px' }} onClick=${() => window.navigateTo('/login')}>
+                    <button class="btn-primary" onClick=${() => window.navigateTo('/login')}>
                         ${t('nav.signIn') || 'Sign In'}
                     </button>
                 </div>
@@ -392,48 +426,148 @@ export function NotificationsPage({ session }) {
         `;
     }
 
+    // Render a chemistry call notification card
+    const renderChemistryCard = (notif) => {
+        const cc = notif.chemistryCall;
+        return html`
+            <div key=${notif.id} class="feed-card notif-card notif-card-chemistry">
+                <!-- Header row: icon + avatar + text -->
+                <div class="notif-header-row">
+                    <div class="notif-icon">
+                        ${getIcon(notif.type)}
+                    </div>
+                    <img
+                        class="notif-avatar"
+                        src=${notif.actorAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(notif.actorName) + '&background=f59e0b&color=fff&size=40'}
+                        alt=${notif.actorName}
+                    />
+                    <div class="notif-content">
+                        <div class="notif-text">
+                            <strong>${notif.actorName}</strong>${' '}${notif.message}
+                        </div>
+                        <div class="notif-time">${timeAgo(notif.timestamp)}</div>
+                    </div>
+                </div>
+
+                <!-- Chemistry call details -->
+                <div class="notif-chemistry-details">
+                    <div class="notif-chemistry-row">
+                        <span class="notif-chemistry-label">${t('notifications.chemistryCallPhone') || 'Phone'}:</span>
+                        <a class="notif-chemistry-link" href=${'tel:' + cc.phone}>${cc.phone}</a>
+                    </div>
+                    <div class="notif-chemistry-row">
+                        <span class="notif-chemistry-label">${t('notifications.chemistryCallEmail') || 'Email'}:</span>
+                        <a class="notif-chemistry-link" href=${'mailto:' + cc.email}>${cc.email}</a>
+                    </div>
+                    ${cc.specialties && cc.specialties.length > 0 && html`
+                        <div class="notif-chemistry-row">
+                            <span class="notif-chemistry-label">${t('notifications.chemistryCallSpecialties') || 'Topics'}:</span>
+                            <div class="notif-chemistry-pills">
+                                ${cc.specialties.map(s => html`
+                                    <span key=${s} class="notif-chemistry-pill">${s}</span>
+                                `)}
+                            </div>
+                        </div>
+                    `}
+                    ${cc.goal && html`
+                        <div>
+                            <span class="notif-chemistry-label">${t('notifications.chemistryCallGoal') || 'Goal'}:</span>
+                            <div class="notif-chemistry-goal">${cc.goal}</div>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    };
+
+    // Render a standard notification card
+    const renderStandardCard = (notif) => {
+        const isPending = notif.type === 'connection' && notif.status === 'pending';
+        const isGranted = notif.type === 'connection' && notif.status === 'granted';
+        const cardClass = 'feed-card notif-card' + (isPending ? ' notif-card-pending' : '') + (notif.actorSlug ? ' notif-card-clickable' : '');
+
+        return html`
+            <div key=${notif.id} class=${cardClass} onClick=${() => {
+                if (notif.actorSlug) window.navigateTo('/' + notif.actorSlug);
+            }}>
+                <div class="notif-icon">
+                    ${getIcon(notif.type)}
+                </div>
+                <img
+                    class="notif-avatar"
+                    src=${notif.actorAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(notif.actorName) + '&background=006266&color=fff&size=40'}
+                    alt=${notif.actorName}
+                />
+                <div class="notif-content">
+                    <div class="notif-text">
+                        <strong>${notif.actorName}</strong>${' '}${notif.message}
+                    </div>
+                    ${(notif.postPreview || notif.commentPreview) && html`
+                        <div class="notif-preview">
+                            ${notif.commentPreview
+                                ? html`"${notif.commentPreview}${notif.commentPreview.length >= 80 ? '...' : ''}"`
+                                : html`${notif.postPreview}${notif.postPreview.length >= 80 ? '...' : ''}`
+                            }
+                        </div>
+                    `}
+                    <div class="notif-time">${timeAgo(notif.timestamp)}</div>
+                </div>
+
+                ${isPending && html`
+                    <div class="notif-actions" onClick=${(e) => e.stopPropagation()}>
+                        <button
+                            class="notif-btn-accept"
+                            onClick=${() => handleAcceptConnection(notif.connectionId)}
+                            disabled=${acceptingIds.has(notif.connectionId)}
+                        >
+                            ${acceptingIds.has(notif.connectionId)
+                                ? (t('notifications.accepting') || 'Accepting...')
+                                : (t('notifications.accept') || 'Accept')
+                            }
+                        </button>
+                        <button
+                            class="notif-btn-decline"
+                            onClick=${() => handleDeclineConnection(notif.connectionId)}
+                            disabled=${acceptingIds.has(notif.connectionId)}
+                        >
+                            ${t('notifications.decline') || 'Decline'}
+                        </button>
+                    </div>
+                `}
+
+                ${isGranted && html`
+                    <div class="notif-badge-connected">
+                        ${t('notifications.connected') || 'Connected'}
+                    </div>
+                `}
+            </div>
+        `;
+    };
+
     // Left column - filters
     const leftColumn = html`
         <div class="feed-left-column">
             <div class="feed-card" style=${{ padding: '16px' }}>
-                <h4 style=${{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: '700', color: '#1f2937' }}>
+                <h4 class="notif-sidebar-title">
                     ${t('notifications.title') || 'Notifications'}
                 </h4>
-                <div style=${{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div class="notif-filter-list">
                     ${[
                         { key: 'all', label: t('notifications.filterAll') || 'All' },
                         { key: 'connection', label: t('notifications.filterConnections') || 'Connections' },
                         { key: 'like', label: t('notifications.filterLikes') || 'Likes' },
                         { key: 'comment', label: t('notifications.filterComments') || 'Comments' },
                         { key: 'repost', label: t('notifications.filterReposts') || 'Reposts' },
+                        { key: 'chemistry_call', label: t('notifications.filterChemistryCalls') || 'Chemistry Calls' },
                     ].map(f => html`
                         <button
                             key=${f.key}
                             onClick=${() => setFilter(f.key)}
-                            style=${{
-                                background: filter === f.key ? '#006266' : 'transparent',
-                                color: filter === f.key ? 'white' : '#374151',
-                                border: 'none',
-                                padding: '8px 12px',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                textAlign: 'left',
-                                fontSize: '0.88rem',
-                                fontWeight: filter === f.key ? '600' : '400',
-                                transition: 'all 0.15s ease',
-                            }}
+                            class=${'notif-filter-btn' + (filter === f.key ? ' active' : '')}
                         >
                             ${f.label}
                             ${f.key === 'connection' && connectionCount > 0 ? html`
-                                <span style=${{
-                                    background: '#ef4444',
-                                    color: 'white',
-                                    borderRadius: '10px',
-                                    padding: '1px 7px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '700',
-                                    marginLeft: '6px',
-                                }}>${connectionCount}</span>
+                                <span class="notif-filter-badge">${connectionCount}</span>
                             ` : null}
                         </button>
                     `)}
@@ -442,14 +576,14 @@ export function NotificationsPage({ session }) {
         </div>
     `;
 
-    // Right column - empty for now (can add suggestions later)
+    // Right column
     const rightColumn = html`
         <div class="feed-right-column">
             <div class="feed-card" style=${{ padding: '16px' }}>
-                <h4 style=${{ margin: '0 0 8px', fontSize: '0.95rem', fontWeight: '700', color: '#1f2937' }}>
+                <h4 class="notif-manage-title">
                     ${t('notifications.manage') || 'Manage notifications'}
                 </h4>
-                <p style=${{ margin: 0, fontSize: '0.82rem', color: '#6b7280' }}>
+                <p class="notif-manage-text">
                     ${t('notifications.manageDesc') || 'Stay up to date with your coaching network activity.'}
                 </p>
             </div>
@@ -463,8 +597,8 @@ export function NotificationsPage({ session }) {
 
                 <!-- CENTER COLUMN - Notifications -->
                 <div class="feed-center-column">
-                    <div class="feed-card" style=${{ padding: '16px 20px' }}>
-                        <h2 style=${{ margin: 0, fontSize: '1.2rem', fontWeight: '700', color: '#1f2937' }}>
+                    <div class="feed-card notif-page-header">
+                        <h2 class="notif-page-title">
                             ${t('notifications.title') || 'Notifications'}
                         </h2>
                     </div>
@@ -475,150 +609,29 @@ export function NotificationsPage({ session }) {
                             <p>${t('notifications.loading') || 'Loading notifications...'}</p>
                         </div>
                     ` : filteredNotifications.length === 0 ? html`
-                        <div class="feed-card" style=${{ padding: '40px 20px', textAlign: 'center' }}>
-                            <div style=${{ fontSize: '2.5rem', marginBottom: '12px' }}>
-                                ${filter === 'all' ? html`
+                        <div class="feed-card notif-empty">
+                            ${filter === 'all' ? html`
+                                <div style=${{ fontSize: '2.5rem', marginBottom: '12px' }}>
                                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
                                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                                         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                                     </svg>
-                                ` : null}
-                            </div>
-                            <h3 style=${{ margin: '0 0 8px', color: '#6b7280', fontWeight: '600' }}>
+                                </div>
+                            ` : null}
+                            <h3 class="notif-empty-title">
                                 ${t('notifications.empty') || 'No notifications yet'}
                             </h3>
-                            <p style=${{ margin: 0, color: '#9ca3af', fontSize: '0.88rem' }}>
+                            <p class="notif-empty-text">
                                 ${t('notifications.emptyDesc') || 'When you get notifications, they will show up here.'}
                             </p>
                         </div>
                     ` : html`
-                        <div style=${{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            ${filteredNotifications.map(notif => html`
-                                <div key=${notif.id} class="feed-card" style=${{
-                                    padding: '14px 16px',
-                                    display: 'flex',
-                                    alignItems: 'flex-start',
-                                    gap: '12px',
-                                    background: notif.type === 'connection' && notif.status === 'pending' ? '#f0fdfa' : 'white',
-                                    cursor: notif.actorSlug ? 'pointer' : 'default',
-                                    transition: 'background 0.15s ease',
-                                }} onClick=${() => {
-                                    if (notif.actorSlug) window.navigateTo(`/${notif.actorSlug}`);
-                                }}>
-                                    <!-- Icon -->
-                                    <div style=${{
-                                        flexShrink: 0,
-                                        width: '36px',
-                                        height: '36px',
-                                        borderRadius: '50%',
-                                        background: '#f3f4f6',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                    }}>
-                                        ${getIcon(notif.type)}
-                                    </div>
-
-                                    <!-- Avatar -->
-                                    <img
-                                        src=${notif.actorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(notif.actorName)}&background=006266&color=fff&size=40`}
-                                        alt=${notif.actorName}
-                                        style=${{
-                                            width: '40px',
-                                            height: '40px',
-                                            borderRadius: '50%',
-                                            objectFit: 'cover',
-                                            flexShrink: 0,
-                                        }}
-                                    />
-
-                                    <!-- Content -->
-                                    <div style=${{ flex: 1, minWidth: 0 }}>
-                                        <div style=${{ fontSize: '0.9rem', color: '#1f2937', lineHeight: '1.4' }}>
-                                            <strong>${notif.actorName}</strong>${' '}${notif.message}
-                                        </div>
-                                        ${(notif.postPreview || notif.commentPreview) && html`
-                                            <div style=${{
-                                                fontSize: '0.82rem',
-                                                color: '#6b7280',
-                                                marginTop: '4px',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                            }}>
-                                                ${notif.commentPreview
-                                                    ? html`"${notif.commentPreview}${notif.commentPreview.length >= 80 ? '...' : ''}"`
-                                                    : html`${notif.postPreview}${notif.postPreview.length >= 80 ? '...' : ''}`
-                                                }
-                                            </div>
-                                        `}
-                                        <div style=${{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '4px' }}>
-                                            ${timeAgo(notif.timestamp)}
-                                        </div>
-                                    </div>
-
-                                    <!-- Action buttons for connection requests -->
-                                    ${notif.type === 'connection' && notif.status === 'pending' && html`
-                                        <div style=${{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }} onClick=${(e) => e.stopPropagation()}>
-                                            <button
-                                                onClick=${() => handleAcceptConnection(notif.connectionId)}
-                                                disabled=${acceptingIds.has(notif.connectionId)}
-                                                style=${{
-                                                    background: '#006266',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    padding: '6px 16px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.82rem',
-                                                    fontWeight: '600',
-                                                    cursor: acceptingIds.has(notif.connectionId) ? 'not-allowed' : 'pointer',
-                                                    opacity: acceptingIds.has(notif.connectionId) ? 0.6 : 1,
-                                                    whiteSpace: 'nowrap',
-                                                }}
-                                            >
-                                                ${acceptingIds.has(notif.connectionId)
-                                                    ? (t('notifications.accepting') || 'Accepting...')
-                                                    : (t('notifications.accept') || 'Accept')
-                                                }
-                                            </button>
-                                            <button
-                                                onClick=${() => handleDeclineConnection(notif.connectionId)}
-                                                disabled=${acceptingIds.has(notif.connectionId)}
-                                                style=${{
-                                                    background: 'transparent',
-                                                    color: '#6b7280',
-                                                    border: '1px solid #d1d5db',
-                                                    padding: '6px 16px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.82rem',
-                                                    fontWeight: '600',
-                                                    cursor: acceptingIds.has(notif.connectionId) ? 'not-allowed' : 'pointer',
-                                                    opacity: acceptingIds.has(notif.connectionId) ? 0.6 : 1,
-                                                    whiteSpace: 'nowrap',
-                                                }}
-                                            >
-                                                ${t('notifications.decline') || 'Decline'}
-                                            </button>
-                                        </div>
-                                    `}
-
-                                    <!-- Accepted badge -->
-                                    ${notif.type === 'connection' && notif.status === 'granted' && html`
-                                        <div style=${{
-                                            background: '#d1fae5',
-                                            color: '#065f46',
-                                            padding: '4px 12px',
-                                            borderRadius: '20px',
-                                            fontSize: '0.78rem',
-                                            fontWeight: '600',
-                                            flexShrink: 0,
-                                            whiteSpace: 'nowrap',
-                                        }}>
-                                            ${t('notifications.connected') || 'Connected'}
-                                        </div>
-                                    `}
-                                </div>
-                            `)}
+                        <div class="notif-list">
+                            ${filteredNotifications.map(notif =>
+                                notif.type === 'chemistry_call'
+                                    ? renderChemistryCard(notif)
+                                    : renderStandardCard(notif)
+                            )}
                         </div>
                     `}
 

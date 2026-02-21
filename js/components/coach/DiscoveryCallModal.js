@@ -1,28 +1,38 @@
 /**
  * DiscoveryCallModal Component
- * Modal for booking free discovery calls with coaches
+ * Modal for booking free chemistry/discovery calls with coaches.
+ * Supports both signed-in users and guests (auto-creates account for guests).
  */
 
 import htm from '../../vendor/htm.js';
-import { t } from '../../i18n.js';
+import { t, getCurrentLang } from '../../i18n.js';
+import { useLookupOptions } from '../../context/AppContext.js';
 
 const React = window.React;
-const { useState, useEffect } = React;
+const { useState, useEffect, useMemo, useCallback } = React;
 const html = htm.bind(React.createElement);
 
 /**
  * DiscoveryCallModal Component
  * @param {Object} props
  * @param {Object} props.coach - Coach object
+ * @param {Object} props.session - User session (null if guest)
  * @param {function} props.onClose - Close handler
  */
-export function DiscoveryCallModal({ coach, onClose }) {
+export function DiscoveryCallModal({ coach, session, onClose }) {
+    const { lookupOptions, getLocalizedName } = useLookupOptions();
+    const specialties = lookupOptions?.specialties || [];
+
+    const isGuest = !session?.user;
+
     const [formData, setFormData] = useState({
-        name: '',
+        name: session?.user?.user_metadata?.full_name || '',
         phone: '',
-        email: '',
-        message: '',
-        timePreference: 'flexible'
+        email: session?.user?.email || '',
+        specialties: [],
+        goal: '',
+        password: '',
+        confirmPassword: '',
     });
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -47,53 +57,157 @@ export function DiscoveryCallModal({ coach, onClose }) {
         }
     };
 
-    const timePreferenceOptions = [
-        { value: 'flexible', label: t('discovery.timeFlexible') || 'Flexible' },
-        { value: 'weekday_morning', label: t('discovery.timeWeekdayMorning') || 'Weekday Morning' },
-        { value: 'weekday_afternoon', label: t('discovery.timeWeekdayAfternoon') || 'Weekday Afternoon' },
-        { value: 'weekday_evening', label: t('discovery.timeWeekdayEvening') || 'Weekday Evening' },
-        { value: 'weekend_morning', label: t('discovery.timeWeekendMorning') || 'Weekend Morning' },
-        { value: 'weekend_afternoon', label: t('discovery.timeWeekendAfternoon') || 'Weekend Afternoon' }
-    ];
+    const toggleSpecialty = useCallback((code) => {
+        setFormData(prev => {
+            const current = prev.specialties;
+            const updated = current.includes(code)
+                ? current.filter(s => s !== code)
+                : [...current, code];
+            return { ...prev, specialties: updated };
+        });
+    }, []);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const getSpecialtyDisplayName = useCallback((code) => {
+        const s = specialties.find(sp => sp.code === code);
+        return s ? String(getLocalizedName(s)) : String(code);
+    }, [specialties, getLocalizedName]);
 
+    const getSpecialtyIcon = useCallback((code) => {
+        const s = specialties.find(sp => sp.code === code);
+        return s?.icon || '🎯';
+    }, [specialties]);
+
+    // Validate form
+    const validate = () => {
         if (!formData.name.trim()) {
             setError(t('discovery.errorName') || 'Please enter your name');
-            return;
+            return false;
         }
         if (!formData.phone.trim()) {
             setError(t('discovery.errorPhone') || 'Please enter your phone number');
-            return;
+            return false;
         }
+        if (!formData.email.trim()) {
+            setError(t('discovery.errorEmail') || 'Please enter your email address');
+            return false;
+        }
+        // Basic email format check
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+            setError(t('discovery.errorEmailInvalid') || 'Please enter a valid email address');
+            return false;
+        }
+        if (formData.specialties.length === 0) {
+            setError(t('discovery.errorSpecialties') || 'Please select at least one coaching type');
+            return false;
+        }
+        if (!formData.goal.trim()) {
+            setError(t('discovery.errorGoal') || 'Please describe your coaching goal');
+            return false;
+        }
+        if (isGuest) {
+            if (!formData.password) {
+                setError(t('discovery.errorPassword') || 'Please enter a password');
+                return false;
+            }
+            if (formData.password.length < 6) {
+                setError(t('discovery.errorPasswordLength') || 'Password must be at least 6 characters');
+                return false;
+            }
+            if (formData.password !== formData.confirmPassword) {
+                setError(t('discovery.errorPasswordMatch') || 'Passwords do not match');
+                return false;
+            }
+        }
+        return true;
+    };
 
-        setSubmitting(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setError('');
 
+        if (!validate()) return;
+
+        setSubmitting(true);
+
         try {
-            const response = await fetch('/api/discovery-requests', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    coach_id: coach.id,
-                    client_name: formData.name.trim(),
-                    client_phone: formData.phone.trim(),
-                    client_email: formData.email.trim() || null,
-                    client_message: formData.message.trim() || null,
-                    time_preference: formData.timePreference
-                })
-            });
+            const supabase = window.supabaseClient;
+            if (!supabase) throw new Error('Service unavailable');
 
-            const result = await response.json();
+            let userId;
 
-            if (result.success) {
-                setSuccess(true);
+            if (isGuest) {
+                // Register new user account
+                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                    email: formData.email.trim(),
+                    password: formData.password,
+                    options: {
+                        data: {
+                            full_name: formData.name.trim(),
+                            user_type: 'client',
+                        }
+                    }
+                });
+
+                if (signUpError) {
+                    if (signUpError.message?.includes('already registered')) {
+                        setError(t('discovery.errorEmailExists') || 'This email is already registered. Please sign in first.');
+                    } else {
+                        setError(signUpError.message || t('discovery.errorGeneric') || 'Something went wrong');
+                    }
+                    setSubmitting(false);
+                    return;
+                }
+
+                userId = signUpData.user?.id;
+                if (!userId) {
+                    setError(t('discovery.errorGeneric') || 'Something went wrong');
+                    setSubmitting(false);
+                    return;
+                }
             } else {
-                setError(result.error?.message || t('discovery.errorGeneric') || 'Something went wrong');
+                userId = session.user.id;
             }
+
+            // Insert chemistry call request
+            const { error: insertError } = await supabase
+                .from('cs_chemistry_call_requests')
+                .insert({
+                    user_id: userId,
+                    coach_id: coach.user_id || coach.id,
+                    name: formData.name.trim(),
+                    phone: formData.phone.trim(),
+                    email: formData.email.trim(),
+                    specialties: formData.specialties,
+                    goal: formData.goal.trim(),
+                });
+
+            if (insertError) {
+                console.error('Chemistry call insert error:', insertError);
+                setError(t('discovery.errorGeneric') || 'Something went wrong');
+                setSubmitting(false);
+                return;
+            }
+
+            // Send email notification to coach via PHP API
+            try {
+                await fetch('/api/chemistry-call-notify.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        coach_id: coach.user_id || coach.id,
+                        client_name: formData.name.trim(),
+                        client_phone: formData.phone.trim(),
+                        client_email: formData.email.trim(),
+                        specialties: formData.specialties,
+                        goal: formData.goal.trim(),
+                    })
+                });
+            } catch (emailErr) {
+                // Email notification failure is non-blocking
+                console.warn('Email notification failed:', emailErr);
+            }
+
+            setSuccess(true);
         } catch (err) {
             console.error('Discovery call request error:', err);
             setError(t('discovery.errorNetwork') || 'Network error. Please try again.');
@@ -114,8 +228,8 @@ export function DiscoveryCallModal({ coach, onClose }) {
                     </div>
                     <div class="discovery-modal-content success-content">
                         <div class="success-icon">✓</div>
-                        <p>${(t('discovery.successMessage') || '{coachName} will contact you soon!').replace('{coachName}', coachName)}</p>
-                        <p>${t('discovery.successFollowUp') || 'Check your phone for their call.'}</p>
+                        <p>${(t('discovery.successMessage') || 'Your discovery call request has been sent to {coachName}.').replace('{coachName}', coachName)}</p>
+                        <p>${t('discovery.successFollowUp') || 'They will contact you soon at the phone number you provided.'}</p>
                         <button class="btn-primary" onClick=${onClose}>${t('discovery.close') || 'Close'}</button>
                     </div>
                 </div>
@@ -125,77 +239,139 @@ export function DiscoveryCallModal({ coach, onClose }) {
 
     return html`
         <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
-            <div class="discovery-modal-container">
+            <div class="discovery-modal-container" style=${{ maxWidth: '520px' }}>
                 <div class="discovery-modal-header">
                     <h3>${t('discovery.modalTitle') || 'Book a Free Discovery Call'}</h3>
                     <button class="discovery-modal-close" onClick=${onClose}>✕</button>
                 </div>
-                <div class="discovery-modal-content">
+                <div class="discovery-modal-content" style=${{ maxHeight: '70vh', overflowY: 'auto' }}>
                     <p class="discovery-intro">
-                        ${(t('discovery.modalIntro') || 'Get a free 15-minute call with {coachName} to discuss your goals.').replace('{coachName}', coachName)}
+                        ${(t('discovery.modalIntro') || 'Get to know {coachName} with a free discovery call. Share your contact info and preferred time, and they\'ll reach out to schedule.').replace('{coachName}', coachName)}
                     </p>
 
                     ${error && html`<div class="discovery-error">${error}</div>`}
 
                     <form onSubmit=${handleSubmit}>
+                        <!-- Name -->
                         <div class="form-group">
                             <label>${t('discovery.yourName') || 'Your Name'} *</label>
                             <input
                                 type="text"
-                                placeholder=${t('discovery.yourNamePlaceholder') || 'Enter your name'}
+                                placeholder=${t('discovery.yourNamePlaceholder') || 'Enter your full name'}
                                 value=${formData.name}
-                                onChange=${(e) => setFormData({...formData, name: e.target.value})}
+                                onInput=${(e) => setFormData(prev => ({...prev, name: e.target.value}))}
                                 required
                             />
                         </div>
 
+                        <!-- Phone -->
                         <div class="form-group">
                             <label>${t('discovery.phoneNumber') || 'Phone Number'} *</label>
                             <input
                                 type="tel"
-                                placeholder=${t('discovery.phonePlaceholder') || '+1 234 567 890'}
+                                placeholder=${t('discovery.phonePlaceholder') || 'Your phone number'}
                                 value=${formData.phone}
-                                onChange=${(e) => setFormData({...formData, phone: e.target.value})}
+                                onInput=${(e) => setFormData(prev => ({...prev, phone: e.target.value}))}
                                 required
                             />
                         </div>
 
+                        <!-- Email (required) -->
                         <div class="form-group">
-                            <label>${t('discovery.email') || 'Email (optional)'}</label>
+                            <label>${t('discovery.emailRequired') || 'Email'} *</label>
                             <input
                                 type="email"
-                                placeholder=${t('discovery.emailPlaceholder') || 'your@email.com'}
+                                placeholder=${t('discovery.emailPlaceholder') || 'Your email address'}
                                 value=${formData.email}
-                                onChange=${(e) => setFormData({...formData, email: e.target.value})}
+                                onInput=${(e) => setFormData(prev => ({...prev, email: e.target.value}))}
+                                required
+                                disabled=${!isGuest && !!session?.user?.email}
                             />
                         </div>
 
+                        <!-- Coaching Type / Specialties -->
                         <div class="form-group">
-                            <label>${t('discovery.preferredTime') || 'Preferred Time'}</label>
-                            <select
-                                value=${formData.timePreference}
-                                onChange=${(e) => setFormData({...formData, timePreference: e.target.value})}
-                            >
-                                ${timePreferenceOptions.map(opt => html`
-                                    <option key=${opt.value} value=${opt.value}>${opt.label}</option>
-                                `)}
-                            </select>
+                            <label>${t('discovery.coachingType') || 'Coaching Type'} *</label>
+                            ${formData.specialties.length > 0 && html`
+                                <div class="selected-pills" style=${{ marginBottom: '8px' }}>
+                                    ${formData.specialties.map(code => html`
+                                        <span key=${code} class="specialty-pill-inline">
+                                            ${getSpecialtyDisplayName(code)}
+                                            <button type="button" class="pill-remove" onClick=${() => toggleSpecialty(code)}>×</button>
+                                        </span>
+                                    `)}
+                                </div>
+                            `}
+                            <div class="specialty-grid-inline">
+                                ${specialties.map(s => {
+                                    const isSel = formData.specialties.includes(s.code);
+                                    return html`
+                                        <button key=${s.code} type="button" class="specialty-option-inline ${isSel ? 'selected' : ''}" onClick=${() => toggleSpecialty(s.code)}>
+                                            <span>${String(s.icon || '🎯')}</span>
+                                            <span>${String(getLocalizedName(s))}</span>
+                                        </button>
+                                    `;
+                                })}
+                            </div>
                         </div>
 
+                        <!-- Goal Description -->
                         <div class="form-group">
-                            <label>${t('discovery.message') || 'Message (optional)'}</label>
+                            <label>${t('discovery.goalDescription') || 'What do you want to achieve?'} *</label>
                             <textarea
-                                placeholder=${t('discovery.messagePlaceholder') || 'Tell the coach about your goals...'}
+                                placeholder=${t('discovery.goalPlaceholder') || 'Describe your coaching goals and what you hope to achieve...'}
                                 rows="3"
-                                value=${formData.message}
-                                onChange=${(e) => setFormData({...formData, message: e.target.value})}
+                                value=${formData.goal}
+                                onInput=${(e) => setFormData(prev => ({...prev, goal: e.target.value}))}
+                                required
                             ></textarea>
                         </div>
+
+                        <!-- Password fields (guests only) -->
+                        ${isGuest && html`
+                            <div style=${{
+                                background: '#f0fdfa',
+                                border: '1px solid #d1fae5',
+                                borderRadius: '10px',
+                                padding: '14px',
+                                marginBottom: '16px',
+                            }}>
+                                <p style=${{
+                                    margin: '0 0 12px',
+                                    fontSize: '0.82rem',
+                                    color: '#065f46',
+                                    fontWeight: '500',
+                                }}>
+                                    ${t('discovery.accountNote') || 'An account will be created for you so you can track your request.'}
+                                </p>
+                                <div class="form-group" style=${{ marginBottom: '10px' }}>
+                                    <label>${t('discovery.password') || 'Password'} *</label>
+                                    <input
+                                        type="password"
+                                        placeholder=${t('discovery.passwordPlaceholder') || 'Choose a password (min 6 characters)'}
+                                        value=${formData.password}
+                                        onInput=${(e) => setFormData(prev => ({...prev, password: e.target.value}))}
+                                        required
+                                        minLength="6"
+                                    />
+                                </div>
+                                <div class="form-group" style=${{ marginBottom: '0' }}>
+                                    <label>${t('discovery.confirmPassword') || 'Confirm Password'} *</label>
+                                    <input
+                                        type="password"
+                                        placeholder=${t('discovery.confirmPasswordPlaceholder') || 'Confirm your password'}
+                                        value=${formData.confirmPassword}
+                                        onInput=${(e) => setFormData(prev => ({...prev, confirmPassword: e.target.value}))}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        `}
 
                         <div class="discovery-form-actions">
                             <button type="button" class="btn-cancel" onClick=${onClose}>${t('discovery.cancel') || 'Cancel'}</button>
                             <button type="submit" class="btn-primary" disabled=${submitting}>
-                                ${submitting ? (t('discovery.submitting') || 'Sending...') : (t('discovery.submit') || 'Request Call')}
+                                ${submitting ? (t('discovery.submitting') || 'Sending...') : (t('discovery.submit') || 'Request Discovery Call')}
                             </button>
                         </div>
                     </form>

@@ -135,16 +135,12 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
         setShowReviewsPopup(true);
     };
 
-    // Handle discovery button click - check auth status first
+    // Handle discovery button click - now open directly for both guests and signed-in users
     const handleDiscoveryClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-
-        // If user is logged in, show discovery modal directly
-        if (session) {
-            setShowDiscoveryModal(true);
-        } else {
-            // If not logged in, show auth modal first
+        setShowDiscoveryModal(true);
+    };
             setShowAuthModal(true);
         }
     };
@@ -327,6 +323,7 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
         ${showDiscoveryModal && html`
             <${DiscoveryCallModal}
                 coach=${coach}
+                session=${session}
                 onClose=${() => setShowDiscoveryModal(false)}
             />
         `}

@@ -536,6 +536,12 @@ export function useNotificationCountQuery(userId) {
                     .select('*', { count: 'exact', head: true })
                     .eq('coach_id', userId)
                     .eq('status', 'pending'),
+                // Pending chemistry call requests where I'm the coach
+                supabase
+                    .from('cs_chemistry_call_requests')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('coach_id', userId)
+                    .eq('status', 'pending'),
             ];
 
             if (myPostIds.length > 0) {
@@ -571,7 +577,8 @@ export function useNotificationCountQuery(userId) {
                 if (res.error) throw res.error;
                 total += (res.count || 0);
             }
-            return total;
+            const chemistryCallCount = results[1]?.count || 0;
+            return { total, hasChemistryCall: chemistryCallCount > 0 };
         },
         staleTime: STALE_TIMES.notificationCount,
         enabled: !!userId && !!getSupabase(),

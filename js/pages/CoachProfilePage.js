@@ -598,11 +598,7 @@ const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall, sess
     const handleDiscoveryClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (session) {
-            setShowDiscoveryModal(true);
-        } else {
-            setShowAuthModal(true);
-        }
+        setShowDiscoveryModal(true);
     };
 
     const handleAuthSuccess = () => {
@@ -664,6 +660,7 @@ const MiniCoachCard = memo(function MiniCoachCard({ coach, onDiscoveryCall, sess
         ${showDiscoveryModal && html`
             <${DiscoveryCallModal}
                 coach=${coach}
+                session=${session}
                 onClose=${() => setShowDiscoveryModal(false)}
             />
         `}
@@ -5118,12 +5115,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             setShowOwnProfileCallModal(true);
             return;
         }
-        if (session) {
-            setShowDiscoveryModal(true);
-        } else {
-            setPendingAuthAction('discovery');
-            setShowAuthModal(true);
-        }
+        setShowDiscoveryModal(true);
     };
 
     // Handle write review click - check auth status first
