@@ -141,10 +141,7 @@ export const CoachCard = memo(function CoachCard({ coach, onViewDetails, session
         e.stopPropagation();
         setShowDiscoveryModal(true);
     };
-            setShowAuthModal(true);
-        }
-    };
-
+    
     // Handle successful auth - close auth modal and open discovery modal
     const handleAuthSuccess = () => {
         // Immediately transition from auth modal to discovery modal
