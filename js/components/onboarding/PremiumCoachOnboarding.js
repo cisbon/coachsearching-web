@@ -15,6 +15,7 @@ import { t, getCurrentLang } from '../../i18n.js';
 import { queryClient } from '../../config/queryClient.js';
 import { useLookupOptions, useCities, useCertifications } from '../../context/AppContext.js';
 import { useCitiesQuery, useCertificationsQuery } from '../../hooks/useSupabaseQuery.js';
+import { uploadToR2 } from '../../services/r2Upload.js';
 
 const React = window.React;
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
@@ -1033,20 +1034,14 @@ const CertificationsSection = ({ data, updateData, session, certifications = { l
             setUploading(true);
             try {
                 const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
-
-                const formData = new FormData();
-                formData.append('file', newCert.certificate_file);
-                formData.append('bucket', 'coach-certifications');
-                formData.append('original_name', newCert.certificate_file.name.replace(/\.[^.]+$/, '') || 'certificate');
-
-                const token = session?.access_token;
-                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-                const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
-                const json = await res.json();
-                if (res.ok) {
-                    certificateFilePath = json.data?.url || json.url || null;
-                }
+                const file = newCert.certificate_file;
+                certificateFilePath = await uploadToR2({
+                    apiBase,
+                    file,
+                    bucket: 'coach-certifications',
+                    originalName: file.name.replace(/\.[^.]+$/, '') || 'certificate',
+                    accessToken: session?.access_token,
+                });
             } catch (err) {
                 console.error('Certificate upload failed:', err);
             } finally {
@@ -1399,26 +1394,17 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
         setUploading(true);
         try {
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('bucket', 'profile-images');
-            formData.append('original_name', file.name.replace(/\.[^.]+$/, '') || 'avatar');
-
-            const token = session?.access_token;
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-            const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
-            const json = await res.json();
-            if (res.ok && (json.data?.url || json.url)) {
-                const r2Url = json.data?.url || json.url;
-                updateData('avatar_url', r2Url);
-                setAvatarPreview(r2Url);
-            } else {
-                // Upload failed — keep local preview visible, show inline error
-                setUploadError(t('onboard.uploadFailed') || 'Image upload failed. You can add a photo later from your profile settings.');
-            }
+            const r2Url = await uploadToR2({
+                apiBase,
+                file,
+                bucket: 'profile-images',
+                originalName: file.name.replace(/\.[^.]+$/, '') || 'avatar',
+                accessToken: session?.access_token,
+            });
+            updateData('avatar_url', r2Url);
+            setAvatarPreview(r2Url);
         } catch {
+            // Keep local preview visible, show inline error
             setUploadError(t('onboard.uploadFailed') || 'Image upload failed. You can add a photo later from your profile settings.');
         } finally {
             setUploading(false);
@@ -1471,7 +1457,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                     style=${{ display: 'none' }}
                     onChange=${(e) => handleFileSelect(e.target.files[0])}
                 />
-                ${uploadError && html`<p style=${{ color: '#ef4444', fontSize: '0.8rem', marginTop: '6px', textAlign: 'center' }}>${uploadError}</p>`}
+                ${uploadError && html`<p class="upload-error-msg">${uploadError}</p>`}
 
                 <div class="avatar-tips">
                     <div class="avatar-tips-title">${t('onboard.premium.photoTips')}</div>

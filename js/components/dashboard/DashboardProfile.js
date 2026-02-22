@@ -6,6 +6,7 @@
 import htm from '../../vendor/htm.js';
 import { useCities } from '../../context/AppContext.js';
 import { queryClient } from '../../config/queryClient.js';
+import { uploadToR2 } from '../../services/r2Upload.js';
 
 const React = window.React;
 const { useState, useEffect, useMemo } = React;
@@ -172,19 +173,13 @@ export const DashboardProfile = ({ session, userType }) => {
             const bucket = fieldName === 'banner_url' ? 'profile-banners' : 'profile-images';
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('bucket', bucket);
-            formData.append('original_name', file.name.replace(/\.[^.]+$/, '') || 'image');
-
-            const token = session?.access_token;
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-            const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error?.message || json.error || 'Upload failed');
-
-            const publicUrl = json.data?.url || json.url;
+            const publicUrl = await uploadToR2({
+                apiBase,
+                file,
+                bucket,
+                originalName: file.name.replace(/\.[^.]+$/, '') || 'image',
+                accessToken: session?.access_token,
+            });
 
             setFormData(prev => ({ ...prev, [fieldName]: publicUrl }));
             await saveField(fieldName, publicUrl);

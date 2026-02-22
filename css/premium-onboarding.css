@@ -789,6 +789,13 @@
     font-weight: 600;
 }
 
+.upload-error-msg {
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 6px;
+    text-align: center;
+}
+
 .avatar-tips {
     flex: 1;
 }

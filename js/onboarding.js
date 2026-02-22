@@ -2,6 +2,7 @@ import { html } from 'https://esm.sh/htm/react';
 import { useState, useEffect, useRef } from 'react';
 import api from './api-client.js';
 import { t, getCurrentLang } from './i18n.js';
+import { uploadToR2 } from './services/r2Upload.js';
 
 /**
  * Onboarding Flow System
@@ -288,23 +289,17 @@ const ProfilePictureUpload = ({ currentUrl, onUpload }) => {
         setPreview(localPreview);
 
         try {
-            // Upload to R2 profile-images bucket via backend API
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('bucket', 'profile-images');
-            formData.append('original_name', file.name.replace(/\.[^.]+$/, '') || 'avatar');
-
             const supabase = window.supabaseClient;
             const session = supabase ? (await supabase.auth.getSession())?.data?.session : null;
-            const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
 
-            const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error?.message || json.error || 'Upload failed');
-
-            const r2Url = json.data?.url || json.url;
+            const r2Url = await uploadToR2({
+                apiBase,
+                file,
+                bucket: 'profile-images',
+                originalName: file.name.replace(/\.[^.]+$/, '') || 'avatar',
+                accessToken: session?.access_token,
+            });
             setPreview(r2Url);
             onUpload(r2Url);
         } catch (error) {
@@ -367,9 +362,7 @@ const ProfilePictureUpload = ({ currentUrl, onUpload }) => {
                 style="display: none"
                 onChange=${(e) => handleFileSelect(e.target.files[0])}
             />
-            ${uploadError && html`
-                <p style=${{ color: '#ef4444', fontSize: '0.8rem', marginTop: '6px', textAlign: 'center' }}>${uploadError}</p>
-            `}
+            ${uploadError && html`<p class="upload-error-msg">${uploadError}</p>`}
         </div>
     `;
 };

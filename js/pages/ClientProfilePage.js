@@ -247,19 +247,14 @@ const ClientBannerEditorModal = memo(function ClientBannerEditorModal({ client, 
             if (!userId) throw new Error('Not authenticated');
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            const formData = new FormData();
-            formData.append('file', new File([blob], 'banner.jpg', { type: 'image/jpeg' }));
-            formData.append('bucket', 'profile-banners');
-            formData.append('original_name', originalStemRef.current || 'banner');
-
-            const token = session?.access_token;
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-            const uploadRes = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
-            const uploadJson = await uploadRes.json();
-            if (!uploadRes.ok) throw new Error(uploadJson.error?.message || uploadJson.error || 'Upload failed');
-
-            await onSave({ banner_url: uploadJson.data?.url || uploadJson.url });
+            const bannerUrl = await uploadToR2({
+                apiBase,
+                file: new File([blob], 'banner.jpg', { type: 'image/jpeg' }),
+                bucket: 'profile-banners',
+                originalName: originalStemRef.current || 'banner',
+                accessToken: session?.access_token,
+            });
+            await onSave({ banner_url: bannerUrl });
             onClose();
         } catch (err) {
             console.error('Banner upload error:', err);

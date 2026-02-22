@@ -7,6 +7,7 @@
 import htm from '../../vendor/htm.js';
 import { t, getCurrentLang } from '../../i18n.js';
 import { queryClient } from '../../config/queryClient.js';
+import { uploadToR2 } from '../../services/r2Upload.js';
 
 const React = window.React;
 const { useState, useEffect, useRef, useCallback } = React;
@@ -323,20 +324,15 @@ const FeaturedImageUpload = ({ imageUrl, onImageChange, session }) => {
         try {
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('bucket', 'certifications-badges');
-            formData.append('original_name', file.name.replace(/\.[^.]+$/, '') || 'badge');
-
-            // Get auth token from active Supabase session
             const { data: { session } } = await window.supabaseClient.auth.getSession();
-            const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
-
-            const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error?.message || json.error || 'Upload failed');
-
-            onImageChange(json.data?.url || json.url);
+            const publicUrl = await uploadToR2({
+                apiBase,
+                file,
+                bucket: 'certifications-badges',
+                originalName: file.name.replace(/\.[^.]+$/, '') || 'badge',
+                accessToken: session?.access_token,
+            });
+            onImageChange(publicUrl);
         } catch (error) {
             console.error('Image upload failed:', error);
             alert('Failed to upload image. Please try again.');

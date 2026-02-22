@@ -971,23 +971,32 @@ function CoachProfileEditor({ coachId, coach: initialCoach }) {
     const handleImageUpload = async (file, type) => {
         setSaving(true);
         try {
-            const fileExt = file.name.split('.').pop();
-            const key = `${coachId}/${type}.${fileExt}`;
             const bucket = type === 'avatar' ? 'profile-images' : 'profile-banners';
+            const originalName = file.name.replace(/\.[^.]+$/, '') || type;
 
+            // Step 1: POST to backend — validates file, returns presigned PUT URL + public URL
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
             const formData = new FormData();
             formData.append('file', file);
             formData.append('bucket', bucket);
-            formData.append('key', key);
+            formData.append('original_name', originalName);
 
-            const { data: { session } } = await window.supabaseClient.auth.getSession();
-            const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+            const metaRes = await fetch(`${API_BASE}/upload`, { method: 'POST', headers, body: formData });
+            const metaJson = await metaRes.json();
+            if (!metaRes.ok) throw new Error(metaJson.error?.message || metaJson.error || 'Upload init failed');
 
-            const res = await fetch(`${API_BASE}/upload`, { method: 'POST', headers, body: formData });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error?.message || json.error || 'Upload failed');
+            const presignedUrl = metaJson.data?.presigned_url || metaJson.presigned_url;
+            const publicUrl    = metaJson.data?.url            || metaJson.url;
 
-            const publicUrl = json.data?.url || json.url;
+            // Step 2: PUT file directly to R2 (browser → R2, no PHP TLS involved)
+            const putRes = await fetch(presignedUrl, {
+                method:  'PUT',
+                body:    file,
+                headers: { 'Content-Type': file.type || 'application/octet-stream' },
+            });
+            if (!putRes.ok) throw new Error(`Upload to storage failed (HTTP ${putRes.status})`);
+
             const field = type === 'avatar' ? 'avatar_url' : 'banner_url';
             await saveChanges({ [field]: publicUrl });
         } catch (err) {
