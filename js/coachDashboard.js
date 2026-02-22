@@ -972,16 +972,24 @@ function CoachProfileEditor({ coachId, coach: initialCoach }) {
         setSaving(true);
         try {
             const fileExt = file.name.split('.').pop();
-            const fileName = `${coachId}/${type}.${fileExt}`;
-            const { error: uploadError } = await window.supabaseClient.storage
-                .from('avatars')
-                .upload(fileName, file, { upsert: true });
-            if (uploadError) throw uploadError;
-            const { data: { publicUrl } } = window.supabaseClient.storage
-                .from('avatars')
-                .getPublicUrl(fileName);
+            const key = `${coachId}/${type}.${fileExt}`;
+            const bucket = type === 'avatar' ? 'profile-images' : 'profile-banners';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('bucket', bucket);
+            formData.append('key', key);
+
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+
+            const res = await fetch(`${API_BASE}/upload`, { method: 'POST', headers, body: formData });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error?.message || json.error || 'Upload failed');
+
+            const publicUrl = json.data?.url || json.url;
             const field = type === 'avatar' ? 'avatar_url' : 'banner_url';
-            await saveChanges({ [field]: publicUrl + '?t=' + Date.now() });
+            await saveChanges({ [field]: publicUrl });
         } catch (err) {
             showMessage('error', 'Failed to upload image');
         } finally {

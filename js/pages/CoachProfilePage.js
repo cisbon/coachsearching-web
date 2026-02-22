@@ -1621,17 +1621,22 @@ const ProfilePhotoEditorModal = memo(function ProfilePhotoEditorModal({ coach, o
             const userId = session?.user?.id;
             if (!userId) throw new Error('Not authenticated');
 
-            const fileName = `${userId}/avatar-${Date.now()}.jpg`;
-            const { error: uploadError } = await window.supabaseClient.storage
-                .from('profile-banners')
-                .upload(fileName, blob, { upsert: true, contentType: 'image/jpeg' });
-            if (uploadError) throw uploadError;
+            const key = `${userId}/avatar-${Date.now()}.jpg`;
+            const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            const { data: { publicUrl } } = window.supabaseClient.storage
-                .from('profile-banners')
-                .getPublicUrl(fileName);
+            const formData = new FormData();
+            formData.append('file', new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
+            formData.append('bucket', 'profile-images');
+            formData.append('key', key);
 
-            const avatarUrl = publicUrl + '?t=' + Date.now();
+            const token = session?.access_token;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+            const uploadRes = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+            const uploadJson = await uploadRes.json();
+            if (!uploadRes.ok) throw new Error(uploadJson.error?.message || uploadJson.error || 'Upload failed');
+
+            const avatarUrl = uploadJson.data?.url || uploadJson.url;
             await onSave({ avatar_url: avatarUrl });
             onClose();
         } catch (err) {
@@ -1973,34 +1978,26 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
                 throw new Error('Not authenticated - please sign in again');
             }
 
-            const fileName = `${userId}/banner-${Date.now()}.jpg`;
-            console.log('Uploading banner:', { fileName, coachId: coach.id, userId });
+            const key = `${userId}/banner-${Date.now()}.jpg`;
+            const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            // Upload to profile-banners bucket
-            const { error: uploadError } = await window.supabaseClient.storage
-                .from('profile-banners')
-                .upload(fileName, blob, {
-                    upsert: true,
-                    contentType: 'image/jpeg'
-                });
+            const formData = new FormData();
+            formData.append('file', new File([blob], 'banner.jpg', { type: 'image/jpeg' }));
+            formData.append('bucket', 'profile-banners');
+            formData.append('key', key);
 
-            if (uploadError) {
-                console.error('Storage upload error:', uploadError);
-                throw uploadError;
+            const token = session?.access_token;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+            const uploadRes = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+            const uploadJson = await uploadRes.json();
+            if (!uploadRes.ok) {
+                console.error('R2 upload error:', uploadJson);
+                throw new Error(uploadJson.error?.message || uploadJson.error || 'Upload failed');
             }
-            console.log('Storage upload successful');
 
-            // Get public URL
-            const { data: { publicUrl } } = window.supabaseClient.storage
-                .from('profile-banners')
-                .getPublicUrl(fileName);
-
-            // Save to coach profile with cache busting
-            const bannerUrl = publicUrl + '?t=' + Date.now();
-            console.log('Saving banner URL to profile:', bannerUrl);
-
+            const bannerUrl = uploadJson.data?.url || uploadJson.url;
             await onSave({ banner_url: bannerUrl });
-            console.log('Profile update successful');
             onClose();
         } catch (err) {
             console.error('Banner upload error:', err);

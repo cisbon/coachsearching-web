@@ -188,25 +188,25 @@ export function PostEditor({ session, userProfile, onPostCreated, onClose, initi
 
             let imageUrl = null;
 
-            // Upload image to feed-media bucket
+            // Upload image to R2 feed-media bucket via backend API
             if (attachedImage?.blob) {
                 const userId = session.user.id;
-                const fileName = `${userId}/post-${Date.now()}.jpg`;
+                const key = `${userId}/post-${Date.now()}.jpg`;
+                const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-                const { error: uploadError } = await supabase.storage
-                    .from('feed-media')
-                    .upload(fileName, attachedImage.blob, {
-                        upsert: true,
-                        contentType: 'image/jpeg'
-                    });
+                const formData = new FormData();
+                formData.append('file', new File([attachedImage.blob], 'post.jpg', { type: 'image/jpeg' }));
+                formData.append('bucket', 'feed-media');
+                formData.append('key', key);
 
-                if (uploadError) throw uploadError;
+                const token = session?.access_token;
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-                const { data: { publicUrl } } = supabase.storage
-                    .from('feed-media')
-                    .getPublicUrl(fileName);
+                const uploadRes = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+                const uploadJson = await uploadRes.json();
+                if (!uploadRes.ok) throw new Error(uploadJson.error?.message || uploadJson.error || 'Image upload failed');
 
-                imageUrl = publicUrl;
+                imageUrl = uploadJson.data?.url || uploadJson.url;
             }
 
             const { data, error } = await supabase.from('cs_posts').insert({

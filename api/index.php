@@ -153,6 +153,11 @@ try {
             handleLookup($method, $id, $action, $input);
             break;
 
+        case 'upload':
+            require_once __DIR__ . '/endpoints/upload.php';
+            handleUpload($method);
+            break;
+
         case 'ai-council':
             require_once __DIR__ . '/endpoints/ai-council.php';
             handleAICouncil($method, $id, $action, $input);

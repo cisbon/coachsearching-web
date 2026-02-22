@@ -1028,25 +1028,25 @@ const CertificationsSection = ({ data, updateData, session, certifications = { l
 
         let certificateFilePath = null;
 
-        // Upload file if provided
+        // Upload file to R2 coach-certifications bucket via backend API
         if (newCert.certificate_file) {
             setUploading(true);
             try {
-                const supabase = window.supabaseClient;
-                // Use folder structure: {user_id}/cert_{timestamp}.pdf for RLS policy compliance
-                const filePath = `${session.user.id}/cert_${Date.now()}.pdf`;
-                const { data: uploadData, error } = await supabase.storage
-                    .from('coach-certifications')
-                    .upload(filePath, newCert.certificate_file, {
-                        upsert: true,
-                        contentType: 'application/pdf'
-                    });
+                const key = `${session.user.id}/cert_${Date.now()}.pdf`;
+                const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-                if (!error && uploadData) {
-                    const { data: publicData } = supabase.storage
-                        .from('coach-certifications')
-                        .getPublicUrl(filePath);
-                    certificateFilePath = publicData?.publicUrl || filePath;
+                const formData = new FormData();
+                formData.append('file', newCert.certificate_file);
+                formData.append('bucket', 'coach-certifications');
+                formData.append('key', key);
+
+                const token = session?.access_token;
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+                const json = await res.json();
+                if (res.ok) {
+                    certificateFilePath = json.data?.url || json.url || key;
                 }
             } catch (err) {
                 console.error('Certificate upload failed:', err);
@@ -1392,28 +1392,29 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
 
         setUploading(true);
         try {
+            // Show a local preview immediately while the upload happens in the background
             const reader = new FileReader();
             reader.onload = (e) => updateData('avatar_url', e.target.result);
             reader.readAsDataURL(file);
 
-            const supabase = window.supabaseClient;
-            if (supabase) {
-                const fileName = `coach_${session.user.id}_${Date.now()}`;
-                const { data: uploadData, error } = await supabase.storage
-                    .from('avatars')
-                    .upload(fileName, file, { upsert: true });
+            const key = `coach_${session.user.id}_${Date.now()}`;
+            const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-                if (!error && uploadData) {
-                    const { data: publicData } = supabase.storage
-                        .from('avatars')
-                        .getPublicUrl(fileName);
-                    if (publicData?.publicUrl) {
-                        updateData('avatar_url', publicData.publicUrl);
-                    }
-                }
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('bucket', 'profile-images');
+            formData.append('key', key);
+
+            const token = session?.access_token;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+            const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+            const json = await res.json();
+            if (res.ok && (json.data?.url || json.url)) {
+                updateData('avatar_url', json.data?.url || json.url);
             }
         } catch {
-            // Silently handle upload errors
+            // Silently handle upload errors — local preview remains visible
         } finally {
             setUploading(false);
         }

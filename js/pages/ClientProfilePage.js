@@ -94,11 +94,22 @@ const ClientPhotoEditorModal = memo(function ClientPhotoEditorModal({ client, se
             const blob = await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error('Blob failed')), 'image/jpeg', 0.9));
             const userId = session?.user?.id;
             if (!userId) throw new Error('Not authenticated');
-            const fileName = `${userId}/client-avatar-${Date.now()}.jpg`;
-            const { error: upErr } = await window.supabaseClient.storage.from('profile-banners').upload(fileName, blob, { upsert: true, contentType: 'image/jpeg' });
-            if (upErr) throw upErr;
-            const { data: { publicUrl } } = window.supabaseClient.storage.from('profile-banners').getPublicUrl(fileName);
-            await onSave({ avatar_url: publicUrl + '?t=' + Date.now() });
+            const key = `${userId}/client-avatar-${Date.now()}.jpg`;
+            const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
+
+            const formData = new FormData();
+            formData.append('file', new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
+            formData.append('bucket', 'profile-images');
+            formData.append('key', key);
+
+            const token = session?.access_token;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+            const uploadRes = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+            const uploadJson = await uploadRes.json();
+            if (!uploadRes.ok) throw new Error(uploadJson.error?.message || uploadJson.error || 'Upload failed');
+
+            await onSave({ avatar_url: uploadJson.data?.url || uploadJson.url });
             onClose();
         } catch (err) {
             console.error('Photo upload error:', err);
@@ -235,11 +246,22 @@ const ClientBannerEditorModal = memo(function ClientBannerEditorModal({ client, 
             const blob = await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error('Blob failed')), 'image/jpeg', 0.85));
             const userId = session?.user?.id;
             if (!userId) throw new Error('Not authenticated');
-            const fileName = `${userId}/client-banner-${Date.now()}.jpg`;
-            const { error: upErr } = await window.supabaseClient.storage.from('profile-banners').upload(fileName, blob, { upsert: true, contentType: 'image/jpeg' });
-            if (upErr) throw upErr;
-            const { data: { publicUrl } } = window.supabaseClient.storage.from('profile-banners').getPublicUrl(fileName);
-            await onSave({ banner_url: publicUrl + '?t=' + Date.now() });
+            const key = `${userId}/client-banner-${Date.now()}.jpg`;
+            const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
+
+            const formData = new FormData();
+            formData.append('file', new File([blob], 'banner.jpg', { type: 'image/jpeg' }));
+            formData.append('bucket', 'profile-banners');
+            formData.append('key', key);
+
+            const token = session?.access_token;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+            const uploadRes = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+            const uploadJson = await uploadRes.json();
+            if (!uploadRes.ok) throw new Error(uploadJson.error?.message || uploadJson.error || 'Upload failed');
+
+            await onSave({ banner_url: uploadJson.data?.url || uploadJson.url });
             onClose();
         } catch (err) {
             console.error('Banner upload error:', err);

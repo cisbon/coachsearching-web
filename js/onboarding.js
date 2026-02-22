@@ -289,28 +289,26 @@ const ProfilePictureUpload = ({ currentUrl, onUpload }) => {
             };
             reader.readAsDataURL(file);
 
-            // Upload to Supabase storage
-            const supabase = window.supabaseClient;
-            const fileName = `avatar_${Date.now()}_${file.name}`;
-            const { data, error } = await supabase.storage
-                .from('avatars')
-                .upload(fileName, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+            // Upload to R2 profile-images bucket via backend API
+            const key = `avatar_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+            const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            if (error) throw error;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('bucket', 'profile-images');
+            formData.append('key', key);
 
-            // Get public URL
-            const { data: publicData } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(fileName);
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
 
-            onUpload(publicData.publicUrl);
+            const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error?.message || json.error || 'Upload failed');
+
+            onUpload(json.data?.url || json.url);
         } catch (error) {
             console.error('Upload error:', error);
-            // Still keep the preview for now
-            // Convert to base64 for local storage
+            // Still keep the preview — convert to base64 as fallback
             const reader = new FileReader();
             reader.onload = (e) => {
                 onUpload(e.target.result);

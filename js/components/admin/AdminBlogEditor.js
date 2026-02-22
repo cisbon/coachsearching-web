@@ -321,24 +321,24 @@ const FeaturedImageUpload = ({ imageUrl, onImageChange, session }) => {
 
         setUploading(true);
         try {
-            const supabase = window.supabaseClient;
             const fileExt = file.name.split('.').pop();
-            const filePath = `blog/${Date.now()}.${fileExt}`;
+            const key = `blog/${Date.now()}.${fileExt}`;
+            const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            const { data, error } = await supabase.storage
-                .from('public-assets')
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('bucket', 'certifications-badges');
+            formData.append('key', key);
 
-            if (error) throw error;
+            // Get auth token from active Supabase session
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
 
-            const { data: publicData } = supabase.storage
-                .from('public-assets')
-                .getPublicUrl(filePath);
+            const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error?.message || json.error || 'Upload failed');
 
-            onImageChange(publicData.publicUrl);
+            onImageChange(json.data?.url || json.url);
         } catch (error) {
             console.error('Image upload failed:', error);
             alert('Failed to upload image. Please try again.');

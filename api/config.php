@@ -66,6 +66,13 @@ define('STRIPE_SECRET_KEY', getenv('STRIPE_SECRET_KEY') ?: 'sk_test_...');
 define('STRIPE_CONNECT_CLIENT_ID', getenv('STRIPE_CONNECT_CLIENT_ID') ?: 'ca_...');
 define('STRIPE_WEBHOOK_SECRET', getenv('STRIPE_WEBHOOK_SECRET') ?: 'whsec_...');
 
+// Cloudflare R2 Object Storage (S3-compatible)
+// Credentials are backend-only and must NEVER be exposed to the frontend
+define('R2_ACCESS_KEY_ID', getenv('R2_ACCESS_KEY_ID') ?: '');
+define('R2_SECRET_ACCESS_KEY', getenv('R2_SECRET_ACCESS_KEY') ?: '');
+define('R2_ENDPOINT', getenv('R2_ENDPOINT') ?: '');
+define('R2_TOKEN_VALUE', getenv('R2_TOKEN_VALUE') ?: '');
+
 // Site URL for redirects
 define('SITE_URL', getenv('SITE_URL') ?: 'https://coachsearching.com');
 

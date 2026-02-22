@@ -170,17 +170,23 @@ export const DashboardProfile = ({ session, userType }) => {
         setUploading(true);
         try {
             const fileExt = file.name.split('.').pop();
-            const fileName = `${session.user.id}-${fieldName}-${Date.now()}.${fileExt}`;
+            const key = `${session.user.id}-${fieldName}-${Date.now()}.${fileExt}`;
+            const bucket = fieldName === 'banner_url' ? 'profile-banners' : 'profile-images';
+            const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            const { error: uploadError } = await window.supabaseClient.storage
-                .from('avatars')
-                .upload(fileName, file, { upsert: true });
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('bucket', bucket);
+            formData.append('key', key);
 
-            if (uploadError) throw uploadError;
+            const token = session?.access_token;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-            const { data: { publicUrl } } = window.supabaseClient.storage
-                .from('avatars')
-                .getPublicUrl(fileName);
+            const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error?.message || json.error || 'Upload failed');
+
+            const publicUrl = json.data?.url || json.url;
 
             setFormData(prev => ({ ...prev, [fieldName]: publicUrl }));
             await saveField(fieldName, publicUrl);
