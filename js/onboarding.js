@@ -262,6 +262,7 @@ const ProfilePictureUpload = ({ currentUrl, onUpload }) => {
     const [preview, setPreview] = useState(currentUrl || null);
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
+    const [uploadError, setUploadError] = useState('');
     const fileInputRef = useRef(null);
 
     const handleFileSelect = async (file) => {
@@ -269,26 +270,24 @@ const ProfilePictureUpload = ({ currentUrl, onUpload }) => {
 
         // Validate file type
         if (!file.type.startsWith('image/')) {
-            alert(t('onboard.invalidImageType') || 'Please select an image file');
+            setUploadError(t('onboard.invalidImageType') || 'Please select an image file');
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert(t('onboard.imageTooLarge') || 'Image must be less than 5MB');
+            setUploadError(t('onboard.imageTooLarge') || 'Image must be less than 5MB');
             return;
         }
 
+        setUploadError('');
         setUploading(true);
 
-        try {
-            // Create preview immediately
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setPreview(e.target.result);
-            };
-            reader.readAsDataURL(file);
+        // Show local preview immediately while upload happens
+        const localPreview = URL.createObjectURL(file);
+        setPreview(localPreview);
 
+        try {
             // Upload to R2 profile-images bucket via backend API
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
@@ -297,17 +296,22 @@ const ProfilePictureUpload = ({ currentUrl, onUpload }) => {
             formData.append('bucket', 'profile-images');
             formData.append('original_name', file.name.replace(/\.[^.]+$/, '') || 'avatar');
 
-            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            const supabase = window.supabaseClient;
+            const session = supabase ? (await supabase.auth.getSession())?.data?.session : null;
             const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
 
             const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error?.message || json.error || 'Upload failed');
 
-            onUpload(json.data?.url || json.url);
+            const r2Url = json.data?.url || json.url;
+            setPreview(r2Url);
+            onUpload(r2Url);
         } catch (error) {
             console.error('Upload error:', error);
-            alert(t('onboard.uploadFailed') || 'Failed to upload image. Please try again.');
+            // Keep the local preview visible so the user isn't confused,
+            // but show an inline error. avatar_url is NOT updated (stays empty/previous).
+            setUploadError(t('onboard.uploadFailed') || 'Image upload failed. You can add a photo later from your profile settings.');
         } finally {
             setUploading(false);
         }
@@ -363,6 +367,9 @@ const ProfilePictureUpload = ({ currentUrl, onUpload }) => {
                 style="display: none"
                 onChange=${(e) => handleFileSelect(e.target.files[0])}
             />
+            ${uploadError && html`
+                <p style=${{ color: '#ef4444', fontSize: '0.8rem', marginTop: '6px', textAlign: 'center' }}>${uploadError}</p>
+            `}
         </div>
     `;
 };

@@ -1045,7 +1045,7 @@ const CertificationsSection = ({ data, updateData, session, certifications = { l
                 const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
                 const json = await res.json();
                 if (res.ok) {
-                    certificateFilePath = json.data?.url || json.url || key;
+                    certificateFilePath = json.data?.url || json.url || null;
                 }
             } catch (err) {
                 console.error('Certificate upload failed:', err);
@@ -1353,6 +1353,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(data.avatar_url || null);
+    const [uploadError, setUploadError] = useState('');
 
     // Initialize video URL error state based on existing data
     const [videoUrlError, setVideoUrlError] = useState(() => {
@@ -1393,6 +1394,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
         // Show a local object URL preview immediately (never stored in the DB)
         const localPreview = URL.createObjectURL(file);
         setAvatarPreview(localPreview);
+        setUploadError('');
 
         setUploading(true);
         try {
@@ -1413,13 +1415,11 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                 updateData('avatar_url', r2Url);
                 setAvatarPreview(r2Url);
             } else {
-                // Upload failed — clear preview and form value, show error
-                setAvatarPreview(data.avatar_url || null);
-                alert(t('onboard.uploadFailed') || 'Failed to upload image. Please try again.');
+                // Upload failed — keep local preview visible, show inline error
+                setUploadError(t('onboard.uploadFailed') || 'Image upload failed. You can add a photo later from your profile settings.');
             }
         } catch {
-            setAvatarPreview(data.avatar_url || null);
-            alert(t('onboard.uploadFailed') || 'Failed to upload image. Please try again.');
+            setUploadError(t('onboard.uploadFailed') || 'Image upload failed. You can add a photo later from your profile settings.');
         } finally {
             setUploading(false);
         }
@@ -1471,6 +1471,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                     style=${{ display: 'none' }}
                     onChange=${(e) => handleFileSelect(e.target.files[0])}
                 />
+                ${uploadError && html`<p style=${{ color: '#ef4444', fontSize: '0.8rem', marginTop: '6px', textAlign: 'center' }}>${uploadError}</p>`}
 
                 <div class="avatar-tips">
                     <div class="avatar-tips-title">${t('onboard.premium.photoTips')}</div>

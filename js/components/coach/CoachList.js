@@ -574,6 +574,16 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
         return () => window.removeEventListener('currencyChange', handleCurrencyChange);
     }, []);
 
+    // If Supabase client wasn't ready on first render, reload coaches when it becomes available
+    useEffect(() => {
+        const handleSupabaseReady = () => {
+            if (!window.supabaseClient) return;
+            loadCoaches();
+        };
+        window.addEventListener('supabaseReady', handleSupabaseReady);
+        return () => window.removeEventListener('supabaseReady', handleSupabaseReady);
+    }, [loadCoaches]);
+
     const activeFilterCount = [
         filters.minPrice,
         filters.maxPrice,
