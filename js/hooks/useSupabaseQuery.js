@@ -507,7 +507,20 @@ export function useCoachAnalyticsQuery(coachId) {
 // ─── NOTIFICATION HOOKS ─────────────────────────────────────────────
 
 /**
+ * Get the "last seen" timestamp from localStorage.
+ * Returns null if not set (means count everything).
+ */
+function getNotificationsSeenAt() {
+    try {
+        return window.localStorage.getItem('cs_notifications_seen_at') || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+/**
  * Count unread notifications (pending connections + likes + comments + reposts on my posts)
+ * Only counts items newer than the last time the user visited /notifications.
  */
 export function useNotificationCountQuery(userId) {
     return useQuery({
@@ -521,6 +534,9 @@ export function useNotificationCountQuery(userId) {
             cutoffDate.setDate(cutoffDate.getDate() - 30);
             const cutoff = cutoffDate.toISOString();
 
+            // "Last seen" timestamp - only count items newer than this
+            const lastSeenAt = getNotificationsSeenAt();
+
             // First, get my post IDs for activity counting
             const { data: myPosts } = await supabase
                 .from('cs_posts')
@@ -529,20 +545,25 @@ export function useNotificationCountQuery(userId) {
             const myPostIds = (myPosts || []).map(p => p.id);
 
             // Count all notification sources in parallel
-            const queries = [
-                // Pending connection requests where I'm the recipient
-                supabase
-                    .from('cs_connections')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('coach_id', userId)
-                    .eq('status', 'pending'),
-                // Pending chemistry call requests where I'm the coach
-                supabase
-                    .from('cs_chemistry_call_requests')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('coach_id', userId)
-                    .eq('status', 'pending'),
-            ];
+            // For connections and chemistry calls, use lastSeenAt if available
+            let connectionsQuery = supabase
+                .from('cs_connections')
+                .select('*', { count: 'exact', head: true })
+                .eq('coach_id', userId)
+                .eq('status', 'pending');
+            if (lastSeenAt) connectionsQuery = connectionsQuery.gt('connected_at', lastSeenAt);
+
+            let chemistryQuery = supabase
+                .from('cs_chemistry_call_requests')
+                .select('*', { count: 'exact', head: true })
+                .eq('coach_id', userId)
+                .eq('status', 'pending');
+            if (lastSeenAt) chemistryQuery = chemistryQuery.gt('created_at', lastSeenAt);
+
+            const queries = [connectionsQuery, chemistryQuery];
+
+            // Use the more restrictive cutoff (lastSeenAt or 30-day cutoff)
+            const activityCutoff = lastSeenAt && lastSeenAt > cutoff ? lastSeenAt : cutoff;
 
             if (myPostIds.length > 0) {
                 queries.push(
@@ -552,21 +573,21 @@ export function useNotificationCountQuery(userId) {
                         .select('*', { count: 'exact', head: true })
                         .in('post_id', myPostIds)
                         .neq('user_id', userId)
-                        .gte('created_at', cutoff),
+                        .gte('created_at', activityCutoff),
                     // Comments on my posts
                     supabase
                         .from('cs_post_comments')
                         .select('*', { count: 'exact', head: true })
                         .in('post_id', myPostIds)
                         .neq('user_id', userId)
-                        .gte('created_at', cutoff),
+                        .gte('created_at', activityCutoff),
                     // Reposts of my posts
                     supabase
                         .from('cs_post_reposts')
                         .select('*', { count: 'exact', head: true })
                         .in('post_id', myPostIds)
                         .neq('user_id', userId)
-                        .gte('reposted_at', cutoff),
+                        .gte('reposted_at', activityCutoff),
                 );
             }
 

@@ -81,8 +81,14 @@ export function NotificationsPage({ session }) {
     const { refetch: refetchCount } = useNotificationCountQuery(userId);
 
     // Reset notification badge to 0 when user visits this page
+    // Save "last seen" timestamp to localStorage so it persists across refreshes
     useEffect(() => {
         if (userId) {
+            try {
+                window.localStorage.setItem('cs_notifications_seen_at', new Date().toISOString());
+            } catch (e) {
+                // ignore localStorage errors
+            }
             queryClient.setQueryData(QUERY_KEYS.notificationCount(userId), { total: 0, hasChemistryCall: false });
         }
     }, [userId]);

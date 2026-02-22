@@ -2,6 +2,7 @@
  * DiscoveryCallModal Component
  * Modal for booking free chemistry/discovery calls with coaches.
  * Supports both signed-in users and guests (auto-creates account for guests).
+ * Persists form data to localStorage so users don't re-enter info across coaches.
  */
 
 import htm from '../../vendor/htm.js';
@@ -9,8 +10,59 @@ import { t, getCurrentLang } from '../../i18n.js';
 import { useLookupOptions } from '../../context/AppContext.js';
 
 const React = window.React;
-const { useState, useEffect, useMemo, useCallback } = React;
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
 const html = htm.bind(React.createElement);
+
+const STORAGE_KEY = 'cs_chemistry_call_form';
+
+/**
+ * Load saved form data from localStorage
+ */
+function loadSavedFormData() {
+    try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch (e) {
+        // ignore
+    }
+    return null;
+}
+
+/**
+ * Save form data to localStorage (excludes passwords)
+ */
+function saveFormData(data) {
+    try {
+        const toSave = {
+            name: data.name || '',
+            phone: data.phone || '',
+            email: data.email || '',
+            specialties: data.specialties || [],
+            goal: data.goal || '',
+        };
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch (e) {
+        // ignore
+    }
+}
+
+/**
+ * Show a DOM-based toast notification (used after redirect)
+ */
+function showGlobalToast(message) {
+    let container = document.getElementById('feed-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'feed-toast-container';
+        container.className = 'feed-toast-container';
+        document.body.appendChild(container);
+    }
+    container.textContent = message;
+    container.classList.add('visible');
+    setTimeout(() => {
+        container.classList.remove('visible');
+    }, 5000);
+}
 
 /**
  * DiscoveryCallModal Component
@@ -25,18 +77,29 @@ export function DiscoveryCallModal({ coach, session, onClose }) {
 
     const isGuest = !session?.user;
 
-    const [formData, setFormData] = useState({
-        name: session?.user?.user_metadata?.full_name || '',
-        phone: '',
-        email: session?.user?.email || '',
-        specialties: [],
-        goal: '',
-        password: '',
-        confirmPassword: '',
+    // Build initial form state: session data > localStorage > empty
+    const [formData, setFormData] = useState(() => {
+        const saved = loadSavedFormData();
+        return {
+            name: session?.user?.user_metadata?.full_name || saved?.name || '',
+            phone: saved?.phone || '',
+            email: session?.user?.email || saved?.email || '',
+            specialties: saved?.specialties || [],
+            goal: saved?.goal || '',
+            password: '',
+            confirmPassword: '',
+        };
     });
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
+
+    // Save form data to localStorage whenever it changes (excludes passwords)
+    const formDataRef = useRef(formData);
+    formDataRef.current = formData;
+    useEffect(() => {
+        saveFormData(formDataRef.current);
+    }, [formData.name, formData.phone, formData.email, formData.specialties, formData.goal]);
 
     useEffect(() => {
         const handleEscape = (e) => {
@@ -120,6 +183,8 @@ export function DiscoveryCallModal({ coach, session, onClose }) {
         }
         return true;
     };
+
+    const coachName = coach.full_name || coach.display_name;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -207,6 +272,16 @@ export function DiscoveryCallModal({ coach, session, onClose }) {
                 console.warn('Email notification failed:', emailErr);
             }
 
+            // For guests: redirect to /feed with toast message
+            if (isGuest) {
+                const toastMsg = (t('discovery.successToast') || 'Successfully sent a chemistry call request to {coachName}').replace('{coachName}', coachName);
+                onClose();
+                window.navigateTo('/feed');
+                // Small delay to let route render, then show toast
+                setTimeout(() => showGlobalToast(toastMsg), 300);
+                return;
+            }
+
             setSuccess(true);
         } catch (err) {
             console.error('Discovery call request error:', err);
@@ -215,8 +290,6 @@ export function DiscoveryCallModal({ coach, session, onClose }) {
 
         setSubmitting(false);
     };
-
-    const coachName = coach.full_name || coach.display_name;
 
     if (success) {
         return html`
@@ -239,12 +312,12 @@ export function DiscoveryCallModal({ coach, session, onClose }) {
 
     return html`
         <div class="discovery-modal-overlay" onClick=${handleBackdropClick}>
-            <div class="discovery-modal-container" style=${{ maxWidth: '520px' }}>
+            <div class="discovery-modal-container">
                 <div class="discovery-modal-header">
                     <h3>${t('discovery.modalTitle') || 'Book a Free Discovery Call'}</h3>
                     <button class="discovery-modal-close" onClick=${onClose}>✕</button>
                 </div>
-                <div class="discovery-modal-content" style=${{ maxHeight: '70vh', overflowY: 'auto' }}>
+                <div class="discovery-modal-content">
                     <p class="discovery-intro">
                         ${(t('discovery.modalIntro') || 'Get to know {coachName} with a free discovery call. Share your contact info and preferred time, and they\'ll reach out to schedule.').replace('{coachName}', coachName)}
                     </p>
@@ -293,7 +366,7 @@ export function DiscoveryCallModal({ coach, session, onClose }) {
                         <div class="form-group">
                             <label>${t('discovery.coachingType') || 'Coaching Type'} *</label>
                             ${formData.specialties.length > 0 && html`
-                                <div class="selected-pills" style=${{ marginBottom: '8px' }}>
+                                <div class="selected-pills">
                                     ${formData.specialties.map(code => html`
                                         <span key=${code} class="specialty-pill-inline">
                                             ${getSpecialtyDisplayName(code)}
@@ -329,22 +402,11 @@ export function DiscoveryCallModal({ coach, session, onClose }) {
 
                         <!-- Password fields (guests only) -->
                         ${isGuest && html`
-                            <div style=${{
-                                background: '#f0fdfa',
-                                border: '1px solid #d1fae5',
-                                borderRadius: '10px',
-                                padding: '14px',
-                                marginBottom: '16px',
-                            }}>
-                                <p style=${{
-                                    margin: '0 0 12px',
-                                    fontSize: '0.82rem',
-                                    color: '#065f46',
-                                    fontWeight: '500',
-                                }}>
+                            <div class="discovery-account-note">
+                                <p class="discovery-account-note-text">
                                     ${t('discovery.accountNote') || 'An account will be created for you so you can track your request.'}
                                 </p>
-                                <div class="form-group" style=${{ marginBottom: '10px' }}>
+                                <div class="form-group">
                                     <label>${t('discovery.password') || 'Password'} *</label>
                                     <input
                                         type="password"
@@ -355,7 +417,7 @@ export function DiscoveryCallModal({ coach, session, onClose }) {
                                         minLength="6"
                                     />
                                 </div>
-                                <div class="form-group" style=${{ marginBottom: '0' }}>
+                                <div class="form-group">
                                     <label>${t('discovery.confirmPassword') || 'Confirm Password'} *</label>
                                     <input
                                         type="password"
