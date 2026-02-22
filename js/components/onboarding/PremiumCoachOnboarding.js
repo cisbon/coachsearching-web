@@ -485,81 +485,54 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 .replace(/^-|-$/g, '');
             const slug = `${baseSlug}-${userId.substring(0, 8)}`;
 
-            const coachData = {
-                user_id: userId,
-                full_name: fullName,
-                title: data.professional_title,
-                bio: data.bio,
-                intro_video_url: isValidVideoUrl(data.intro_video_url) ? data.intro_video_url : null,
-                avatar_url: data.avatar_url,
-                city_id: data.city_id,  // Reference to cs_cities.id
-                years_experience: parseInt(data.years_experience) || 0,
-                specialties: data.specialties,
-                languages: data.languages,
-                session_types: data.session_formats, // DB column is session_types
-                hourly_rate: parseFloat(data.hourly_rate) || 0,
-                currency: 'EUR',
+            // New schema: display/profile data → cs_users.profile_data JSONB
+            //            operational data → cs_coaches (user_id PK)
+
+            const profileData = {
+                title:             data.professional_title,
+                bio:               data.bio,
+                intro_video_url:   isValidVideoUrl(data.intro_video_url) ? data.intro_video_url : null,
+                city_id:           data.city_id,
+                years_experience:  parseInt(data.years_experience) || 0,
+                specialties:       data.specialties,
+                languages:         data.languages,
+                session_types:     data.session_formats,
+                hourly_rate:       parseFloat(data.hourly_rate) || 0,
+                currency:          'EUR',
                 offers_free_discovery: data.offers_free_discovery !== false,
-                is_active: true,
-                onboarding_completed: true,
-                slug: slug
             };
 
-            // Ensure cs_users record exists (required for foreign key)
-            const { data: existingUser } = await supabase
+            // Upsert cs_users (core fields + profile_data)
+            const { error: userError } = await supabase
                 .from('cs_users')
-                .select('id')
-                .eq('id', userId)
-                .single();
+                .upsert({
+                    id:                   userId,
+                    email:                session.user.email,
+                    full_name:            fullName,
+                    avatar_url:           data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                    user_type:            'coach',
+                    slug:                 slug,
+                    onboarding_completed: true,
+                    is_active:            true,
+                    profile_data:         profileData,
+                    updated_at:           new Date().toISOString(),
+                }, { onConflict: 'id' });
 
-            if (!existingUser) {
-                // User doesn't exist, create it
-                const { error: userError } = await supabase
-                    .from('cs_users')
-                    .insert({
-                        id: userId,
-                        email: session.user.email,
-                        full_name: fullName,
-                        user_type: 'coach',
-                        avatar_url: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`
-                    });
+            if (userError) throw userError;
 
-                if (userError) {
-                    throw userError;
-                }
-            }
-
-            // Check if coach profile exists
-            const { data: existingCoach } = await supabase
+            // Upsert cs_coaches (operational fields only)
+            const { error: coachError } = await supabase
                 .from('cs_coaches')
-                .select('id, slug')
-                .eq('user_id', userId)
-                .single();
+                .upsert({
+                    user_id:              userId,
+                    onboarding_completed: true,
+                    updated_at:           new Date().toISOString(),
+                }, { onConflict: 'user_id' });
 
-            let coachId = null;
-            let coachSlug = slug; // Default to newly generated slug
+            if (coachError) throw coachError;
 
-            if (existingCoach) {
-                // Update existing - don't update slug
-                coachId = existingCoach.id;
-                coachSlug = existingCoach.slug || slug;
-                const { slug: _slug, ...updateData } = coachData;
-                const { error } = await supabase
-                    .from('cs_coaches')
-                    .update(updateData)
-                    .eq('user_id', userId);
-                if (error) throw error;
-            } else {
-                // Insert new and get the returned id
-                const { data: newCoach, error } = await supabase
-                    .from('cs_coaches')
-                    .insert(coachData)
-                    .select('id, slug')
-                    .single();
-                if (error) throw error;
-                coachId = newCoach?.id;
-                coachSlug = newCoach?.slug || slug;
-            }
+            const coachId   = userId; // in new schema, user_id IS the PK
+            const coachSlug = slug;
 
             // Handle referral code if valid - insert into cs_referral_code_usage
             if (data.referral_code_valid && data.referral_code && data.referral_code_id) {

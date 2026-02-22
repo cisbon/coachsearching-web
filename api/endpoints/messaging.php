@@ -50,30 +50,21 @@ function getUserType($db, string $userId): array
         'client_id' => null
     ];
 
-    // Check if user is a coach
-    $coach = $db->from('cs_coaches')
-        ->select('id')
-        ->eq('user_id', $userId)
+    // Determine role from cs_users.user_type (new schema)
+    $userRow = $db->from('cs_users')
+        ->select('id, user_type')
+        ->eq('id', $userId)
         ->single()
         ->execute();
 
-    if (!isset($coach['error']) && !empty($coach['data'])) {
-        $result['type'] = 'coach';
-        $result['coach_id'] = $coach['data']['id'];
-    }
+    $userType = $userRow['data']['user_type'] ?? null;
 
-    // Check if user is a client
-    $client = $db->from('cs_clients')
-        ->select('id')
-        ->eq('user_id', $userId)
-        ->single()
-        ->execute();
-
-    if (!isset($client['error']) && !empty($client['data'])) {
-        $result['client_id'] = $client['data']['id'];
-        if ($result['type'] === 'unknown') {
-            $result['type'] = 'client';
-        }
+    if ($userType === 'coach') {
+        $result['type']     = 'coach';
+        $result['coach_id'] = $userId; // user_id IS the coach PK in new schema
+    } elseif ($userType === 'client') {
+        $result['type']      = 'client';
+        $result['client_id'] = $userId; // user_id IS the client PK in new schema
     }
 
     return $result;
@@ -134,13 +125,13 @@ function getConversations($db, string $userId, array $userType): void
                 client_unread_count,
                 is_archived,
                 created_at,
-                cs_coaches (
+                cs_users!coach_id (
                     id,
                     full_name,
                     avatar_url,
-                    title
+                    profile_data
                 ),
-                cs_clients (
+                cs_users!client_id (
                     id,
                     full_name,
                     avatar_url
@@ -198,18 +189,16 @@ function getConversation($db, string $userId, array $userType, string $conversat
                 coach_unread_count,
                 client_unread_count,
                 created_at,
-                cs_coaches (
+                cs_users!coach_id (
                     id,
                     full_name,
                     avatar_url,
-                    title,
-                    user_id
+                    profile_data
                 ),
-                cs_clients (
+                cs_users!client_id (
                     id,
                     full_name,
-                    avatar_url,
-                    user_id
+                    avatar_url
                 )
             ')
             ->eq('id', $conversationId)

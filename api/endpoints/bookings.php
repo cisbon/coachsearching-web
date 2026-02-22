@@ -124,12 +124,15 @@ function bookDiscoveryCall($input) {
         return ['error' => 'You already have a pending discovery call with this coach', 'status' => 409];
     }
 
-    // Get coach info for notification
-    $coach = $db->from('cs_coaches')
-        ->select('user_id, display_name, email')
+    // Get coach info — display data now lives in cs_users (new schema)
+    $coach = $db->from('cs_users')
+        ->select('id, full_name, email')
         ->eq('id', $coachId)
         ->single()
         ->execute();
+    if ($coach) {
+        $coach['display_name'] = $coach['full_name']; // backwards-compat alias
+    }
 
     if (!$coach || isset($coach['error'])) {
         return ['error' => 'Coach not found', 'status' => 404];
@@ -238,12 +241,17 @@ function createBookingIntent($input) {
         return ['error' => 'This time slot is no longer available', 'status' => 409];
     }
 
-    // Get coach pricing and Stripe account
-    $coach = $db->from('cs_coaches')
-        ->select('id, user_id, display_name, email, hourly_rate, currency')
+    // Get coach pricing and display info — new schema: join cs_users + cs_coaches
+    $coach = $db->from('cs_users')
+        ->select('id, full_name, email, currency, profile_data')
         ->eq('id', $coachId)
         ->single()
         ->execute();
+    if ($coach) {
+        $coach['display_name'] = $coach['full_name'];
+        $coach['hourly_rate']  = $coach['profile_data']['hourly_rate'] ?? null;
+        $coach['currency']     = $coach['profile_data']['currency']    ?? $coach['currency'] ?? 'EUR';
+    }
 
     if (!$coach || isset($coach['error'])) {
         return ['error' => 'Coach not found', 'status' => 404];
@@ -372,7 +380,7 @@ function confirmBooking($bookingId, $input) {
 
     // Get the booking
     $booking = $db->from('cs_bookings')
-        ->select('*, cs_coaches(display_name, email)')
+        ->select('*, cs_users!coach_id(full_name, email)')
         ->eq('id', $bookingId)
         ->single()
         ->execute();
@@ -480,8 +488,8 @@ function confirmBooking($bookingId, $input) {
     }
 
     // Queue notifications
-    $coachEmail = $booking['cs_coaches']['email'];
-    $coachName = $booking['cs_coaches']['display_name'];
+    $coachEmail = $booking['cs_users']['email']    ?? $booking['cs_coaches']['email']    ?? '';
+    $coachName  = $booking['cs_users']['full_name'] ?? $booking['cs_coaches']['display_name'] ?? 'Coach';
 
     queueNotification($booking['coach_id'], 'new_booking', [
         'booking_id' => $bookingId,
@@ -518,7 +526,7 @@ function cancelBooking($bookingId, $input) {
 
     // Get the booking
     $booking = $db->from('cs_bookings')
-        ->select('*, cs_coaches(display_name, email)')
+        ->select('*, cs_users!coach_id(full_name, email)')
         ->eq('id', $bookingId)
         ->single()
         ->execute();
@@ -609,8 +617,8 @@ function cancelBooking($bookingId, $input) {
         ->execute();
 
     // Queue notifications
-    $coachEmail = $booking['cs_coaches']['email'];
-    $coachName = $booking['cs_coaches']['display_name'];
+    $coachEmail = $booking['cs_users']['email']    ?? $booking['cs_coaches']['email']    ?? '';
+    $coachName  = $booking['cs_users']['full_name'] ?? $booking['cs_coaches']['display_name'] ?? 'Coach';
 
     if ($cancelledBy === 'client') {
         queueNotification($booking['coach_id'], 'booking_cancelled', [
@@ -655,7 +663,7 @@ function rescheduleBooking($bookingId, $input) {
 
     // Get the booking
     $booking = $db->from('cs_bookings')
-        ->select('*, cs_coaches(display_name, email)')
+        ->select('*, cs_users!coach_id(full_name, email)')
         ->eq('id', $bookingId)
         ->single()
         ->execute();
@@ -707,8 +715,8 @@ function rescheduleBooking($bookingId, $input) {
         ->execute();
 
     // Queue notifications
-    $coachEmail = $booking['cs_coaches']['email'];
-    $coachName = $booking['cs_coaches']['display_name'];
+    $coachEmail = $booking['cs_users']['email']    ?? $booking['cs_coaches']['email']    ?? '';
+    $coachName  = $booking['cs_users']['full_name'] ?? $booking['cs_coaches']['display_name'] ?? 'Coach';
 
     if ($rescheduledBy === 'client') {
         queueNotification($booking['coach_id'], 'booking_rescheduled', [
@@ -755,7 +763,7 @@ function bookPackageSession($input) {
 
     // Get the package
     $package = $db->from('cs_booking_packages')
-        ->select('*, cs_coaches(display_name, email)')
+        ->select('*, cs_users!coach_id(full_name, email)')
         ->eq('id', $packageId)
         ->single()
         ->execute();
@@ -962,7 +970,7 @@ function getBooking($bookingId) {
     $db = new Database();
 
     $booking = $db->from('cs_bookings')
-        ->select('*, cs_coaches(id, display_name, profile_image_url, specialties)')
+        ->select('*, cs_users!coach_id(id, full_name, avatar_url, profile_data)')
         ->eq('id', $bookingId)
         ->single()
         ->execute();
@@ -1046,7 +1054,7 @@ function getClientBookings() {
     }
 
     $query = $db->from('cs_bookings')
-        ->select('*, cs_coaches(id, display_name, profile_image_url, specialties)')
+        ->select('*, cs_users!coach_id(id, full_name, avatar_url, profile_data)')
         ->order('start_time', ['ascending' => false]);
 
     if ($clientId) {
@@ -1147,13 +1155,14 @@ function formatBookingResponse($booking) {
         'created_at' => $booking['created_at']
     ];
 
-    // Include coach info if joined
-    if (isset($booking['cs_coaches'])) {
+    // Include coach info if joined (new schema: cs_users!coach_id)
+    $coachJoin = $booking['cs_users'] ?? $booking['cs_coaches'] ?? null;
+    if ($coachJoin) {
         $response['coach'] = [
-            'id' => $booking['cs_coaches']['id'],
-            'name' => $booking['cs_coaches']['display_name'],
-            'image' => $booking['cs_coaches']['profile_image_url'],
-            'specialties' => $booking['cs_coaches']['specialties'] ?? []
+            'id'          => $coachJoin['id'],
+            'name'        => $coachJoin['full_name']    ?? $coachJoin['display_name'] ?? '',
+            'image'       => $coachJoin['avatar_url']   ?? $coachJoin['profile_image_url'] ?? null,
+            'specialties' => $coachJoin['profile_data']['specialties'] ?? $coachJoin['specialties'] ?? [],
         ];
     }
 

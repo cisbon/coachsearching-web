@@ -350,23 +350,30 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
         }
     }, [reposted, post.id, session]);
 
+    // New schema: author data from joined cs_users object.
+    // Fall back gracefully to legacy author_* fields during the transition period.
+    const authorName   = post.cs_users?.full_name          || post.author_name   || null;
+    const authorAvatar = post.cs_users?.avatar_url         || post.author_avatar || null;
+    const authorSlug   = post.cs_users?.slug               || post.author_slug   || null;
+    const authorTitle  = post.cs_users?.profile_data?.title || post.author_title  || null;
+
     const handleShare = useCallback(() => {
         const url = `${window.location.origin}/feed?post=${post.id}`;
         if (navigator.share) {
-            navigator.share({ title: post.author_name, text: post.content?.slice(0, 100), url });
+            navigator.share({ title: authorName, text: post.content?.slice(0, 100), url });
         } else {
             navigator.clipboard.writeText(url).then(() => {
                 showToast(t('feed.linkCopied') || 'Link copied!');
             });
         }
-    }, [post]);
+    }, [post, authorName]);
 
     const handleAuthorClick = () => {
-        if (post.author_slug) {
-            if (post.author_slug.startsWith('u/')) {
-                window.navigateTo(`/${post.author_slug}`);
+        if (authorSlug) {
+            if (authorSlug.startsWith('u/')) {
+                window.navigateTo(`/${authorSlug}`);
             } else {
-                window.navigateTo(`/coach/${post.author_slug}`);
+                window.navigateTo(`/coach/${authorSlug}`);
             }
         }
     };
@@ -382,14 +389,14 @@ export function FeedPost({ post, session, onHighlightToggle, compact }) {
         <div class="feed-card feed-post ${compact ? 'feed-post-compact' : ''}">
             <div class="feed-post-header">
                 <img
-                    src=${post.author_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author_name || 'User')}&background=006266&color=fff`}
-                    alt=${post.author_name}
+                    src=${authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName || 'User')}&background=006266&color=fff`}
+                    alt=${authorName}
                     class="feed-post-avatar"
                     onClick=${handleAuthorClick}
                 />
                 <div class="feed-post-meta">
-                    <div class="feed-post-author" onClick=${handleAuthorClick}>${post.author_name || (t('feed.anonymous') || 'Anonymous')}</div>
-                    ${post.author_title && html`<div class="feed-post-author-title">${post.author_title}</div>`}
+                    <div class="feed-post-author" onClick=${handleAuthorClick}>${authorName || (t('feed.anonymous') || 'Anonymous')}</div>
+                    ${authorTitle && html`<div class="feed-post-author-title">${authorTitle}</div>`}
                     <div class="feed-post-time">${timeAgo(post.created_at)}</div>
                 </div>
                 <!-- Highlight star -->

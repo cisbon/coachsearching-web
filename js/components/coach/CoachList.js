@@ -515,31 +515,16 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
 
         if (window.supabaseClient) {
             try {
+                // New schema: use coach_profiles view for flat display columns
                 const supabaseCoaches = await queryClient.fetchQuery({
                     queryKey: QUERY_KEYS.coachList('all'),
                     queryFn: async () => {
                         const { data, error } = await window.supabaseClient
-                            .from('cs_coaches')
-                            .select(`
-                                *,
-                                cs_coach_certifications (
-                                    id,
-                                    certification_id,
-                                    date_acquired,
-                                    certificate_url,
-                                    certificate_file_path,
-                                    is_verified,
-                                    cs_certifications (
-                                        id,
-                                        code,
-                                        name,
-                                        short_name,
-                                        badge_url,
-                                        sort_order
-                                    )
-                                )
-                            `)
-                            .order('created_at', { ascending: false });
+                            .from('coach_profiles')
+                            .select('*')
+                            .eq('onboarding_completed', true)
+                            .order('is_featured', { ascending: false })
+                            .order('profile_views', { ascending: false });
                         if (error) throw error;
                         return data || [];
                     },

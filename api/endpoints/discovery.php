@@ -73,53 +73,41 @@ function handleSearch($method) {
     $limit = min(50, max(1, intval($params['limit'] ?? 20)));
     $offset = ($page - 1) * $limit;
 
-    // Build Supabase query
-    $url = SUPABASE_URL . '/rest/v1/cs_coaches?select=*';
+    // Use coach_profiles view (flattens cs_users + cs_coaches + profile_data JSONB)
+    $url = SUPABASE_URL . '/rest/v1/coach_profiles?select=*';
 
-    // Base filter: only completed onboarding
+    // Base filter: only coaches who finished onboarding
     $url .= '&onboarding_completed=eq.true';
 
-    // Text search (across multiple fields)
+    // Text search across flat view columns
     if (!empty($query)) {
         $searchTerm = urlencode($query);
-        $url .= "&or=(full_name.ilike.%{$searchTerm}%,title.ilike.%{$searchTerm}%,bio.ilike.%{$searchTerm}%,city.ilike.%{$searchTerm}%)";
+        $url .= "&or=(full_name.ilike.%{$searchTerm}%,title.ilike.%{$searchTerm}%,bio.ilike.%{$searchTerm}%)";
     }
 
-    // Apply filters
     if (is_string($filters)) {
         $filters = json_decode($filters, true) ?? [];
     }
 
-    if (!empty($filters['location'])) {
-        $location = urlencode($filters['location']);
-        $url .= "&city=ilike.%{$location}%";
-    }
-
     if (!empty($filters['priceMin'])) {
-        $url .= "&hourly_rate=gte.{$filters['priceMin']}";
+        $url .= '&hourly_rate=gte.' . floatval($filters['priceMin']);
     }
 
     if (!empty($filters['priceMax'])) {
-        $url .= "&hourly_rate=lte.{$filters['priceMax']}";
+        $url .= '&hourly_rate=lte.' . floatval($filters['priceMax']);
     }
 
     if (!empty($filters['hasVideo'])) {
-        $url .= "&video_intro_url=not.is.null";
+        // intro_video_url is a view column from profile_data
+        $url .= '&intro_video_url=not.is.null';
     }
 
     if (!empty($filters['verified'])) {
-        $url .= "&is_verified=eq.true";
+        $url .= '&is_verified=eq.true';
     }
 
-    if (!empty($filters['minRating'])) {
-        $url .= "&rating_average=gte.{$filters['minRating']}";
-    }
-
-    // Sorting
+    // Sorting (all columns come from the view)
     switch ($sort) {
-        case 'rating':
-            $url .= '&order=rating_average.desc.nullslast';
-            break;
         case 'price_low':
             $url .= '&order=hourly_rate.asc.nullslast';
             break;
@@ -132,8 +120,8 @@ function handleSearch($method) {
         case 'newest':
             $url .= '&order=created_at.desc';
             break;
-        default: // recommended
-            $url .= '&order=video_intro_url.desc.nullslast,trust_score.desc.nullslast,rating_average.desc.nullslast';
+        default: // recommended / rating
+            $url .= '&order=is_featured.desc.nullslast,intro_video_url.desc.nullslast,profile_views.desc.nullslast';
     }
 
     // Pagination
@@ -508,7 +496,7 @@ function getAIQuizMatchesInternal($answers, $limit = 10, $language = 'en') {
  * Fetch active coaches from database
  */
 function fetchActiveCoaches() {
-    $url = SUPABASE_URL . '/rest/v1/cs_coaches?select=*&onboarding_completed=eq.true';
+    $url = SUPABASE_URL . '/rest/v1/coach_profiles?select=*&onboarding_completed=eq.true';
 
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -530,7 +518,7 @@ function fetchActiveCoaches() {
 
 function calculateMatches($answers, $limit = 10) {
     // Fetch all active coaches
-    $url = SUPABASE_URL . '/rest/v1/cs_coaches?select=*&onboarding_completed=eq.true';
+    $url = SUPABASE_URL . '/rest/v1/coach_profiles?select=*&onboarding_completed=eq.true';
 
     $ch = curl_init($url);
     curl_setopt_array($ch, [

@@ -98,10 +98,12 @@ export const DashboardProfile = ({ session, userType }) => {
 
     const loadCoachProfile = async () => {
         try {
-            const { data: coach, error } = await window.supabaseClient
-                .from('cs_coaches')
-                .select('*')
-                .eq('user_id', session.user.id)
+            // New schema: display data lives in cs_users.profile_data JSONB.
+            // Join cs_coaches for operational fields (subscription, onboarding, etc.).
+            const { data: user, error } = await window.supabaseClient
+                .from('cs_users')
+                .select('*, cs_coaches(id, onboarding_completed, subscription_status)')
+                .eq('id', session.user.id)
                 .single();
 
             if (error && error.code !== 'PGRST116') {
@@ -109,42 +111,41 @@ export const DashboardProfile = ({ session, userType }) => {
                 return;
             }
 
-            if (coach) {
-                setCoachId(coach.id);
-                // Handle both old field names (offers_virtual/offers_onsite) and new (offers_online/offers_in_person)
-                const offersOnline = coach.offers_online ?? coach.offers_virtual ?? true;
-                const offersInPerson = coach.offers_in_person ?? coach.offers_onsite ?? false;
+            if (user) {
+                // cs_coaches row for this coach (operational data)
+                const coachOp = user.cs_coaches || {};
+                setCoachId(user.id); // in new schema, user_id IS the coach PK
 
-                // Get city_id - either directly from coach or lookup from city name
-                let cityId = coach.city_id || null;
+                const pd = user.profile_data || {};
+                const sessionTypes = pd.session_types || [];
+                const offersOnline   = sessionTypes.includes('online') || pd.offers_online   ?? true;
+                const offersInPerson = sessionTypes.includes('in-person') || pd.offers_in_person ?? false;
+
+                let cityId = pd.city_id || null;
                 let locationCountry = '';
-
-                // If we have a city_id, get the country from the city
                 if (cityId && cities.list) {
                     const city = cities.list.find(c => c.id === cityId);
-                    if (city) {
-                        locationCountry = city.country_en;
-                    }
+                    if (city) locationCountry = city.country_en;
                 }
 
                 setFormData({
-                    full_name: coach.full_name || '',
-                    avatar_url: coach.avatar_url || '',
-                    banner_url: coach.banner_url || '',
-                    title: coach.title || '',
-                    bio: coach.bio || '',
-                    city_id: cityId,
+                    full_name:       user.full_name || '',
+                    avatar_url:      user.avatar_url || '',
+                    banner_url:      pd.banner_url || '',
+                    title:           pd.title || '',
+                    bio:             pd.bio || '',
+                    city_id:         cityId,
                     location_country: locationCountry,
-                    hourly_rate: coach.hourly_rate || '',
-                    currency: coach.currency || 'EUR',
-                    specialties: Array.isArray(coach.specialties) ? coach.specialties : [],
-                    languages: Array.isArray(coach.languages) ? coach.languages : [],
-                    years_experience: coach.years_experience || 0,
-                    offers_online: offersOnline,
+                    hourly_rate:     pd.hourly_rate || '',
+                    currency:        pd.currency || user.currency || 'EUR',
+                    specialties:     Array.isArray(pd.specialties) ? pd.specialties : [],
+                    languages:       Array.isArray(pd.languages) ? pd.languages : [],
+                    years_experience: pd.years_experience || 0,
+                    offers_online:   offersOnline,
                     offers_in_person: offersInPerson,
-                    website_url: coach.website_url || '',
-                    linkedin_url: coach.linkedin_url || '',
-                    intro_video_url: coach.intro_video_url || ''
+                    website_url:     pd.website_url || '',
+                    linkedin_url:    pd.linkedin_url || '',
+                    intro_video_url: pd.intro_video_url || '',
                 });
             }
         } catch (err) {
@@ -196,10 +197,24 @@ export const DashboardProfile = ({ session, userType }) => {
     const saveField = async (field, value) => {
         if (!coachId) return;
         try {
-            await window.supabaseClient
-                .from('cs_coaches')
-                .update({ [field]: value, updated_at: new Date().toISOString() })
-                .eq('id', coachId);
+            // New schema: core fields (full_name, avatar_url) → cs_users column
+            // Display fields (title, bio, hourly_rate, …) → cs_users.profile_data JSONB
+            const coreFields = ['full_name', 'avatar_url', 'slug', 'currency', 'timezone'];
+            if (coreFields.includes(field)) {
+                await window.supabaseClient
+                    .from('cs_users')
+                    .update({ [field]: value, updated_at: new Date().toISOString() })
+                    .eq('id', coachId);
+            } else {
+                // Merge patch into profile_data using Postgres || via RPC, or fetch-merge-update
+                const { data: cur } = await window.supabaseClient
+                    .from('cs_users').select('profile_data').eq('id', coachId).single();
+                const merged = { ...(cur?.profile_data || {}), [field]: value };
+                await window.supabaseClient
+                    .from('cs_users')
+                    .update({ profile_data: merged, updated_at: new Date().toISOString() })
+                    .eq('id', coachId);
+            }
             queryClient.invalidateQueries({ queryKey: ['coach', 'profile'] });
             queryClient.invalidateQueries({ queryKey: ['coaches'] });
             queryClient.invalidateQueries({ queryKey: ['user', 'coachProfile'] });
@@ -216,32 +231,46 @@ export const DashboardProfile = ({ session, userType }) => {
             if (formData.offers_online) sessionFormats.push('online');
             if (formData.offers_in_person) sessionFormats.push('in-person');
 
-            const profileData = {
-                user_id: session.user.id,
-                full_name: formData.full_name,
-                avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
-                banner_url: formData.banner_url,
-                title: formData.title,
-                bio: formData.bio,
-                city_id: formData.city_id,  // Reference to cs_cities.id
-                hourly_rate: parseFloat(formData.hourly_rate) || 0,
-                currency: formData.currency,
-                specialties: formData.specialties,
-                languages: formData.languages,
+            // New schema: write display data to cs_users.profile_data JSONB.
+            // Fetch current profile_data to merge (avoid overwriting unrelated fields).
+            const { data: curUser } = await window.supabaseClient
+                .from('cs_users').select('profile_data').eq('id', session.user.id).single();
+
+            const mergedProfileData = {
+                ...(curUser?.profile_data || {}),
+                banner_url:       formData.banner_url,
+                title:            formData.title,
+                bio:              formData.bio,
+                city_id:          formData.city_id,
+                hourly_rate:      parseFloat(formData.hourly_rate) || 0,
+                currency:         formData.currency,
+                specialties:      formData.specialties,
+                languages:        formData.languages,
                 years_experience: parseInt(formData.years_experience) || 0,
-                offers_online: formData.offers_online,
-                offers_in_person: formData.offers_in_person,
-                session_formats: sessionFormats,
-                website_url: formData.website_url,
-                linkedin_url: formData.linkedin_url,
-                intro_video_url: formData.intro_video_url,
-                onboarding_completed: true,
-                updated_at: new Date().toISOString()
+                session_types:    sessionFormats,
+                website_url:      formData.website_url,
+                linkedin_url:     formData.linkedin_url,
+                intro_video_url:  formData.intro_video_url,
             };
 
+            // Update cs_users (core fields + profile_data)
             const { error } = await window.supabaseClient
+                .from('cs_users')
+                .update({
+                    full_name:    formData.full_name,
+                    avatar_url:   formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                    currency:     formData.currency,
+                    onboarding_completed: true,
+                    profile_data: mergedProfileData,
+                    updated_at:   new Date().toISOString(),
+                })
+                .eq('id', session.user.id);
+
+            // Also update onboarding_completed on cs_coaches (operational table)
+            await window.supabaseClient
                 .from('cs_coaches')
-                .upsert(profileData, { onConflict: 'user_id' });
+                .update({ onboarding_completed: true, updated_at: new Date().toISOString() })
+                .eq('user_id', session.user.id);
 
             if (error) throw error;
 

@@ -202,15 +202,13 @@ export function PostEditor({ session, userProfile, onPostCreated, onClose, initi
                 });
             }
 
+            // New schema: cs_posts no longer stores denormalized author_* columns.
+            // Author data is read at display time by joining cs_users!user_id.
             const { data, error } = await supabase.from('cs_posts').insert({
                 user_id: session.user.id,
                 content: content.trim(),
                 image_url: imageUrl,
                 video_url: videoEmbed ? videoUrl : null,
-                author_name: displayName,
-                author_avatar: avatarUrl,
-                author_title: userProfile?.title || null,
-                author_slug: userProfile?.slug || null,
             }).select().single();
 
             if (error) throw error;

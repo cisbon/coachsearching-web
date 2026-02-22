@@ -39,9 +39,11 @@ export function FeedLayout({ session, userProfile, leftColumn, rightColumn }) {
             const data = await queryClient.fetchQuery({
                 queryKey: QUERY_KEYS.feedPosts(offset),
                 queryFn: async () => {
+                    // New schema: join cs_users!user_id for author display data.
+                    // profile_data JSONB exposes role-specific fields (e.g. title for coaches).
                     const { data: d, error } = await supabase
                         .from('cs_posts')
-                        .select('*')
+                        .select('*, cs_users!user_id(id, full_name, avatar_url, slug, profile_data)')
                         .order('created_at', { ascending: false })
                         .range(offset, offset + PAGE_SIZE - 1);
                     if (error) throw error;
@@ -101,11 +103,16 @@ export function FeedLayout({ session, userProfile, leftColumn, rightColumn }) {
     }, [hasMore, loadingMore, loading, posts.length, loadPosts]);
 
     const handlePostCreated = (newPost) => {
-        if (userProfile) {
-            newPost.author_name = userProfile.full_name;
-            newPost.author_avatar = userProfile.avatar_url;
-            newPost.author_title = userProfile.title;
-            if (userProfile.slug) newPost.author_slug = userProfile.slug;
+        // New schema: attach the cs_users join object so FeedPost can read author data
+        // the same way it does for posts fetched from Supabase.
+        if (userProfile || session?.user) {
+            newPost.cs_users = {
+                id:           session?.user?.id,
+                full_name:    userProfile?.full_name || session?.user?.user_metadata?.full_name || '',
+                avatar_url:   userProfile?.avatar_url || session?.user?.user_metadata?.avatar_url || null,
+                slug:         userProfile?.slug || null,
+                profile_data: { title: userProfile?.title || null },
+            };
         }
         setPosts(prev => [newPost, ...prev]);
     };

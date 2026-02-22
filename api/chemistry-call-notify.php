@@ -30,8 +30,8 @@ $clientEmail = $data['client_email'] ?? '';
 $specialties = $data['specialties'] ?? [];
 $goal = $data['goal'] ?? '';
 
-// Fetch coach email from Supabase
-$url = SUPABASE_URL . '/rest/v1/cs_coaches?select=full_name,email,user_id&user_id=eq.' . urlencode($coachId) . '&limit=1';
+// Fetch coach display info from cs_users (new schema: display data lives in cs_users)
+$url = SUPABASE_URL . '/rest/v1/cs_users?select=id,full_name,email&id=eq.' . urlencode($coachId) . '&user_type=eq.coach&limit=1';
 $ch = curl_init($url);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,

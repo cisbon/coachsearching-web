@@ -43,27 +43,28 @@ function searchCoaches($filters) {
     $page = max(1, (int)($filters['page'] ?? 1));
     $limit = min(50, max(1, (int)($filters['limit'] ?? 20)));
 
-    // Select visible coaches with required fields
-    $selectFields = 'id, display_name, professional_title, bio, specialties, languages, hourly_rate, currency, rating, review_count, is_verified, profile_image_url, video_url, session_formats, location, created_at';
+    // Use the coach_profiles view which flattens cs_users + cs_coaches + profile_data JSONB.
+    // Columns available: id, full_name, avatar_url, slug, email, title, bio, specialties,
+    // languages, session_types, hourly_rate, is_verified, is_featured, profile_views,
+    // intro_video_url, onboarding_completed, subscription_status, …
+    $selectFields = 'id,full_name,avatar_url,slug,title,bio,specialties,languages,session_types,'
+                  . 'hourly_rate,currency,is_verified,is_featured,profile_views,intro_video_url,'
+                  . 'city_id,offers_free_discovery,years_experience,banner_url,created_at';
 
-    // Build query
-    $dbQuery = $db->from('cs_coaches')
+    // Build query against the view
+    $dbQuery = $db->from('coach_profiles')
         ->select($selectFields)
-        ->eq('is_visible', true);
+        ->eq('onboarding_completed', true);
 
-    // Apply text search if provided
-    // Note: Supabase text search uses ilike for simple matching
     if (!empty($query)) {
-        // Search in name, title, bio, and specialties
-        // For now, use simple ilike - production might use full-text search
         $dbQuery = $dbQuery->or(
-            'display_name.ilike.%' . $query . '%,' .
-            'professional_title.ilike.%' . $query . '%,' .
-            'bio.ilike.%' . $query . '%'
+            'full_name.ilike.%' . $query . '%,' .
+            'title.ilike.%'     . $query . '%,' .
+            'bio.ilike.%'       . $query . '%'
         );
     }
 
-    // Apply price filters
+    // Price filters (hourly_rate is a real numeric column in the view)
     if ($minPrice !== null) {
         $dbQuery = $dbQuery->gte('hourly_rate', $minPrice);
     }
@@ -71,38 +72,23 @@ function searchCoaches($filters) {
         $dbQuery = $dbQuery->lte('hourly_rate', $maxPrice);
     }
 
-    // Apply rating filter
-    if ($minRating !== null) {
-        $dbQuery = $dbQuery->gte('rating', $minRating);
-    }
-
-    // Apply verification filter
+    // Verification filter (is_verified is a boolean column in the view)
     if ($isVerified === true) {
         $dbQuery = $dbQuery->eq('is_verified', true);
     }
 
     // Apply sorting
-    // Video priority: coaches with video shown first, then by rating
     switch ($sort) {
         case 'video_priority':
-            // Coaches with video_url first, then by rating
             $dbQuery = $dbQuery
-                ->order('video_url', ['ascending' => false, 'nullsFirst' => false])
-                ->order('rating', ['ascending' => false, 'nullsFirst' => false]);
-            break;
-
-        case 'rating':
-        case 'rating_desc':
-            $dbQuery = $dbQuery->order('rating', ['ascending' => false, 'nullsFirst' => false]);
-            break;
-
-        case 'rating_asc':
-            $dbQuery = $dbQuery->order('rating', ['ascending' => true]);
+                ->order('is_featured',    ['ascending' => false, 'nullsFirst' => false])
+                ->order('intro_video_url', ['ascending' => false, 'nullsFirst' => false])
+                ->order('profile_views',   ['ascending' => false, 'nullsFirst' => false]);
             break;
 
         case 'price_low':
         case 'price_asc':
-            $dbQuery = $dbQuery->order('hourly_rate', ['ascending' => true, 'nullsFirst' => false]);
+            $dbQuery = $dbQuery->order('hourly_rate', ['ascending' => true,  'nullsFirst' => false]);
             break;
 
         case 'price_high':
@@ -110,17 +96,14 @@ function searchCoaches($filters) {
             $dbQuery = $dbQuery->order('hourly_rate', ['ascending' => false]);
             break;
 
-        case 'reviews':
-        case 'reviews_desc':
-            $dbQuery = $dbQuery->order('review_count', ['ascending' => false, 'nullsFirst' => false]);
-            break;
-
         case 'newest':
             $dbQuery = $dbQuery->order('created_at', ['ascending' => false]);
             break;
 
         default:
-            $dbQuery = $dbQuery->order('rating', ['ascending' => false, 'nullsFirst' => false]);
+            $dbQuery = $dbQuery
+                ->order('is_featured',  ['ascending' => false, 'nullsFirst' => false])
+                ->order('profile_views', ['ascending' => false, 'nullsFirst' => false]);
     }
 
     // Apply pagination
@@ -168,12 +151,10 @@ function searchCoaches($filters) {
     }
 
     if (!empty($sessionFormat)) {
-        $results = array_filter($results, function($coach) use ($sessionFormat) {
-            $formats = $coach['session_formats'] ?? [];
-            if (!is_array($formats)) {
-                return false;
-            }
-            return in_array($sessionFormat, $formats);
+        $results = array_filter($results, function ($coach) use ($sessionFormat) {
+            $types = $coach['session_types'] ?? [];
+            if (!is_array($types)) return false;
+            return in_array($sessionFormat, $types);
         });
     }
 
@@ -201,26 +182,24 @@ function getSearchSuggestions($query) {
 
     $db = new Database();
 
-    // Search for matching coach names and specialties
-    $results = $db->from('cs_coaches')
-        ->select('display_name, professional_title, specialties')
-        ->eq('is_visible', true)
+    // Search against the coach_profiles view
+    $results = $db->from('coach_profiles')
+        ->select('full_name,title,specialties')
+        ->eq('onboarding_completed', true)
         ->or(
-            'display_name.ilike.%' . $query . '%,' .
-            'professional_title.ilike.%' . $query . '%'
+            'full_name.ilike.%' . $query . '%,' .
+            'title.ilike.%'     . $query . '%'
         )
         ->limit(10)
         ->execute();
 
     $suggestions = [];
 
-    // Collect unique suggestions
     if (is_array($results)) {
         foreach ($results as $coach) {
-            // Add coach name as suggestion
-            if (!empty($coach['display_name'])) {
+            if (!empty($coach['full_name'])) {
                 $suggestions[] = [
-                    'text' => $coach['display_name'],
+                    'text' => $coach['full_name'],
                     'type' => 'coach'
                 ];
             }

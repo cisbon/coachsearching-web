@@ -62,26 +62,19 @@ function handleFavorites(string $method, ?string $coachId, ?string $action, arra
 function getFavorites($db, string $userId): void
 {
     try {
-        // Get favorites with coach details
+        // Get favorites with coach display info from cs_users (new schema)
         $favorites = $db->from('cs_favorites')
             ->select('
                 id,
                 coach_id,
                 created_at,
-                cs_coaches (
+                cs_users!coach_id (
                     id,
                     full_name,
-                    title,
                     avatar_url,
                     slug,
-                    specialties,
-                    hourly_rate,
-                    currency,
-                    rating_average,
-                    rating_count,
-                    location_city,
-                    location_country,
-                    is_verified
+                    is_verified,
+                    profile_data
                 )
             ')
             ->eq('user_id', $userId)
@@ -135,10 +128,11 @@ function checkFavorite($db, string $userId, string $coachId): void
 function addFavorite($db, string $userId, string $coachId): void
 {
     try {
-        // Check if coach exists
-        $coach = $db->from('cs_coaches')
+        // Check if coach exists (new schema: look up cs_users by id)
+        $coach = $db->from('cs_users')
             ->select('id, full_name')
             ->eq('id', $coachId)
+            ->eq('user_type', 'coach')
             ->single()
             ->execute();
 

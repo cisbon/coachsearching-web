@@ -80,21 +80,19 @@ export function DashboardOverview({ userType, session }) {
                 setUpcomingBookings(upcoming.slice(0, 3));
             }
 
-            // If coach, load additional stats
+            // If coach, load additional stats from cs_coaches (operational table)
             if (userType === 'coach') {
-                // Load coach profile for rating
                 const { data: coachData } = await window.supabaseClient
                     .from('cs_coaches')
-                    .select('rating_average, total_reviews, total_sessions, total_earnings')
+                    .select('total_sessions_completed, profile_views')
                     .eq('user_id', userId)
                     .single();
 
                 if (coachData) {
                     setStats(prev => ({
                         ...prev,
-                        averageRating: coachData.rating_average || 0,
-                        totalReviews: coachData.total_reviews || 0,
-                        totalEarnings: coachData.total_earnings || 0
+                        totalSessions: coachData.total_sessions_completed || 0,
+                        profileViews:  coachData.profile_views || 0,
                     }));
                 }
 

@@ -111,33 +111,32 @@ function handleCoaches($method, $id, $action, $input) {
 }
 
 function getCoaches() {
-    error_log('[COACH DEBUG] getCoaches() called with video priority');
+    error_log('[COACH DEBUG] getCoaches() called — new schema (coach_profiles view)');
 
-    // Get query parameters for filtering
-    $search = $_GET['search'] ?? null;
+    $search    = $_GET['search']    ?? null;
     $specialty = $_GET['specialty'] ?? null;
-    $language = $_GET['language'] ?? null;
-    $maxPrice = $_GET['max_price'] ?? null;
-    $hasVideo = $_GET['has_video'] ?? null;
+    $language  = $_GET['language']  ?? null;
+    $maxPrice  = $_GET['max_price'] ?? null;
+    $hasVideo  = $_GET['has_video'] ?? null;
 
     try {
         $supabaseUrl = SUPABASE_URL;
         $supabaseKey = SUPABASE_ANON_KEY;
 
-        // Build query with video priority sorting
-        // Coaches with videos appear first, then sorted by trust_score, then rating
-        $url = $supabaseUrl . '/rest/v1/cs_coaches?select=*&onboarding_completed=eq.true';
+        // coach_profiles view flattens cs_users + cs_coaches + profile_data JSONB
+        $url = $supabaseUrl . '/rest/v1/coach_profiles?select=*&onboarding_completed=eq.true';
 
-        // Add filters
+        // intro_video_url is a real column in the view (from profile_data)
         if ($hasVideo === 'true') {
-            $url .= '&video_intro_url=not.is.null';
+            $url .= '&intro_video_url=not.is.null';
         }
+        // hourly_rate is a numeric column in the view
         if ($maxPrice) {
             $url .= '&hourly_rate=lte.' . floatval($maxPrice);
         }
 
-        // Sort by video presence (nulls last), then trust_score, then rating
-        $url .= '&order=video_intro_url.desc.nullslast,trust_score.desc,rating_average.desc';
+        // Sort: featured first, then by intro video presence, then profile_views
+        $url .= '&order=is_featured.desc.nullslast,intro_video_url.desc.nullslast,profile_views.desc.nullslast';
 
         $headers = [
             'apikey: ' . $supabaseKey,
@@ -150,8 +149,8 @@ function getCoaches() {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
         curl_close($ch);
 
@@ -162,69 +161,58 @@ function getCoaches() {
         if ($httpCode === 200 && $response) {
             $coaches = json_decode($response, true);
 
-            // Apply text search filter (specialty, name, location)
+            // PHP-side text search on flat view columns
             if ($search) {
-                $searchLower = strtolower($search);
-                $coaches = array_filter($coaches, function($coach) use ($searchLower) {
-                    $fullName = strtolower($coach['full_name'] ?? '');
-                    $title = strtolower($coach['title'] ?? '');
-                    $bio = strtolower($coach['bio'] ?? '');
-                    $location = strtolower($coach['location'] ?? '');
-                    $specialties = array_map('strtolower', $coach['specialties'] ?? []);
-
-                    return strpos($fullName, $searchLower) !== false
-                        || strpos($title, $searchLower) !== false
-                        || strpos($bio, $searchLower) !== false
-                        || strpos($location, $searchLower) !== false
-                        || in_array($searchLower, $specialties)
-                        || array_filter($specialties, fn($s) => strpos($s, $searchLower) !== false);
-                });
-                $coaches = array_values($coaches);
+                $sl      = strtolower($search);
+                $coaches = array_values(array_filter($coaches, function ($c) use ($sl) {
+                    $name       = strtolower($c['full_name'] ?? '');
+                    $title      = strtolower($c['title']     ?? '');
+                    $bio        = strtolower($c['bio']        ?? '');
+                    $specs      = array_map('strtolower', is_array($c['specialties']) ? $c['specialties'] : (json_decode($c['specialties'] ?? '[]', true) ?: []));
+                    return strpos($name, $sl) !== false
+                        || strpos($title, $sl) !== false
+                        || strpos($bio,   $sl) !== false
+                        || in_array($sl, $specs)
+                        || (bool)array_filter($specs, fn($s) => strpos($s, $sl) !== false);
+                }));
             }
 
-            // Filter by specific specialty
             if ($specialty) {
-                $specialtyLower = strtolower($specialty);
-                $coaches = array_filter($coaches, function($coach) use ($specialtyLower) {
-                    $specialties = array_map('strtolower', $coach['specialties'] ?? []);
-                    return in_array($specialtyLower, $specialties);
-                });
-                $coaches = array_values($coaches);
+                $sl      = strtolower($specialty);
+                $coaches = array_values(array_filter($coaches, function ($c) use ($sl) {
+                    $specs = array_map('strtolower', is_array($c['specialties']) ? $c['specialties'] : (json_decode($c['specialties'] ?? '[]', true) ?: []));
+                    return in_array($sl, $specs);
+                }));
             }
 
-            // Filter by language
             if ($language) {
-                $languageLower = strtolower($language);
-                $coaches = array_filter($coaches, function($coach) use ($languageLower) {
-                    $languages = array_map('strtolower', $coach['languages'] ?? []);
-                    return in_array($languageLower, $languages);
-                });
-                $coaches = array_values($coaches);
+                $ll      = strtolower($language);
+                $coaches = array_values(array_filter($coaches, function ($c) use ($ll) {
+                    $langs = array_map('strtolower', is_array($c['languages']) ? $c['languages'] : (json_decode($c['languages'] ?? '[]', true) ?: []));
+                    return in_array($ll, $langs);
+                }));
             }
 
-            error_log('[COACH DEBUG] Successfully loaded ' . count($coaches) . ' coaches (video priority)');
+            error_log('[COACH DEBUG] Loaded ' . count($coaches) . ' coaches');
 
-            // Separate featured (with video) and regular coaches
-            $featured = array_filter($coaches, fn($c) => !empty($c['video_intro_url']));
-            $regular = array_filter($coaches, fn($c) => empty($c['video_intro_url']));
+            $featured = array_values(array_filter($coaches, fn($c) => !empty($c['intro_video_url'])));
+            $regular  = array_values(array_filter($coaches, fn($c) => empty($c['intro_video_url'])));
 
             echo json_encode([
-                'coaches' => array_values($coaches),
-                'featured' => array_values($featured),
-                'regular' => array_values($regular),
-                'total' => count($coaches),
-                'source' => 'supabase'
+                'coaches'  => $coaches,
+                'featured' => $featured,
+                'regular'  => $regular,
+                'total'    => count($coaches),
+                'source'   => 'supabase',
             ]);
             return;
-        } else {
-            error_log('[COACH DEBUG] Failed to load from Supabase, HTTP code: ' . $httpCode);
         }
+
+        error_log('[COACH DEBUG] Supabase HTTP: ' . $httpCode);
     } catch (Exception $e) {
         error_log('[COACH DEBUG] Exception: ' . $e->getMessage());
     }
 
-    // Fallback to mock data
-    error_log('[COACH DEBUG] Using mock data');
     $coaches = getMockCoaches();
     echo json_encode(['coaches' => $coaches, 'featured' => [], 'regular' => $coaches, 'source' => 'mock']);
 }
@@ -237,11 +225,11 @@ function getFeaturedCoaches() {
         $supabaseUrl = SUPABASE_URL;
         $supabaseKey = SUPABASE_ANON_KEY;
 
-        // Only get coaches with video intro, sorted by trust score
-        $url = $supabaseUrl . '/rest/v1/cs_coaches?select=*'
+        // coach_profiles view — filter on is_featured (JSONB-promoted boolean column)
+        $url = $supabaseUrl . '/rest/v1/coach_profiles?select=*'
             . '&onboarding_completed=eq.true'
-            . '&video_intro_url=not.is.null'
-            . '&order=trust_score.desc,rating_average.desc'
+            . '&is_featured=eq.true'
+            . '&order=profile_views.desc.nullslast'
             . '&limit=6';
 
         $headers = [
@@ -820,9 +808,10 @@ function getCoachReviews($coachId) {
         $supabaseUrl = SUPABASE_URL;
         $supabaseKey = SUPABASE_ANON_KEY;
 
-        // Get reviews with client info
+        // Get reviews with client display info from cs_users (new schema)
+        // cs_clients no longer stores full_name / avatar_url — use cs_users via user_id
         $url = $supabaseUrl . '/rest/v1/cs_reviews?coach_id=eq.' . $coachId
-            . '&select=*,cs_clients(full_name,avatar_url)'
+            . '&select=*,cs_clients(user_id,cs_users!user_id(full_name,avatar_url))'
             . '&order=created_at.desc'
             . '&limit=' . intval($limit)
             . '&offset=' . intval($offset);
@@ -864,8 +853,8 @@ function getCoachReviews($coachId) {
                     'rating' => $review['rating'],
                     'comment' => $review['comment'],
                     'created_at' => $review['created_at'],
-                    'client_name' => $review['cs_clients']['full_name'] ?? 'Anonymous',
-                    'client_avatar' => $review['cs_clients']['avatar_url'] ?? null
+                    'client_name'   => $review['cs_clients']['cs_users']['full_name']   ?? 'Anonymous',
+                    'client_avatar' => $review['cs_clients']['cs_users']['avatar_url'] ?? null
                 ];
             }, $reviews);
 

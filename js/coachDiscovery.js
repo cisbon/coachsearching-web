@@ -812,20 +812,17 @@ export const DiscoveryPage = ({ session, formatPrice, onStartQuiz }) => {
                 return;
             }
 
+            // New schema: use coach_profiles view which exposes flat columns from
+            // cs_users + cs_coaches + profile_data JSONB (hourly_rate, is_verified, etc.)
             let query = supabase
-                .from('cs_coaches')
+                .from('coach_profiles')
                 .select('*')
                 .eq('onboarding_completed', true);
 
-            // Apply search term
             if (searchTerm) {
-                query = query.or(`full_name.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%`);
+                query = query.or(`full_name.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`);
             }
 
-            // Apply filters
-            if (filters.location) {
-                query = query.ilike('city', `%${filters.location}%`);
-            }
             if (filters.priceMin) {
                 query = query.gte('hourly_rate', filters.priceMin);
             }
@@ -833,20 +830,15 @@ export const DiscoveryPage = ({ session, formatPrice, onStartQuiz }) => {
                 query = query.lte('hourly_rate', filters.priceMax);
             }
             if (filters.hasVideo) {
-                query = query.not('video_intro_url', 'is', null);
+                // intro_video_url is a view column from profile_data
+                query = query.not('intro_video_url', 'is', null);
             }
             if (filters.verified) {
                 query = query.eq('is_verified', true);
             }
-            if (filters.minRating) {
-                query = query.gte('rating_average', filters.minRating);
-            }
 
-            // Apply sorting
+            // Apply sorting (all columns available in the view)
             switch (sortBy) {
-                case 'rating':
-                    query = query.order('rating_average', { ascending: false, nullsLast: true });
-                    break;
                 case 'price_low':
                     query = query.order('hourly_rate', { ascending: true, nullsLast: true });
                     break;
@@ -859,11 +851,11 @@ export const DiscoveryPage = ({ session, formatPrice, onStartQuiz }) => {
                 case 'newest':
                     query = query.order('created_at', { ascending: false });
                     break;
-                default: // recommended
+                default: // recommended / rating
                     query = query
-                        .order('video_intro_url', { ascending: false, nullsLast: true })
-                        .order('trust_score', { ascending: false, nullsLast: true })
-                        .order('rating_average', { ascending: false, nullsLast: true });
+                        .order('is_featured',    { ascending: false, nullsLast: true })
+                        .order('intro_video_url', { ascending: false, nullsLast: true })
+                        .order('profile_views',   { ascending: false, nullsLast: true });
             }
 
             const { data, error } = await query;

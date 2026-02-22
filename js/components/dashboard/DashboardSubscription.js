@@ -31,10 +31,12 @@ export function DashboardSubscription({ session }) {
     const loadSubscription = async () => {
         setLoading(true);
         try {
+            // New schema: subscription/billing fields are in cs_coaches (operational table).
+            // cs_coaches PK is now user_id.
             const { data, error } = await window.supabaseClient
                 .from('cs_coaches')
                 .select('subscription_status, trial_ends_at, subscription_ends_at, stripe_subscription_id')
-                .eq('id', session.user.id)
+                .eq('user_id', session.user.id)
                 .single();
 
             if (error) throw error;

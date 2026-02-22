@@ -88,7 +88,9 @@ export function useCertificationsQuery() {
 // ─── COACH HOOKS ────────────────────────────────────────────────────
 
 /**
- * Fetch a coach profile by ID (with certifications)
+ * Fetch a coach profile by user ID.
+ * New schema: display data comes from the coach_profiles VIEW which flattens
+ * cs_users + cs_coaches + profile_data JSONB.
  */
 export function useCoachByIdQuery(coachId) {
     return useQuery({
@@ -96,9 +98,10 @@ export function useCoachByIdQuery(coachId) {
         queryFn: async () => {
             const supabase = getSupabase();
             if (!supabase) throw new Error('Supabase not ready');
+            // coach_profiles view exposes flat columns from cs_users + cs_coaches + profile_data
             const { data, error } = await supabase
-                .from('cs_coaches')
-                .select('*, cs_coach_certifications(*, cs_certifications(*))')
+                .from('coach_profiles')
+                .select('*')
                 .eq('id', coachId)
                 .single();
             if (error) throw error;
@@ -110,7 +113,8 @@ export function useCoachByIdQuery(coachId) {
 }
 
 /**
- * Fetch a coach profile by slug (with certifications)
+ * Fetch a coach profile by slug.
+ * New schema: slug is now a column on cs_users (promoted to the view).
  */
 export function useCoachBySlugQuery(slug) {
     return useQuery({
@@ -119,8 +123,8 @@ export function useCoachBySlugQuery(slug) {
             const supabase = getSupabase();
             if (!supabase) throw new Error('Supabase not ready');
             const { data, error } = await supabase
-                .from('cs_coaches')
-                .select('*, cs_coach_certifications(*, cs_certifications(*))')
+                .from('coach_profiles')
+                .select('*')
                 .eq('slug', slug)
                 .single();
             if (error) throw error;
@@ -132,7 +136,8 @@ export function useCoachBySlugQuery(slug) {
 }
 
 /**
- * Fetch the current user's coach profile (for feed sidebar, dashboard)
+ * Fetch the current user's own profile (coach or client).
+ * New schema: all display data is in cs_users + profile_data JSONB.
  */
 export function useMyCoachProfileQuery(userId) {
     return useQuery({
@@ -140,10 +145,11 @@ export function useMyCoachProfileQuery(userId) {
         queryFn: async () => {
             const supabase = getSupabase();
             if (!supabase) throw new Error('Supabase not ready');
+            // Join cs_coaches for operational/subscription fields
             const { data, error } = await supabase
-                .from('cs_coaches')
-                .select('*')
-                .eq('user_id', userId)
+                .from('cs_users')
+                .select('*, cs_coaches(subscription_status, trial_ends_at, onboarding_completed, stripe_charges_enabled, stripe_account_id)')
+                .eq('id', userId)
                 .single();
             if (error) throw error;
             return data;
@@ -154,7 +160,8 @@ export function useMyCoachProfileQuery(userId) {
 }
 
 /**
- * Fetch suggested coaches for the client feed
+ * Fetch suggested coaches for the client feed sidebar.
+ * New schema: use coach_profiles view for flat column access.
  */
 export function useSuggestedCoachesQuery() {
     return useQuery({
@@ -163,10 +170,10 @@ export function useSuggestedCoachesQuery() {
             const supabase = getSupabase();
             if (!supabase) throw new Error('Supabase not ready');
             const { data, error } = await supabase
-                .from('cs_coaches')
-                .select('id, full_name, slug, title, avatar_url, rating_average, rating_count')
+                .from('coach_profiles')
+                .select('id, full_name, slug, title, avatar_url, profile_views, is_featured')
                 .eq('onboarding_completed', true)
-                .order('rating_average', { ascending: false })
+                .order('profile_views', { ascending: false })
                 .limit(5);
             if (error) throw error;
             return data || [];
@@ -457,10 +464,12 @@ export function useClientProfileQuery(userId) {
         queryFn: async () => {
             const supabase = getSupabase();
             if (!supabase) throw new Error('Supabase not ready');
+            // New schema: display/preference data in cs_users.profile_data JSONB,
+            // operational stats in cs_clients (total_bookings, etc.).
             const { data, error } = await supabase
-                .from('cs_clients')
-                .select('*')
-                .eq('user_id', userId)
+                .from('cs_users')
+                .select('*, cs_clients(total_bookings, total_completed_sessions, total_amount_spent, last_booking_at)')
+                .eq('id', userId)
                 .single();
             if (error) throw error;
             return data;
@@ -613,10 +622,11 @@ export function useOnboardingStatusQuery(userId) {
         queryFn: async () => {
             const supabase = getSupabase();
             if (!supabase) throw new Error('Supabase not ready');
+            // New schema: onboarding_completed lives in cs_users (top-level column)
             const { data, error } = await supabase
-                .from('cs_coaches')
-                .select('onboarding_completed')
-                .eq('user_id', userId)
+                .from('cs_users')
+                .select('onboarding_completed, user_type')
+                .eq('id', userId)
                 .single();
             if (error) throw error;
             return data;

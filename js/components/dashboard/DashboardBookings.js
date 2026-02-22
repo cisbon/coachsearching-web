@@ -205,21 +205,19 @@ export const DashboardBookings = ({ session, userType }) => {
                 let bookingsData = [];
 
                 if (userType === 'coach') {
-                    // Get coach_id
-                    const { data: coachData } = await window.supabaseClient
-                        .from('cs_coaches')
-                        .select('id')
-                        .eq('user_id', session.user.id)
-                        .single();
+                    // New schema: coach_id in cs_bookings = user_id; no separate lookup needed.
+                    // Client display data now comes from cs_users via cs_clients.user_id.
+                    const coachUserId = session.user.id;
+                    const coachData = { id: coachUserId }; // keep variable name for compat
 
                     if (coachData) {
                         const { data, error } = await window.supabaseClient
                             .from('cs_bookings')
                             .select(`
                                 *,
-                                client:cs_clients!client_id(full_name, email, phone)
+                                client:cs_users!client_id(full_name, email, phone)
                             `)
-                            .eq('coach_id', coachData.id)
+                            .eq('coach_id', coachUserId)
                             .order('start_time', { ascending: false });
 
                         if (!error && data) {
@@ -227,21 +225,19 @@ export const DashboardBookings = ({ session, userType }) => {
                         }
                     }
                 } else {
-                    // Client view
-                    const { data: clientData } = await window.supabaseClient
-                        .from('cs_clients')
-                        .select('id')
-                        .eq('user_id', session.user.id)
-                        .single();
+                    // Client view — new schema: client_id in cs_bookings = user_id.
+                    // Coach display data now comes from cs_users via coach_id.
+                    const clientUserId = session.user.id;
+                    const clientData = { id: clientUserId };
 
                     if (clientData) {
                         const { data, error } = await window.supabaseClient
                             .from('cs_bookings')
                             .select(`
                                 *,
-                                coach:cs_coaches!coach_id(full_name, title, avatar_url)
+                                coach:cs_users!coach_id(full_name, avatar_url, profile_data)
                             `)
-                            .eq('client_id', clientData.id)
+                            .eq('client_id', clientUserId)
                             .order('start_time', { ascending: false });
 
                         if (!error && data) {

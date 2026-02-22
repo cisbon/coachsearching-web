@@ -30,17 +30,27 @@ export function NavbarUserMenu({ session, onNavigate }) {
             if (!supabase || !session?.user?.id) return;
 
             try {
+                // New schema: all display data lives in cs_users + profile_data JSONB.
+                // For coaches, also join cs_coaches for subscription info.
                 if (userType === 'coach' || userType === 'business') {
                     const { data } = await supabase
-                        .from('cs_coaches')
-                        .select('slug, title, full_name, avatar_url, subscription_status, trial_ends_at')
-                        .eq('user_id', session.user.id)
+                        .from('cs_users')
+                        .select('id, slug, full_name, avatar_url, profile_data, cs_coaches(subscription_status, trial_ends_at)')
+                        .eq('id', session.user.id)
                         .single();
-                    if (data) setProfile(data);
+                    if (data) {
+                        // Flatten for backward compatibility with template that reads data.title etc.
+                        setProfile({
+                            ...data,
+                            title:               data.profile_data?.title,
+                            subscription_status: data.cs_coaches?.subscription_status,
+                            trial_ends_at:       data.cs_coaches?.trial_ends_at,
+                        });
+                    }
                 } else {
                     const { data } = await supabase
                         .from('cs_users')
-                        .select('slug, full_name, avatar_url, title')
+                        .select('id, slug, full_name, avatar_url, profile_data')
                         .eq('id', session.user.id)
                         .single();
                     if (data) setProfile(data);

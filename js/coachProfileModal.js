@@ -56,7 +56,8 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
                         .order('sort_order'),
                     supabase
                         .from('cs_reviews')
-                        .select('*, cs_clients(full_name, avatar_url)')
+                        // New schema: client display data comes from cs_users via cs_clients.user_id
+                        .select('*, cs_clients(user_id, cs_users!user_id(full_name, avatar_url))')
                         .eq('coach_id', coach.id)
                         .order('created_at', { ascending: false })
                         .limit(10)
@@ -65,11 +66,10 @@ export const CoachProfileModal = ({ coach, onClose, onBook, formatPrice, session
                 if (credentialsRes.data) setCredentials(credentialsRes.data);
                 if (servicesRes.data) setServices(servicesRes.data);
                 if (reviewsRes.data) {
-                    // Map client data to review
                     const reviewsWithClient = reviewsRes.data.map(r => ({
                         ...r,
-                        client_name: r.cs_clients?.full_name || 'Anonymous',
-                        client_avatar: r.cs_clients?.avatar_url
+                        client_name:   r.cs_clients?.cs_users?.full_name  || r.cs_clients?.full_name  || 'Anonymous',
+                        client_avatar: r.cs_clients?.cs_users?.avatar_url || r.cs_clients?.avatar_url || null,
                     }));
                     setReviews(reviewsWithClient);
                 }

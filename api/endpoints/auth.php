@@ -47,71 +47,53 @@ function getCurrentUser() {
     $userId = $user['id'];
     $email = $user['email'] ?? '';
 
-    // Try to get coach profile first
-    $coachProfile = $db->from('cs_coaches')
-        ->select('*')
-        ->eq('user_id', $userId)
+    // New schema: user role and display data live in cs_users.user_type / profile_data
+    $userRow = $db->from('cs_users')
+        ->select('*, cs_coaches(subscription_status, onboarding_completed, stripe_account_id)')
+        ->eq('id', $userId)
         ->single()
         ->execute();
 
-    if ($coachProfile && !isset($coachProfile['error'])) {
+    if (!$userRow || isset($userRow['error'])) {
         return [
-            'id' => $userId,
-            'email' => $email,
-            'role' => 'coach',
-            'profile' => [
-                'coach_id' => $coachProfile['id'],
-                'display_name' => $coachProfile['display_name'],
-                'professional_title' => $coachProfile['professional_title'],
-                'bio' => $coachProfile['bio'],
-                'hourly_rate' => $coachProfile['hourly_rate'],
-                'currency' => $coachProfile['currency'],
-                'specialties' => $coachProfile['specialties'],
-                'languages' => $coachProfile['languages'],
-                'profile_image_url' => $coachProfile['profile_image_url'],
-                'video_url' => $coachProfile['video_url'],
-                'is_visible' => $coachProfile['is_visible'],
-                'is_verified' => $coachProfile['is_verified'],
-                'rating' => $coachProfile['rating'],
-                'review_count' => $coachProfile['review_count'],
-                'onboarding_completed' => $coachProfile['onboarding_completed'] ?? false
-            ],
-            'created_at' => $coachProfile['created_at']
+            'id'         => $userId,
+            'email'      => $email,
+            'role'       => 'new_user',
+            'profile'    => null,
+            'message'    => 'Profile not yet created. Please complete onboarding.',
+            'created_at' => $user['created_at'] ?? date('c'),
         ];
     }
 
-    // Try to get client profile
-    $clientProfile = $db->from('cs_clients')
-        ->select('*')
-        ->eq('user_id', $userId)
-        ->single()
-        ->execute();
+    $ud = $userRow['data'] ?? $userRow;
+    $pd = $ud['profile_data'] ?? [];
+    $co = $ud['cs_coaches'] ?? [];
 
-    if ($clientProfile && !isset($clientProfile['error'])) {
-        return [
-            'id' => $userId,
-            'email' => $email,
-            'role' => 'client',
-            'profile' => [
-                'name' => $clientProfile['name'],
-                'avatar_url' => $clientProfile['avatar_url'],
-                'phone' => $clientProfile['phone'],
-                'timezone' => $clientProfile['timezone'],
-                'preferred_language' => $clientProfile['preferred_language'],
-                'onboarding_completed' => $clientProfile['onboarding_completed'] ?? false
-            ],
-            'created_at' => $clientProfile['created_at']
-        ];
-    }
-
-    // User exists but has no profile yet (new user)
     return [
-        'id' => $userId,
-        'email' => $email,
-        'role' => 'new_user',
-        'profile' => null,
-        'message' => 'Profile not yet created. Please complete onboarding.',
-        'created_at' => $user['created_at'] ?? date('c')
+        'id'         => $userId,
+        'email'      => $email,
+        'role'       => $ud['user_type'],
+        'profile'    => [
+            // Core display fields (always from cs_users)
+            'full_name'            => $ud['full_name'],
+            'avatar_url'           => $ud['avatar_url'],
+            'slug'                 => $ud['slug'],
+            'onboarding_completed' => $ud['onboarding_completed'] ?? false,
+            // JSONB display fields (role-specific)
+            'title'                => $pd['title']             ?? null,
+            'bio'                  => $pd['bio']               ?? null,
+            'hourly_rate'          => $pd['hourly_rate']       ?? null,
+            'currency'             => $pd['currency']          ?? $ud['currency'] ?? 'EUR',
+            'specialties'          => $pd['specialties']       ?? [],
+            'languages'            => $pd['languages']         ?? [],
+            'session_types'        => $pd['session_types']     ?? [],
+            'is_verified'          => $pd['is_verified']       ?? $ud['is_verified'] ?? false,
+            'intro_video_url'      => $pd['intro_video_url']   ?? null,
+            // Operational coach fields (from cs_coaches join)
+            'subscription_status'  => $co['subscription_status']  ?? null,
+            'stripe_account_id'    => $co['stripe_account_id']    ?? null,
+        ],
+        'created_at' => $ud['created_at'],
     ];
 }
 
@@ -132,30 +114,32 @@ function updateCurrentUser($input) {
     $db = new Database();
     $userId = $user['id'];
 
-    // Determine if user is coach or client
-    $coachProfile = $db->from('cs_coaches')
-        ->select('id')
-        ->eq('user_id', $userId)
+    // New schema: read user_type from cs_users to determine role
+    $userRow = $db->from('cs_users')
+        ->select('user_type, profile_data')
+        ->eq('id', $userId)
         ->single()
         ->execute();
 
-    $isCoach = $coachProfile && !isset($coachProfile['error']);
+    $userType = ($userRow['data'] ?? $userRow)['user_type'] ?? 'client';
+    $isCoach  = $userType === 'coach';
 
-    if ($isCoach) {
-        // Coach-specific fields that can be updated
-        $allowedFields = [
-            'display_name', 'professional_title', 'bio', 'hourly_rate',
-            'currency', 'specialties', 'languages', 'session_formats',
-            'location', 'profile_image_url', 'video_url', 'timezone'
-        ];
-        $table = 'cs_coaches';
-    } else {
-        // Client-specific fields
-        $allowedFields = [
-            'name', 'avatar_url', 'phone', 'timezone', 'preferred_language'
-        ];
-        $table = 'cs_clients';
-    }
+    // All profile updates now go to cs_users (core fields + profile_data JSONB).
+    // Allowed core fields (top-level columns on cs_users):
+    $allowedCoreFields = ['full_name', 'avatar_url', 'phone', 'timezone', 'currency', 'slug', 'language_preference'];
+
+    // Allowed profile_data fields per role:
+    $allowedProfileData = $isCoach
+        ? ['title', 'bio', 'title_en', 'bio_en', 'hourly_rate', 'currency', 'specialties',
+           'languages', 'session_types', 'years_experience', 'city_id', 'banner_url',
+           'instagram_url', 'linkedin_url', 'intro_video_url', 'website_url',
+           'offers_free_discovery', 'primary_profile_language', 'profile_completion_percentage']
+        : ['preferred_coach_types', 'preferred_specialties', 'preferred_languages',
+           'budget_range_min', 'budget_range_max', 'preferred_meeting_type',
+           'banner_url', 'timezone', 'currency'];
+
+    $table         = 'cs_users';
+    $allowedFields = array_merge($allowedCoreFields, $allowedProfileData);
 
     // Filter and sanitize input
     $updates = [];
@@ -194,9 +178,27 @@ function updateCurrentUser($input) {
     $updates['updated_at'] = date('c');
 
     try {
-        $result = $db->from($table)
-            ->update($updates)
-            ->eq('user_id', $userId)
+        // Split updates: core fields go to cs_users columns, rest go to profile_data JSONB
+        $coreUpdates    = [];
+        $profileUpdates = [];
+        foreach ($updates as $k => $v) {
+            if (in_array($k, $allowedCoreFields)) {
+                $coreUpdates[$k] = $v;
+            } else {
+                $profileUpdates[$k] = $v;
+            }
+        }
+
+        if (!empty($profileUpdates)) {
+            // Merge with existing profile_data using Postgres || operator via RPC,
+            // or simply include the whole profile_data as a merged object.
+            $existingPd = ($userRow['data'] ?? $userRow)['profile_data'] ?? [];
+            $coreUpdates['profile_data'] = array_merge($existingPd, $profileUpdates);
+        }
+
+        $result = $db->from('cs_users')
+            ->update($coreUpdates)
+            ->eq('id', $userId)
             ->execute();
 
         return [
@@ -258,10 +260,10 @@ function exportUserData() {
         ]
     ];
 
-    // Get coach profile if exists
-    $coachProfile = $db->from('cs_coaches')
-        ->select('*')
-        ->eq('user_id', $userId)
+    // Get user profile (includes profile_data JSONB with all display/preference data)
+    $coachProfile = $db->from('cs_users')
+        ->select('*, cs_coaches(*)')
+        ->eq('id', $userId)
         ->single()
         ->execute();
 
@@ -301,9 +303,9 @@ function exportUserData() {
         }
     }
 
-    // Get client profile if exists
+    // Client operational data (new schema — cs_clients has only billing/stats fields)
     $clientProfile = $db->from('cs_clients')
-        ->select('*')
+        ->select('total_bookings, total_completed_sessions, total_amount_spent, created_at')
         ->eq('user_id', $userId)
         ->single()
         ->execute();
@@ -334,7 +336,7 @@ function exportUserData() {
 
     // Get favorites
     $favorites = $db->from('cs_favorites')
-        ->select('*, cs_coaches(full_name, slug)')
+        ->select('*, cs_users!coach_id(full_name, slug)')
         ->eq('user_id', $userId)
         ->execute();
 

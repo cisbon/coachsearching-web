@@ -49,14 +49,72 @@ interface AppConfig {
 
 type UserRole = 'client' | 'coach' | 'admin' | 'business';
 
+// ---------------------------------------------------------------------------
+// profile_data JSONB shapes (stored in cs_users.profile_data, new schema)
+// ---------------------------------------------------------------------------
+
+interface CoachProfileData {
+  title?: string;
+  bio?: string;
+  title_en?: string;
+  bio_en?: string;
+  primary_profile_language?: string;
+  specialties?: string[];
+  years_experience?: number;
+  languages?: string[];
+  session_types?: string[];
+  hourly_rate?: number;
+  currency?: string;
+  is_verified?: boolean;
+  is_featured?: boolean;
+  profile_completion_percentage?: number;
+  total_sessions_completed?: number;
+  profile_views?: number;
+  city_id?: number;
+  banner_url?: string;
+  instagram_url?: string;
+  linkedin_url?: string;
+  intro_video_url?: string;
+  website_url?: string;
+  offers_free_discovery?: boolean;
+}
+
+interface ClientProfileData {
+  preferred_coach_types?: string[];
+  preferred_specialties?: string[];
+  preferred_languages?: string[];
+  budget_range_min?: number;
+  budget_range_max?: number;
+  currency?: string;
+  timezone?: string;
+  preferred_meeting_type?: string;
+  total_bookings?: number;
+  total_completed_sessions?: number;
+  total_amount_spent?: number;
+  banner_url?: string;
+}
+
+type ProfileData = CoachProfileData | ClientProfileData | Record<string, unknown>;
+
+// ---------------------------------------------------------------------------
+
 interface User {
   id: string;
   email: string;
   full_name: string;
   avatar_url?: string;
+  /** Unique URL slug (used for public profile links) */
+  slug?: string;
   role: UserRole;
   user_type: UserRole;
+  is_verified: boolean;
   is_email_verified: boolean;
+  onboarding_completed: boolean;
+  language_preference?: string;
+  timezone?: string;
+  currency?: string;
+  /** All role-specific display fields consolidated here (new schema) */
+  profile_data: ProfileData;
   created_at: string;
   updated_at: string;
 }
@@ -91,32 +149,77 @@ interface AuthState {
 
 type SessionType = 'online' | 'onsite';
 
+/**
+ * Coach as returned by the coach_profiles Supabase VIEW (new schema).
+ * The view flattens cs_users + cs_coaches + profile_data JSONB into one row.
+ */
 interface Coach {
-  id: string;
-  user_id: string;
+  // From cs_users
+  id: string;               // = user UUID
+  email: string;
   full_name: string;
-  title: string;
-  bio: string;
   avatar_url?: string;
-  location?: string;
-  hourly_rate: number;
-  currency: string;
-  specialties: string[];
-  languages: string[];
-  session_types: SessionType[];
-  offers_virtual: boolean;
-  offers_onsite: boolean;
-  rating?: number;
-  reviews_count: number;
+  slug?: string;
   is_verified: boolean;
   is_active: boolean;
-  onboarding_completed: boolean;
-  youtube_intro_url?: string;
-  credentials: Credential[];
-  portfolio_items: PortfolioItem[];
-  trust_score?: number;
   created_at: string;
   updated_at: string;
+  // Promoted from profile_data JSONB by the view
+  title?: string;
+  bio?: string;
+  title_en?: string;
+  bio_en?: string;
+  primary_profile_language?: string;
+  specialties: string[];
+  years_experience?: number;
+  languages: string[];
+  session_types: string[];
+  hourly_rate?: number;
+  currency: string;
+  is_featured: boolean;
+  profile_completion_percentage: number;
+  total_sessions_completed: number;
+  profile_views: number;
+  city_id?: number;
+  banner_url?: string;
+  instagram_url?: string;
+  linkedin_url?: string;
+  intro_video_url?: string;
+  website_url?: string;
+  offers_free_discovery: boolean;
+  // From cs_coaches (operational)
+  subscription_status?: string;
+  onboarding_completed: boolean;
+  stripe_account_id?: string;
+  stripe_charges_enabled?: boolean;
+  verified_at?: string;
+  last_booking_at?: string;
+  // Legacy field aliases (kept for backward compat during transition)
+  user_id?: string;         // same as id in new schema
+}
+
+/**
+ * Post as returned by cs_posts + joined cs_users (new schema).
+ * Author data is joined from cs_users; no more denormalized author_* columns.
+ */
+interface Post {
+  id: string;
+  user_id: string;
+  content: string;
+  image_url?: string;
+  video_url?: string;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+  /** Joined from cs_users — present when using select('*, cs_users!user_id(...)') */
+  cs_users?: Pick<User, 'id' | 'full_name' | 'avatar_url' | 'slug'> & {
+    profile_data?: CoachProfileData | Record<string, unknown>;
+  };
+  /** Runtime-only flags populated by the feed loader */
+  _userLiked?: boolean;
+  _userHighlighted?: boolean;
+  _userReposted?: boolean;
 }
 
 interface Credential {
