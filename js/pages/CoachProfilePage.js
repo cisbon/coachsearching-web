@@ -1526,6 +1526,7 @@ const ProfilePhotoEditorModal = memo(function ProfilePhotoEditorModal({ coach, o
     const fileInputRef = React.useRef(null);
     const canvasRef = React.useRef(null);
     const containerRef = React.useRef(null);
+    const originalStemRef = React.useRef('image');
 
     const CROP_SIZE = 280; // Square crop area
 
@@ -1563,6 +1564,7 @@ const ProfilePhotoEditorModal = memo(function ProfilePhotoEditorModal({ coach, o
         if (!file.type.startsWith('image/')) { setError('Please select an image file'); return; }
         if (file.size > 10 * 1024 * 1024) { setError('Image must be less than 10MB'); return; }
 
+        originalStemRef.current = file.name.replace(/\.[^.]+$/, '') || 'image';
         setError('');
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -1621,13 +1623,12 @@ const ProfilePhotoEditorModal = memo(function ProfilePhotoEditorModal({ coach, o
             const userId = session?.user?.id;
             if (!userId) throw new Error('Not authenticated');
 
-            const key = `${userId}/avatar-${Date.now()}.jpg`;
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
             const formData = new FormData();
             formData.append('file', new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
             formData.append('bucket', 'profile-images');
-            formData.append('key', key);
+            formData.append('original_name', originalStemRef.current || 'avatar');
 
             const token = session?.access_token;
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -1775,6 +1776,7 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
     const fileInputRef = React.useRef(null);
     const canvasRef = React.useRef(null);
     const containerRef = React.useRef(null);
+    const originalStemRef = React.useRef('banner');
 
     // Banner aspect ratio (4:1 for LinkedIn-style banners)
     const ASPECT_RATIO = 4;
@@ -1840,6 +1842,7 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
             return;
         }
 
+        originalStemRef.current = file.name.replace(/\.[^.]+$/, '') || 'banner';
         setError('');
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -1978,13 +1981,12 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
                 throw new Error('Not authenticated - please sign in again');
             }
 
-            const key = `${userId}/banner-${Date.now()}.jpg`;
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
             const formData = new FormData();
             formData.append('file', new File([blob], 'banner.jpg', { type: 'image/jpeg' }));
             formData.append('bucket', 'profile-banners');
-            formData.append('key', key);
+            formData.append('original_name', originalStemRef.current || 'banner');
 
             const token = session?.access_token;
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};

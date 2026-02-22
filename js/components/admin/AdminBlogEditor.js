@@ -321,14 +321,12 @@ const FeaturedImageUpload = ({ imageUrl, onImageChange, session }) => {
 
         setUploading(true);
         try {
-            const fileExt = file.name.split('.').pop();
-            const key = `blog/${Date.now()}.${fileExt}`;
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
             const formData = new FormData();
             formData.append('file', file);
             formData.append('bucket', 'certifications-badges');
-            formData.append('key', key);
+            formData.append('original_name', file.name.replace(/\.[^.]+$/, '') || 'badge');
 
             // Get auth token from active Supabase session
             const { data: { session } } = await window.supabaseClient.auth.getSession();

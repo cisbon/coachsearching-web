@@ -137,24 +137,30 @@ class R2Storage
     }
 
     /**
-     * Build the public URL for a stored object.
+     * Custom domain map: bucket → public base URL.
      *
-     * Uses virtual-hosted-style addressing:
-     *   https://<bucket>.<account-id>.r2.cloudflarestorage.com/<key>
-     *
-     * This requires public access to be enabled on the bucket in the
-     * Cloudflare dashboard.
+     * Each bucket's public access must be enabled in the Cloudflare dashboard
+     * and the custom domain configured there.
+     */
+    private const DOMAIN_MAP = [
+        'profile-images'        => 'https://profile-images.coachsearching.com',
+        'profile-banners'       => 'https://profile-banners.coachsearching.com',
+        'coach-certifications'  => 'https://coach-certifications.coachsearching.com',
+        'feed-media'            => 'https://feed-media.coachsearching.com',
+        'certifications-badges' => 'https://certification-badges.coachsearching.com',
+    ];
+
+    /**
+     * Build the public URL for a stored object using the bucket's custom domain.
      *
      * @param string $bucket Bucket name
-     * @param string $key    Object key
-     * @return string Public URL
+     * @param string $key    Object key (filename)
+     * @return string Public URL  e.g. https://profile-banners.coachsearching.com/myphoto<userId><ts>.jpg
      */
     public function getPublicUrl(string $bucket, string $key): string
     {
-        $parsedUrl = parse_url($this->endpoint);
-        $host      = $parsedUrl['host']; // e.g. <account-id>.r2.cloudflarestorage.com
-
-        return "https://{$bucket}.{$host}/" . ltrim($key, '/');
+        $base = self::DOMAIN_MAP[$bucket] ?? 'https://' . $bucket . '.coachsearching.com';
+        return $base . '/' . ltrim($key, '/');
     }
 
     /**

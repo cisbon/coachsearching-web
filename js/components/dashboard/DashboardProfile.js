@@ -169,15 +169,13 @@ export const DashboardProfile = ({ session, userType }) => {
 
         setUploading(true);
         try {
-            const fileExt = file.name.split('.').pop();
-            const key = `${session.user.id}-${fieldName}-${Date.now()}.${fileExt}`;
             const bucket = fieldName === 'banner_url' ? 'profile-banners' : 'profile-images';
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
             const formData = new FormData();
             formData.append('file', file);
             formData.append('bucket', bucket);
-            formData.append('key', key);
+            formData.append('original_name', file.name.replace(/\.[^.]+$/, '') || 'image');
 
             const token = session?.access_token;
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};

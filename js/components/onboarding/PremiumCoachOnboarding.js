@@ -1032,13 +1032,12 @@ const CertificationsSection = ({ data, updateData, session, certifications = { l
         if (newCert.certificate_file) {
             setUploading(true);
             try {
-                const key = `${session.user.id}/cert_${Date.now()}.pdf`;
                 const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
                 const formData = new FormData();
                 formData.append('file', newCert.certificate_file);
                 formData.append('bucket', 'coach-certifications');
-                formData.append('key', key);
+                formData.append('original_name', newCert.certificate_file.name.replace(/\.[^.]+$/, '') || 'certificate');
 
                 const token = session?.access_token;
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -1353,6 +1352,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
+    const [avatarPreview, setAvatarPreview] = useState(data.avatar_url || null);
 
     // Initialize video URL error state based on existing data
     const [videoUrlError, setVideoUrlError] = useState(() => {
@@ -1390,20 +1390,18 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
             return;
         }
 
+        // Show a local object URL preview immediately (never stored in the DB)
+        const localPreview = URL.createObjectURL(file);
+        setAvatarPreview(localPreview);
+
         setUploading(true);
         try {
-            // Show a local preview immediately while the upload happens in the background
-            const reader = new FileReader();
-            reader.onload = (e) => updateData('avatar_url', e.target.result);
-            reader.readAsDataURL(file);
-
-            const key = `coach_${session.user.id}_${Date.now()}`;
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
             const formData = new FormData();
             formData.append('file', file);
             formData.append('bucket', 'profile-images');
-            formData.append('key', key);
+            formData.append('original_name', file.name.replace(/\.[^.]+$/, '') || 'avatar');
 
             const token = session?.access_token;
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -1411,10 +1409,17 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
             const res = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
             const json = await res.json();
             if (res.ok && (json.data?.url || json.url)) {
-                updateData('avatar_url', json.data?.url || json.url);
+                const r2Url = json.data?.url || json.url;
+                updateData('avatar_url', r2Url);
+                setAvatarPreview(r2Url);
+            } else {
+                // Upload failed — clear preview and form value, show error
+                setAvatarPreview(data.avatar_url || null);
+                alert(t('onboard.uploadFailed') || 'Failed to upload image. Please try again.');
             }
         } catch {
-            // Silently handle upload errors — local preview remains visible
+            setAvatarPreview(data.avatar_url || null);
+            alert(t('onboard.uploadFailed') || 'Failed to upload image. Please try again.');
         } finally {
             setUploading(false);
         }
@@ -1422,7 +1427,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
 
     // Pre-compute values to avoid interpolation issues
     const bioLength = String(data.bio || '').length;
-    const avatarClass = 'avatar-upload-zone' + (dragOver ? ' dragging' : '') + (data.avatar_url ? ' has-image' : '');
+    const avatarClass = 'avatar-upload-zone' + (dragOver ? ' dragging' : '') + (avatarPreview ? ' has-image' : '');
     const charCounterClass = 'char-counter' + (bioLength > 450 ? ' warning' : '') + (bioLength > 480 ? ' danger' : '');
 
     return html`
@@ -1442,8 +1447,8 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
                     onDragOver=${(e) => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave=${() => setDragOver(false)}
                 >
-                    ${data.avatar_url ? html`
-                        <img src=${data.avatar_url} alt="Profile" class="avatar-preview" />
+                    ${avatarPreview ? html`
+                        <img src=${avatarPreview} alt="Profile" class="avatar-preview" />
                         <div class="avatar-overlay">
                             <span class="avatar-overlay-text">${t('onboard.premium.changePhoto')}</span>
                         </div>

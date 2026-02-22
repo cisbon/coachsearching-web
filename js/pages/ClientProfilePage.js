@@ -29,6 +29,7 @@ const ClientPhotoEditorModal = memo(function ClientPhotoEditorModal({ client, se
     const fileInputRef = useRef(null);
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
+    const originalStemRef = useRef('avatar');
     const CROP_SIZE = 280;
 
     useEffect(() => {
@@ -52,6 +53,7 @@ const ClientPhotoEditorModal = memo(function ClientPhotoEditorModal({ client, se
         if (!file) return;
         if (!file.type.startsWith('image/')) { setError(t('client.editPhotoImageOnly') || 'Please select an image file'); return; }
         if (file.size > 10 * 1024 * 1024) { setError(t('client.editPhotoMaxSize') || 'Image must be less than 10MB'); return; }
+        originalStemRef.current = file.name.replace(/\.[^.]+$/, '') || 'avatar';
         setError('');
         const reader = new FileReader();
         reader.onload = (ev) => {
@@ -94,13 +96,12 @@ const ClientPhotoEditorModal = memo(function ClientPhotoEditorModal({ client, se
             const blob = await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error('Blob failed')), 'image/jpeg', 0.9));
             const userId = session?.user?.id;
             if (!userId) throw new Error('Not authenticated');
-            const key = `${userId}/client-avatar-${Date.now()}.jpg`;
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
             const formData = new FormData();
             formData.append('file', new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
             formData.append('bucket', 'profile-images');
-            formData.append('key', key);
+            formData.append('original_name', originalStemRef.current || 'avatar');
 
             const token = session?.access_token;
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -182,6 +183,7 @@ const ClientBannerEditorModal = memo(function ClientBannerEditorModal({ client, 
     const fileInputRef = useRef(null);
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
+    const originalStemRef = useRef('banner');
     const BANNER_W = 600; const BANNER_H = 150;
 
     useEffect(() => {
@@ -203,6 +205,7 @@ const ClientBannerEditorModal = memo(function ClientBannerEditorModal({ client, 
         const file = e.target.files?.[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) { setError(t('client.editPhotoImageOnly') || 'Please select an image file'); return; }
+        originalStemRef.current = file.name.replace(/\.[^.]+$/, '') || 'banner';
         setError('');
         const reader = new FileReader();
         reader.onload = (ev) => {
@@ -246,13 +249,12 @@ const ClientBannerEditorModal = memo(function ClientBannerEditorModal({ client, 
             const blob = await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error('Blob failed')), 'image/jpeg', 0.85));
             const userId = session?.user?.id;
             if (!userId) throw new Error('Not authenticated');
-            const key = `${userId}/client-banner-${Date.now()}.jpg`;
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
             const formData = new FormData();
             formData.append('file', new File([blob], 'banner.jpg', { type: 'image/jpeg' }));
             formData.append('bucket', 'profile-banners');
-            formData.append('key', key);
+            formData.append('original_name', originalStemRef.current || 'banner');
 
             const token = session?.access_token;
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};

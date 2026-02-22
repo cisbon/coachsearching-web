@@ -26,14 +26,25 @@ use CoachSearching\Api\R2Storage;
 require_once __DIR__ . '/../lib/R2Storage.php';
 
 /**
- * Allowed MIME types and their file extensions.
+ * Allowed MIME types and their canonical file extensions.
  */
 const UPLOAD_ALLOWED_TYPES = [
-    'image/jpeg'      => ['jpg', 'jpeg'],
-    'image/png'       => ['png'],
-    'image/gif'       => ['gif'],
-    'image/webp'      => ['webp'],
-    'application/pdf' => ['pdf'],
+    'image/jpeg'      => 'jpg',
+    'image/png'       => 'png',
+    'image/gif'       => 'gif',
+    'image/webp'      => 'webp',
+    'application/pdf' => 'pdf',
+];
+
+/**
+ * Buckets that only accept image files (no PDFs).
+ * coach-certifications accepts PDFs as well.
+ */
+const UPLOAD_IMAGE_ONLY_BUCKETS = [
+    'profile-images',
+    'profile-banners',
+    'feed-media',
+    'certifications-badges',
 ];
 
 /** Maximum upload size: 10 MB */
@@ -81,17 +92,26 @@ function handleUpload(string $method): void
         Response::error('File type not permitted: ' . $contentType, 415, 'UNSUPPORTED_MEDIA_TYPE');
     }
 
-    // Build object key
-    $userId    = $user['id'];
-    $customKey = trim($_POST['key'] ?? '');
-
-    if ($customKey !== '') {
-        // Sanitize caller-supplied key: allow alphanumeric, dash, underscore, dot, slash
-        $key = preg_replace('/[^a-zA-Z0-9\-_\.\/]/', '_', $customKey);
-    } else {
-        $ext = UPLOAD_ALLOWED_TYPES[$contentType][0];
-        $key = $userId . '/' . uniqid('', true) . '.' . $ext;
+    // Image-only buckets must not receive PDFs
+    if (in_array($bucket, UPLOAD_IMAGE_ONLY_BUCKETS, true) && !str_starts_with($contentType, 'image/')) {
+        Response::error('Only image files are allowed for this bucket', 415, 'IMAGES_ONLY');
     }
+
+    // Build object key: {stem}{userId}{timestampMs}.{ext}
+    // stem = sanitized original filename without extension (caller-supplied or derived from upload name)
+    $userId  = $user['id'];
+    $origName = trim($_POST['original_name'] ?? '');
+    if ($origName === '') {
+        $origName = pathinfo($file['name'], PATHINFO_FILENAME);
+    }
+    // Keep only alphanumeric, dash, underscore for the stem
+    $stem = preg_replace('/[^a-zA-Z0-9\-_]/', '', $origName);
+    if ($stem === '') {
+        $stem = 'file';
+    }
+    $ext          = UPLOAD_ALLOWED_TYPES[$contentType];
+    $timestampMs  = (int)(microtime(true) * 1000);
+    $key          = $stem . $userId . $timestampMs . '.' . $ext;
 
     // Read file content from temp location
     $fileContent = file_get_contents($file['tmp_name']);
@@ -104,8 +124,9 @@ function handleUpload(string $method): void
     $result = $r2->upload($bucket, $key, $fileContent, $contentType);
 
     if (!$result['success']) {
-        error_log('R2 upload error for user ' . $userId . ': ' . ($result['error'] ?? 'unknown'));
-        Response::error('Upload to storage failed', 500, 'STORAGE_ERROR');
+        $r2Error = $result['error'] ?? 'unknown';
+        error_log('R2 upload error for user ' . $userId . ': ' . $r2Error);
+        Response::error('Upload to storage failed: ' . $r2Error, 500, 'STORAGE_ERROR');
     }
 
     $publicUrl = $r2->getPublicUrl($bucket, $key);

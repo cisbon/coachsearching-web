@@ -290,13 +290,12 @@ const ProfilePictureUpload = ({ currentUrl, onUpload }) => {
             reader.readAsDataURL(file);
 
             // Upload to R2 profile-images bucket via backend API
-            const key = `avatar_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
             const formData = new FormData();
             formData.append('file', file);
             formData.append('bucket', 'profile-images');
-            formData.append('key', key);
+            formData.append('original_name', file.name.replace(/\.[^.]+$/, '') || 'avatar');
 
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
@@ -308,12 +307,7 @@ const ProfilePictureUpload = ({ currentUrl, onUpload }) => {
             onUpload(json.data?.url || json.url);
         } catch (error) {
             console.error('Upload error:', error);
-            // Still keep the preview — convert to base64 as fallback
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                onUpload(e.target.result);
-            };
-            reader.readAsDataURL(file);
+            alert(t('onboard.uploadFailed') || 'Failed to upload image. Please try again.');
         } finally {
             setUploading(false);
         }

@@ -142,7 +142,8 @@ export function PostEditor({ session, userProfile, onPostCreated, onClose, initi
     };
 
     const handleImageEdited = (blob, previewUrl) => {
-        setAttachedImage({ blob, previewUrl });
+        const originalName = pendingImageFile ? pendingImageFile.name.replace(/\.[^.]+$/, '') : 'post';
+        setAttachedImage({ blob, previewUrl, originalName });
         setShowImageEditor(false);
         setPendingImageFile(null);
         // Remove video if adding image
@@ -190,14 +191,12 @@ export function PostEditor({ session, userProfile, onPostCreated, onClose, initi
 
             // Upload image to R2 feed-media bucket via backend API
             if (attachedImage?.blob) {
-                const userId = session.user.id;
-                const key = `${userId}/post-${Date.now()}.jpg`;
                 const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
                 const formData = new FormData();
                 formData.append('file', new File([attachedImage.blob], 'post.jpg', { type: 'image/jpeg' }));
                 formData.append('bucket', 'feed-media');
-                formData.append('key', key);
+                formData.append('original_name', attachedImage.originalName || 'post');
 
                 const token = session?.access_token;
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
