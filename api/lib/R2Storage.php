@@ -114,17 +114,25 @@ class R2Storage
                 "x-amz-content-sha256: {$contentHash}",
                 "x-amz-date: {$amzDate}",
             ],
+            // Force TLS 1.2 — Cloudflare R2 requires it and some OpenSSL 3.x
+            // system configs negotiate in a way that triggers handshake failures.
+            CURLOPT_SSLVERSION     => CURL_SSLVERSION_TLSv1_2,
             CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            // Stick to HTTP/1.1; HTTP/2 multiplexing can cause issues with large
+            // binary PUT bodies on some curl builds.
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
             CURLOPT_TIMEOUT        => 60,
         ]);
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
+        $curlErrNo = curl_errno($ch);
         curl_close($ch);
 
         if ($curlError) {
-            error_log("R2Storage cURL error: {$curlError}");
+            error_log("R2Storage cURL error #{$curlErrNo}: {$curlError} | URL: {$requestUrl}");
             return ['success' => false, 'error' => "Connection error: {$curlError}"];
         }
 
