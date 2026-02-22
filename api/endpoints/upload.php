@@ -113,27 +113,24 @@ function handleUpload(string $method): void
     $timestampMs  = (int)(microtime(true) * 1000);
     $key          = $stem . $userId . $timestampMs . '.' . $ext;
 
-    // Read file content from temp location
-    $fileContent = file_get_contents($file['tmp_name']);
-    if ($fileContent === false) {
-        Response::error('Failed to read uploaded file', 500, 'READ_ERROR');
-    }
-
-    // Upload to R2
+    // Generate a presigned PUT URL for the browser to upload directly to R2.
+    // This avoids server-side TLS issues; the browser handles the R2 connection.
     $r2     = new R2Storage();
-    $result = $r2->upload($bucket, $key, $fileContent, $contentType);
+    $result = $r2->generatePresignedPutUrl($bucket, $key);
 
     if (!$result['success']) {
         $r2Error = $result['error'] ?? 'unknown';
-        error_log('R2 upload error for user ' . $userId . ': ' . $r2Error);
+        error_log('R2 presign error for user ' . $userId . ': ' . $r2Error);
         Response::error('Upload to storage failed: ' . $r2Error, 500, 'STORAGE_ERROR');
     }
 
-    $publicUrl = $r2->getPublicUrl($bucket, $key);
+    $publicUrl    = $r2->getPublicUrl($bucket, $key);
+    $presignedUrl = $result['url'];
 
     Response::success([
-        'url'    => $publicUrl,
-        'key'    => $key,
-        'bucket' => $bucket,
+        'url'          => $publicUrl,
+        'presigned_url' => $presignedUrl,
+        'key'          => $key,
+        'bucket'       => $bucket,
     ], 201);
 }

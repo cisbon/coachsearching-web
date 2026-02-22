@@ -6,6 +6,7 @@
  */
 import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
+import { uploadToR2 } from '../services/r2Upload.js';
 import { FeedPost } from '../components/feed/FeedPost.js';
 import { queryClient } from '../config/queryClient.js';
 import { QUERY_KEYS, STALE_TIMES } from '../config/queryConfig.js';
@@ -98,19 +99,14 @@ const ClientPhotoEditorModal = memo(function ClientPhotoEditorModal({ client, se
             if (!userId) throw new Error('Not authenticated');
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            const formData = new FormData();
-            formData.append('file', new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
-            formData.append('bucket', 'profile-images');
-            formData.append('original_name', originalStemRef.current || 'avatar');
-
-            const token = session?.access_token;
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-            const uploadRes = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
-            const uploadJson = await uploadRes.json();
-            if (!uploadRes.ok) throw new Error(uploadJson.error?.message || uploadJson.error || 'Upload failed');
-
-            await onSave({ avatar_url: uploadJson.data?.url || uploadJson.url });
+            const avatarUrl = await uploadToR2({
+                apiBase,
+                file: new File([blob], 'avatar.jpg', { type: 'image/jpeg' }),
+                bucket: 'profile-images',
+                originalName: originalStemRef.current || 'avatar',
+                accessToken: session?.access_token,
+            });
+            await onSave({ avatar_url: avatarUrl });
             onClose();
         } catch (err) {
             console.error('Photo upload error:', err);

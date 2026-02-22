@@ -5,6 +5,7 @@
 
 import htm from '../vendor/htm.js';
 import { t } from '../i18n.js';
+import { uploadToR2 } from '../services/r2Upload.js';
 import {
     setPageMeta,
     setStructuredData,
@@ -1625,19 +1626,13 @@ const ProfilePhotoEditorModal = memo(function ProfilePhotoEditorModal({ coach, o
 
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            const formData = new FormData();
-            formData.append('file', new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
-            formData.append('bucket', 'profile-images');
-            formData.append('original_name', originalStemRef.current || 'avatar');
-
-            const token = session?.access_token;
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-            const uploadRes = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
-            const uploadJson = await uploadRes.json();
-            if (!uploadRes.ok) throw new Error(uploadJson.error?.message || uploadJson.error || 'Upload failed');
-
-            const avatarUrl = uploadJson.data?.url || uploadJson.url;
+            const avatarUrl = await uploadToR2({
+                apiBase,
+                file: new File([blob], 'avatar.jpg', { type: 'image/jpeg' }),
+                bucket: 'profile-images',
+                originalName: originalStemRef.current || 'avatar',
+                accessToken: session?.access_token,
+            });
             await onSave({ avatar_url: avatarUrl });
             onClose();
         } catch (err) {
@@ -1983,22 +1978,13 @@ const BannerEditorModal = memo(function BannerEditorModal({ coach, onClose, onSa
 
             const apiBase = window.CONFIG?.API_URL || 'https://clouedo.com/coachsearching/api';
 
-            const formData = new FormData();
-            formData.append('file', new File([blob], 'banner.jpg', { type: 'image/jpeg' }));
-            formData.append('bucket', 'profile-banners');
-            formData.append('original_name', originalStemRef.current || 'banner');
-
-            const token = session?.access_token;
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-            const uploadRes = await fetch(`${apiBase}/upload`, { method: 'POST', headers, body: formData });
-            const uploadJson = await uploadRes.json();
-            if (!uploadRes.ok) {
-                console.error('R2 upload error:', uploadJson);
-                throw new Error(uploadJson.error?.message || uploadJson.error || 'Upload failed');
-            }
-
-            const bannerUrl = uploadJson.data?.url || uploadJson.url;
+            const bannerUrl = await uploadToR2({
+                apiBase,
+                file: new File([blob], 'banner.jpg', { type: 'image/jpeg' }),
+                bucket: 'profile-banners',
+                originalName: originalStemRef.current || 'banner',
+                accessToken: session?.access_token,
+            });
             await onSave({ banner_url: bannerUrl });
             onClose();
         } catch (err) {

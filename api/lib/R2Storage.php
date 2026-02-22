@@ -145,6 +145,78 @@ class R2Storage
     }
 
     /**
+     * Generate a presigned PUT URL for direct browser-to-R2 upload.
+     *
+     * No network call to R2 is made — this is a pure cryptographic operation.
+     * The returned URL can be used by a browser to PUT a file directly to R2,
+     * bypassing the PHP server entirely for the data transfer.
+     *
+     * IMPORTANT: The R2 bucket must have CORS configured to allow PUT from your
+     * app's origin, otherwise browsers will block the preflight OPTIONS request.
+     *
+     * @param string $bucket    Target R2 bucket name
+     * @param string $key       Object key (filename, no leading slash)
+     * @param int    $expiresIn Seconds until URL expires (default 15 min)
+     * @return array{success: bool, url?: string, error?: string}
+     */
+    public function generatePresignedPutUrl(string $bucket, string $key, int $expiresIn = 900): array
+    {
+        if (empty($this->accessKeyId) || empty($this->secretAccessKey) || empty($this->endpoint)) {
+            return ['success' => false, 'error' => 'R2 credentials not configured'];
+        }
+
+        $amzDate   = gmdate('Ymd\THis\Z');
+        $dateStamp = gmdate('Ymd');
+
+        $parsedUrl = parse_url($this->endpoint);
+        $host      = $parsedUrl['host'] ?? '';
+        $key       = ltrim($key, '/');
+
+        $credentialScope = "{$dateStamp}/{$this->region}/{$this->service}/aws4_request";
+
+        // Query parameters for query-string authentication (must be sorted lexicographically)
+        $queryParams = [
+            'X-Amz-Algorithm'     => 'AWS4-HMAC-SHA256',
+            'X-Amz-Credential'    => $this->accessKeyId . '/' . $credentialScope,
+            'X-Amz-Date'          => $amzDate,
+            'X-Amz-Expires'       => (string)$expiresIn,
+            'X-Amz-SignedHeaders' => 'host',
+        ];
+        ksort($queryParams);
+        $canonicalQueryString = http_build_query($queryParams, '', '&', PHP_QUERY_RFC3986);
+
+        // URL-encode the key for both canonical URI and the presigned URL itself
+        $encodedKey  = implode('/', array_map('rawurlencode', explode('/', $key)));
+        $canonicalUri = '/' . $bucket . '/' . $encodedKey;
+
+        // For presigned URLs, payload hash is the literal string UNSIGNED-PAYLOAD
+        $canonicalRequest =
+            "PUT\n" .
+            $canonicalUri . "\n" .
+            $canonicalQueryString . "\n" .
+            "host:{$host}\n" .
+            "\n" .
+            "host\n" .
+            'UNSIGNED-PAYLOAD';
+
+        $stringToSign =
+            "AWS4-HMAC-SHA256\n" .
+            "{$amzDate}\n" .
+            "{$credentialScope}\n" .
+            hash('sha256', $canonicalRequest);
+
+        $signature = hash_hmac('sha256', $stringToSign, $this->deriveSigningKey($dateStamp));
+
+        $presignedUrl = $this->endpoint
+            . '/' . $bucket
+            . '/' . $encodedKey
+            . '?' . $canonicalQueryString
+            . '&X-Amz-Signature=' . $signature;
+
+        return ['success' => true, 'url' => $presignedUrl];
+    }
+
+    /**
      * Custom domain map: bucket → public base URL.
      *
      * Each bucket's public access must be enabled in the Cloudflare dashboard
