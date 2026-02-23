@@ -1610,7 +1610,7 @@ const StepProfile = ({ data, updateData, session, cities = [], countries = COUNT
             <${CertificationsSection} data=${data} updateData=${updateData} session=${session} certifications=${certifications} getCertificationById=${getCertificationById} />
 
             <div class="form-section">
-                <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div class="onboarding-location-grid">
                     <div class="form-group">
                         <label class="form-label">
                             ${t('onboard.premium.country')} <span class="required">*</span>
@@ -2125,8 +2125,8 @@ const OnboardingServiceModal = ({ service, onClose, onSave }) => {
                     <div class="edit-modal-content">
                         ${error && html`<div class="edit-error">${error}</div>`}
 
-                        <div class="form-row" style=${{ display: 'flex', gap: '16px' }}>
-                            <div class="form-group" style=${{ flex: 1 }}>
+                        <div class="form-row" style=${{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                            <div class="form-group" style=${{ flex: 1, minWidth: '200px' }}>
                                 <label>${t('edit.serviceName') || 'Service Name'} *</label>
                                 <input
                                     type="text"
@@ -2137,7 +2137,7 @@ const OnboardingServiceModal = ({ service, onClose, onSave }) => {
                                     class="premium-input"
                                 />
                             </div>
-                            <div class="form-group" style=${{ flex: 1 }}>
+                            <div class="form-group" style=${{ flex: 1, minWidth: '200px' }}>
                                 <label>${t('edit.serviceNameEn') || 'Service Name (English)'}</label>
                                 <input
                                     type="text"
@@ -2149,8 +2149,8 @@ const OnboardingServiceModal = ({ service, onClose, onSave }) => {
                             </div>
                         </div>
 
-                        <div class="form-row" style=${{ display: 'flex', gap: '16px' }}>
-                            <div class="form-group" style=${{ flex: 1 }}>
+                        <div class="form-row" style=${{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                            <div class="form-group" style=${{ flex: 1, minWidth: '180px' }}>
                                 <label>${t('edit.price') || 'Price'} *</label>
                                 <div style=${{ display: 'flex', gap: '8px' }}>
                                     <input
@@ -2177,7 +2177,7 @@ const OnboardingServiceModal = ({ service, onClose, onSave }) => {
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group" style=${{ flex: 1 }}>
+                            <div class="form-group" style=${{ flex: 1, minWidth: '180px' }}>
                                 <label>${t('edit.unit') || 'Unit'}</label>
                                 <select
                                     value=${unit}
@@ -2281,7 +2281,7 @@ const StepLaunch = ({ data, updateData, loading, onComplete, onBack, onReferralC
                     </p>
                 </div>
 
-                <div class="plan-selection" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                <div class="plan-selection onboarding-plan-grid">
                     <div
                         class=${freeCardClass}
                         onClick=${() => updateData('plan_type', 'free')}
