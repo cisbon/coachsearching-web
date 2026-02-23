@@ -118,7 +118,7 @@ export const DashboardProfile = ({ session, userType }) => {
 
                 const pd = user.profile_data || {};
                 const sessionTypes = pd.session_types || [];
-                const offersOnline   = sessionTypes.includes('online') || pd.offers_online   ?? true;
+                const offersOnline   = sessionTypes.includes('online') || pd.offers_online ?? true;
                 const offersInPerson = sessionTypes.includes('in-person') || pd.offers_in_person ?? false;
 
                 let cityId = pd.city_id || null;
