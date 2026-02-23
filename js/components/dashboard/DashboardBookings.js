@@ -66,7 +66,7 @@ const BookingAcceptModal = ({ booking, onClose, onAccept }) => {
                     <h3>Session Details</h3>
                     <div class="summary-row">
                         <span>Client:</span>
-                        <span>${booking.client?.full_name || 'Client'}</span>
+                        <span>${booking.client?.cs_users?.full_name || booking.client?.full_name || 'Client'}</span>
                     </div>
                     <div class="summary-row">
                         <span>Date:</span>
@@ -217,7 +217,7 @@ export const DashboardBookings = ({ session, userType }) => {
                             .from('cs_bookings')
                             .select(`
                                 *,
-                                client:cs_clients!client_id(full_name, email, phone)
+                                client:cs_clients!client_id(user_id, phone, cs_users(full_name, email, avatar_url))
                             `)
                             .eq('coach_id', coachData.id)
                             .order('start_time', { ascending: false });
@@ -239,7 +239,7 @@ export const DashboardBookings = ({ session, userType }) => {
                             .from('cs_bookings')
                             .select(`
                                 *,
-                                coach:cs_coaches!coach_id(full_name, title, avatar_url)
+                                coach:cs_coaches!coach_id(cs_users(full_name, title, avatar_url, slug))
                             `)
                             .eq('client_id', clientData.id)
                             .order('start_time', { ascending: false });

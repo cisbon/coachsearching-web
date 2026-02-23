@@ -334,7 +334,7 @@ function exportUserData() {
 
     // Get favorites
     $favorites = $db->from('cs_favorites')
-        ->select('*, cs_coaches(full_name, slug)')
+        ->select('*, cs_coaches(user_id, cs_users(full_name, slug))')
         ->eq('user_id', $userId)
         ->execute();
 

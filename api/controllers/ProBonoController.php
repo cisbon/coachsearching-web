@@ -10,22 +10,21 @@ class ProBonoController {
 
     public function index() {
         try {
-            // Join cs_coaches -> cs_user_profiles
-            $query = "select=*,cs_coaches(cs_user_profiles(full_name,avatar_url))&is_booked=eq.false&start_time=gt.now&order=start_time.asc";
-            
+            // Join cs_coaches -> cs_users for coach name and avatar
+            $query = "select=*,cs_coaches(user_id,cs_users(full_name,avatar_url))&is_booked=eq.false&start_time=gt.now&order=start_time.asc";
+
             $response = $this->db->request('GET', '/cs_pro_bono_slots?' . $query);
 
             if ($response['status'] >= 200 && $response['status'] < 300) {
                 $slots = $response['body'];
-                
+
                 // Flatten
                 foreach ($slots as &$slot) {
-                    if (isset($slot['cs_coaches']['cs_user_profiles'])) {
-                        $profile = $slot['cs_coaches']['cs_user_profiles'];
-                        $slot['coach_name'] = $profile['full_name'] ?? '';
-                        $slot['avatar_url'] = $profile['avatar_url'] ?? '';
-                        unset($slot['cs_coaches']);
-                    }
+                    $coachData = $slot['cs_coaches'] ?? [];
+                    $profile = $coachData['cs_users'] ?? [];
+                    $slot['coach_name'] = $profile['full_name'] ?? $coachData['full_name'] ?? '';
+                    $slot['avatar_url'] = $profile['avatar_url'] ?? $coachData['avatar_url'] ?? '';
+                    unset($slot['cs_coaches']);
                 }
 
                 if (empty($slots)) {

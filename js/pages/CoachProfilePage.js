@@ -4270,14 +4270,23 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
                 const data = await cachedFetch(qKey, async () => {
                     const field = isUUID(identifier) ? 'id' : 'slug';
-                    const { data: d, error } = await window.supabaseClient
+                    let query = window.supabaseClient
                         .from('cs_coaches')
-                        .select('*, cs_coach_certifications(*, cs_certifications(*))')
+                        .select('*, cs_users(full_name, avatar_url, banner_url, title, slug), cs_coach_certifications(*, cs_certifications(*))')
                         .eq(field, identifier)
                         .single();
+                    const { data: d, error } = await query;
                     if (error) throw error;
                     if (!d) throw new Error('Coach not found');
-                    return d;
+                    // Normalize: prefer cs_users fields over cs_coaches redundant fields
+                    return {
+                        ...d,
+                        full_name: d.cs_users?.full_name || d.full_name,
+                        avatar_url: d.cs_users?.avatar_url || d.avatar_url,
+                        banner_url: d.cs_users?.banner_url || d.banner_url,
+                        title: d.cs_users?.title || d.title,
+                        slug: d.cs_users?.slug || d.slug,
+                    };
                 }, STALE_TIMES.coachProfile);
 
                 setCoach(data);
@@ -4332,6 +4341,24 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 .in('id', postIds);
 
             if (posts) {
+                // Enrich posts with author data from cs_users
+                const postUserIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
+                if (postUserIds.length > 0) {
+                    const { data: usersData } = await supabase
+                        .from('cs_users')
+                        .select('id, full_name, avatar_url, title, slug')
+                        .in('id', postUserIds);
+                    const userMap = {};
+                    (usersData || []).forEach(u => { userMap[u.id] = u; });
+                    posts.forEach(p => {
+                        const user = userMap[p.user_id] || {};
+                        p.author_name = user.full_name || '';
+                        p.author_avatar = user.avatar_url || null;
+                        p.author_title = user.title || null;
+                        p.author_slug = user.slug || null;
+                    });
+                }
+
                 // Preserve highlight order
                 const postMap = {};
                 posts.forEach(p => { postMap[p.id] = p; });
@@ -4378,7 +4405,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                     .order('created_at', { ascending: false }).range(offset, offset + fetchSize - 1),
                 supabase.from('cs_post_reposts').select('post_id, reposted_at, cs_posts(*)').eq('user_id', userId)
                     .order('reposted_at', { ascending: false }).range(offset, offset + fetchSize - 1),
-                supabase.from('cs_post_comments').select('id, post_id, content, author_name, author_avatar, created_at, cs_posts(*)').eq('user_id', userId)
+                supabase.from('cs_post_comments').select('id, post_id, content, created_at, cs_posts(*)').eq('user_id', userId)
                     .order('created_at', { ascending: false }).range(offset, offset + fetchSize * 2 - 1),
                 supabase.from('cs_post_likes').select('post_id, created_at, cs_posts(*)').eq('user_id', userId)
                     .order('created_at', { ascending: false }).range(offset, offset + fetchSize - 1),
@@ -4401,13 +4428,42 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 }
             };
 
+            // Gather all posts to enrich with author data from cs_users
+            const allPosts = [
+                ...(ownPostsRes.data || []),
+                ...(repostsRes.data || []).map(r => r.cs_posts).filter(Boolean),
+                ...(commentsRes.data || []).map(c => c.cs_posts).filter(Boolean),
+                ...(likesRes.data || []).map(l => l.cs_posts).filter(Boolean),
+            ];
+            const postUserIds = [...new Set(allPosts.map(p => p.user_id).filter(Boolean))];
+            const postUserMap = {};
+            if (postUserIds.length > 0) {
+                const { data: postUsersData } = await supabase
+                    .from('cs_users')
+                    .select('id, full_name, avatar_url, title, slug')
+                    .in('id', postUserIds);
+                (postUsersData || []).forEach(u => { postUserMap[u.id] = u; });
+            }
+            const enrichPost = (p) => {
+                if (!p) return p;
+                const user = postUserMap[p.user_id] || {};
+                p.author_name = user.full_name || '';
+                p.author_avatar = user.avatar_url || null;
+                p.author_title = user.title || null;
+                p.author_slug = user.slug || null;
+                return p;
+            };
+
             (ownPostsRes.data || []).forEach(post => {
+                enrichPost(post);
                 addActivity(post.id, post, 'posted', post.created_at);
             });
             (repostsRes.data || []).forEach(r => {
-                if (r.cs_posts) addActivity(r.post_id, r.cs_posts, 'reposted', r.reposted_at);
+                if (r.cs_posts) addActivity(r.post_id, enrichPost(r.cs_posts), 'reposted', r.reposted_at);
             });
             // Collect user's comments per post (most recent comment per post)
+            // Use cs_users data for the commenter (userId is the profile being viewed)
+            const commentUser = postUserMap[userId] || {};
             const commentsByPost = new Map();
             (commentsRes.data || []).forEach(c => {
                 if (c.cs_posts) {
@@ -4416,18 +4472,18 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                         commentsByPost.set(c.post_id, {
                             id: c.id,
                             content: c.content,
-                            author_name: c.author_name,
-                            author_avatar: c.author_avatar,
+                            author_name: commentUser.full_name || '',
+                            author_avatar: commentUser.avatar_url || null,
                             created_at: c.created_at,
                         });
                     }
-                    addActivity(c.post_id, c.cs_posts, 'commented', commentsByPost.get(c.post_id).created_at, {
+                    addActivity(c.post_id, enrichPost(c.cs_posts), 'commented', commentsByPost.get(c.post_id).created_at, {
                         userComment: commentsByPost.get(c.post_id),
                     });
                 }
             });
             (likesRes.data || []).forEach(l => {
-                if (l.cs_posts) addActivity(l.post_id, l.cs_posts, 'liked', l.created_at);
+                if (l.cs_posts) addActivity(l.post_id, enrichPost(l.cs_posts), 'liked', l.created_at);
             });
 
             let activityItems = Array.from(activityByPost.values());
@@ -4639,12 +4695,21 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
         }
     };
 
+    const normalizeCoachData = (coaches) => (coaches || []).map(c => ({
+        ...c,
+        full_name: c.cs_users?.full_name || c.full_name,
+        avatar_url: c.cs_users?.avatar_url || c.avatar_url,
+        banner_url: c.cs_users?.banner_url || c.banner_url,
+        title: c.cs_users?.title || c.title,
+        slug: c.cs_users?.slug || c.slug,
+    }));
+
     const loadSimilarCoaches = async (coachData) => {
         try {
             const specialties = coachData.specialties || [];
             let query = window.supabaseClient
                 .from('cs_coaches')
-                .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location, cs_coach_certifications(*, cs_certifications(*))')
+                .select('id, hourly_rate, rating_average, rating_count, specialties, location, cs_users(full_name, title, avatar_url, slug), cs_coach_certifications(*, cs_certifications(*))')
                 .neq('id', coachData.id)
                 .eq('is_active', true)
                 .limit(5);
@@ -4658,14 +4723,14 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             if (error) {
                 const fallback = await window.supabaseClient
                     .from('cs_coaches')
-                    .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location, cs_coach_certifications(*, cs_certifications(*))')
+                    .select('id, hourly_rate, rating_average, rating_count, specialties, location, cs_users(full_name, title, avatar_url, slug), cs_coach_certifications(*, cs_certifications(*))')
                     .neq('id', coachData.id)
                     .eq('is_active', true)
                     .order('rating_average', { ascending: false })
                     .limit(5);
-                setSimilarCoaches(fallback.data || []);
+                setSimilarCoaches(normalizeCoachData(fallback.data));
             } else {
-                setSimilarCoaches(data || []);
+                setSimilarCoaches(normalizeCoachData(data));
             }
         } catch (err) {
             console.error('Failed to load similar coaches:', err);
@@ -4683,7 +4748,7 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
             let query = window.supabaseClient
                 .from('cs_coaches')
-                .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location, cs_coach_certifications(*, cs_certifications(*))')
+                .select('id, hourly_rate, rating_average, rating_count, specialties, location, cs_users(full_name, title, avatar_url, slug), cs_coach_certifications(*, cs_certifications(*))')
                 .neq('id', coachData.id)
                 .eq('is_active', true)
                 .limit(5);
@@ -4699,14 +4764,14 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
                 // Fallback to just top rated coaches
                 const fallback = await window.supabaseClient
                     .from('cs_coaches')
-                    .select('id, full_name, title, avatar_url, hourly_rate, rating_average, rating_count, specialties, slug, location, cs_coach_certifications(*, cs_certifications(*))')
+                    .select('id, hourly_rate, rating_average, rating_count, specialties, location, cs_users(full_name, title, avatar_url, slug), cs_coach_certifications(*, cs_certifications(*))')
                     .neq('id', coachData.id)
                     .eq('is_active', true)
                     .order('rating_average', { ascending: false })
                     .limit(5);
-                setViewersAlsoViewed(fallback.data || []);
+                setViewersAlsoViewed(normalizeCoachData(fallback.data));
             } else {
-                setViewersAlsoViewed(data || []);
+                setViewersAlsoViewed(normalizeCoachData(data));
             }
         } catch (err) {
             console.error('Failed to load viewers also viewed:', err);
@@ -4727,9 +4792,30 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
             throw new Error('You can only edit your own profile');
         }
 
+        // Fields that belong to cs_users instead of cs_coaches
+        const userFields = ['full_name', 'avatar_url', 'banner_url', 'title'];
+        const csUsersUpdate = {};
+        const csCoachesUpdate = {};
+
+        Object.entries(updateData).forEach(([key, value]) => {
+            if (userFields.includes(key)) {
+                csUsersUpdate[key] = value;
+            }
+            // Always include in coaches update for backward compat
+            csCoachesUpdate[key] = value;
+        });
+
+        // Update cs_users for user-level fields
+        if (Object.keys(csUsersUpdate).length > 0) {
+            await window.supabaseClient
+                .from('cs_users')
+                .update(csUsersUpdate)
+                .eq('id', session.user.id);
+        }
+
         const { data, error } = await window.supabaseClient
             .from('cs_coaches')
-            .update(updateData)
+            .update(csCoachesUpdate)
             .eq('id', coach.id)
             .eq('user_id', session.user.id)
             .select()
@@ -4737,8 +4823,8 @@ function CoachProfilePageComponent({ coachIdOrSlug, coachId, session }) {
 
         if (error) throw error;
 
-        // Update local state with new data
-        setCoach(prev => ({ ...prev, ...data }));
+        // Update local state with new data (merge with cs_users fields)
+        setCoach(prev => ({ ...prev, ...data, ...csUsersUpdate }));
 
         // Invalidate TanStack Query cache so next visit re-fetches
         queryClient.invalidateQueries({ queryKey: ['coach', 'profile'] });

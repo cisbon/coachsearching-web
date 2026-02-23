@@ -30,8 +30,8 @@ $clientEmail = $data['client_email'] ?? '';
 $specialties = $data['specialties'] ?? [];
 $goal = $data['goal'] ?? '';
 
-// Fetch coach email from Supabase
-$url = SUPABASE_URL . '/rest/v1/cs_coaches?select=full_name,email,user_id&user_id=eq.' . urlencode($coachId) . '&limit=1';
+// Fetch coach email from Supabase (join cs_users for full_name and email)
+$url = SUPABASE_URL . '/rest/v1/cs_coaches?select=user_id,cs_users(full_name,email)&user_id=eq.' . urlencode($coachId) . '&limit=1';
 $ch = curl_init($url);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
@@ -56,8 +56,9 @@ if ($httpCode !== 200) {
 
 $coaches = json_decode($response, true);
 $coach = $coaches[0] ?? null;
+$coachUser = $coach['cs_users'] ?? [];
 
-if (!$coach || empty($coach['email'])) {
+if (!$coach || empty($coachUser['email'])) {
     error_log("Chemistry call notify: Coach not found or no email for ID: $coachId");
     http_response_code(404);
     header('Content-Type: application/json');
@@ -65,8 +66,8 @@ if (!$coach || empty($coach['email'])) {
     exit;
 }
 
-$coachEmail = $coach['email'];
-$coachName = $coach['full_name'] ?? 'Coach';
+$coachEmail = $coachUser['email'];
+$coachName = $coachUser['full_name'] ?? 'Coach';
 
 // Build specialties string
 $specialtiesStr = is_array($specialties) ? implode(', ', $specialties) : (string)$specialties;

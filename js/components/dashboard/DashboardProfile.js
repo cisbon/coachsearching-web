@@ -98,14 +98,24 @@ export const DashboardProfile = ({ session, userType }) => {
 
     const loadCoachProfile = async () => {
         try {
-            const { data: coach, error } = await window.supabaseClient
-                .from('cs_coaches')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .single();
+            const [coachRes, userRes] = await Promise.all([
+                window.supabaseClient
+                    .from('cs_coaches')
+                    .select('*')
+                    .eq('user_id', session.user.id)
+                    .single(),
+                window.supabaseClient
+                    .from('cs_users')
+                    .select('full_name, avatar_url, banner_url, title')
+                    .eq('id', session.user.id)
+                    .single(),
+            ]);
 
-            if (error && error.code !== 'PGRST116') {
-                console.error('Failed to load profile:', error);
+            const coach = coachRes.data;
+            const userProfile = userRes.data;
+
+            if (coachRes.error && coachRes.error.code !== 'PGRST116') {
+                console.error('Failed to load profile:', coachRes.error);
                 return;
             }
 
@@ -127,11 +137,12 @@ export const DashboardProfile = ({ session, userType }) => {
                     }
                 }
 
+                // Prefer cs_users data for user-level fields
                 setFormData({
-                    full_name: coach.full_name || '',
-                    avatar_url: coach.avatar_url || '',
-                    banner_url: coach.banner_url || '',
-                    title: coach.title || '',
+                    full_name: userProfile?.full_name || coach.full_name || '',
+                    avatar_url: userProfile?.avatar_url || coach.avatar_url || '',
+                    banner_url: userProfile?.banner_url || coach.banner_url || '',
+                    title: userProfile?.title || coach.title || '',
                     bio: coach.bio || '',
                     city_id: cityId,
                     location_country: locationCountry,
@@ -193,9 +204,20 @@ export const DashboardProfile = ({ session, userType }) => {
         }
     };
 
+    // Fields that live in cs_users instead of only cs_coaches
+    const USER_LEVEL_FIELDS = ['full_name', 'avatar_url', 'banner_url', 'title'];
+
     const saveField = async (field, value) => {
         if (!coachId) return;
         try {
+            // For user-level fields, save to cs_users
+            if (USER_LEVEL_FIELDS.includes(field)) {
+                await window.supabaseClient
+                    .from('cs_users')
+                    .update({ [field]: value })
+                    .eq('id', session.user.id);
+            }
+            // Also save to cs_coaches for backward compat
             await window.supabaseClient
                 .from('cs_coaches')
                 .update({ [field]: value, updated_at: new Date().toISOString() })
@@ -216,10 +238,23 @@ export const DashboardProfile = ({ session, userType }) => {
             if (formData.offers_online) sessionFormats.push('online');
             if (formData.offers_in_person) sessionFormats.push('in-person');
 
+            const resolvedAvatarUrl = formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`;
+
+            // Save user-level fields to cs_users
+            await window.supabaseClient
+                .from('cs_users')
+                .update({
+                    full_name: formData.full_name,
+                    avatar_url: resolvedAvatarUrl,
+                    banner_url: formData.banner_url,
+                    title: formData.title,
+                })
+                .eq('id', session.user.id);
+
             const profileData = {
                 user_id: session.user.id,
                 full_name: formData.full_name,
-                avatar_url: formData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                avatar_url: resolvedAvatarUrl,
                 banner_url: formData.banner_url,
                 title: formData.title,
                 bio: formData.bio,

@@ -30,6 +30,28 @@ export function FeedLayout({ session, userProfile, leftColumn, rightColumn }) {
     const [showMobileSections, setShowMobileSections] = useState(false);
     const sentinelRef = useRef(null);
 
+    // Enrich posts with author data from cs_users (since author_ columns removed from cs_posts)
+    const enrichPostsWithAuthors = async (posts) => {
+        const supabase = window.supabaseClient;
+        if (!supabase || !posts || posts.length === 0) return posts;
+        const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
+        if (userIds.length === 0) return posts;
+        const { data: usersData } = await supabase
+            .from('cs_users')
+            .select('id, full_name, avatar_url, title, slug')
+            .in('id', userIds);
+        const userMap = {};
+        (usersData || []).forEach(u => { userMap[u.id] = u; });
+        posts.forEach(p => {
+            const user = userMap[p.user_id] || {};
+            p.author_name = user.full_name || '';
+            p.author_avatar = user.avatar_url || null;
+            p.author_title = user.title || null;
+            p.author_slug = user.slug || null;
+        });
+        return posts;
+    };
+
     // Load feed posts (cached via TanStack Query)
     const loadPosts = useCallback(async (offset = 0) => {
         try {
@@ -49,6 +71,9 @@ export function FeedLayout({ session, userProfile, leftColumn, rightColumn }) {
                 },
                 staleTime: STALE_TIMES.feedPosts,
             });
+
+            // Enrich posts with author data from cs_users
+            await enrichPostsWithAuthors(data);
 
             // Check which posts current user has liked, highlighted, reposted
             if (data && data.length > 0 && session?.user?.id) {
@@ -101,12 +126,11 @@ export function FeedLayout({ session, userProfile, leftColumn, rightColumn }) {
     }, [hasMore, loadingMore, loading, posts.length, loadPosts]);
 
     const handlePostCreated = (newPost) => {
-        if (userProfile) {
-            newPost.author_name = userProfile.full_name;
-            newPost.author_avatar = userProfile.avatar_url;
-            newPost.author_title = userProfile.title;
-            if (userProfile.slug) newPost.author_slug = userProfile.slug;
-        }
+        // Populate author fields from userProfile (since columns removed from cs_posts)
+        newPost.author_name = userProfile?.full_name || '';
+        newPost.author_avatar = userProfile?.avatar_url || null;
+        newPost.author_title = userProfile?.title || null;
+        newPost.author_slug = userProfile?.slug || null;
         setPosts(prev => [newPost, ...prev]);
     };
 

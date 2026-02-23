@@ -18,7 +18,8 @@ const ACTIVITY_LOOKBACK_DAYS = 30;
 
 /**
  * Resolve user profiles from a list of user IDs.
- * Tries cs_clients first, then cs_coaches for any missing.
+ * Fetches from cs_users (authoritative for full_name, avatar_url, slug)
+ * and determines user type from cs_clients/cs_coaches membership.
  */
 async function resolveUserProfiles(userIds) {
     if (!userIds.length) return {};
@@ -27,24 +28,41 @@ async function resolveUserProfiles(userIds) {
 
     const profiles = {};
 
-    // Try cs_clients first
-    const { data: clients } = await supabase
-        .from('cs_clients')
-        .select('user_id, full_name, avatar_url, slug')
-        .in('user_id', userIds);
-    (clients || []).forEach(c => {
-        profiles[c.user_id] = { full_name: c.full_name, avatar_url: c.avatar_url, slug: c.slug, type: 'client' };
+    // Fetch user-level fields from cs_users (authoritative source)
+    const { data: users } = await supabase
+        .from('cs_users')
+        .select('id, full_name, avatar_url, slug, user_type')
+        .in('id', userIds);
+
+    (users || []).forEach(u => {
+        profiles[u.id] = {
+            full_name: u.full_name,
+            avatar_url: u.avatar_url,
+            slug: u.slug,
+            type: u.user_type === 'coach' ? 'coach' : 'client',
+        };
     });
 
-    // For any missing, try cs_coaches
+    // For any user IDs not found in cs_users, fall back to cs_coaches/cs_clients
     const missing = userIds.filter(id => !profiles[id]);
     if (missing.length > 0) {
-        const { data: coaches } = await supabase
-            .from('cs_coaches')
-            .select('user_id, full_name, avatar_url, slug')
-            .in('user_id', missing);
-        (coaches || []).forEach(c => {
-            profiles[c.user_id] = { full_name: c.full_name, avatar_url: c.avatar_url, slug: c.slug, type: 'coach' };
+        const [clientsRes, coachesRes] = await Promise.all([
+            supabase.from('cs_clients').select('user_id').in('user_id', missing),
+            supabase.from('cs_coaches').select('user_id, full_name, avatar_url, slug').in('user_id', missing),
+        ]);
+        const clientIds = new Set((clientsRes.data || []).map(c => c.user_id));
+        (coachesRes.data || []).forEach(c => {
+            profiles[c.user_id] = {
+                full_name: c.full_name,
+                avatar_url: c.avatar_url,
+                slug: c.slug,
+                type: clientIds.has(c.user_id) ? 'client' : 'coach',
+            };
+        });
+        missing.filter(id => !profiles[id]).forEach(id => {
+            if (clientIds.has(id)) {
+                profiles[id] = { full_name: '', avatar_url: null, slug: null, type: 'client' };
+            }
         });
     }
 
@@ -162,7 +180,7 @@ export function NotificationsPage({ session }) {
                         .limit(50),
                     supabase
                         .from('cs_post_comments')
-                        .select('id, post_id, user_id, content, author_name, author_avatar, created_at')
+                        .select('id, post_id, user_id, content, created_at')
                         .in('post_id', myPostIds)
                         .neq('user_id', userId)
                         .gte('created_at', cutoff)
@@ -189,7 +207,8 @@ export function NotificationsPage({ session }) {
             myAcceptedConnections.forEach(c => userIdsToResolve.add(c.coach_id));
             likes.forEach(l => userIdsToResolve.add(l.user_id));
             reposts.forEach(r => userIdsToResolve.add(r.user_id));
-            // Comments already have author_name/author_avatar
+            // Comment authors are looked up via user_id from cs_users
+            comments.forEach(c => userIdsToResolve.add(c.user_id));
 
             const profiles = await resolveUserProfiles([...userIdsToResolve]);
 
@@ -252,13 +271,15 @@ export function NotificationsPage({ session }) {
 
             // Comments on my posts
             comments.forEach(c => {
+                const profile = profiles[c.user_id] || {};
                 const post = myPostMap[c.post_id];
                 allNotifications.push({
                     id: `comment-${c.id}`,
                     type: 'comment',
                     actorId: c.user_id,
-                    actorName: c.author_name || (t('notifications.someone') || 'Someone'),
-                    actorAvatar: c.author_avatar,
+                    actorName: profile.full_name || (t('notifications.someone') || 'Someone'),
+                    actorAvatar: profile.avatar_url,
+                    actorSlug: profile.type === 'client' ? `u/${profile.slug}` : (profile.type === 'coach' ? `coach/${profile.slug}` : null),
                     timestamp: c.created_at,
                     message: t('notifications.commentedPost') || 'commented on your post',
                     commentPreview: c.content?.substring(0, 80) || '',

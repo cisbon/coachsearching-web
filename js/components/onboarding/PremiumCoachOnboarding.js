@@ -513,7 +513,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 .single();
 
             if (!existingUser) {
-                // User doesn't exist, create it
+                // User doesn't exist, create it with user-level fields
                 const { error: userError } = await supabase
                     .from('cs_users')
                     .insert({
@@ -521,12 +521,25 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                         email: session.user.email,
                         full_name: fullName,
                         user_type: 'coach',
-                        avatar_url: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`
+                        avatar_url: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                        title: data.professional_title || null,
+                        slug: slug,
                     });
 
                 if (userError) {
                     throw userError;
                 }
+            } else {
+                // User exists - update user-level fields in cs_users (slug, full_name, avatar_url, title)
+                await supabase
+                    .from('cs_users')
+                    .update({
+                        full_name: fullName,
+                        avatar_url: data.avatar_url || null,
+                        title: data.professional_title || null,
+                        slug: slug,
+                    })
+                    .eq('id', userId);
             }
 
             // Check if coach profile exists
@@ -537,12 +550,11 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 .single();
 
             let coachId = null;
-            let coachSlug = slug; // Default to newly generated slug
+            let coachSlug = slug; // Use cs_users.slug as the canonical slug
 
             if (existingCoach) {
-                // Update existing - don't update slug
+                // Update existing coach - slug is now in cs_users, not cs_coaches
                 coachId = existingCoach.id;
-                coachSlug = existingCoach.slug || slug;
                 const { slug: _slug, ...updateData } = coachData;
                 const { error } = await supabase
                     .from('cs_coaches')
@@ -558,7 +570,6 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                     .single();
                 if (error) throw error;
                 coachId = newCoach?.id;
-                coachSlug = newCoach?.slug || slug;
             }
 
             // Handle referral code if valid - insert into cs_referral_code_usage

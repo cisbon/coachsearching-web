@@ -9,11 +9,12 @@ class CoachController {
     }
 
     public function index() {
-        // Build Query String - cs_coaches now has full_name and avatar_url directly
-        $query = "select=*";
+        // Build Query String - join with cs_users to get full_name, avatar_url, title, slug
+        $query = "select=*,cs_users(full_name,avatar_url,title,slug)";
 
         if (isset($_GET['search'])) {
             $search = $_GET['search'];
+            // Search by coach-specific fields (full_name kept in cs_coaches for search compat)
             $query .= "&or=(title.ilike.*$search*,bio.ilike.*$search*,full_name.ilike.*$search*)";
         }
 
@@ -99,7 +100,7 @@ class CoachController {
             return;
         }
 
-        // Build coach profile data
+        // Build coach profile data (coach-specific fields only)
         $profileData = [
             'id' => $userId,
             'full_name' => $data['full_name'],
@@ -116,10 +117,20 @@ class CoachController {
             'updated_at' => date('c')
         ];
 
+        // User-level fields that also need to be saved in cs_users
+        $userProfileData = [
+            'full_name' => $data['full_name'],
+            'avatar_url' => $data['avatar_url'] ?? null,
+            'title' => $data['title'],
+        ];
+
         try {
             $headers = getallheaders();
             $authHeader = $headers['Authorization'] ?? '';
             $token = str_replace('Bearer ', '', $authHeader);
+
+            // Also update cs_users with user-level fields
+            $this->db->request('PATCH', '/cs_users?id=eq.' . $userId, $userProfileData, $token);
 
             // UPSERT using Prefer: resolution=merge-duplicates
             $response = $this->db->request('POST', '/cs_coaches', $profileData, $token, ['Prefer: resolution=merge-duplicates']);

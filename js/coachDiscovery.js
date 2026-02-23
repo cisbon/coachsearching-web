@@ -814,7 +814,7 @@ export const DiscoveryPage = ({ session, formatPrice, onStartQuiz }) => {
 
             let query = supabase
                 .from('cs_coaches')
-                .select('*')
+                .select('*, cs_users(full_name, avatar_url, banner_url, title, slug)')
                 .eq('onboarding_completed', true);
 
             // Apply search term
@@ -896,7 +896,16 @@ export const DiscoveryPage = ({ session, formatPrice, onStartQuiz }) => {
                     );
                 }
 
-                setCoaches(filteredData);
+                // Normalize: use cs_users fields for display (full_name, avatar_url, etc.)
+                const normalizedData = filteredData.map(coach => ({
+                    ...coach,
+                    full_name: coach.cs_users?.full_name || coach.full_name,
+                    avatar_url: coach.cs_users?.avatar_url || coach.avatar_url,
+                    banner_url: coach.cs_users?.banner_url || coach.banner_url,
+                    title: coach.cs_users?.title || coach.title,
+                    slug: coach.cs_users?.slug || coach.slug,
+                }));
+                setCoaches(normalizedData);
 
                 // Track search event
                 trackSearchEvent({

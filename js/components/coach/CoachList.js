@@ -522,6 +522,13 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                             .from('cs_coaches')
                             .select(`
                                 *,
+                                cs_users (
+                                    full_name,
+                                    avatar_url,
+                                    banner_url,
+                                    title,
+                                    slug
+                                ),
                                 cs_coach_certifications (
                                     id,
                                     certification_id,
@@ -541,7 +548,15 @@ export function CoachList({ searchFilters, session, CoachDetailModal, initialSpe
                             `)
                             .order('created_at', { ascending: false });
                         if (error) throw error;
-                        return data || [];
+                        // Normalize: use cs_users fields for full_name, avatar_url, banner_url, title, slug
+                        return (data || []).map(coach => ({
+                            ...coach,
+                            full_name: coach.cs_users?.full_name || coach.full_name,
+                            avatar_url: coach.cs_users?.avatar_url || coach.avatar_url,
+                            banner_url: coach.cs_users?.banner_url || coach.banner_url,
+                            title: coach.cs_users?.title || coach.title,
+                            slug: coach.cs_users?.slug || coach.slug,
+                        }));
                     },
                     staleTime: STALE_TIMES.coachList,
                 });

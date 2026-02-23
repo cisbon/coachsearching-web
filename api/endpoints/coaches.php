@@ -820,9 +820,9 @@ function getCoachReviews($coachId) {
         $supabaseUrl = SUPABASE_URL;
         $supabaseKey = SUPABASE_ANON_KEY;
 
-        // Get reviews with client info
+        // Get reviews with client info - join through cs_clients to cs_users for full_name/avatar_url
         $url = $supabaseUrl . '/rest/v1/cs_reviews?coach_id=eq.' . $coachId
-            . '&select=*,cs_clients(full_name,avatar_url)'
+            . '&select=*,cs_clients(user_id,cs_users(full_name,avatar_url))'
             . '&order=created_at.desc'
             . '&limit=' . intval($limit)
             . '&offset=' . intval($offset);
@@ -857,15 +857,16 @@ function getCoachReviews($coachId) {
         if ($httpCode === 200 && $body) {
             $reviews = json_decode($body, true);
 
-            // Map client data
+            // Map client data - use cs_users for full_name/avatar_url (authoritative source)
             $reviews = array_map(function($review) {
+                $clientUser = $review['cs_clients']['cs_users'] ?? [];
                 return [
                     'id' => $review['id'],
                     'rating' => $review['rating'],
                     'comment' => $review['comment'],
                     'created_at' => $review['created_at'],
-                    'client_name' => $review['cs_clients']['full_name'] ?? 'Anonymous',
-                    'client_avatar' => $review['cs_clients']['avatar_url'] ?? null
+                    'client_name' => $clientUser['full_name'] ?? ($review['cs_clients']['full_name'] ?? 'Anonymous'),
+                    'client_avatar' => $clientUser['avatar_url'] ?? ($review['cs_clients']['avatar_url'] ?? null)
                 ];
             }, $reviews);
 

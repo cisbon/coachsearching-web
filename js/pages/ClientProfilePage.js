@@ -433,13 +433,54 @@ export function ClientProfilePage({ clientSlug, session }) {
             const data = await queryClient.fetchQuery({
                 queryKey: QUERY_KEYS.clientBySlug(clientSlug),
                 queryFn: async () => {
-                    const { data, error } = await supabase
-                        .from('cs_clients')
-                        .select('*')
+                    // Slug is now in cs_users; find the user by slug first, then get client record
+                    const { data: userBySlug, error: userError } = await supabase
+                        .from('cs_users')
+                        .select('id, full_name, email, avatar_url, banner_url, slug')
                         .eq('slug', clientSlug)
                         .single();
-                    if (error) throw error;
-                    return data;
+
+                    let userRecord = userBySlug;
+                    let clientData = null;
+
+                    if (userRecord) {
+                        const { data: client } = await supabase
+                            .from('cs_clients')
+                            .select('*')
+                            .eq('user_id', userRecord.id)
+                            .single();
+                        clientData = client;
+                    } else {
+                        // Fallback: try old cs_clients.slug for backward compatibility
+                        const { data: oldClient, error } = await supabase
+                            .from('cs_clients')
+                            .select('*')
+                            .eq('slug', clientSlug)
+                            .single();
+                        if (error) throw error;
+                        clientData = oldClient;
+                        // Also fetch cs_users for user-level fields
+                        if (oldClient) {
+                            const { data: u } = await supabase
+                                .from('cs_users')
+                                .select('id, full_name, email, avatar_url, banner_url, slug')
+                                .eq('id', oldClient.user_id)
+                                .single();
+                            userRecord = u;
+                        }
+                    }
+
+                    if (!clientData) throw new Error('Profile not found');
+
+                    // Merge cs_users fields (authoritative) into client record
+                    return {
+                        ...clientData,
+                        full_name: userRecord?.full_name || clientData.full_name,
+                        email: userRecord?.email || clientData.email,
+                        avatar_url: userRecord?.avatar_url || clientData.avatar_url,
+                        banner_url: userRecord?.banner_url || clientData.banner_url,
+                        slug: userRecord?.slug || clientData.slug,
+                    };
                 },
                 staleTime: STALE_TIMES.clientProfile,
             });
@@ -491,7 +532,7 @@ export function ClientProfilePage({ clientSlug, session }) {
                         // Commented posts — get distinct posts commented on
                         supabase
                             .from('cs_post_comments')
-                            .select('id, post_id, content, author_name, author_avatar, created_at, cs_posts(*)')
+                            .select('id, post_id, content, created_at, cs_posts(*)')
                             .eq('user_id', userId)
                             .order('created_at', { ascending: false })
                             .range(page * PAGE_SIZE * 2, (page + 1) * PAGE_SIZE * 2 - 1),
@@ -517,15 +558,45 @@ export function ClientProfilePage({ clientSlug, session }) {
                         }
                     };
 
+                    // Collect all posts to enrich with author data from cs_users
+                    const allPosts = [
+                        ...(ownPostsRes.data || []),
+                        ...(repostsRes.data || []).map(r => r.cs_posts).filter(Boolean),
+                        ...(commentsRes.data || []).map(c => c.cs_posts).filter(Boolean),
+                        ...(likesRes.data || []).map(l => l.cs_posts).filter(Boolean),
+                    ];
+                    const postUserIds = [...new Set(allPosts.map(p => p.user_id).filter(Boolean))];
+                    const postUserMap = {};
+                    if (postUserIds.length > 0) {
+                        const { data: postUsersData } = await supabase
+                            .from('cs_users')
+                            .select('id, full_name, avatar_url, title, slug')
+                            .in('id', postUserIds);
+                        (postUsersData || []).forEach(u => { postUserMap[u.id] = u; });
+                    }
+                    const enrichPost = (p) => {
+                        if (!p) return p;
+                        const user = postUserMap[p.user_id] || {};
+                        p.author_name = user.full_name || '';
+                        p.author_avatar = user.avatar_url || null;
+                        p.author_title = user.title || null;
+                        p.author_slug = user.slug || null;
+                        return p;
+                    };
+
+                    // Client user data for comment author
+                    const commentUser = postUserMap[userId] || {};
+
                     // Own posts
                     (ownPostsRes.data || []).forEach(post => {
+                        enrichPost(post);
                         addActivity(post.id, post, 'posted', post.created_at);
                     });
 
                     // Reposts
                     (repostsRes.data || []).forEach(repost => {
                         if (repost.cs_posts) {
-                            addActivity(repost.post_id, repost.cs_posts, 'reposted', repost.reposted_at);
+                            addActivity(repost.post_id, enrichPost(repost.cs_posts), 'reposted', repost.reposted_at);
                         }
                     });
 
@@ -538,12 +609,12 @@ export function ClientProfilePage({ clientSlug, session }) {
                                 commentsByPost.set(comment.post_id, {
                                     id: comment.id,
                                     content: comment.content,
-                                    author_name: comment.author_name,
-                                    author_avatar: comment.author_avatar,
+                                    author_name: commentUser.full_name || '',
+                                    author_avatar: commentUser.avatar_url || null,
                                     created_at: comment.created_at,
                                 });
                             }
-                            addActivity(comment.post_id, comment.cs_posts, 'commented', commentsByPost.get(comment.post_id).created_at, {
+                            addActivity(comment.post_id, enrichPost(comment.cs_posts), 'commented', commentsByPost.get(comment.post_id).created_at, {
                                 userComment: commentsByPost.get(comment.post_id),
                             });
                         }
@@ -552,7 +623,7 @@ export function ClientProfilePage({ clientSlug, session }) {
                     // Likes
                     (likesRes.data || []).forEach(like => {
                         if (like.cs_posts) {
-                            addActivity(like.post_id, like.cs_posts, 'liked', like.created_at);
+                            addActivity(like.post_id, enrichPost(like.cs_posts), 'liked', like.created_at);
                         }
                     });
 
@@ -599,21 +670,51 @@ export function ClientProfilePage({ clientSlug, session }) {
         }
     }, [client, session]);
 
+    // Fields that belong to cs_users instead of cs_clients
+    const CLIENT_USER_FIELDS = ['full_name', 'avatar_url', 'banner_url'];
+
     // Save client profile changes
     const saveClientProfile = useCallback(async (updateData) => {
         if (!client?.id || !session?.user?.id) throw new Error('Not authenticated');
         if (session.user.id !== client.user_id) throw new Error('You can only edit your own profile');
 
-        const { data, error } = await window.supabaseClient
-            .from('cs_clients')
-            .update(updateData)
-            .eq('id', client.id)
-            .eq('user_id', session.user.id)
-            .select()
-            .single();
+        // Separate user-level fields from client-specific fields
+        const csUsersUpdate = {};
+        const csClientsUpdate = {};
 
-        if (error) throw error;
-        setClient(prev => ({ ...prev, ...data }));
+        Object.entries(updateData).forEach(([key, value]) => {
+            if (CLIENT_USER_FIELDS.includes(key)) {
+                csUsersUpdate[key] = value;
+            } else {
+                csClientsUpdate[key] = value;
+            }
+        });
+
+        // Save user-level fields to cs_users
+        if (Object.keys(csUsersUpdate).length > 0) {
+            const { error: userError } = await window.supabaseClient
+                .from('cs_users')
+                .update(csUsersUpdate)
+                .eq('id', session.user.id);
+            if (userError) throw userError;
+        }
+
+        // Save client-specific fields to cs_clients (if any)
+        let data = { ...client };
+        if (Object.keys(csClientsUpdate).length > 0) {
+            const { data: clientData, error } = await window.supabaseClient
+                .from('cs_clients')
+                .update(csClientsUpdate)
+                .eq('id', client.id)
+                .eq('user_id', session.user.id)
+                .select()
+                .single();
+            if (error) throw error;
+            data = clientData;
+        }
+
+        // Update local state merging both cs_users and cs_clients changes
+        setClient(prev => ({ ...prev, ...data, ...csUsersUpdate }));
         queryClient.invalidateQueries({ queryKey: ['client'] });
         queryClient.invalidateQueries({ queryKey: ['user'] });
         return data;

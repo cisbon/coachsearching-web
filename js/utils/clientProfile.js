@@ -1,12 +1,13 @@
 /**
  * Client Profile Utilities
  * Helper to ensure a cs_clients record exists for the current user.
- * Auto-creates with a unique slug if missing.
+ * User-level fields (full_name, email, avatar_url, banner_url, slug) live in cs_users.
+ * Auto-creates with a unique slug in cs_users if missing.
  */
 
 /**
- * Generate a slug from a name + random suffix.
- * e.g. "John Doe" → "john-doe-x7k3m"
+ * Generate a random slug with a random suffix for uniqueness.
+ * e.g. "john-doe-x7k3m"
  */
 function generateSlug(fullName) {
     const base = (fullName || 'user')
@@ -22,8 +23,8 @@ function generateSlug(fullName) {
 
 /**
  * Ensures a cs_clients record exists for the given user session.
- * If not, creates one with a generated slug.
- * Returns the client record.
+ * Also ensures cs_users has a slug (used for the client public URL /u/:slug).
+ * Returns the client record enriched with cs_users fields.
  */
 export async function ensureClientProfile(session) {
     const supabase = window.supabaseClient;
@@ -31,41 +32,46 @@ export async function ensureClientProfile(session) {
 
     const userId = session.user.id;
 
+    // Fetch cs_users record for user-level fields
+    const { data: userRecord } = await supabase
+        .from('cs_users')
+        .select('id, full_name, email, avatar_url, banner_url, slug')
+        .eq('id', userId)
+        .single();
+
+    // If cs_users has no slug yet, generate one and save it
+    if (userRecord && !userRecord.slug) {
+        const slug = generateSlug(userRecord.full_name || session.user.user_metadata?.full_name);
+        await supabase
+            .from('cs_users')
+            .update({ slug })
+            .eq('id', userId);
+        userRecord.slug = slug;
+    }
+
     // Try to fetch existing client record
-    const { data: existing, error: fetchError } = await supabase
+    const { data: existing } = await supabase
         .from('cs_clients')
         .select('*')
         .eq('user_id', userId)
         .single();
 
     if (existing) {
-        // If no slug yet, generate one
-        if (!existing.slug) {
-            const slug = generateSlug(existing.full_name || session.user.user_metadata?.full_name);
-            const { data: updated } = await supabase
-                .from('cs_clients')
-                .update({ slug })
-                .eq('id', existing.id)
-                .select()
-                .single();
-            return updated || { ...existing, slug };
-        }
-        return existing;
+        // Return client enriched with cs_users fields (cs_users is authoritative for these)
+        return {
+            ...existing,
+            full_name: userRecord?.full_name || existing.full_name,
+            email: userRecord?.email || existing.email,
+            avatar_url: userRecord?.avatar_url || existing.avatar_url,
+            banner_url: userRecord?.banner_url || existing.banner_url,
+            slug: userRecord?.slug || existing.slug,
+        };
     }
 
-    // No record found — create one
-    const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
-    const slug = generateSlug(fullName);
-
+    // No client record found — create one (user-level fields live in cs_users, not duplicated here)
     const { data: created, error: createError } = await supabase
         .from('cs_clients')
-        .insert({
-            user_id: userId,
-            full_name: fullName,
-            email: session.user.email,
-            avatar_url: session.user.user_metadata?.avatar_url || null,
-            slug,
-        })
+        .insert({ user_id: userId })
         .select()
         .single();
 
@@ -74,5 +80,21 @@ export async function ensureClientProfile(session) {
         return null;
     }
 
-    return created;
+    // Also ensure cs_users has a slug
+    if (!userRecord?.slug) {
+        const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
+        const slug = generateSlug(fullName);
+        await supabase.from('cs_users').update({ slug }).eq('id', userId);
+        if (userRecord) userRecord.slug = slug;
+    }
+
+    // Return client enriched with cs_users fields
+    return {
+        ...created,
+        full_name: userRecord?.full_name || session.user.user_metadata?.full_name || '',
+        email: userRecord?.email || session.user.email || '',
+        avatar_url: userRecord?.avatar_url || null,
+        banner_url: userRecord?.banner_url || null,
+        slug: userRecord?.slug || null,
+    };
 }

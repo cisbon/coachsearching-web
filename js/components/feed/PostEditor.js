@@ -207,10 +207,6 @@ export function PostEditor({ session, userProfile, onPostCreated, onClose, initi
                 content: content.trim(),
                 image_url: imageUrl,
                 video_url: videoEmbed ? videoUrl : null,
-                author_name: displayName,
-                author_avatar: avatarUrl,
-                author_title: userProfile?.title || null,
-                author_slug: userProfile?.slug || null,
             }).select().single();
 
             if (error) throw error;

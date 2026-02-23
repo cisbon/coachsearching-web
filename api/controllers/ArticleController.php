@@ -10,21 +10,19 @@ class ArticleController {
 
     public function index() {
         try {
-            // Join cs_coaches -> cs_user_profiles
-            // Syntax: select=*,cs_coaches(cs_user_profiles(full_name))
-            $query = "select=*,cs_coaches(cs_user_profiles(full_name))&published=eq.true&order=created_at.desc";
-            
+            // Join cs_coaches -> cs_users for author name
+            $query = "select=*,cs_coaches(user_id,cs_users(full_name))&published=eq.true&order=created_at.desc";
+
             $response = $this->db->request('GET', '/cs_articles?' . $query);
 
             if ($response['status'] >= 200 && $response['status'] < 300) {
                 $articles = $response['body'];
-                
+
                 // Flatten
                 foreach ($articles as &$article) {
-                    if (isset($article['cs_coaches']['cs_user_profiles'])) {
-                        $article['author_name'] = $article['cs_coaches']['cs_user_profiles']['full_name'] ?? 'Unknown';
-                        unset($article['cs_coaches']);
-                    }
+                    $coachData = $article['cs_coaches'] ?? [];
+                    $article['author_name'] = $coachData['cs_users']['full_name'] ?? $coachData['full_name'] ?? 'Unknown';
+                    unset($article['cs_coaches']);
                 }
 
                 if (empty($articles)) {

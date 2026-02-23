@@ -98,11 +98,18 @@ export function useCoachByIdQuery(coachId) {
             if (!supabase) throw new Error('Supabase not ready');
             const { data, error } = await supabase
                 .from('cs_coaches')
-                .select('*, cs_coach_certifications(*, cs_certifications(*))')
+                .select('*, cs_users(full_name, avatar_url, banner_url, title, slug), cs_coach_certifications(*, cs_certifications(*))')
                 .eq('id', coachId)
                 .single();
             if (error) throw error;
-            return data;
+            return data ? {
+                ...data,
+                full_name: data.cs_users?.full_name || data.full_name,
+                avatar_url: data.cs_users?.avatar_url || data.avatar_url,
+                banner_url: data.cs_users?.banner_url || data.banner_url,
+                title: data.cs_users?.title || data.title,
+                slug: data.cs_users?.slug || data.slug,
+            } : data;
         },
         staleTime: STALE_TIMES.coachProfile,
         enabled: !!coachId && !!getSupabase(),
@@ -111,6 +118,7 @@ export function useCoachByIdQuery(coachId) {
 
 /**
  * Fetch a coach profile by slug (with certifications)
+ * Slug is now in cs_users.slug - query cs_users first, then get coach by user_id
  */
 export function useCoachBySlugQuery(slug) {
     return useQuery({
@@ -118,13 +126,22 @@ export function useCoachBySlugQuery(slug) {
         queryFn: async () => {
             const supabase = getSupabase();
             if (!supabase) throw new Error('Supabase not ready');
+            // First try cs_coaches.slug for backward compat, then cs_users.slug
             const { data, error } = await supabase
                 .from('cs_coaches')
-                .select('*, cs_coach_certifications(*, cs_certifications(*))')
+                .select('*, cs_users(full_name, avatar_url, banner_url, title, slug), cs_coach_certifications(*, cs_certifications(*))')
                 .eq('slug', slug)
                 .single();
             if (error) throw error;
-            return data;
+            // Normalize: prefer cs_users fields
+            return data ? {
+                ...data,
+                full_name: data.cs_users?.full_name || data.full_name,
+                avatar_url: data.cs_users?.avatar_url || data.avatar_url,
+                banner_url: data.cs_users?.banner_url || data.banner_url,
+                title: data.cs_users?.title || data.title,
+                slug: data.cs_users?.slug || data.slug,
+            } : data;
         },
         staleTime: STALE_TIMES.coachProfile,
         enabled: !!slug && !!getSupabase(),
@@ -142,11 +159,18 @@ export function useMyCoachProfileQuery(userId) {
             if (!supabase) throw new Error('Supabase not ready');
             const { data, error } = await supabase
                 .from('cs_coaches')
-                .select('*')
+                .select('*, cs_users(full_name, avatar_url, banner_url, title, slug)')
                 .eq('user_id', userId)
                 .single();
             if (error) throw error;
-            return data;
+            return data ? {
+                ...data,
+                full_name: data.cs_users?.full_name || data.full_name,
+                avatar_url: data.cs_users?.avatar_url || data.avatar_url,
+                banner_url: data.cs_users?.banner_url || data.banner_url,
+                title: data.cs_users?.title || data.title,
+                slug: data.cs_users?.slug || data.slug,
+            } : data;
         },
         staleTime: STALE_TIMES.myCoachProfile,
         enabled: !!userId && !!getSupabase(),
@@ -164,12 +188,19 @@ export function useSuggestedCoachesQuery() {
             if (!supabase) throw new Error('Supabase not ready');
             const { data, error } = await supabase
                 .from('cs_coaches')
-                .select('id, full_name, slug, title, avatar_url, rating_average, rating_count')
+                .select('id, rating_average, rating_count, cs_users(full_name, slug, title, avatar_url)')
                 .eq('onboarding_completed', true)
                 .order('rating_average', { ascending: false })
                 .limit(5);
             if (error) throw error;
-            return data || [];
+            // Normalize: use cs_users fields for display
+            return (data || []).map(c => ({
+                ...c,
+                full_name: c.cs_users?.full_name || c.full_name,
+                slug: c.cs_users?.slug || c.slug,
+                title: c.cs_users?.title || c.title,
+                avatar_url: c.cs_users?.avatar_url || c.avatar_url,
+            }));
         },
         staleTime: STALE_TIMES.suggestedCoaches,
         enabled: !!getSupabase(),

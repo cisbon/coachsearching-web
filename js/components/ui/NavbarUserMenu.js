@@ -33,10 +33,19 @@ export function NavbarUserMenu({ session, onNavigate }) {
                 if (userType === 'coach' || userType === 'business') {
                     const { data } = await supabase
                         .from('cs_coaches')
-                        .select('slug, title, full_name, avatar_url, subscription_status, trial_ends_at')
+                        .select('subscription_status, trial_ends_at, cs_users(slug, title, full_name, avatar_url)')
                         .eq('user_id', session.user.id)
                         .single();
-                    if (data) setProfile(data);
+                    if (data) {
+                        // Normalize: use cs_users for user-level fields
+                        setProfile({
+                            ...data,
+                            slug: data.cs_users?.slug || data.slug,
+                            title: data.cs_users?.title || data.title,
+                            full_name: data.cs_users?.full_name || data.full_name,
+                            avatar_url: data.cs_users?.avatar_url || data.avatar_url,
+                        });
+                    }
                 } else {
                     const { data } = await supabase
                         .from('cs_users')
