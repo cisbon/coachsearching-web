@@ -486,14 +486,17 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
 
             const coachData = {
                 user_id: userId,
+                full_name: fullName,
+                title: data.professional_title || null,
                 bio: data.bio,
+                avatar_url: data.avatar_url || null,
                 intro_video_url: isValidVideoUrl(data.intro_video_url) ? data.intro_video_url : null,
-                city_id: data.city_id,  // Reference to cs_cities.id
+                city_id: data.city_id ? parseInt(data.city_id) : null,
+                location_country: data.location_country || null,
                 years_experience: parseInt(data.years_experience) || 0,
                 specialties: data.specialties,
                 languages: data.languages,
                 session_types: data.session_formats, // DB column is session_types
-                offers_free_discovery: data.offers_free_discovery !== false,
                 is_active: true,
                 onboarding_completed: true,
             };
@@ -515,22 +518,18 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                         full_name: fullName,
                         user_type: 'coach',
                         avatar_url: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
-                        title: data.professional_title || null,
-                        slug: slug,
                     });
 
                 if (userError) {
                     throw userError;
                 }
             } else {
-                // User exists - update user-level fields in cs_users (slug, full_name, avatar_url, title)
+                // User exists - update user-level fields in cs_users
                 await supabase
                     .from('cs_users')
                     .update({
                         full_name: fullName,
                         avatar_url: data.avatar_url || null,
-                        title: data.professional_title || null,
-                        slug: slug,
                     })
                     .eq('id', userId);
             }
