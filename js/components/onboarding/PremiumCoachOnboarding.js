@@ -98,7 +98,6 @@ const DEFAULT_DATA = {
     languages: ['en'],
     session_formats: ['video'],
     session_durations: [60],
-    hourly_rate: '',
     services: [], // Array of { name, name_en, description, description_en, unit, price, currency, active }
     offers_free_discovery: true,
     plan_type: 'free',
@@ -121,7 +120,7 @@ const loadSavedProgress = (userId) => {
         if (!parsed.data) return null;
 
         const sanitizedData = { ...DEFAULT_DATA };
-        const stringFields = ['full_name', 'professional_title', 'bio', 'intro_video_url', 'avatar_url', 'location_country', 'years_experience', 'hourly_rate', 'referral_code', 'plan_type'];
+        const stringFields = ['full_name', 'professional_title', 'bio', 'intro_video_url', 'avatar_url', 'location_country', 'years_experience', 'referral_code', 'plan_type'];
         const numberFields = ['city_id']; // city_id is a reference to cs_cities.id
         const arrayFields = ['specialties', 'languages', 'session_formats', 'session_durations', 'services', 'certifications'];
 
@@ -487,22 +486,16 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
 
             const coachData = {
                 user_id: userId,
-                full_name: fullName,
-                title: data.professional_title,
                 bio: data.bio,
                 intro_video_url: isValidVideoUrl(data.intro_video_url) ? data.intro_video_url : null,
-                avatar_url: data.avatar_url,
                 city_id: data.city_id,  // Reference to cs_cities.id
                 years_experience: parseInt(data.years_experience) || 0,
                 specialties: data.specialties,
                 languages: data.languages,
                 session_types: data.session_formats, // DB column is session_types
-                hourly_rate: parseFloat(data.hourly_rate) || 0,
-                currency: 'EUR',
                 offers_free_discovery: data.offers_free_discovery !== false,
                 is_active: true,
                 onboarding_completed: true,
-                slug: slug
             };
 
             // Ensure cs_users record exists (required for foreign key)
@@ -553,12 +546,11 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
             let coachSlug = slug; // Use cs_users.slug as the canonical slug
 
             if (existingCoach) {
-                // Update existing coach - slug is now in cs_users, not cs_coaches
+                // Update existing coach
                 coachId = existingCoach.id;
-                const { slug: _slug, ...updateData } = coachData;
                 const { error } = await supabase
                     .from('cs_coaches')
-                    .update(updateData)
+                    .update(coachData)
                     .eq('user_id', userId);
                 if (error) throw error;
             } else {
@@ -566,7 +558,7 @@ export const PremiumCoachOnboarding = ({ session, onComplete }) => {
                 const { data: newCoach, error } = await supabase
                     .from('cs_coaches')
                     .insert(coachData)
-                    .select('id, slug')
+                    .select('id')
                     .single();
                 if (error) throw error;
                 coachId = newCoach?.id;
@@ -2122,14 +2114,8 @@ const OnboardingServiceModal = ({ service, onClose, onSave }) => {
         });
     };
 
-    const handleBackdropClick = (e) => {
-        if (e.target.classList.contains('edit-modal-overlay')) {
-            onClose();
-        }
-    };
-
     return html`
-        <div class="edit-modal-overlay" onClick=${handleBackdropClick} style=${{ zIndex: 10001 }}>
+        <div class="edit-modal-overlay" style=${{ zIndex: 10001 }}>
             <div class="edit-modal-container edit-modal-wide" style=${{ maxHeight: '90vh', overflow: 'auto' }}>
                 <div class="edit-modal-header">
                     <h3>${isEditing ? (t('edit.editService') || 'Edit Service') : (t('edit.addService') || 'Add Service')}</h3>
